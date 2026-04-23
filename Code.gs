@@ -102,34 +102,6 @@ function showChekeoApp() {
 }
 
 /**
- * Obtiene la imagen de la nota (web) como Data URI para evitar bloqueos de hotlink/CORS en HtmlService.
- */
-function getStickyNoteImage() {
-  return { dataUri: getStickyNoteDataUri_() };
-}
-
-function getStickyNoteDataUri_() {
-  const cache = CacheService.getScriptCache();
-  const cacheKey = 'sticky_note_data_uri_v1';
-  const cached = cache.get(cacheKey);
-  if (cached) return cached;
-
-  const response = UrlFetchApp.fetch(STICKY_NOTE_IMAGE_URL, { muteHttpExceptions: true });
-  const code = response.getResponseCode();
-
-  if (code < 200 || code >= 300) {
-    throw new Error(`No se pudo descargar la imagen de la nota (HTTP ${code}).`);
-  }
-
-  const contentType = response.getHeaders()['Content-Type'] || 'image/png';
-  const base64 = Utilities.base64Encode(response.getContent());
-  const dataUri = `data:${contentType};base64,${base64}`;
-
-  cache.put(cacheKey, dataUri, 21600); // 6 horas
-  return dataUri;
-}
-
-/**
  * Sync Pedidos Master -> Chekeo
  * Conserva:
  * - Estado Cocina
