@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --bg: #141414;
+        --panel: #fffaf0;
+        --ink: #1f1f1f;
+        --muted: #6a6a6a;
+        --sticky-main: #ffe98c;
+        --sticky-next: #ffd8a8;
+        --green: #1f8f48;
+        --green-dark: #146635;
+        --gray: #efefef;
+        --danger: #d54c4c;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(180deg, #111 0%, #1b1b1b 100%);
+        color: var(--ink);
+      }
+
+      .app {
+        min-height: 100vh;
+        padding: 14px;
+      }
+
+      .header {
+        background: #fff;
+        border-radius: 16px;
+        padding: 14px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.18);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #111;
+      }
+
+      .subtitle {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+
+      .count-pill {
+        min-width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        background: #111;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 0 10px;
+      }
+
+      .stack {
+        margin-top: 16px;
+        position: relative;
+      }
+
+      .stack-label {
+        color: #f4f4f4;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin: 0 0 8px 6px;
+      }
+
+      .note {
+        position: relative;
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 18px 35px rgba(0,0,0,.28);
+        border: 1px solid rgba(0,0,0,.08);
+        overflow: hidden;
+      }
+
+      .note.current {
+        background: var(--sticky-main);
+        transform: rotate(-1deg);
+      }
+
+      .note.next {
+        background: var(--sticky-next);
+        margin-top: -10px;
+        margin-left: 18px;
+        transform: rotate(1.5deg) scale(.97);
+        opacity: .95;
+      }
+
+      .note.slide-out {
+        animation: slideLeft .32s ease forwards;
+      }
+
+      @keyframes slideLeft {
+        from { transform: translateX(0) rotate(-1deg); opacity: 1; }
+        to { transform: translateX(-120%) rotate(-4deg); opacity: 0; }
+      }
+
+      .note::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,0));
+        pointer-events: none;
+      }
+
+      .note-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .eyebrow {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: #5f551f;
+        margin-bottom: 6px;
+      }
+
+      .name {
+        font-size: 26px;
+        line-height: 1.05;
+        font-weight: 700;
+        margin: 0;
+      }
+
+      .meta {
+        font-size: 13px;
+        color: #4b4b4b;
+        margin-top: 4px;
+      }
+
+      .status-pill {
+        padding: 7px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+        background: rgba(255,255,255,.55);
+        border: 1px solid rgba(0,0,0,.08);
+      }
+
+      .status-PENDIENTE { background: #fff2cc; }
+      .status-EN-PREP { background: #d9ebfa; }
+
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 5px 9px;
+        font-size: 11px;
+        font-weight: 700;
+        border: 1px solid rgba(0,0,0,.08);
+        background: rgba(255,255,255,.55);
+      }
+
+      .badge.warn { background: #ffe0a6; }
+      .badge.ok { background: #daf0d2; }
+      .badge.danger { background: #f8c9c9; }
+
+      .sections {
+        margin-top: 14px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .section-title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin-bottom: 5px;
+        color: #5f551f;
+      }
+
+      .section-body {
+        font-size: 15px;
+        line-height: 1.38;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .footer-grid {
+        margin-top: 16px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .footer-box {
+        background: rgba(255,255,255,.45);
+        border-radius: 12px;
+        padding: 10px;
+        border: 1px solid rgba(0,0,0,.06);
+      }
+
+      .footer-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: #6d6d6d;
+        font-weight: 700;
+      }
+
+      .footer-value {
+        margin-top: 4px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .actions {
+        margin-top: 16px;
+      }
+
+      .btn-ready {
+        width: 100%;
+        border: 0;
+        border-radius: 14px;
+        padding: 14px 12px;
+        background: var(--green);
+        color: #fff;
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform .12s ease, background .12s ease;
+      }
+
+      .btn-ready:hover {
+        transform: translateY(-1px);
+        background: var(--green-dark);
+      }
+
+      .empty {
+        background: #fff;
+        border-radius: 18px;
+        padding: 24px 18px;
+        text-align: center;
+        box-shadow: 0 18px 35px rgba(0,0,0,.18);
+      }
+
+      .empty h3 {
+        margin: 0 0 8px;
+        font-size: 22px;
+      }
+
+      .empty p {
+        margin: 0;
+        color: #666;
+        line-height: 1.4;
+      }
+
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        z-index: 20;
+      }
+
+      .overlay.show {
+        display: flex;
+      }
+
+      .confirm-card {
+        width: 100%;
+        max-width: 360px;
+        background: #fff;
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 20px 50px rgba(0,0,0,.28);
+      }
+
+      .confirm-title {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      .confirm-text {
+        color: #555;
+        line-height: 1.4;
+        margin-bottom: 14px;
+      }
+
+      .confirm-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .btn-cancel,
+      .btn-confirm {
+        border: 0;
+        border-radius: 12px;
+        padding: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .btn-cancel {
+        background: #efefef;
+        color: #111;
+      }
+
+      .btn-confirm {
+        background: var(--green);
+        color: #fff;
+      }
+
+      .loading {
+        position: fixed;
+        right: 14px;
+        top: 14px;
+        background: #111;
+        color: #fff;
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 12px;
+        display: none;
+        z-index: 25;
+      }
+
+      .loading.show {
+        display: block;
+      }
+
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        background: #111;
+        color: #fff;
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-size: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.28);
+        display: none;
+        z-index: 30;
+      }
+
+      .toast.show {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loading" id="loading">Cargando…</div>
+    <div class="toast" id="toast"></div>
+
+    <div class="app">
+      <div class="header">
+        <div>
+          <div class="title">Chekeo</div>
+          <div class="subtitle">Solo cola activa y flujo LISTO</div>
+        </div>
+        <div class="count-pill" id="countPill">0</div>
+      </div>
+
+      <div class="stack" id="stack"></div>
+    </div>
+
+    <div class="overlay" id="confirmOverlay">
+      <div class="confirm-card">
+        <div class="confirm-title">¿Marcar como LISTO?</div>
+        <div class="confirm-text" id="confirmText"></div>
+        <div class="confirm-actions">
+          <button class="btn-cancel" onclick="closeConfirm()">Cancelar</button>
+          <button class="btn-confirm" onclick="confirmReady()">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let state = {
+        orders: [],
+        current: null
+      };
+
+      document.addEventListener('DOMContentLoaded', () => {
+        loadOrders();
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') closeConfirm();
+        });
+      });
+
+      function loadOrders() {
+        showLoading(true);
+
+        google.script.run
+          .withSuccessHandler((result) => {
+            showLoading(false);
+            state.orders = (result && result.orders) || [];
+            state.current = state.orders[0] || null;
+            render();
+          })
+          .withFailureHandler((err) => {
+            showLoading(false);
+            showToast(err && err.message ? err.message : 'Error al cargar pedidos');
+          })
+          .getChekeoOrders();
+      }
+
+      function render() {
+        const stack = document.getElementById('stack');
+        const countPill = document.getElementById('countPill');
+        countPill.textContent = state.orders.length;
+
+        if (!state.orders.length) {
+          stack.innerHTML = `
+            <div class="stack-label">Cola</div>
+            <div class="empty">
+              <h3>Sin pedidos activos</h3>
+              <p>No hay órdenes en estado PENDIENTE o EN PREP.</p>
+            </div>
+          `;
+          return;
+        }
+
+        const current = state.orders[0];
+        const next = state.orders[1] || null;
+
+        stack.innerHTML = `
+          <div class="stack-label">Pedido actual</div>
+          ${buildCurrentNote(current)}
+          ${next ? `<div class="stack-label" style="margin-top:14px;">Siguiente</div>${buildNextNote(next)}` : ''}
+        `;
+      }
+
+      function buildCurrentNote(order) {
+        const badges = [];
+
+        if (order.specialCase) badges.push(`<span class="badge warn">Caso especial</span>`);
+        if (order.manualReview) badges.push(`<span class="badge danger">Revisar manual</span>`);
+        if (order.confirmed === 'Si') badges.push(`<span class="badge ok">Confirmado</span>`);
+        if (order.paid === 'Si') badges.push(`<span class="badge ok">Pagado</span>`);
+
+        const sections = [];
+        if (order.specialCase) {
+          sections.push(sectionHtml('Orden exacta', order.exactOrderText || 'Sin texto exacto'));
+        } else {
+          sections.push(sectionHtml('Burgers', order.burgerSummary || 'Sin detalle'));
+          if (order.extras) sections.push(sectionHtml('Extras / Detalles', order.extras));
+        }
+        if (order.sides) sections.push(sectionHtml('Guarnición', order.sides));
+
+        return `
+          <div class="note current" id="currentNote">
+            <div class="note-top">
+              <div>
+                <div class="eyebrow">${escapeHtml(order.orderDateTime)}</div>
+                <h2 class="name">${escapeHtml(order.name || 'Sin nombre')}</h2>
+                <div class="meta">${escapeHtml(order.phone || '')}</div>
+              </div>
+              <div class="status-pill status-${escapeClass(order.kitchenStatus)}">${escapeHtml(order.kitchenStatus)}</div>
+            </div>
+
+            ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
+
+            <div class="sections">
+              ${sections.join('')}
+            </div>
+
+            <div class="footer-grid">
+              <div class="footer-box">
+                <div class="footer-label">Total</div>
+                <div class="footer-value">${escapeHtml(order.totalDisplay || '')}</div>
+              </div>
+              <div class="footer-box">
+                <div class="footer-label">Pago</div>
+                <div class="footer-value">${escapeHtml(order.payment || '')}</div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn-ready" onclick="openConfirm()">LISTO</button>
+            </div>
+          </div>
+        `;
+      }
+
+      function buildNextNote(order) {
+        const body = order.specialCase
+          ? (order.exactOrderText || 'Caso especial')
+          : (order.burgerSummary || 'Sin detalle');
+
+        return `
+          <div class="note next">
+            <div class="eyebrow">${escapeHtml(order.orderDateTime)}</div>
+            <h3 style="margin:0 0 6px;font-size:20px;line-height:1.05;">${escapeHtml(order.name || 'Sin nombre')}</h3>
+            <div class="meta">${escapeHtml(order.phone || '')}</div>
+            <div class="sections" style="margin-top:12px;">
+              ${sectionHtml('Preview', shorten(body, 180))}
+              ${order.sides ? sectionHtml('Guarnición', shorten(order.sides, 120)) : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      function sectionHtml(title, body) {
+        return `
+          <div>
+            <div class="section-title">${escapeHtml(title)}</div>
+            <div class="section-body">${escapeHtml(body || '')}</div>
+          </div>
+        `;
+      }
+
+      function openConfirm() {
+        if (!state.current) return;
+        document.getElementById('confirmText').textContent =
+          `Se marcará como LISTO el pedido de ${state.current.name || 'este cliente'}.`;
+        document.getElementById('confirmOverlay').classList.add('show');
+      }
+
+      function closeConfirm() {
+        document.getElementById('confirmOverlay').classList.remove('show');
+      }
+
+      function confirmReady() {
+        if (!state.current) return;
+
+        const note = document.getElementById('currentNote');
+        if (note) {
+          note.classList.add('slide-out');
+        }
+
+        setTimeout(() => {
+          showLoading(true);
+
+          google.script.run
+            .withSuccessHandler(() => {
+              showLoading(false);
+              closeConfirm();
+              showToast('Pedido marcado como LISTO');
+              loadOrders();
+            })
+            .withFailureHandler((err) => {
+              showLoading(false);
+              closeConfirm();
+              showToast(err && err.message ? err.message : 'Error al actualizar');
+              loadOrders();
+            })
+            .markOrderReady(state.current.id);
+        }, 260);
+      }
+
+      function showLoading(show) {
+        document.getElementById('loading').classList.toggle('show', !!show);
+      }
+
+      function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message || '';
+        toast.classList.add('show');
+        clearTimeout(window.__toastTimer);
+        window.__toastTimer = setTimeout(() => {
+          toast.classList.remove('show');
+        }, 2600);
+      }
+
+      function shorten(text, max) {
+        const value = String(text || '');
+        return value.length > max ? value.slice(0, max - 1) + '…' : value;
+      }
+
+      function escapeClass(value) {
+        return String(value || '').replace(/[^A-Za-z0-9_-]/g, '-');
+      }
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+    </script>
+  </body>
+</html>
