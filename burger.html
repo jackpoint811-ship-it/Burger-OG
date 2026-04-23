@@ -117,7 +117,7 @@
         box-shadow: 0 18px 35px rgba(0,0,0,.28);
         border: 1px solid rgba(0,0,0,.08);
         overflow: hidden;
-        background-image: var(--sticky-note-bg);
+        background-image: url('https://images.vexels.com/media/users/3/146688/isolated/preview/298f7c2c9272fc68222668ba547f529e-nota-adhesiva-forrada-con-cinta-transparente.png?w=360');
         background-position: center;
         background-repeat: no-repeat;
         background-size: cover;
@@ -474,7 +474,13 @@
           })
           .withFailureHandler((err) => {
             showLoading(false);
-            showToast(err && err.message ? err.message : 'Error al cargar pedidos');
+            const rawMessage = err && err.message ? String(err.message) : '';
+            const isPermissionError = /PERMISSION_DENIED|permission denied|authorize|autoriz/i.test(rawMessage);
+            showToast(
+              isPermissionError
+                ? 'Permiso denegado. Autoriza el script y revisa permisos de la hoja.'
+                : (rawMessage || 'Error al cargar pedidos')
+            );
           })
           .getChekeoOrders();
       }
