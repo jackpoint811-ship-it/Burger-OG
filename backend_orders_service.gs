@@ -1,5 +1,5 @@
 function getChekeoOrdersService_(){
-  const ss=SpreadsheetApp.getActiveSpreadsheet();
+  const ss=getSpreadsheet_();
   const sheet=ss.getSheetByName(CHEKEO_SHEET);
   if(!sheet)throw new Error(`No existe la hoja "${CHEKEO_SHEET}"`);
 
@@ -23,7 +23,7 @@ function markOrderReadyService_(orderId){
   const lock=LockService.getDocumentLock();
   lock.waitLock(10000);
   try{
-    const ss=SpreadsheetApp.getActiveSpreadsheet();
+    const ss=getSpreadsheet_();
     const sheet=ss.getSheetByName(CHEKEO_SHEET);
     if(!sheet)throw new Error(`No existe la hoja "${CHEKEO_SHEET}"`);
 
@@ -49,7 +49,7 @@ function markOrderReadyService_(orderId){
 
 function diagnoseChekeoPermissionsService_(){
   const ui=SpreadsheetApp.getUi();
-  const ss=SpreadsheetApp.getActiveSpreadsheet();
+  const ss=getSpreadsheet_();
   const sheet=ss.getSheetByName(CHEKEO_SHEET);
   if(!sheet){
     ui.alert('Diagnóstico Chekeo',`No existe la hoja "${CHEKEO_SHEET}".`,ui.ButtonSet.OK);
