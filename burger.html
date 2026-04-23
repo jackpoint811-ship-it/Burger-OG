@@ -4,243 +4,349 @@
     <base target="_top">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-      :root{--ink:#1f1f1f;--muted:#6a6a6a;--green:#1f8f48;--green-dark:#146635;--danger:#d54c4c}
-      *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(180deg,#111 0%,#1b1b1b 100%);color:var(--ink)}
-      .app{min-height:100vh;padding:14px}.header{background:#fff;border-radius:16px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:space-between;gap:12px}
-      .title{font-size:20px;font-weight:700;color:#111}.subtitle{font-size:11px;color:var(--muted);margin-top:2px}.count-pill{min-width:36px;height:36px;border-radius:999px;background:#111;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;padding:0 10px}
-      .stack{margin-top:16px;position:relative}.stack-label{color:#f4f4f4;font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 8px 6px}
-      .order-info{background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shadow:0 8px 18px rgba(0,0,0,.2);border:1px solid rgba(0,0,0,.08);display:grid;gap:4px}.order-info-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#666;font-weight:700}.order-info-main{font-size:16px;font-weight:700;color:#111}.order-info-sub{font-size:12px;color:#444}
-      .note{position:relative;border-radius:18px;padding:18px;box-shadow:0 18px 35px rgba(0,0,0,.28);border:1px solid rgba(0,0,0,.08);overflow:hidden;background-image:linear-gradient(170deg,#fff2a8 0%,#ffe06f 48%,#ffd25c 100%);background-position:center;background-repeat:no-repeat;background-size:cover}
-      .note.current{transform:rotate(-1deg)}.note.next{margin-top:-10px;margin-left:18px;transform:rotate(1.5deg) scale(.97);opacity:.95}.note.slide-out{animation:slideLeft .32s ease forwards}
-      @keyframes slideLeft{from{transform:translateX(0) rotate(-1deg);opacity:1}to{transform:translateX(-120%) rotate(-4deg);opacity:0}}
-      .note::after{content:"";position:absolute;inset:0;background:linear-gradient(140deg,rgba(255,255,255,.46),rgba(255,255,255,.18));pointer-events:none}
-      .note-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#5f551f;margin-bottom:6px}.name{font-size:26px;line-height:1.05;font-weight:700;margin:0}.meta{font-size:13px;color:#4b4b4b;margin-top:4px}
-      .status-pill{padding:7px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;background:rgba(255,255,255,.55);border:1px solid rgba(0,0,0,.08)}.status-PENDIENTE{background:#fff2cc}.status-EN-PREP{background:#d9ebfa}
-      .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.badge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700;border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.55)}.badge.warn{background:#ffe0a6}.badge.ok{background:#daf0d2}.badge.danger{background:#f8c9c9}
-      .sections{margin-top:14px;display:grid;gap:12px}.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;color:#5f551f}.section-body{font-size:15px;line-height:1.38;white-space:pre-wrap;word-break:break-word}
-      .footer-grid{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}.footer-box{background:rgba(255,255,255,.45);border-radius:12px;padding:10px;border:1px solid rgba(0,0,0,.06)}.footer-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6d6d6d;font-weight:700}.footer-value{margin-top:4px;font-size:14px;font-weight:700}
-      .actions{margin-top:16px}.btn-ready{width:100%;border:0;border-radius:14px;padding:14px 12px;background:var(--green);color:#fff;font-size:18px;font-weight:700;cursor:pointer;transition:transform .12s ease,background .12s ease}.btn-ready:hover{transform:translateY(-1px);background:var(--green-dark)}
-      .empty{background:#fff;border-radius:18px;padding:24px 18px;text-align:center;box-shadow:0 18px 35px rgba(0,0,0,.18)}.empty h3{margin:0 0 8px;font-size:22px}.empty p{margin:0;color:#666;line-height:1.4}
-      .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}.overlay.show{display:flex}.confirm-card{width:100%;max-width:360px;background:#fff;border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.28)}.confirm-title{font-size:22px;font-weight:700;margin-bottom:6px}.confirm-text{color:#555;line-height:1.4;margin-bottom:14px}.confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn-cancel,.btn-confirm{border:0;border-radius:12px;padding:12px;font-weight:700;cursor:pointer}.btn-cancel{background:#efefef;color:#111}.btn-confirm{background:var(--green);color:#fff}
-      .loading{position:fixed;right:14px;top:14px;background:#111;color:#fff;border-radius:999px;padding:8px 12px;font-size:12px;display:none;z-index:25}.loading.show{display:block}.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:999px;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.28);display:none;z-index:30}.toast.show{display:block}
+      :root{
+        --bg:#101114;
+        --bg-soft:#171a20;
+        --panel:#ffffff;
+        --panel-soft:#f6f7f9;
+        --ink:#1f2430;
+        --muted:#667085;
+        --line:#e5e7eb;
+        --ok:#1f8f48;
+        --ok-dark:#146635;
+        --warn:#c58a10;
+        --danger:#d54c4c;
+        --radius-lg:18px;
+        --radius-md:14px;
+        --radius-sm:10px;
+        --shadow:0 12px 28px rgba(0,0,0,.22);
+      }
+      *{box-sizing:border-box}
+      body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(180deg,var(--bg) 0%,#191d24 100%);color:var(--ink)}
+      .app-shell{min-height:100vh;padding:14px;display:grid;gap:12px;grid-template-rows:auto auto 1fr auto}
+      .panel{background:var(--panel);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.06)}
+      .header{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+      .title{font-size:20px;font-weight:700;color:#0f172a}.subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+      .queue-counter{min-width:42px;height:42px;border-radius:999px;background:#111827;color:#fff;display:grid;place-items:center;padding:0 12px;font-size:12px;font-weight:700}
+
+      .status-area{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--panel-soft);border:1px solid var(--line);border-radius:var(--radius-md)}
+      .status-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:700}
+      .status-value{font-size:13px;font-weight:700;color:#111827}
+
+      .content-area{display:grid;gap:10px;align-content:start}
+      .card{padding:14px;border-radius:var(--radius-md);background:var(--panel);border:1px solid var(--line)}
+      .card.current{border-left:6px solid #111827}
+      .card.next{background:#fcfcfd}
+      .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+      .card-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:#6b7280;margin-bottom:6px}
+      .card-name{font-size:24px;line-height:1.05;font-weight:700;margin:0;color:#111827}
+      .card-meta{font-size:13px;color:#4b5563;margin-top:4px}
+
+      .status-pill{padding:7px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;border:1px solid rgba(0,0,0,.08);background:#f9fafb}
+      .status-PENDIENTE{background:#fff4d1}.status-EN-PREP{background:#d9ebfa}
+      .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+      .badge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700;border:1px solid rgba(0,0,0,.08);background:#f3f4f6}
+      .badge.warn{background:#ffe7b8}.badge.ok{background:#daf0d2}.badge.danger{background:#f8c9c9}
+
+      .section{margin-top:12px}
+      .section-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:#6b7280;margin-bottom:4px}
+      .section-body{font-size:14px;line-height:1.35;white-space:pre-wrap;word-break:break-word;color:#111827}
+
+      .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+      .meta-item{background:#f9fafb;border:1px solid var(--line);border-radius:10px;padding:9px}
+      .meta-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:700}
+      .meta-value{margin-top:3px;font-size:14px;font-weight:700;color:#111827}
+
+      .empty{text-align:center;padding:24px 18px}.empty h3{margin:0 0 8px;font-size:22px;color:#111827}.empty p{margin:0;color:#6b7280;line-height:1.4}
+      .error{padding:16px;border:1px solid #fecaca;background:#fff5f5;border-radius:12px;color:#7f1d1d}
+
+      .action-area{display:grid;gap:8px}
+      .btn{border:0;border-radius:12px;padding:12px;font-weight:700;cursor:pointer}
+      .btn-primary{background:var(--ok);color:#fff;font-size:17px}.btn-primary:hover{background:var(--ok-dark)}
+      .btn-secondary{background:#e5e7eb;color:#111827}
+      .btn:disabled{opacity:.6;cursor:not-allowed}
+
+      .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
+      .overlay.show{display:flex}
+      .confirm-card{width:100%;max-width:360px;background:#fff;border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.28)}
+      .confirm-title{font-size:22px;font-weight:700;margin-bottom:6px}
+      .confirm-text{color:#555;line-height:1.4;margin-bottom:14px}
+      .confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+      .loading{position:fixed;right:14px;top:14px;background:#111827;color:#fff;border-radius:999px;padding:8px 12px;font-size:12px;display:none;z-index:25}
+      .loading.show{display:block}
+      .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:999px;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.28);display:none;z-index:30}
+      .toast.show{display:block}
     </style>
   </head>
   <body>
     <div class="loading" id="loading">Cargando…</div>
     <div class="toast" id="toast"></div>
-    <div class="app">
-      <div class="header">
-        <div><div class="title">Chekeo</div><div class="subtitle">Solo órdenes activas según estado en la hoja</div></div>
-        <div class="count-pill" id="countPill">0</div>
-      </div>
-      <div class="stack" id="stack"></div>
+
+    <div class="app-shell">
+      <header class="panel header" id="headerArea"></header>
+      <section class="status-area" id="statusArea"></section>
+      <main class="content-area" id="contentArea"></main>
+      <footer class="action-area" id="actionArea"></footer>
     </div>
+
     <div class="overlay" id="confirmOverlay">
       <div class="confirm-card">
         <div class="confirm-title">¿Marcar como LISTO?</div>
         <div class="confirm-text" id="confirmText"></div>
         <div class="confirm-actions">
-          <button class="btn-cancel" id="cancelConfirmBtn">Cancelar</button>
-          <button class="btn-confirm" id="confirmReadyBtn">Confirmar</button>
+          <button class="btn btn-secondary" data-action="close-confirm">Cancelar</button>
+          <button class="btn btn-primary" id="confirmReadyBtn" data-action="confirm-ready">Confirmar</button>
         </div>
       </div>
     </div>
+
     <script>
+      const UI_STATES = {
+        LOADING: 'loading',
+        READY_WITH_ORDERS: 'ready_with_orders',
+        READY_EMPTY: 'ready_empty',
+        CONFIRMING_READY: 'confirming_ready',
+        SUBMITTING_READY: 'submitting_ready',
+        ERROR: 'error'
+      };
+
       const AppState = {
+        uiState: UI_STATES.LOADING,
         orders: [],
         current: null,
-        pendingOrderId: null
+        next: null,
+        pendingOrderId: null,
+        errorMessage: ''
       };
 
       const ChekeoBridge = {
         getOrders() {
           return new Promise((resolve, reject) => {
-            google.script.run
-              .withSuccessHandler(resolve)
-              .withFailureHandler(reject)
-              .getChekeoOrders();
+            google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getChekeoOrders();
           });
         },
         markReady(orderId) {
           return new Promise((resolve, reject) => {
-            google.script.run
-              .withSuccessHandler(resolve)
-              .withFailureHandler(reject)
-              .markOrderReady(orderId);
+            google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).markOrderReady(orderId);
           });
         }
       };
 
       const ViewUtils = {
-        sectionHtml(title, body) {
-          return `<div><div class="section-title">${this.escapeHtml(title)}</div><div class="section-body">${this.escapeHtml(body || '')}</div></div>`;
+        escapeHtml(value) { return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); },
+        escapeClass(value) { return String(value || '').replace(/[^A-Za-z0-9_-]/g, '-'); },
+        shorten(text, max) { const value = String(text || ''); return value.length > max ? value.slice(0, max - 1) + '…' : value; },
+        sectionBlock(title, body) { return `<section class="section"><div class="section-title">${this.escapeHtml(title)}</div><div class="section-body">${this.escapeHtml(body || '')}</div></section>`; },
+        badge(label, type='') { return `<span class="badge ${type}">${this.escapeHtml(label)}</span>`; }
+      };
+
+      const UIComponents = {
+        appHeader(state) {
+          return `<div><div class="title">Chekeo</div><div class="subtitle">Operación de cocina · órdenes activas</div></div><div class="queue-counter">${state.orders.length}</div>`;
         },
-        shorten(text, max) {
-          const value = String(text || '');
-          return value.length > max ? value.slice(0, max - 1) + '…' : value;
+        queueSummary(state) {
+          const map = {
+            [UI_STATES.LOADING]: ['Estado', 'Cargando pedidos...'],
+            [UI_STATES.READY_EMPTY]: ['Estado', 'Sin órdenes activas'],
+            [UI_STATES.ERROR]: ['Estado', 'Error de carga'],
+            [UI_STATES.CONFIRMING_READY]: ['Acción', 'Confirmar pedido LISTO'],
+            [UI_STATES.SUBMITTING_READY]: ['Estado', 'Marcando pedido como LISTO...'],
+            [UI_STATES.READY_WITH_ORDERS]: ['Cola activa', `${state.orders.length} pedido(s) en flujo`]
+          };
+          const [title, value] = map[state.uiState] || ['Estado', 'Listo'];
+          return `<div class="status-title">${title}</div><div class="status-value">${value}</div>`;
         },
-        escapeClass(value) {
-          return String(value || '').replace(/[^A-Za-z0-9_-]/g, '-');
+        currentOrderCard(order) {
+          const badges = [];
+          if (order.specialCase) badges.push(ViewUtils.badge('Caso especial', 'warn'));
+          if (order.manualReview) badges.push(ViewUtils.badge('Revisar manual', 'danger'));
+          if (order.confirmed === 'Si') badges.push(ViewUtils.badge('Confirmado', 'ok'));
+          if (order.paid === 'Si') badges.push(ViewUtils.badge('Pagado', 'ok'));
+
+          const sections = order.specialCase
+            ? [ViewUtils.sectionBlock('Orden exacta', order.exactOrderText || 'Sin texto exacto')]
+            : [
+                ViewUtils.sectionBlock('Burgers', order.burgerSummary || 'Sin detalle'),
+                order.extras ? ViewUtils.sectionBlock('Extras / Detalles', order.extras) : ''
+              ];
+
+          if (order.sides) sections.push(ViewUtils.sectionBlock('Guarnición', order.sides));
+
+          return `
+            <article class="card current" id="currentCard">
+              <div class="card-head">
+                <div>
+                  <div class="card-eyebrow">Pedido actual · ${ViewUtils.escapeHtml(order.id || 'Sin folio')}</div>
+                  <h2 class="card-name">${ViewUtils.escapeHtml(order.name || 'Sin nombre')}</h2>
+                  <div class="card-meta">${ViewUtils.escapeHtml(order.phone || '')}</div>
+                </div>
+                <div class="status-pill status-${ViewUtils.escapeClass(order.kitchenStatus)}">${ViewUtils.escapeHtml(order.kitchenStatus || '')}</div>
+              </div>
+              ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
+              ${sections.join('')}
+              <div class="meta-grid">
+                <div class="meta-item"><div class="meta-label">Total</div><div class="meta-value">${ViewUtils.escapeHtml(order.totalDisplay || '')}</div></div>
+                <div class="meta-item"><div class="meta-label">Pago</div><div class="meta-value">${ViewUtils.escapeHtml(order.payment || '')}</div></div>
+              </div>
+            </article>
+          `;
         },
-        escapeHtml(value) {
-          return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        nextOrderCard(order) {
+          const preview = order.specialCase ? (order.exactOrderText || 'Caso especial') : (order.burgerSummary || 'Sin detalle');
+          return `
+            <article class="card next">
+              <div class="card-eyebrow">Siguiente pedido</div>
+              <h3 style="margin:0 0 6px;font-size:20px;line-height:1.1;color:#111827;">${ViewUtils.escapeHtml(order.name || 'Sin nombre')}</h3>
+              <div class="card-meta">${ViewUtils.escapeHtml(order.phone || '')}</div>
+              ${ViewUtils.sectionBlock('Preview', ViewUtils.shorten(preview, 180))}
+              ${order.sides ? ViewUtils.sectionBlock('Guarnición', ViewUtils.shorten(order.sides, 120)) : ''}
+            </article>
+          `;
+        },
+        emptyState() {
+          return `<section class="panel empty"><h3>Sin pedidos activos</h3><p>No hay órdenes en estado PENDIENTE o EN PREP.</p></section>`;
+        },
+        errorState(message) {
+          return `<section class="error"><strong>Error:</strong> ${ViewUtils.escapeHtml(message || 'No se pudieron cargar pedidos.')}</section>`;
+        },
+        primaryAction(state) {
+          const disabled = state.uiState === UI_STATES.SUBMITTING_READY || !state.current;
+          return `<button class="btn btn-primary" data-action="open-confirm" ${disabled ? 'disabled' : ''}>LISTO · Pedido actual</button>`;
+        },
+        secondaryAction() {
+          return `<button class="btn btn-secondary" data-action="reload-orders">Recargar cola</button>`;
         }
       };
 
-      const ChekeoRenderer = {
-        render(state) {
-          const stack = document.getElementById('stack');
-          const countPill = document.getElementById('countPill');
-          countPill.textContent = state.orders.length;
+      const UIStateMachine = {
+        transition(nextState, patch = {}) {
+          AppState.uiState = nextState;
+          Object.assign(AppState, patch);
+          UIRenderer.render(AppState);
+        }
+      };
 
-          if (!state.orders.length) {
-            stack.innerHTML = `<div class="stack-label">Cola</div><div class="empty"><h3>Sin pedidos activos</h3><p>No hay órdenes en estado PENDIENTE o EN PREP.</p></div>`;
+      const UIRenderer = {
+        render(state) {
+          document.getElementById('headerArea').innerHTML = UIComponents.appHeader(state);
+          document.getElementById('statusArea').innerHTML = UIComponents.queueSummary(state);
+          this.renderContent(state);
+          this.renderActions(state);
+          this.renderOverlay(state);
+          this.showLoading(state.uiState === UI_STATES.LOADING || state.uiState === UI_STATES.SUBMITTING_READY);
+        },
+        renderContent(state) {
+          const content = document.getElementById('contentArea');
+          if (state.uiState === UI_STATES.ERROR) {
+            content.innerHTML = UIComponents.errorState(state.errorMessage);
+            return;
+          }
+          if (state.uiState === UI_STATES.READY_EMPTY || state.uiState === UI_STATES.LOADING) {
+            content.innerHTML = state.uiState === UI_STATES.LOADING ? '' : UIComponents.emptyState();
             return;
           }
 
-          const current = state.orders[0];
-          const next = state.orders[1] || null;
-          stack.innerHTML = `
-            <div class="stack-label">Pedido actual</div>
-            ${this.buildCurrentNote(current)}
-            ${next ? `<div class="stack-label" style="margin-top:14px;">Siguiente</div>${this.buildNextNote(next)}` : ''}
+          const current = state.current ? UIComponents.currentOrderCard(state.current) : '';
+          const next = state.next ? UIComponents.nextOrderCard(state.next) : '';
+          content.innerHTML = `${current}${next}`;
+        },
+        renderActions(state) {
+          const action = document.getElementById('actionArea');
+          const isReadyState = [UI_STATES.READY_WITH_ORDERS, UI_STATES.CONFIRMING_READY, UI_STATES.SUBMITTING_READY].includes(state.uiState);
+          const canOpenConfirm = isReadyState && !!state.current;
+          action.innerHTML = `
+            ${canOpenConfirm ? UIComponents.primaryAction(state) : ''}
+            ${UIComponents.secondaryAction()}
           `;
         },
-        buildCurrentNote(order) {
-          const badges = [];
-          if (order.specialCase) badges.push('<span class="badge warn">Caso especial</span>');
-          if (order.manualReview) badges.push('<span class="badge danger">Revisar manual</span>');
-          if (order.confirmed === 'Si') badges.push('<span class="badge ok">Confirmado</span>');
-          if (order.paid === 'Si') badges.push('<span class="badge ok">Pagado</span>');
-
-          const sections = [];
-          if (order.specialCase) {
-            sections.push(ViewUtils.sectionHtml('Orden exacta', order.exactOrderText || 'Sin texto exacto'));
-          } else {
-            sections.push(ViewUtils.sectionHtml('Burgers', order.burgerSummary || 'Sin detalle'));
-            if (order.extras) sections.push(ViewUtils.sectionHtml('Extras / Detalles', order.extras));
-          }
-          if (order.sides) sections.push(ViewUtils.sectionHtml('Guarnición', order.sides));
-
-          return `
-            <div class="order-info">
-              <div class="order-info-title">Info de la orden</div>
-              <div class="order-info-main">${ViewUtils.escapeHtml(order.id || 'Sin folio')}</div>
-              <div class="order-info-sub">Estado actual: ${ViewUtils.escapeHtml(order.kitchenStatus || '')}</div>
-            </div>
-            <div class="note current" id="currentNote">
-              <div class="note-top">
-                <div>
-                  <div class="eyebrow">En cola</div>
-                  <h2 class="name">${ViewUtils.escapeHtml(order.name || 'Sin nombre')}</h2>
-                  <div class="meta">${ViewUtils.escapeHtml(order.phone || '')}</div>
-                </div>
-                <div class="status-pill status-${ViewUtils.escapeClass(order.kitchenStatus)}">${ViewUtils.escapeHtml(order.kitchenStatus)}</div>
-              </div>
-              ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
-              <div class="sections">${sections.join('')}</div>
-              <div class="footer-grid">
-                <div class="footer-box"><div class="footer-label">Total</div><div class="footer-value">${ViewUtils.escapeHtml(order.totalDisplay || '')}</div></div>
-                <div class="footer-box"><div class="footer-label">Pago</div><div class="footer-value">${ViewUtils.escapeHtml(order.payment || '')}</div></div>
-              </div>
-              <div class="actions">
-                <button class="btn-ready" data-action="open-confirm" data-order-id="${ViewUtils.escapeHtml(order.id || '')}">LISTO</button>
-              </div>
-            </div>
-          `;
+        renderOverlay(state) {
+          const overlay = document.getElementById('confirmOverlay');
+          const show = state.uiState === UI_STATES.CONFIRMING_READY || state.uiState === UI_STATES.SUBMITTING_READY;
+          overlay.classList.toggle('show', show);
+          const confirmBtn = document.getElementById('confirmReadyBtn');
+          confirmBtn.disabled = state.uiState === UI_STATES.SUBMITTING_READY;
         },
-        buildNextNote(order) {
-          const body = order.specialCase ? (order.exactOrderText || 'Caso especial') : (order.burgerSummary || 'Sin detalle');
-          return `
-            <div class="note next">
-              <div class="eyebrow">Siguiente en cola</div>
-              <h3 style="margin:0 0 6px;font-size:20px;line-height:1.05;">${ViewUtils.escapeHtml(order.name || 'Sin nombre')}</h3>
-              <div class="meta">${ViewUtils.escapeHtml(order.phone || '')}</div>
-              <div class="sections" style="margin-top:12px;">
-                ${ViewUtils.sectionHtml('Preview', ViewUtils.shorten(body, 180))}
-                ${order.sides ? ViewUtils.sectionHtml('Guarnición', ViewUtils.shorten(order.sides, 120)) : ''}
-              </div>
-            </div>
-          `;
+        showLoading(show) {
+          document.getElementById('loading').classList.toggle('show', !!show);
         }
       };
 
       const ChekeoActions = {
         init() {
-          document.getElementById('stack').addEventListener('click', (event) => {
-            const button = event.target.closest('[data-action="open-confirm"]');
-            if (!button) return;
-            this.openConfirm(button.dataset.orderId);
+          document.addEventListener('click', (event) => {
+            const actionEl = event.target.closest('[data-action]');
+            if (!actionEl) return;
+            const action = actionEl.dataset.action;
+
+            if (action === 'open-confirm') this.openConfirm();
+            if (action === 'close-confirm') this.closeConfirm();
+            if (action === 'confirm-ready') this.confirmReady();
+            if (action === 'reload-orders') this.loadOrders();
           });
 
-          document.getElementById('cancelConfirmBtn').addEventListener('click', () => this.closeConfirm());
-          document.getElementById('confirmReadyBtn').addEventListener('click', () => this.confirmReady());
           document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') this.closeConfirm();
           });
 
+          UIStateMachine.transition(UI_STATES.LOADING);
           this.loadOrders();
         },
+
         async loadOrders() {
-          this.showLoading(true);
+          UIStateMachine.transition(UI_STATES.LOADING, { errorMessage: '' });
           try {
             const result = await ChekeoBridge.getOrders();
-            AppState.orders = (result && result.orders) || [];
-            AppState.current = AppState.orders[0] || null;
-            AppState.pendingOrderId = null;
-            this.closeConfirm(false);
-            ChekeoRenderer.render(AppState);
+            const orders = (result && result.orders) || [];
+            const nextState = orders.length ? UI_STATES.READY_WITH_ORDERS : UI_STATES.READY_EMPTY;
+            UIStateMachine.transition(nextState, {
+              orders,
+              current: orders[0] || null,
+              next: orders[1] || null,
+              pendingOrderId: null,
+              errorMessage: ''
+            });
           } catch (err) {
-            this.showToast(err && err.message ? err.message : 'Error al cargar pedidos');
-          } finally {
-            this.showLoading(false);
+            UIStateMachine.transition(UI_STATES.ERROR, {
+              errorMessage: err && err.message ? err.message : 'Error al cargar pedidos'
+            });
+            this.showToast('No se pudieron cargar pedidos');
           }
         },
-        openConfirm(orderId) {
-          const cleanOrderId = String(orderId || '').trim();
-          if (!cleanOrderId) {
-            this.showToast('No se encontró el ID del pedido');
+
+        openConfirm() {
+          if (!AppState.current) {
+            this.showToast('No hay pedido activo para marcar LISTO');
             return;
           }
-          AppState.pendingOrderId = cleanOrderId;
-          const selectedOrder = AppState.orders.find((order) => order.id === cleanOrderId) || AppState.current;
-          const customerName = selectedOrder && selectedOrder.name ? selectedOrder.name : 'este cliente';
-          document.getElementById('confirmText').textContent = `Se marcará como LISTO el pedido de ${customerName}.`;
-          document.getElementById('confirmOverlay').classList.add('show');
+          AppState.pendingOrderId = String(AppState.current.id || '').trim();
+          document.getElementById('confirmText').textContent = `Se marcará como LISTO el pedido de ${AppState.current.name || 'este cliente'}.`;
+          UIStateMachine.transition(UI_STATES.CONFIRMING_READY);
         },
-        closeConfirm(resetPending = true) {
-          document.getElementById('confirmOverlay').classList.remove('show');
-          if (resetPending) AppState.pendingOrderId = null;
+
+        closeConfirm() {
+          if (AppState.uiState !== UI_STATES.CONFIRMING_READY) return;
+          UIStateMachine.transition(UI_STATES.READY_WITH_ORDERS);
         },
-        async confirmReady(orderIdOverride) {
-          const orderId = String(orderIdOverride || AppState.pendingOrderId || (AppState.current && AppState.current.id) || '').trim();
+
+        async confirmReady() {
+          const orderId = String(AppState.pendingOrderId || (AppState.current && AppState.current.id) || '').trim();
           if (!orderId) {
             this.showToast('No se encontró el ID del pedido');
-            this.closeConfirm();
+            UIStateMachine.transition(UI_STATES.READY_WITH_ORDERS);
             return;
           }
 
-          const note = document.getElementById('currentNote');
-          if (note) note.classList.add('slide-out');
+          UIStateMachine.transition(UI_STATES.SUBMITTING_READY);
+          try {
+            await ChekeoBridge.markReady(orderId);
+            this.showToast('Pedido marcado como LISTO');
+          } catch (err) {
+            this.showToast(err && err.message ? err.message : 'Error al actualizar');
+          }
+          this.loadOrders();
+        },
 
-          window.setTimeout(async () => {
-            this.showLoading(true);
-            try {
-              await ChekeoBridge.markReady(orderId);
-              this.closeConfirm();
-              this.showToast('Pedido marcado como LISTO');
-            } catch (err) {
-              this.closeConfirm();
-              this.showToast(err && err.message ? err.message : 'Error al actualizar');
-            } finally {
-              this.showLoading(false);
-              this.loadOrders();
-            }
-          }, 260);
-        },
-        showLoading(show) {
-          document.getElementById('loading').classList.toggle('show', !!show);
-        },
         showToast(message) {
           const toast = document.getElementById('toast');
           toast.textContent = message || '';
