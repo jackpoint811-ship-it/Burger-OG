@@ -94,6 +94,46 @@
       .loading.show{display:block}
       .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:999px;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.28);display:none;z-index:30}
       .toast.show{display:block}
+
+      .ticket-wrap{background:#e7e9ee;border:1px solid #d7dbe4;border-radius:16px;padding:14px;display:flex;justify-content:center}
+      .ticket-paper{
+        width:min(100%,320px);
+        background:#fff;
+        color:#1a1a1a;
+        border:1px solid #eceef2;
+        border-radius:12px;
+        box-shadow:0 8px 18px rgba(0,0,0,.08);
+        padding:12px 14px;
+        font-family:"Courier New",monospace;
+        font-size:12px;
+        line-height:1.32;
+        position:relative;
+      }
+      .ticket-paper::before{
+        content:'';
+        position:absolute;
+        top:-9px;
+        left:10px;
+        right:10px;
+        height:9px;
+        background:
+          radial-gradient(circle at 8px 9px, transparent 8px, #fff 8.1px) 0 0/16px 9px repeat-x;
+      }
+      .ticket-header,
+      .ticket-subheader,
+      .ticket-total,
+      .ticket-label{
+        text-transform:uppercase;
+        letter-spacing:.08em;
+      }
+      .ticket-header{font-size:13px;font-weight:700;text-align:center;margin-bottom:6px}
+      .ticket-subheader{font-size:11px;color:#5f6470;text-align:center;margin-bottom:10px}
+      .ticket-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;padding:3px 0;border-bottom:1px dashed #d9dde5}
+      .ticket-row:last-of-type{border-bottom:0}
+      .ticket-item{min-width:0;word-break:break-word}
+      .ticket-value{white-space:nowrap;text-align:right}
+      .ticket-total{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;margin-top:8px;padding-top:8px;border-top:1px solid #cfd5de}
+
       @media (max-width:640px){
         .app-shell{max-width:none;width:100%;padding:8px 8px calc(12px + env(safe-area-inset-bottom));gap:10px}
         .header{padding:12px}
