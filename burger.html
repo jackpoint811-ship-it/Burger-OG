@@ -59,6 +59,12 @@
       .meta-item{background:#f9fafb;border:1px solid var(--line);border-radius:10px;padding:9px}
       .meta-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:700}
       .meta-value{margin-top:3px;font-size:14px;font-weight:700;color:#111827;word-break:break-word}
+      .ticket-lines{margin-top:12px;border:1px solid var(--line);border-radius:10px;background:#f9fafb;padding:10px}
+      .ticket-line{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:4px 0}
+      .ticket-desc{font-size:14px;line-height:1.25;color:#111827;word-break:break-word}
+      .ticket-price{font-size:14px;font-weight:700;color:#111827;text-align:right;justify-self:end;white-space:nowrap}
+      .ticket-line.final{margin-top:6px;padding-top:8px;border-top:1px solid var(--line)}
+      .ticket-line.final .ticket-desc,.ticket-line.final .ticket-price{font-size:16px;font-weight:800}
 
       .ticket-card{border-left:6px solid #111827;background:#fff}
       .ticket-header{text-align:center}
@@ -155,6 +161,9 @@
         .section-body{font-size:16px;line-height:1.4}
         .meta-grid{grid-template-columns:1fr}
         .meta-value{font-size:16px}
+        .ticket-lines{padding:11px}
+        .ticket-desc,.ticket-price{font-size:16px}
+        .ticket-line.final .ticket-desc,.ticket-line.final .ticket-price{font-size:18px}
         .action-area{margin-top:0}
         .btn{font-size:18px}
         .confirm-card{max-width:none;border-radius:16px;padding:16px}
@@ -223,9 +232,47 @@
         escapeHtml(value) { return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); },
         escapeClass(value) { return String(value || '').replace(/[^A-Za-z0-9_-]/g, '-'); },
         shorten(text, max) { const value = String(text || ''); return value.length > max ? value.slice(0, max - 1) + '…' : value; },
+        splitItems(text) {
+          const value = String(text || '').trim();
+          if (!value) return [];
+          return value
+            .split(/\n|•|·|;/)
+            .flatMap(chunk => chunk.split(/\s*,\s*/))
+            .map(item => item.trim())
+            .filter(Boolean);
+        },
+        extractPrice(itemText) {
+          const value = String(itemText || '').trim();
+          const match = value.match(/(.+?)\s+((?:[$€]\s?\d+(?:[.,]\d{1,2})?)|(?:\d+(?:[.,]\d{1,2})?\s?(?:mxn|usd))|(?:\d+(?:[.,]\d{1,2})?))/i);
+          if (!match) return { desc: value, price: '' };
+          const desc = String(match[1] || '').trim();
+          const price = String(match[2] || '').trim();
+          return { desc: desc || value, price };
+        },
+        ticketLine(desc, price = '', isFinal = false) {
+          const safeDesc = this.escapeHtml(this.shorten(desc, isFinal ? 56 : 46));
+          const safePrice = price ? this.escapeHtml(this.shorten(price, 18)) : '';
+          return `<div class="ticket-line${isFinal ? ' final' : ''}"><div class="ticket-desc">${safeDesc}</div>${safePrice ? `<div class="ticket-price">${safePrice}</div>` : ''}</div>`;
+        },
         sectionBlock(title, body) { return `<section class="section"><div class="section-title">${this.escapeHtml(title)}</div><div class="section-body">${this.escapeHtml(body || '')}</div></section>`; },
         badge(label, type='') { return `<span class="badge ${type}">${this.escapeHtml(label)}</span>`; }
       };
+
+      function toTicketLines(order) {
+        const lines = [];
+        [
+          { label: 'Burger', value: order.burgerSummary },
+          { label: 'Extra', value: order.extras },
+          { label: 'Guarnición', value: order.sides }
+        ].forEach(group => {
+          ViewUtils.splitItems(group.value).forEach(item => {
+            const parsed = ViewUtils.extractPrice(item);
+            const desc = group.label ? `${group.label}: ${parsed.desc}` : parsed.desc;
+            lines.push({ desc, price: parsed.price });
+          });
+        });
+        return lines;
+      }
 
       const UIComponents = {
         appHeader(state) {
@@ -242,6 +289,13 @@
           };
           const [title, value] = map[state.uiState] || ['Estado', 'Listo'];
           return `<div class="status-title">${title}</div><div class="status-value">${value}</div>`;
+        },
+        ticketOrder(order) {
+          const itemLines = toTicketLines(order);
+          const rows = itemLines.map(line => ViewUtils.ticketLine(line.desc, line.price));
+          rows.push(ViewUtils.ticketLine('Total', order.totalDisplay || '', true));
+          rows.push(ViewUtils.ticketLine('Pago', order.payment || '', true));
+          return `<div class="ticket-lines">${rows.join('')}</div>`;
         },
         currentOrderCard(order) {
           const badges = [];
@@ -272,10 +326,7 @@
               </div>
               ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
               ${sections.join('')}
-              <div class="meta-grid">
-                <div class="meta-item"><div class="meta-label">Total</div><div class="meta-value">${ViewUtils.escapeHtml(order.totalDisplay || '')}</div></div>
-                <div class="meta-item"><div class="meta-label">Pago</div><div class="meta-value">${ViewUtils.escapeHtml(order.payment || '')}</div></div>
-              </div>
+              ${UIComponents.ticketOrder(order)}
             </article>
           `;
         },
