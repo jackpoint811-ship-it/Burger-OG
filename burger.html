@@ -23,29 +23,32 @@
       }
       *{box-sizing:border-box}
       body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(180deg,var(--bg) 0%,#191d24 100%);color:var(--ink)}
-      .app-shell{min-height:100vh;padding:14px;display:grid;gap:12px;grid-template-rows:auto auto 1fr auto}
+      .app-shell{min-height:100vh;max-width:760px;margin:0 auto;padding:14px 14px calc(18px + env(safe-area-inset-bottom));display:grid;gap:12px;grid-template-rows:auto auto 1fr auto}
       .panel{background:var(--panel);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.06)}
       .header{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
-      .title{font-size:20px;font-weight:700;color:#0f172a}.subtitle{font-size:12px;color:var(--muted);margin-top:2px}
-      .queue-counter{min-width:42px;height:42px;border-radius:999px;background:#111827;color:#fff;display:grid;place-items:center;padding:0 12px;font-size:12px;font-weight:700}
+      .title{font-size:clamp(18px,2.8vw,20px);font-weight:700;color:#0f172a;line-height:1.15}
+      .subtitle{font-size:clamp(11px,2.2vw,12px);color:var(--muted);margin-top:2px;line-height:1.25}
+      .queue-counter{min-width:42px;height:42px;border-radius:999px;background:#111827;color:#fff;display:grid;place-items:center;padding:0 12px;font-size:12px;font-weight:700;flex-shrink:0}
 
       .status-area{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--panel-soft);border:1px solid var(--line);border-radius:var(--radius-md)}
       .status-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:700}
-      .status-value{font-size:13px;font-weight:700;color:#111827}
+      .status-value{font-size:13px;font-weight:700;color:#111827;text-align:right}
 
       .content-area{display:grid;gap:10px;align-content:start}
       .card{padding:14px;border-radius:var(--radius-md);background:var(--panel);border:1px solid var(--line)}
       .card.current{border-left:6px solid #111827}
       .card.next{background:#fcfcfd}
       .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+      .card-head>div:first-child{min-width:0}
       .card-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:#6b7280;margin-bottom:6px}
-      .card-name{font-size:24px;line-height:1.05;font-weight:700;margin:0;color:#111827}
-      .card-meta{font-size:13px;color:#4b5563;margin-top:4px}
+      .card-name{font-size:clamp(20px,5.4vw,24px);line-height:1.1;font-weight:700;margin:0;color:#111827;word-break:break-word;overflow-wrap:anywhere}
+      .card-meta{font-size:13px;color:#4b5563;margin-top:4px;word-break:break-word}
 
-      .status-pill{padding:7px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;border:1px solid rgba(0,0,0,.08);background:#f9fafb}
+      .status-pill{padding:7px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;border:1px solid rgba(0,0,0,.08);background:#f9fafb;flex-shrink:0;max-width:100%;text-overflow:ellipsis;overflow:hidden}
       .status-PENDIENTE{background:#fff4d1}.status-EN-PREP{background:#d9ebfa}
       .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
       .badge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700;border:1px solid rgba(0,0,0,.08);background:#f3f4f6}
+      .badge.manual{background:#fff6cc;color:#7a5a00}
       .badge.warn{background:#ffe7b8}.badge.ok{background:#daf0d2}.badge.danger{background:#f8c9c9}
 
       .section{margin-top:12px}
@@ -55,20 +58,20 @@
       .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
       .meta-item{background:#f9fafb;border:1px solid var(--line);border-radius:10px;padding:9px}
       .meta-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:700}
-      .meta-value{margin-top:3px;font-size:14px;font-weight:700;color:#111827}
+      .meta-value{margin-top:3px;font-size:14px;font-weight:700;color:#111827;word-break:break-word}
 
       .empty{text-align:center;padding:24px 18px}.empty h3{margin:0 0 8px;font-size:22px;color:#111827}.empty p{margin:0;color:#6b7280;line-height:1.4}
       .error{padding:16px;border:1px solid #fecaca;background:#fff5f5;border-radius:12px;color:#7f1d1d}
 
-      .action-area{display:grid;gap:8px}
-      .btn{border:0;border-radius:12px;padding:12px;font-weight:700;cursor:pointer}
-      .btn-primary{background:var(--ok);color:#fff;font-size:17px}.btn-primary:hover{background:var(--ok-dark)}
-      .btn-secondary{background:#e5e7eb;color:#111827}
+      .action-area{display:grid;gap:10px;position:sticky;bottom:0}
+      .btn{border:0;border-radius:14px;padding:14px 16px;font-weight:700;cursor:pointer;min-height:48px;touch-action:manipulation}
+      .btn-primary{background:var(--ok);color:#fff;font-size:18px}.btn-primary:hover{background:var(--ok-dark)}
+      .btn-secondary{background:#e5e7eb;color:#111827;font-size:16px}
       .btn:disabled{opacity:.6;cursor:not-allowed}
 
-      .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
+      .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:12px;z-index:20}
       .overlay.show{display:flex}
-      .confirm-card{width:100%;max-width:360px;background:#fff;border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.28)}
+      .confirm-card{width:100%;max-width:430px;background:#fff;border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.28)}
       .confirm-title{font-size:22px;font-weight:700;margin-bottom:6px}
       .confirm-text{color:#555;line-height:1.4;margin-bottom:14px}
       .confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -77,6 +80,23 @@
       .loading.show{display:block}
       .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:999px;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.28);display:none;z-index:30}
       .toast.show{display:block}
+      @media (max-width:640px){
+        .app-shell{padding:10px 10px calc(14px + env(safe-area-inset-bottom));gap:10px}
+        .header{padding:12px}
+        .header>div:first-child{min-width:0}
+        .queue-counter{min-width:40px;height:40px}
+        .status-area{align-items:flex-start;flex-direction:column}
+        .status-value{text-align:left}
+        .card{padding:12px}
+        .card-head{flex-direction:column;align-items:flex-start}
+        .status-pill{white-space:normal;overflow:visible;text-overflow:clip}
+        .meta-grid{grid-template-columns:1fr}
+        .confirm-card{max-width:none;border-radius:16px;padding:16px}
+        .confirm-title{font-size:20px}
+        .confirm-actions{grid-template-columns:1fr}
+        .loading{right:10px;top:10px}
+        .toast{left:10px;right:10px;bottom:10px;transform:none;text-align:center}
+      }
     </style>
   </head>
   <body>
@@ -159,6 +179,7 @@
         },
         currentOrderCard(order) {
           const badges = [];
+          if (order.specialCase) badges.push(ViewUtils.badge('Manual', 'manual'));
           if (order.specialCase) badges.push(ViewUtils.badge('Caso especial', 'warn'));
           if (order.manualReview) badges.push(ViewUtils.badge('Revisar manual', 'danger'));
           if (order.confirmed === 'Si') badges.push(ViewUtils.badge('Confirmado', 'ok'));
@@ -197,7 +218,7 @@
           return `
             <article class="card next">
               <div class="card-eyebrow">Siguiente pedido</div>
-              <h3 style="margin:0 0 6px;font-size:20px;line-height:1.1;color:#111827;">${ViewUtils.escapeHtml(order.name || 'Sin nombre')}</h3>
+              <h3 style="margin:0 0 6px;font-size:20px;line-height:1.1;color:#111827;word-break:break-word;overflow-wrap:anywhere;">${ViewUtils.escapeHtml(order.name || 'Sin nombre')}</h3>
               <div class="card-meta">${ViewUtils.escapeHtml(order.phone || '')}</div>
               ${ViewUtils.sectionBlock('Preview', ViewUtils.shorten(preview, 180))}
               ${order.sides ? ViewUtils.sectionBlock('Guarnición', ViewUtils.shorten(order.sides, 120)) : ''}
