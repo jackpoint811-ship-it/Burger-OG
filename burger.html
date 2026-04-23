@@ -13,7 +13,6 @@
         --sticky-next: #ffd8a8;
         --green: #1f8f48;
         --green-dark: #146635;
-        --gray: #efefef;
         --danger: #d54c4c;
       }
 
@@ -402,7 +401,8 @@
     <script>
       let state = {
         orders: [],
-        current: null
+        current: null,
+        pendingOrderId: null
       };
 
       document.addEventListener('DOMContentLoaded', () => {
@@ -420,6 +420,7 @@
             showLoading(false);
             state.orders = (result && result.orders) || [];
             state.current = state.orders[0] || null;
+            state.pendingOrderId = null;
             render();
           })
           .withFailureHandler((err) => {
@@ -472,6 +473,8 @@
         }
         if (order.sides) sections.push(sectionHtml('Guarnición', order.sides));
 
+        const safeId = jsString(order.id || '');
+
         return `
           <div class="note current" id="currentNote">
             <div class="note-top">
@@ -501,7 +504,7 @@
             </div>
 
             <div class="actions">
-              <button class="btn-ready" onclick="openConfirm()">LISTO</button>
+              <button class="btn-ready" onclick="openConfirm('${safeId}')">LISTO</button>
             </div>
           </div>
         `;
@@ -534,19 +537,35 @@
         `;
       }
 
-      function openConfirm() {
-        if (!state.current) return;
+      function openConfirm(orderId) {
+        if (!orderId) {
+          showToast('No se encontró el ID del pedido');
+          return;
+        }
+
+        state.pendingOrderId = orderId;
+
+        const selectedOrder = state.orders.find((o) => o.id === orderId) || state.current;
+        const customerName = selectedOrder && selectedOrder.name ? selectedOrder.name : 'este cliente';
+
         document.getElementById('confirmText').textContent =
-          `Se marcará como LISTO el pedido de ${state.current.name || 'este cliente'}.`;
+          `Se marcará como LISTO el pedido de ${customerName}.`;
         document.getElementById('confirmOverlay').classList.add('show');
       }
 
       function closeConfirm() {
         document.getElementById('confirmOverlay').classList.remove('show');
+        state.pendingOrderId = null;
       }
 
       function confirmReady() {
-        if (!state.current) return;
+        const orderId = state.pendingOrderId;
+
+        if (!orderId) {
+          showToast('No se encontró el ID del pedido');
+          closeConfirm();
+          return;
+        }
 
         const note = document.getElementById('currentNote');
         if (note) {
@@ -569,7 +588,7 @@
               showToast(err && err.message ? err.message : 'Error al actualizar');
               loadOrders();
             })
-            .markOrderReady(state.current.id);
+            .markOrderReady(orderId);
         }, 260);
       }
 
@@ -603,6 +622,12 @@
           .replace(/>/g, '&gt;')
           .replace(/"/g, '&quot;')
           .replace(/'/g, '&#39;');
+      }
+
+      function jsString(value) {
+        return String(value || '')
+          .replace(/\\/g, '\\\\')
+          .replace(/'/g, "\\'");
       }
     </script>
   </body>
