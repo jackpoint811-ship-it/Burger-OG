@@ -81,17 +81,28 @@
       .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:999px;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.28);display:none;z-index:30}
       .toast.show{display:block}
       @media (max-width:640px){
-        .app-shell{padding:10px 10px calc(14px + env(safe-area-inset-bottom));gap:10px}
+        .app-shell{max-width:none;width:100%;padding:8px 8px calc(12px + env(safe-area-inset-bottom));gap:10px}
         .header{padding:12px}
         .header>div:first-child{min-width:0}
-        .queue-counter{min-width:40px;height:40px}
+        .title{font-size:20px}
+        .subtitle{font-size:12px}
+        .queue-counter{min-width:42px;height:42px;font-size:13px}
         .status-area{align-items:flex-start;flex-direction:column}
-        .status-value{text-align:left}
+        .status-title{font-size:12px}
+        .status-value{text-align:left;font-size:14px}
         .card{padding:12px}
         .card-head{flex-direction:column;align-items:flex-start}
+        .card-eyebrow{font-size:11px}
+        .card-name{font-size:24px}
+        .card-meta{font-size:15px}
         .status-pill{white-space:normal;overflow:visible;text-overflow:clip}
+        .badge{font-size:12px;padding:6px 10px}
+        .section-title{font-size:11px}
+        .section-body{font-size:16px;line-height:1.4}
         .meta-grid{grid-template-columns:1fr}
+        .meta-value{font-size:16px}
         .action-area{margin-top:0}
+        .btn{font-size:18px}
         .confirm-card{max-width:none;border-radius:16px;padding:16px}
         .confirm-title{font-size:20px}
         .confirm-actions{grid-template-columns:1fr}
@@ -219,7 +230,7 @@
           return `
             <article class="card next">
               <div class="card-eyebrow">Siguiente pedido</div>
-              <h3 style="margin:0 0 6px;font-size:20px;line-height:1.1;color:#111827;word-break:break-word;overflow-wrap:anywhere;">${ViewUtils.escapeHtml(order.name || 'Sin nombre')}</h3>
+              <h3 style="margin:0 0 6px;font-size:22px;line-height:1.1;color:#111827;word-break:break-word;overflow-wrap:anywhere;">${ViewUtils.escapeHtml(order.name || 'Sin nombre')}</h3>
               <div class="card-meta">${ViewUtils.escapeHtml(order.phone || '')}</div>
               ${ViewUtils.sectionBlock('Preview', ViewUtils.shorten(preview, 180))}
               ${order.sides ? ViewUtils.sectionBlock('Guarnición', ViewUtils.shorten(order.sides, 120)) : ''}
