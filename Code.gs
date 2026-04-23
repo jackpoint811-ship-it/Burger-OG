@@ -84,6 +84,7 @@ function onOpen() {
     .addItem('Sync Chekeo', 'syncChekeoFromMaster')
     .addSeparator()
     .addItem('Open Chekeo App', 'showChekeoApp')
+    .addItem('Diagnosticar permisos', 'diagnoseChekeoPermissions')
     .addSeparator()
     .addItem('Install 1-min trigger', 'installChekeoTrigger')
     .addItem('Remove sync triggers', 'removeChekeoTriggers')
@@ -192,56 +193,76 @@ function syncChekeoFromMaster() {
  * PENDIENTE y EN PREP
  */
 function getChekeoOrders() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(CHEKEO_SHEET);
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(CHEKEO_SHEET);
 
-  if (!sheet) throw new Error(`No existe la hoja "${CHEKEO_SHEET}"`);
+    if (!sheet) throw new Error(`No existe la hoja "${CHEKEO_SHEET}"`);
 
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return { orders: [] };
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { orders: [] };
 
-  const values = sheet.getRange(2, 1, lastRow - 1, 22).getValues();
+    const values = sheet.getRange(2, 1, lastRow - 1, 22).getValues();
 
-  const orders = values
-    .map((row) => {
-      const dt = normalizeDateValue_(row[CHEKEO.orderDateTime]);
-      const status = normalizeKitchenStatus_(row[CHEKEO.kitchenStatus]);
+    const orders = values
+      .map((row) => {
+        const dt = normalizeDateValue_(row[CHEKEO.orderDateTime]);
+        const status = normalizeKitchenStatus_(row[CHEKEO.kitchenStatus]);
 
-      const masterRow = row[CHEKEO.masterRow] || '';
-      const stableId = safeTrim_(row[CHEKEO.id]) || (masterRow ? buildOrderId_(masterRow) : '');
+        const masterRow = row[CHEKEO.masterRow] || '';
+        const stableId = safeTrim_(row[CHEKEO.id]) || (masterRow ? buildOrderId_(masterRow) : '');
 
-      return {
-        id: stableId,
-        masterRow: masterRow,
-        orderDateTimeRaw: dt,
-        orderDateTime: formatUiDateTime_(dt),
-        orderDate: formatUiDate_(dt),
-        name: safeTrim_(row[CHEKEO.name]),
-        phone: row[CHEKEO.phone] ? String(row[CHEKEO.phone]) : '',
-        qtyOg: normalizeQty_(row[CHEKEO.qtyOg]),
-        qtyBbq: normalizeQty_(row[CHEKEO.qtyBbq]),
-        burgerSummary: safeTrim_(row[CHEKEO.burgerSummary]),
-        exactOrderText: safeTrim_(row[CHEKEO.exactOrderText]),
-        extras: safeTrim_(row[CHEKEO.extras]),
-        sides: safeTrim_(row[CHEKEO.sides]),
-        totalDisplay: formatUiMoney_(row[CHEKEO.total]),
-        payment: safeTrim_(row[CHEKEO.payment]),
-        confirmed: safeTrim_(row[CHEKEO.confirmed]),
-        paid: safeTrim_(row[CHEKEO.paid]),
-        kitchenStatus: status,
-        specialCase: safeTrim_(row[CHEKEO.specialCase]).toUpperCase() === 'SI',
-        manualReview: safeTrim_(row[CHEKEO.manualReview]).toUpperCase() === 'SI'
-      };
-    })
-    .filter((o) => o.id)
-    .filter((o) => o.kitchenStatus === KITCHEN_STATUS.PENDING || o.kitchenStatus === KITCHEN_STATUS.IN_PREP)
-    .sort((a, b) => {
-      const at = a.orderDateTimeRaw ? a.orderDateTimeRaw.getTime() : 0;
-      const bt = b.orderDateTimeRaw ? b.orderDateTimeRaw.getTime() : 0;
-      return at - bt;
-    });
+        return {
+          id: stableId,
+          masterRow: masterRow,
+          orderDateTimeRaw: dt,
+          orderDateTime: formatUiDateTime_(dt),
+          orderDate: formatUiDate_(dt),
+          name: safeTrim_(row[CHEKEO.name]),
+          phone: row[CHEKEO.phone] ? String(row[CHEKEO.phone]) : '',
+          qtyOg: normalizeQty_(row[CHEKEO.qtyOg]),
+          qtyBbq: normalizeQty_(row[CHEKEO.qtyBbq]),
+          burgerSummary: safeTrim_(row[CHEKEO.burgerSummary]),
+          exactOrderText: safeTrim_(row[CHEKEO.exactOrderText]),
+          extras: safeTrim_(row[CHEKEO.extras]),
+          sides: safeTrim_(row[CHEKEO.sides]),
+          totalDisplay: formatUiMoney_(row[CHEKEO.total]),
+          payment: safeTrim_(row[CHEKEO.payment]),
+          confirmed: safeTrim_(row[CHEKEO.confirmed]),
+          paid: safeTrim_(row[CHEKEO.paid]),
+          kitchenStatus: status,
+          specialCase: safeTrim_(row[CHEKEO.specialCase]).toUpperCase() === 'SI',
+          manualReview: safeTrim_(row[CHEKEO.manualReview]).toUpperCase() === 'SI'
+        };
+      })
+      .filter((o) => o.id)
+      .filter((o) => o.kitchenStatus === KITCHEN_STATUS.PENDING || o.kitchenStatus === KITCHEN_STATUS.IN_PREP)
+      .sort((a, b) => {
+        const at = a.orderDateTimeRaw ? a.orderDateTimeRaw.getTime() : 0;
+        const bt = b.orderDateTimeRaw ? b.orderDateTimeRaw.getTime() : 0;
+        return at - bt;
+      });
 
-  return { orders };
+    return { orders };
+  } catch (error) {
+    const msg = error && error.message ? String(error.message) : 'Error desconocido al leer Chekeo.';
+    throw new Error(`No se pudo leer la hoja "${CHEKEO_SHEET}". Reautoriza el script y valida permisos del archivo. Detalle: ${msg}`);
+  }
+}
+
+function diagnoseChekeoPermissions() {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(CHEKEO_SHEET);
+    if (!sheet) throw new Error(`No existe la hoja "${CHEKEO_SHEET}"`);
+    sheet.getRange(1, 1, 1, 1).getValue();
+    ui.alert('Permisos OK', `Acceso correcto a "${CHEKEO_SHEET}" en ${ss.getName()}.`, ui.ButtonSet.OK);
+  } catch (error) {
+    const detail = error && error.message ? String(error.message) : 'Sin detalle';
+    ui.alert('Permiso/Reautorización requerida', `No se pudo leer "${CHEKEO_SHEET}".\n\nDetalle: ${detail}`, ui.ButtonSet.OK);
+    throw error;
+  }
 }
 
 /**
