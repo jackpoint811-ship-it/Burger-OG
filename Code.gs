@@ -9,6 +9,13 @@
 const MASTER_SHEET = 'Pedidos Master';
 const CHEKEO_SHEET = 'Chekeo';
 const TIME_ZONE = 'America/Mexico_City';
+const KITCHEN_STATUS = {
+  PENDING: 'PENDIENTE',
+  IN_PREP: 'EN PREP',
+  READY: 'LISTO',
+  DELIVERED: 'ENTREGADO',
+  CANCELED: 'CANCELADO'
+};
 
 /**
  * Columnas de "Pedidos Master" base 0
@@ -133,7 +140,7 @@ function syncChekeoFromMaster() {
     const specialCase = isSpecialCase_(row);
     const preserved = existingById[id] || {};
 
-    const kitchenStatus = normalizeKitchenStatus_(preserved.kitchenStatus || 'PENDIENTE');
+    const kitchenStatus = normalizeKitchenStatus_(preserved.kitchenStatus || KITCHEN_STATUS.PENDING);
     const startTime = preserved.startTime || '';
     const readyTime = preserved.readyTime || '';
     const updatedAt = preserved.updatedAt || '';
@@ -200,9 +207,12 @@ function getChekeoOrders() {
       const dt = normalizeDateValue_(row[CHEKEO.orderDateTime]);
       const status = normalizeKitchenStatus_(row[CHEKEO.kitchenStatus]);
 
+      const masterRow = row[CHEKEO.masterRow] || '';
+      const stableId = safeTrim_(row[CHEKEO.id]) || (masterRow ? buildOrderId_(masterRow) : '');
+
       return {
-        id: safeTrim_(row[CHEKEO.id]),
-        masterRow: row[CHEKEO.masterRow] || '',
+        id: stableId,
+        masterRow: masterRow,
         orderDateTimeRaw: dt,
         orderDateTime: formatUiDateTime_(dt),
         orderDate: formatUiDate_(dt),
@@ -224,7 +234,7 @@ function getChekeoOrders() {
       };
     })
     .filter((o) => o.id)
-    .filter((o) => o.kitchenStatus === 'PENDIENTE' || o.kitchenStatus === 'EN PREP')
+    .filter((o) => o.kitchenStatus === KITCHEN_STATUS.PENDING || o.kitchenStatus === KITCHEN_STATUS.IN_PREP)
     .sort((a, b) => {
       const at = a.orderDateTimeRaw ? a.orderDateTimeRaw.getTime() : 0;
       const bt = b.orderDateTimeRaw ? b.orderDateTimeRaw.getTime() : 0;
@@ -259,7 +269,7 @@ function markOrderReady(orderId) {
     const now = new Date();
     const startTime = rowValues[CHEKEO.startTime];
 
-    sheet.getRange(rowNumber, CHEKEO.kitchenStatus + 1).setValue('LISTO');
+    sheet.getRange(rowNumber, CHEKEO.kitchenStatus + 1).setValue(KITCHEN_STATUS.READY);
 
     if (!startTime) {
       sheet.getRange(rowNumber, CHEKEO.startTime + 1).setValue(now);
@@ -271,7 +281,7 @@ function markOrderReady(orderId) {
     return {
       ok: true,
       orderId: cleanOrderId,
-      newStatus: 'LISTO',
+      newStatus: KITCHEN_STATUS.READY,
       updatedAt: formatUiDateTime_(now)
     };
   } finally {
@@ -402,16 +412,20 @@ function isYes_(value) {
 
 function normalizeKitchenStatus_(value) {
   const raw = safeTrim_(value);
-  const v = raw.toUpperCase();
+  const normalized = raw
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  if (v === 'PENDIENTE') return 'PENDIENTE';
-  if (v === 'EN PREP') return 'EN PREP';
-  if (v === 'LISTO') return 'LISTO';
-  if (v === 'ENTREGADO') return 'ENTREGADO';
-  if (v === 'CANCELADO') return 'CANCELADO';
-  if (raw === 'Pendiente') return 'PENDIENTE';
+  if (normalized === KITCHEN_STATUS.PENDING) return KITCHEN_STATUS.PENDING;
+  if (normalized === KITCHEN_STATUS.IN_PREP) return KITCHEN_STATUS.IN_PREP;
+  if (normalized === KITCHEN_STATUS.READY) return KITCHEN_STATUS.READY;
+  if (normalized === KITCHEN_STATUS.DELIVERED) return KITCHEN_STATUS.DELIVERED;
+  if (normalized === KITCHEN_STATUS.CANCELED) return KITCHEN_STATUS.CANCELED;
 
-  return 'PENDIENTE';
+  return KITCHEN_STATUS.PENDING;
 }
 
 function safeTrim_(value) {
