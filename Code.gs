@@ -9,6 +9,7 @@
 const MASTER_SHEET = 'Pedidos Master';
 const CHEKEO_SHEET = 'Chekeo';
 const TIME_ZONE = 'America/Mexico_City';
+const STICKY_NOTE_IMAGE_URL = 'https://images.vexels.com/media/users/3/146688/isolated/preview/298f7c2c9272fc68222668ba547f529e-nota-adhesiva-forrada-con-cinta-transparente.png?w=360';
 const KITCHEN_STATUS = {
   PENDING: 'PENDIENTE',
   IN_PREP: 'EN PREP',
