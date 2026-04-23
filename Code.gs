@@ -9,6 +9,7 @@
 const MASTER_SHEET = 'Pedidos Master';
 const CHEKEO_SHEET = 'Chekeo';
 const TIME_ZONE = 'America/Mexico_City';
+const STICKY_NOTE_IMAGE_URL = 'https://images.vexels.com/media/users/3/146688/isolated/preview/298f7c2c9272fc68222668ba547f529e-nota-adhesiva-forrada-con-cinta-transparente.png?w=360';
 const KITCHEN_STATUS = {
   PENDING: 'PENDIENTE',
   IN_PREP: 'EN PREP',
@@ -98,6 +99,34 @@ function showChekeoApp() {
     const detail = error && error.message ? String(error.message) : 'Sin detalle';
     throw new Error(`showChekeoApp solo funciona desde Google Sheets (menú "M Tools > Open Chekeo App"). Detalle: ${detail}`);
   }
+}
+
+/**
+ * Obtiene la imagen de la nota (web) como Data URI para evitar bloqueos de hotlink/CORS en HtmlService.
+ */
+function getStickyNoteImage() {
+  return { dataUri: getStickyNoteDataUri_() };
+}
+
+function getStickyNoteDataUri_() {
+  const cache = CacheService.getScriptCache();
+  const cacheKey = 'sticky_note_data_uri_v1';
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
+
+  const response = UrlFetchApp.fetch(STICKY_NOTE_IMAGE_URL, { muteHttpExceptions: true });
+  const code = response.getResponseCode();
+
+  if (code < 200 || code >= 300) {
+    throw new Error(`No se pudo descargar la imagen de la nota (HTTP ${code}).`);
+  }
+
+  const contentType = response.getHeaders()['Content-Type'] || 'image/png';
+  const base64 = Utilities.base64Encode(response.getContent());
+  const dataUri = `data:${contentType};base64,${base64}`;
+
+  cache.put(cacheKey, dataUri, 21600); // 6 horas
+  return dataUri;
 }
 
 /**
