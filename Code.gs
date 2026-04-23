@@ -86,9 +86,6 @@ function onOpen() {
     .addSeparator()
     .addItem('Open Chekeo App', 'showChekeoApp')
     .addItem('Diagnosticar permisos', 'diagnoseChekeoPermissions')
-    .addSeparator()
-    .addItem('Install 1-min trigger', 'installChekeoTrigger')
-    .addItem('Remove sync triggers', 'removeChekeoTriggers')
     .addToUi();
 }
 
@@ -96,7 +93,12 @@ function showChekeoApp() {
   const html = HtmlService.createHtmlOutputFromFile('burger')
     .setWidth(460)
     .setHeight(780);
-  SpreadsheetApp.getUi().showModelessDialog(html, 'Chekeo');
+  try {
+    SpreadsheetApp.getUi().showModelessDialog(html, 'Chekeo');
+  } catch (error) {
+    const detail = error && error.message ? String(error.message) : 'Sin detalle';
+    throw new Error(`showChekeoApp solo funciona desde Google Sheets (menú "M Tools > Open Chekeo App"). Detalle: ${detail}`);
+  }
 }
 
 /**
@@ -337,27 +339,6 @@ function markOrderReady(orderId) {
   } finally {
     lock.releaseLock();
   }
-}
-
-function installChekeoTrigger() {
-  removeChekeoTriggers();
-
-  ScriptApp.newTrigger('syncChekeoFromMaster')
-    .timeBased()
-    .everyMinutes(1)
-    .create();
-
-  SpreadsheetApp.getActive().toast('Trigger instalado cada 1 minuto.', 'Burgers OG', 4);
-}
-
-function removeChekeoTriggers() {
-  ScriptApp.getProjectTriggers().forEach((trigger) => {
-    if (trigger.getHandlerFunction() === 'syncChekeoFromMaster') {
-      ScriptApp.deleteTrigger(trigger);
-    }
-  });
-
-  SpreadsheetApp.getActive().toast('Triggers eliminados.', 'Burgers OG', 4);
 }
 
 /* =========================
