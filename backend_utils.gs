@@ -1,3 +1,10 @@
+function getSpreadsheet_(){
+  if(!SPREADSHEET_ID){
+    throw new Error('Falta configurar CHEKEO_SPREADSHEET_ID en Script Properties.');
+  }
+  return SpreadsheetApp.openById(SPREADSHEET_ID);
+}
+
 function buildExistingChekeoMap_(rows){const map={};rows.forEach(row=>{const id=safeTrim_(row[CHEKEO.id]);if(!id)return;map[id]={kitchenStatus:normalizeKitchenStatus_(row[CHEKEO.kitchenStatus]||''),startTime:row[CHEKEO.startTime]||'',readyTime:row[CHEKEO.readyTime]||'',updatedAt:row[CHEKEO.updatedAt]||''};});return map;}
 function buildOrderId_(masterRowNumber){return `PM-${String(masterRowNumber).padStart(4,'0')}`;}
 function isSpecialCase_(row){return safeTrim_(row[MASTER.specialFlag])==='(+1)'||safeTrim_(row[MASTER.total])==='Chequeo Manual';}
