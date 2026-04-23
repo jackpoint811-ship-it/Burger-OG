@@ -1,36 +1,31 @@
-const MASTER_SHEET='Pedidos Master';
-const CHEKEO_SHEET='Chekeo';
-const TIME_ZONE='America/Mexico_City';
-const KITCHEN_STATUS={PENDING:'PENDIENTE',IN_PREP:'EN PREP',READY:'LISTO',DELIVERED:'ENTREGADO',CANCELED:'CANCELADO'};
-const MASTER={timestamp:0,qtyOg:1,qtyBbq:2,specialFlag:3,exactOrderText:4,ogText:7,bbqText:8,extraPickles:9,extraAmerican:10,extraManchego:11,extraBacon:12,extraKetchup:13,extraMustard:14,extraTomato:15,sideFriesOg:16,sideFriesEspeciales:17,sideFriesLemon:18,sideOnionRings:19,customerName:20,phone:21,paymentMethod:22,total:23,confirmed:25,paid:26};
-const CHEKEO={id:0,masterRow:1,orderDateTime:2,orderDate:3,name:4,phone:5,qtyOg:6,qtyBbq:7,burgerSummary:8,exactOrderText:9,extras:10,sides:11,total:12,payment:13,confirmed:14,paid:15,kitchenStatus:16,startTime:17,readyTime:18,updatedAt:19,specialCase:20,manualReview:21};
+function onOpen(){
+  SpreadsheetApp
+    .getUi()
+    .createMenu('M Tools')
+    .addItem('Sync Chekeo','syncChekeoFromMaster')
+    .addSeparator()
+    .addItem('Open Chekeo App','showChekeoApp')
+    .addItem('Diagnosticar permisos','diagnoseChekeoPermissions')
+    .addToUi();
+}
 
-function onOpen(){SpreadsheetApp.getUi().createMenu('M Tools').addItem('Sync Chekeo','syncChekeoFromMaster').addSeparator().addItem('Open Chekeo App','showChekeoApp').addItem('Diagnosticar permisos','diagnoseChekeoPermissions').addToUi();}
-function showChekeoApp(){const html=HtmlService.createHtmlOutputFromFile('burger').setWidth(460).setHeight(780);SpreadsheetApp.getUi().showModelessDialog(html,'Chekeo');}
+function showChekeoApp(){
+  const html=HtmlService.createHtmlOutputFromFile('burger').setWidth(460).setHeight(780);
+  SpreadsheetApp.getUi().showModelessDialog(html,'Chekeo');
+}
 
-function syncChekeoFromMaster(){const ss=SpreadsheetApp.getActiveSpreadsheet();const masterSheet=ss.getSheetByName(MASTER_SHEET);const chekeoSheet=ss.getSheetByName(CHEKEO_SHEET);if(!masterSheet)throw new Error(`No existe la hoja "${MASTER_SHEET}"`);if(!chekeoSheet)throw new Error(`No existe la hoja "${CHEKEO_SHEET}"`);const masterLastRow=masterSheet.getLastRow();const masterLastCol=masterSheet.getLastColumn();if(masterLastRow<2){clearChekeoBody_(chekeoSheet);return;}const masterValues=masterSheet.getRange(2,1,masterLastRow-1,masterLastCol).getValues();const chekeoLastRow=chekeoSheet.getLastRow();const existingRows=chekeoLastRow>=2?chekeoSheet.getRange(2,1,chekeoLastRow-1,22).getValues():[];const existingById=buildExistingChekeoMap_(existingRows);const output=[];masterValues.forEach((row,i)=>{const masterRowNumber=i+2;const id=buildOrderId_(masterRowNumber);if(!row[MASTER.timestamp])return;const specialCase=isSpecialCase_(row);const preserved=existingById[id]||{};const syncRow=new Array(22).fill('');const orderDateTime=normalizeDateValue_(row[MASTER.timestamp]);const orderDate=extractOnlyDate_(orderDateTime);syncRow[CHEKEO.id]=id;syncRow[CHEKEO.masterRow]=masterRowNumber;syncRow[CHEKEO.orderDateTime]=orderDateTime||'';syncRow[CHEKEO.orderDate]=orderDate||'';syncRow[CHEKEO.name]=safeTrim_(row[MASTER.customerName]);syncRow[CHEKEO.phone]=row[MASTER.phone]?String(row[MASTER.phone]):'';syncRow[CHEKEO.qtyOg]=normalizeQty_(row[MASTER.qtyOg]);syncRow[CHEKEO.qtyBbq]=normalizeQty_(row[MASTER.qtyBbq]);syncRow[CHEKEO.burgerSummary]=specialCase?'PEDIDO ESPECIAL':buildBurgerSummary_(row);syncRow[CHEKEO.exactOrderText]=specialCase?safeTrim_(row[MASTER.exactOrderText]):'';syncRow[CHEKEO.extras]=specialCase?'':buildExtras_(row);syncRow[CHEKEO.sides]=buildSides_(row);syncRow[CHEKEO.total]=row[MASTER.total]||'';syncRow[CHEKEO.payment]=safeTrim_(row[MASTER.paymentMethod]);syncRow[CHEKEO.confirmed]=normalizeYesNo_(row[MASTER.confirmed]);syncRow[CHEKEO.paid]=normalizeYesNo_(row[MASTER.paid]);syncRow[CHEKEO.kitchenStatus]=normalizeKitchenStatus_(preserved.kitchenStatus||KITCHEN_STATUS.PENDING);syncRow[CHEKEO.startTime]=preserved.startTime||'';syncRow[CHEKEO.readyTime]=preserved.readyTime||'';syncRow[CHEKEO.updatedAt]=preserved.updatedAt||'';syncRow[CHEKEO.specialCase]=specialCase?'SI':'NO';syncRow[CHEKEO.manualReview]=specialCase?'SI':'NO';output.push(syncRow);});clearChekeoBody_(chekeoSheet);if(output.length>0){chekeoSheet.getRange(2,1,output.length,22).setValues(output);applyChekeoFormats_(chekeoSheet,output.length);}SpreadsheetApp.flush();SpreadsheetApp.getActive().toast('Chekeo sincronizado.','Burgers OG',4);}
+function syncChekeoFromMaster(){
+  return syncChekeoFromMasterService_();
+}
 
-function getChekeoOrders(){const ss=SpreadsheetApp.getActiveSpreadsheet();const sheet=ss.getSheetByName(CHEKEO_SHEET);if(!sheet)throw new Error(`No existe la hoja "${CHEKEO_SHEET}"`);const lastRow=sheet.getLastRow();if(lastRow<2)return{orders:[]};const values=sheet.getRange(2,1,lastRow-1,22).getDisplayValues();const orders=values.map((row,index)=>{const masterRow=Number(row[CHEKEO.masterRow])||(index+2);return{id:safeTrim_(row[CHEKEO.id])||buildOrderId_(masterRow),masterRow,name:safeTrim_(row[CHEKEO.name]),phone:safeTrim_(row[CHEKEO.phone]),burgerSummary:safeTrim_(row[CHEKEO.burgerSummary]),exactOrderText:safeTrim_(row[CHEKEO.exactOrderText]),extras:safeTrim_(row[CHEKEO.extras]),sides:safeTrim_(row[CHEKEO.sides]),totalDisplay:safeTrim_(row[CHEKEO.total]),payment:safeTrim_(row[CHEKEO.payment]),confirmed:safeTrim_(row[CHEKEO.confirmed]),paid:safeTrim_(row[CHEKEO.paid]),kitchenStatus:normalizeKitchenStatus_(row[CHEKEO.kitchenStatus]),specialCase:safeTrim_(row[CHEKEO.specialCase]).toUpperCase()==='SI',manualReview:safeTrim_(row[CHEKEO.manualReview]).toUpperCase()==='SI'};}).filter(order=>order.id).filter(order=>isActiveKitchenStatus_(order.kitchenStatus)).sort((a,b)=>a.masterRow-b.masterRow);return{orders};}
+function getChekeoOrders(){
+  return getChekeoOrdersService_();
+}
 
-function diagnoseChekeoPermissions(){const ui=SpreadsheetApp.getUi();const ss=SpreadsheetApp.getActiveSpreadsheet();const sheet=ss.getSheetByName(CHEKEO_SHEET);if(!sheet){ui.alert('Diagnóstico Chekeo',`No existe la hoja "${CHEKEO_SHEET}".`,ui.ButtonSet.OK);return;}const lastRow=sheet.getLastRow();const statusValues=lastRow>=2?sheet.getRange(2,CHEKEO.kitchenStatus+1,lastRow-1,1).getDisplayValues().flat():[];const activeCount=statusValues.filter(value=>isActiveKitchenStatus_(value)).length;ui.alert('Diagnóstico Chekeo',`Hoja: ${CHEKEO_SHEET}\nFilas con datos: ${Math.max(lastRow-1,0)}\nÓrdenes activas detectadas: ${activeCount}`,ui.ButtonSet.OK);}
+function diagnoseChekeoPermissions(){
+  return diagnoseChekeoPermissionsService_();
+}
 
-function markOrderReady(orderId){const cleanOrderId=safeTrim_(orderId);if(!cleanOrderId)throw new Error('No se recibió un ID de pedido válido.');const lock=LockService.getDocumentLock();lock.waitLock(10000);try{const ss=SpreadsheetApp.getActiveSpreadsheet();const sheet=ss.getSheetByName(CHEKEO_SHEET);if(!sheet)throw new Error(`No existe la hoja "${CHEKEO_SHEET}"`);const rowNumber=findChekeoRowById_(sheet,cleanOrderId);if(!rowNumber)throw new Error(`No encontré el pedido ${cleanOrderId} en Chekeo`);const rowValues=sheet.getRange(rowNumber,1,1,22).getValues()[0];const now=new Date();const startTime=rowValues[CHEKEO.startTime];sheet.getRange(rowNumber,CHEKEO.kitchenStatus+1).setValue(KITCHEN_STATUS.READY);if(!startTime){sheet.getRange(rowNumber,CHEKEO.startTime+1).setValue(now);}sheet.getRange(rowNumber,CHEKEO.readyTime+1).setValue(now);sheet.getRange(rowNumber,CHEKEO.updatedAt+1).setValue(now);return{ok:true,orderId:cleanOrderId,newStatus:KITCHEN_STATUS.READY,updatedAt:formatUiDateTime_(now)};}finally{lock.releaseLock();}}
-
-function buildExistingChekeoMap_(rows){const map={};rows.forEach(row=>{const id=safeTrim_(row[CHEKEO.id]);if(!id)return;map[id]={kitchenStatus:normalizeKitchenStatus_(row[CHEKEO.kitchenStatus]||''),startTime:row[CHEKEO.startTime]||'',readyTime:row[CHEKEO.readyTime]||'',updatedAt:row[CHEKEO.updatedAt]||''};});return map;}
-function buildOrderId_(masterRowNumber){return `PM-${String(masterRowNumber).padStart(4,'0')}`;}
-function isSpecialCase_(row){return safeTrim_(row[MASTER.specialFlag])==='(+1)'||safeTrim_(row[MASTER.total])==='Chequeo Manual';}
-function buildBurgerSummary_(row){const parts=[];const qtyOg=normalizeQty_(row[MASTER.qtyOg]);const qtyBbq=normalizeQty_(row[MASTER.qtyBbq]);const ogText=safeTrim_(row[MASTER.ogText]);const bbqText=safeTrim_(row[MASTER.bbqText]);if(qtyOg>0){parts.push(`${qtyOg} x OG`);if(ogText)parts.push(`OG: ${ogText}`);}if(qtyBbq>0){parts.push(`${qtyBbq} x BBQ`);if(bbqText)parts.push(`BBQ: ${bbqText}`);}return parts.join('\n');}
-function buildExtras_(row){const extras=[];if(isYes_(row[MASTER.extraPickles]))extras.push('Pepinillos');if(isYes_(row[MASTER.extraAmerican]))extras.push('Queso americano');if(isYes_(row[MASTER.extraManchego]))extras.push('Queso manchego');if(isYes_(row[MASTER.extraBacon]))extras.push('Tocino');if(isYes_(row[MASTER.extraKetchup]))extras.push('Catsup');if(isYes_(row[MASTER.extraMustard]))extras.push('Mostaza');if(isYes_(row[MASTER.extraTomato]))extras.push('Tomate');return extras.join('\n');}
-function buildSides_(row){const sides=[];const qOg=normalizeQty_(row[MASTER.sideFriesOg]);const qEsp=normalizeQty_(row[MASTER.sideFriesEspeciales]);const qLemon=normalizeQty_(row[MASTER.sideFriesLemon]);const qRings=normalizeQty_(row[MASTER.sideOnionRings]);if(qOg>0)sides.push(`${qOg} x Papas a la francesa OG`);if(qEsp>0)sides.push(`${qEsp} x Papas a la francesa Especiales`);if(qLemon>0)sides.push(`${qLemon} x Papas a la francesa Lemon&Pepper`);if(qRings>0)sides.push(`${qRings} x Aros de Cebolla`);return sides.join('\n');}
-function normalizeQty_(value){if(value===''||value===null||value===undefined)return 0;const n=Number(value);return isNaN(n)?0:n;}
-function normalizeYesNo_(value){const v=safeTrim_(value).toLowerCase();if(v==='si'||v==='sí')return'Si';if(v==='no')return'No';return'';}
-function isYes_(value){return normalizeYesNo_(value)==='Si';}
-function normalizeKitchenStatus_(value){const normalized=safeTrim_(value).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();if(normalized===KITCHEN_STATUS.PENDING)return KITCHEN_STATUS.PENDING;if(normalized===KITCHEN_STATUS.IN_PREP)return KITCHEN_STATUS.IN_PREP;if(normalized===KITCHEN_STATUS.READY)return KITCHEN_STATUS.READY;if(normalized===KITCHEN_STATUS.DELIVERED)return KITCHEN_STATUS.DELIVERED;if(normalized===KITCHEN_STATUS.CANCELED)return KITCHEN_STATUS.CANCELED;return KITCHEN_STATUS.PENDING;}
-function isActiveKitchenStatus_(value){const status=normalizeKitchenStatus_(value);return status===KITCHEN_STATUS.PENDING||status===KITCHEN_STATUS.IN_PREP;}
-function safeTrim_(value){return value===null||value===undefined?'':String(value).trim();}
-function normalizeDateValue_(value){if(!value)return'';if(Object.prototype.toString.call(value)==='[object Date]'&&!isNaN(value))return value;const parsed=new Date(value);return isNaN(parsed)?'':parsed;}
-function extractOnlyDate_(dateValue){if(!dateValue||Object.prototype.toString.call(dateValue)!=='[object Date]')return'';return new Date(dateValue.getFullYear(),dateValue.getMonth(),dateValue.getDate());}
-function formatUiDateTime_(dateValue){if(!dateValue||Object.prototype.toString.call(dateValue)!=='[object Date]'||isNaN(dateValue))return'';return Utilities.formatDate(dateValue,TIME_ZONE,'dd/MM/yyyy HH:mm:ss');}
-function findChekeoRowById_(sheet,orderId){const cleanOrderId=safeTrim_(orderId);if(!cleanOrderId)return 0;const lastRow=sheet.getLastRow();if(lastRow<2)return 0;const ids=sheet.getRange(2,CHEKEO.id+1,lastRow-1,1).getDisplayValues().flat();const index=ids.findIndex(id=>safeTrim_(id)===cleanOrderId);return index===-1?0:index+2;}
-function clearChekeoBody_(sheet){const maxRows=sheet.getMaxRows();if(maxRows>1){sheet.getRange(2,1,maxRows-1,22).clearContent();}}
-function applyChekeoFormats_(sheet,rowCount){if(rowCount<=0)return;sheet.getRange(2,CHEKEO.orderDateTime+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');sheet.getRange(2,CHEKEO.orderDate+1,rowCount,1).setNumberFormat('dd/MM/yyyy');sheet.getRange(2,CHEKEO.startTime+1,rowCount,3).setNumberFormat('dd/MM/yyyy HH:mm:ss');}
+function markOrderReady(orderId){
+  return markOrderReadyService_(orderId);
+}

@@ -1,71 +1,56 @@
-# Fase 0 — Mapa de migración incremental
+# Fase 0 — Mapa de migración incremental (alineado a Burger-OG real)
 
-## E. Plan por fases recomendado
+## Enfoque
+La implementación inmediata se centra en estabilidad operativa de cocina y desacoplamiento técnico incremental.
 
-## Fase 0 — Auditoría + diseño (actual)
-- **Objetivo:** convertir comportamiento real en contratos y arquitectura objetivo.
-- **Alcance:** inventario funcional, boot audit, arquitectura, roadmap, criterios.
-- **Riesgos:** subestimar acoplamientos ocultos de hojas/columnas.
-- **Done:** documentos aprobados + lista priorizada de refactors habilitadores.
-- **Dependencias:** acceso completo al repo y estructura de hoja conocida.
+- Sin big bang rewrite.
+- Sin introducir por ahora Session/Auth/PIN/Update Manager.
+- Paridad funcional primero, reinterpretación visual después.
 
-## Fase 1 — Boot / App Shell
-- **Objetivo:** introducir Shell con FSM de arranque sin romper operación actual.
-- **Alcance:** estado raíz, rutas de bloqueo (`NeedsUpdate`, `NeedsAuth`, `NeedsPin`, `Offline`, `Ready`).
-- **Riesgos:** regresión en tiempo de arranque.
-- **Done:** boot deterministic testable, sin lógica de negocio en componentes raíz.
-- **Dependencias:** contratos de Session, Update, Sync definidos.
+## Fase 0 — Auditoría + diseño
+- **Objetivo:** entender comportamiento real y definir arquitectura mínima target.
+- **Alcance:** inventario, riesgos, plan y criterios de aceptación.
+- **Done:** documentación aprobada y backlog de refactors.
 
-## Fase 2 — Session/Auth/PIN
-- **Objetivo:** aislar sesión y PIN con transiciones explícitas.
-- **Alcance:** gestor de sesión, expiración, unlock por PIN, manejo de lockouts.
-- **Riesgos:** loops de sesión/PIN por guards incompletos.
-- **Done:** no existen transiciones cíclicas infinitas entre `Expired` y `NeedsPin`; telemetry de intentos.
-- **Dependencias:** Fase 1 (Shell + FSM).
+## Fase 1 — Base modular (actual)
+- **Objetivo:** separar responsabilidades sin romper operación.
+- **Alcance:**
+  - Frontend: `AppState`, `Renderer`, `Actions`, `Bridge`.
+  - Backend: servicios de sync/orders/status + utilidades compartidas.
+  - Mantener firmas públicas existentes para compatibilidad.
+- **Riesgos:** regresiones por mover funciones entre archivos.
+- **Done:** app sigue operando con la misma lógica core y menor acoplamiento.
+- **Dependencias:** Fase 0.
 
-## Fase 3 — Update/Version Manager
-- **Objetivo:** separar versionado y compatibilidad de la capa visual.
-- **Alcance:** policy check al abrir, estados update available/required, fallback UX estable.
-- **Riesgos:** falsos positivos de incompatibilidad.
-- **Done:** detección de versión al abrir con rutas determinísticas y testeadas.
+## Fase 2 — Navegación/estado UI y componentes reutilizables
+- **Objetivo:** preparar reinterpretación visual con base estable.
+- **Alcance:** organizar layout por bloques reutilizables (sin cambiar negocio).
+- **Riesgos:** introducir cambios visuales que oculten errores funcionales.
+- **Done:** componentes de vista desacoplados de operaciones remotas.
 - **Dependencias:** Fase 1.
 
-## Fase 4 — Navegación y estado base
-- **Objetivo:** estructurar navegación por estados y store base por módulos.
-- **Alcance:** rutas raíz + stacks funcionales + estado compartido mínimo.
-- **Riesgos:** fuga de estado entre flujos.
-- **Done:** navegación desacoplada de side effects; estado tipado con selectors.
-- **Dependencias:** Fases 1–3.
+## Fase 3 — Endurecimiento de sync y errores
+- **Objetivo:** robustecer pipeline de datos.
+- **Alcance:** validaciones de schema, manejo de errores explícito, diagnósticos útiles.
+- **Riesgos:** falsos positivos en validación si no se calibra con datos reales.
+- **Done:** sync más observable y fallas recuperables.
+- **Dependencias:** Fase 1.
 
-## Fase 5 — Módulos funcionales
-- **Objetivo:** migrar casos de uso de negocio conservando comportamiento útil.
-- **Alcance:** cola activa, detalle de orden, marcar listo, sync y diagnóstico operativo.
-- **Riesgos:** regressions en preservación de estado durante sync.
-- **Done:** paridad funcional medida por pruebas de contratos y escenarios reales.
-- **Dependencias:** Fase 4 + adapters de datos.
+## Fase 4 — UI reinterpretation incremental
+- **Objetivo:** cambiar UI sin tocar core de cocina.
+- **Alcance:** rediseño visual por secciones (header, cola, confirmación, estados).
+- **Riesgos:** degradar legibilidad operativa.
+- **Done:** experiencia más clara, distinta y mantenible con paridad funcional.
+- **Dependencias:** Fase 2.
 
-## Fase 6 — UI reinterpretation
-- **Objetivo:** rediseño visual sin alterar lógica central.
-- **Alcance:** nuevo sistema de componentes, layout distinto, HUD premium selectivo.
-- **Riesgos:** sobreinvertir en estética antes de estabilidad.
-- **Done:** UX más clara con estados explícitos, sin deuda de acoplamiento.
-- **Dependencias:** Fase 5 estable.
+## Fase 5 — Hardening y validación operativa
+- **Objetivo:** estabilización final.
+- **Alcance:** checklist de operación real, pruebas manuales repetibles, documentación de soporte.
+- **Riesgos:** cobertura incompleta en escenarios de concurrencia.
+- **Done:** release candidate con incidentes controlados.
+- **Dependencias:** Fases 1–4.
 
-## Fase 7 — Hardening / tests
-- **Objetivo:** robustez final operativa.
-- **Alcance:** test suite (unit/integration/e2e), observabilidad, retry policies, documentación operativa.
-- **Riesgos:** cobertura incompleta en bordes offline/concurrencia.
-- **Done:** SLO internos cumplidos; checklist de release completo.
-- **Dependencias:** Fases 1–6.
-
-## Orden de ejecución dentro de cada fase
-1. Diseñar contratos.
-2. Implementar detrás de feature flag.
-3. Ejecutar pruebas de regresión de negocio.
-4. Activar gradual.
-
-## Métrica de progreso sugerida
-- % casos de uso migrados con paridad validada.
-- % paths de boot cubiertos por tests.
-- Incidentes por semana en operaciones de cocina.
-
+## Extensiones futuras (no prioritarias hoy)
+- Session/Auth/PIN.
+- Update/version manager.
+- Offline avanzado y estrategia multi-dispositivo.

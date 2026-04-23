@@ -40,28 +40,217 @@
         <div class="confirm-title">¿Marcar como LISTO?</div>
         <div class="confirm-text" id="confirmText"></div>
         <div class="confirm-actions">
-          <button class="btn-cancel" onclick="closeConfirm()">Cancelar</button>
-          <button class="btn-confirm" onclick="confirmReady()">Confirmar</button>
+          <button class="btn-cancel" id="cancelConfirmBtn">Cancelar</button>
+          <button class="btn-confirm" id="confirmReadyBtn">Confirmar</button>
         </div>
       </div>
     </div>
     <script>
-      let state={orders:[],current:null,pendingOrderId:null};
-      document.addEventListener('DOMContentLoaded',()=>{loadOrders();document.addEventListener('keydown',e=>{if(e.key==='Escape')closeConfirm();});});
-      function loadOrders(){showLoading(true);google.script.run.withSuccessHandler(result=>{showLoading(false);state.orders=(result&&result.orders)||[];state.current=state.orders[0]||null;state.pendingOrderId=null;closeConfirm(false);render();}).withFailureHandler(err=>{showLoading(false);showToast(err&&err.message?err.message:'Error al cargar pedidos');}).getChekeoOrders();}
-      function render(){const stack=document.getElementById('stack');const countPill=document.getElementById('countPill');countPill.textContent=state.orders.length;if(!state.orders.length){stack.innerHTML=`<div class="stack-label">Cola</div><div class="empty"><h3>Sin pedidos activos</h3><p>No hay órdenes en estado PENDIENTE o EN PREP.</p></div>`;return;}const current=state.orders[0];const next=state.orders[1]||null;stack.innerHTML=`<div class="stack-label">Pedido actual</div>${buildCurrentNote(current)}${next?`<div class="stack-label" style="margin-top:14px;">Siguiente</div>${buildNextNote(next)}`:''}`;}
-      function buildCurrentNote(order){const badges=[];if(order.specialCase)badges.push(`<span class="badge warn">Caso especial</span>`);if(order.manualReview)badges.push(`<span class="badge danger">Revisar manual</span>`);if(order.confirmed==='Si')badges.push(`<span class="badge ok">Confirmado</span>`);if(order.paid==='Si')badges.push(`<span class="badge ok">Pagado</span>`);const sections=[];if(order.specialCase){sections.push(sectionHtml('Orden exacta',order.exactOrderText||'Sin texto exacto'));}else{sections.push(sectionHtml('Burgers',order.burgerSummary||'Sin detalle'));if(order.extras)sections.push(sectionHtml('Extras / Detalles',order.extras));}if(order.sides)sections.push(sectionHtml('Guarnición',order.sides));const safeId=jsString(order.id||'');return `<div class="order-info"><div class="order-info-title">Info de la orden</div><div class="order-info-main">${escapeHtml(order.id||'Sin folio')}</div><div class="order-info-sub">Estado actual: ${escapeHtml(order.kitchenStatus||'')}</div></div><div class="note current" id="currentNote"><div class="note-top"><div><div class="eyebrow">En cola</div><h2 class="name">${escapeHtml(order.name||'Sin nombre')}</h2><div class="meta">${escapeHtml(order.phone||'')}</div></div><div class="status-pill status-${escapeClass(order.kitchenStatus)}">${escapeHtml(order.kitchenStatus)}</div></div>${badges.length?`<div class="badges">${badges.join('')}</div>`:''}<div class="sections">${sections.join('')}</div><div class="footer-grid"><div class="footer-box"><div class="footer-label">Total</div><div class="footer-value">${escapeHtml(order.totalDisplay||'')}</div></div><div class="footer-box"><div class="footer-label">Pago</div><div class="footer-value">${escapeHtml(order.payment||'')}</div></div></div><div class="actions"><button class="btn-ready" onclick="openConfirm('${safeId}')">LISTO</button></div></div>`;}
-      function buildNextNote(order){const body=order.specialCase?(order.exactOrderText||'Caso especial'):(order.burgerSummary||'Sin detalle');return `<div class="note next"><div class="eyebrow">Siguiente en cola</div><h3 style="margin:0 0 6px;font-size:20px;line-height:1.05;">${escapeHtml(order.name||'Sin nombre')}</h3><div class="meta">${escapeHtml(order.phone||'')}</div><div class="sections" style="margin-top:12px;">${sectionHtml('Preview',shorten(body,180))}${order.sides?sectionHtml('Guarnición',shorten(order.sides,120)):''}</div></div>`;}
-      function sectionHtml(title,body){return `<div><div class="section-title">${escapeHtml(title)}</div><div class="section-body">${escapeHtml(body||'')}</div></div>`;}
-      function openConfirm(orderId){const cleanOrderId=String(orderId||'').trim();if(!cleanOrderId){showToast('No se encontró el ID del pedido');return;}state.pendingOrderId=cleanOrderId;const selectedOrder=state.orders.find(o=>o.id===cleanOrderId)||state.current;const customerName=selectedOrder&&selectedOrder.name?selectedOrder.name:'este cliente';document.getElementById('confirmText').textContent=`Se marcará como LISTO el pedido de ${customerName}.`;document.getElementById('confirmOverlay').classList.add('show');}
-      function closeConfirm(resetPending=true){document.getElementById('confirmOverlay').classList.remove('show');if(resetPending)state.pendingOrderId=null;}
-      function confirmReady(orderIdOverride){const orderId=String(orderIdOverride||state.pendingOrderId||(state.current&&state.current.id)||'').trim();if(!orderId){showToast('No se encontró el ID del pedido');closeConfirm();return;}const note=document.getElementById('currentNote');if(note)note.classList.add('slide-out');setTimeout(()=>{showLoading(true);google.script.run.withSuccessHandler(()=>{showLoading(false);closeConfirm();showToast('Pedido marcado como LISTO');loadOrders();}).withFailureHandler(err=>{showLoading(false);closeConfirm();showToast(err&&err.message?err.message:'Error al actualizar');loadOrders();}).markOrderReady(orderId);},260);}
-      function showLoading(show){document.getElementById('loading').classList.toggle('show',!!show);}
-      function showToast(message){const toast=document.getElementById('toast');toast.textContent=message||'';toast.classList.add('show');clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>{toast.classList.remove('show');},2600);}
-      function shorten(text,max){const value=String(text||'');return value.length>max?value.slice(0,max-1)+'…':value;}
-      function escapeClass(value){return String(value||'').replace(/[^A-Za-z0-9_-]/g,'-');}
-      function escapeHtml(value){return String(value||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-      function jsString(value){return String(value||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+      const AppState = {
+        orders: [],
+        current: null,
+        pendingOrderId: null
+      };
+
+      const ChekeoBridge = {
+        getOrders() {
+          return new Promise((resolve, reject) => {
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler(reject)
+              .getChekeoOrders();
+          });
+        },
+        markReady(orderId) {
+          return new Promise((resolve, reject) => {
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler(reject)
+              .markOrderReady(orderId);
+          });
+        }
+      };
+
+      const ViewUtils = {
+        sectionHtml(title, body) {
+          return `<div><div class="section-title">${this.escapeHtml(title)}</div><div class="section-body">${this.escapeHtml(body || '')}</div></div>`;
+        },
+        shorten(text, max) {
+          const value = String(text || '');
+          return value.length > max ? value.slice(0, max - 1) + '…' : value;
+        },
+        escapeClass(value) {
+          return String(value || '').replace(/[^A-Za-z0-9_-]/g, '-');
+        },
+        escapeHtml(value) {
+          return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+      };
+
+      const ChekeoRenderer = {
+        render(state) {
+          const stack = document.getElementById('stack');
+          const countPill = document.getElementById('countPill');
+          countPill.textContent = state.orders.length;
+
+          if (!state.orders.length) {
+            stack.innerHTML = `<div class="stack-label">Cola</div><div class="empty"><h3>Sin pedidos activos</h3><p>No hay órdenes en estado PENDIENTE o EN PREP.</p></div>`;
+            return;
+          }
+
+          const current = state.orders[0];
+          const next = state.orders[1] || null;
+          stack.innerHTML = `
+            <div class="stack-label">Pedido actual</div>
+            ${this.buildCurrentNote(current)}
+            ${next ? `<div class="stack-label" style="margin-top:14px;">Siguiente</div>${this.buildNextNote(next)}` : ''}
+          `;
+        },
+        buildCurrentNote(order) {
+          const badges = [];
+          if (order.specialCase) badges.push('<span class="badge warn">Caso especial</span>');
+          if (order.manualReview) badges.push('<span class="badge danger">Revisar manual</span>');
+          if (order.confirmed === 'Si') badges.push('<span class="badge ok">Confirmado</span>');
+          if (order.paid === 'Si') badges.push('<span class="badge ok">Pagado</span>');
+
+          const sections = [];
+          if (order.specialCase) {
+            sections.push(ViewUtils.sectionHtml('Orden exacta', order.exactOrderText || 'Sin texto exacto'));
+          } else {
+            sections.push(ViewUtils.sectionHtml('Burgers', order.burgerSummary || 'Sin detalle'));
+            if (order.extras) sections.push(ViewUtils.sectionHtml('Extras / Detalles', order.extras));
+          }
+          if (order.sides) sections.push(ViewUtils.sectionHtml('Guarnición', order.sides));
+
+          return `
+            <div class="order-info">
+              <div class="order-info-title">Info de la orden</div>
+              <div class="order-info-main">${ViewUtils.escapeHtml(order.id || 'Sin folio')}</div>
+              <div class="order-info-sub">Estado actual: ${ViewUtils.escapeHtml(order.kitchenStatus || '')}</div>
+            </div>
+            <div class="note current" id="currentNote">
+              <div class="note-top">
+                <div>
+                  <div class="eyebrow">En cola</div>
+                  <h2 class="name">${ViewUtils.escapeHtml(order.name || 'Sin nombre')}</h2>
+                  <div class="meta">${ViewUtils.escapeHtml(order.phone || '')}</div>
+                </div>
+                <div class="status-pill status-${ViewUtils.escapeClass(order.kitchenStatus)}">${ViewUtils.escapeHtml(order.kitchenStatus)}</div>
+              </div>
+              ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
+              <div class="sections">${sections.join('')}</div>
+              <div class="footer-grid">
+                <div class="footer-box"><div class="footer-label">Total</div><div class="footer-value">${ViewUtils.escapeHtml(order.totalDisplay || '')}</div></div>
+                <div class="footer-box"><div class="footer-label">Pago</div><div class="footer-value">${ViewUtils.escapeHtml(order.payment || '')}</div></div>
+              </div>
+              <div class="actions">
+                <button class="btn-ready" data-action="open-confirm" data-order-id="${ViewUtils.escapeHtml(order.id || '')}">LISTO</button>
+              </div>
+            </div>
+          `;
+        },
+        buildNextNote(order) {
+          const body = order.specialCase ? (order.exactOrderText || 'Caso especial') : (order.burgerSummary || 'Sin detalle');
+          return `
+            <div class="note next">
+              <div class="eyebrow">Siguiente en cola</div>
+              <h3 style="margin:0 0 6px;font-size:20px;line-height:1.05;">${ViewUtils.escapeHtml(order.name || 'Sin nombre')}</h3>
+              <div class="meta">${ViewUtils.escapeHtml(order.phone || '')}</div>
+              <div class="sections" style="margin-top:12px;">
+                ${ViewUtils.sectionHtml('Preview', ViewUtils.shorten(body, 180))}
+                ${order.sides ? ViewUtils.sectionHtml('Guarnición', ViewUtils.shorten(order.sides, 120)) : ''}
+              </div>
+            </div>
+          `;
+        }
+      };
+
+      const ChekeoActions = {
+        init() {
+          document.getElementById('stack').addEventListener('click', (event) => {
+            const button = event.target.closest('[data-action="open-confirm"]');
+            if (!button) return;
+            this.openConfirm(button.dataset.orderId);
+          });
+
+          document.getElementById('cancelConfirmBtn').addEventListener('click', () => this.closeConfirm());
+          document.getElementById('confirmReadyBtn').addEventListener('click', () => this.confirmReady());
+          document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') this.closeConfirm();
+          });
+
+          this.loadOrders();
+        },
+        async loadOrders() {
+          this.showLoading(true);
+          try {
+            const result = await ChekeoBridge.getOrders();
+            AppState.orders = (result && result.orders) || [];
+            AppState.current = AppState.orders[0] || null;
+            AppState.pendingOrderId = null;
+            this.closeConfirm(false);
+            ChekeoRenderer.render(AppState);
+          } catch (err) {
+            this.showToast(err && err.message ? err.message : 'Error al cargar pedidos');
+          } finally {
+            this.showLoading(false);
+          }
+        },
+        openConfirm(orderId) {
+          const cleanOrderId = String(orderId || '').trim();
+          if (!cleanOrderId) {
+            this.showToast('No se encontró el ID del pedido');
+            return;
+          }
+          AppState.pendingOrderId = cleanOrderId;
+          const selectedOrder = AppState.orders.find((order) => order.id === cleanOrderId) || AppState.current;
+          const customerName = selectedOrder && selectedOrder.name ? selectedOrder.name : 'este cliente';
+          document.getElementById('confirmText').textContent = `Se marcará como LISTO el pedido de ${customerName}.`;
+          document.getElementById('confirmOverlay').classList.add('show');
+        },
+        closeConfirm(resetPending = true) {
+          document.getElementById('confirmOverlay').classList.remove('show');
+          if (resetPending) AppState.pendingOrderId = null;
+        },
+        async confirmReady(orderIdOverride) {
+          const orderId = String(orderIdOverride || AppState.pendingOrderId || (AppState.current && AppState.current.id) || '').trim();
+          if (!orderId) {
+            this.showToast('No se encontró el ID del pedido');
+            this.closeConfirm();
+            return;
+          }
+
+          const note = document.getElementById('currentNote');
+          if (note) note.classList.add('slide-out');
+
+          window.setTimeout(async () => {
+            this.showLoading(true);
+            try {
+              await ChekeoBridge.markReady(orderId);
+              this.closeConfirm();
+              this.showToast('Pedido marcado como LISTO');
+            } catch (err) {
+              this.closeConfirm();
+              this.showToast(err && err.message ? err.message : 'Error al actualizar');
+            } finally {
+              this.showLoading(false);
+              this.loadOrders();
+            }
+          }, 260);
+        },
+        showLoading(show) {
+          document.getElementById('loading').classList.toggle('show', !!show);
+        },
+        showToast(message) {
+          const toast = document.getElementById('toast');
+          toast.textContent = message || '';
+          toast.classList.add('show');
+          clearTimeout(window.__toastTimer);
+          window.__toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+        }
+      };
+
+      document.addEventListener('DOMContentLoaded', () => ChekeoActions.init());
     </script>
   </body>
 </html>
