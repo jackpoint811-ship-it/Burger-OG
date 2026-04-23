@@ -84,7 +84,7 @@ function onOpen() {
 }
 
 function showChekeoApp() {
-  const html = HtmlService.createHtmlOutputFromFile('Chekeo')
+  const html = HtmlService.createHtmlOutputFromFile('burger')
     .setWidth(460)
     .setHeight(780);
   SpreadsheetApp.getUi().showModelessDialog(html, 'Chekeo');
@@ -238,6 +238,12 @@ function getChekeoOrders() {
  * Marca una orden como LISTO
  */
 function markOrderReady(orderId) {
+  const cleanOrderId = safeTrim_(orderId);
+
+  if (!cleanOrderId) {
+    throw new Error('No se recibió un ID de pedido válido.');
+  }
+
   const lock = LockService.getDocumentLock();
   lock.waitLock(10000);
 
@@ -246,8 +252,8 @@ function markOrderReady(orderId) {
     const sheet = ss.getSheetByName(CHEKEO_SHEET);
     if (!sheet) throw new Error(`No existe la hoja "${CHEKEO_SHEET}"`);
 
-    const rowNumber = findChekeoRowById_(sheet, orderId);
-    if (!rowNumber) throw new Error(`No encontré el pedido ${orderId} en Chekeo`);
+    const rowNumber = findChekeoRowById_(sheet, cleanOrderId);
+    if (!rowNumber) throw new Error(`No encontré el pedido ${cleanOrderId} en Chekeo`);
 
     const rowValues = sheet.getRange(rowNumber, 1, 1, 22).getValues()[0];
     const now = new Date();
@@ -264,7 +270,7 @@ function markOrderReady(orderId) {
 
     return {
       ok: true,
-      orderId,
+      orderId: cleanOrderId,
       newStatus: 'LISTO',
       updatedAt: formatUiDateTime_(now)
     };
@@ -306,7 +312,7 @@ function buildExistingChekeoMap_(rows) {
     if (!id) return;
 
     map[id] = {
-      kitchenStatus: row[CHEKEO.kitchenStatus] || '',
+      kitchenStatus: normalizeKitchenStatus_(row[CHEKEO.kitchenStatus] || ''),
       startTime: row[CHEKEO.startTime] || '',
       readyTime: row[CHEKEO.readyTime] || '',
       updatedAt: row[CHEKEO.updatedAt] || ''
@@ -395,16 +401,17 @@ function isYes_(value) {
 }
 
 function normalizeKitchenStatus_(value) {
-  const v = safeTrim_(value).toUpperCase();
-  if (v === 'PENDIENTE' || v === 'PENDIENTE ') return 'PENDIENTE';
+  const raw = safeTrim_(value);
+  const v = raw.toUpperCase();
+
+  if (v === 'PENDIENTE') return 'PENDIENTE';
   if (v === 'EN PREP') return 'EN PREP';
   if (v === 'LISTO') return 'LISTO';
   if (v === 'ENTREGADO') return 'ENTREGADO';
   if (v === 'CANCELADO') return 'CANCELADO';
-  if (v === 'PENDIENTE' || v === 'PENDIENTE') return 'PENDIENTE';
-  if (v === 'PENDIENTE' || v === '') return 'PENDIENTE';
-  if (safeTrim_(value) === 'Pendiente') return 'PENDIENTE';
-  return safeTrim_(value) ? v : 'PENDIENTE';
+  if (raw === 'Pendiente') return 'PENDIENTE';
+
+  return 'PENDIENTE';
 }
 
 function safeTrim_(value) {
@@ -444,11 +451,14 @@ function formatUiMoney_(value) {
 }
 
 function findChekeoRowById_(sheet, orderId) {
+  const cleanOrderId = safeTrim_(orderId);
+  if (!cleanOrderId) return 0;
+
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return 0;
 
   const ids = sheet.getRange(2, CHEKEO.id + 1, lastRow - 1, 1).getValues().flat();
-  const index = ids.findIndex((id) => safeTrim_(id) === safeTrim_(orderId));
+  const index = ids.findIndex((id) => safeTrim_(id) === cleanOrderId);
   return index === -1 ? 0 : index + 2;
 }
 
