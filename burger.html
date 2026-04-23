@@ -60,6 +60,20 @@
       .meta-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:700}
       .meta-value{margin-top:3px;font-size:14px;font-weight:700;color:#111827;word-break:break-word}
 
+      .ticket-card{border-left:6px solid #111827;background:#fff}
+      .ticket-header{text-align:center}
+      .ticket-store{font-size:20px;font-weight:700;line-height:1.1;color:#111827;text-transform:uppercase}
+      .ticket-sub{font-size:12px;color:#4b5563;line-height:1.3;margin-top:2px}
+      .ticket-sep{font-family:"Courier New",monospace;font-size:12px;color:#6b7280;letter-spacing:.04em;margin:10px 0;white-space:nowrap;overflow:hidden;text-overflow:clip}
+      .ticket-items{display:grid;gap:6px}
+      .ticket-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:flex-start;font-size:14px;color:#111827}
+      .ticket-item-name{white-space:pre-wrap;word-break:break-word}
+      .ticket-item-amount{font-family:"Courier New",monospace;font-weight:700;white-space:nowrap}
+      .ticket-total{margin-top:12px;padding:10px;border:1px dashed #111827;border-radius:8px;background:#f9fafb}
+      .ticket-total-row{display:flex;justify-content:space-between;gap:10px;font-size:16px;font-weight:700;color:#111827}
+      .ticket-payment{margin-top:6px;font-size:13px;font-weight:700;color:#374151;text-transform:uppercase}
+      .ticket-thanks{margin-top:12px;text-align:center;font-weight:700;letter-spacing:.08em;color:#111827}
+
       .empty{text-align:center;padding:24px 18px}.empty h3{margin:0 0 8px;font-size:22px;color:#111827}.empty p{margin:0;color:#6b7280;line-height:1.4}
       .error{padding:16px;border:1px solid #fecaca;background:#fff5f5;border-radius:12px;color:#7f1d1d}
 
@@ -225,6 +239,66 @@
             </article>
           `;
         },
+        ticketOrder(order) {
+          const splitAmount = (line) => {
+            const value = String(line || '').trim();
+            if (!value) return null;
+            const match = value.match(/^(.*?)(?:\s{2,}|[\t ]+)(\$?\d[\d.,]*(?:\s?[A-Za-z]{2,4})?)$/);
+            if (!match) return { name: value, amount: '' };
+            return { name: match[1].trim(), amount: match[2].trim() };
+          };
+
+          const collectLines = (text) => String(text || '')
+            .split('\n')
+            .map((line) => line.replace(/^[•\-\*]\s*/, '').trim())
+            .filter(Boolean);
+
+          const itemLines = order.specialCase
+            ? collectLines(order.exactOrderText || '')
+            : [
+                ...collectLines(order.burgerSummary || ''),
+                ...collectLines(order.extras || ''),
+                ...collectLines(order.sides || '')
+              ];
+          const items = (itemLines.length ? itemLines : ['Sin detalle']).map(splitAmount).filter(Boolean);
+
+          const storeName = order.storeName || 'CHEKEO BURGER';
+          const addressLine = order.storeAddress || '';
+          const phoneLine = order.storePhone || '';
+          const ticketCode = order.id || 'Sin folio';
+          const customerLine = [order.name || 'Sin nombre', order.phone || ''].filter(Boolean).join(' · ');
+
+          return `
+            <article class="card ticket-card" id="currentCard">
+              <div class="ticket-header">
+                <div class="ticket-store">${ViewUtils.escapeHtml(storeName)}</div>
+                ${addressLine ? `<div class="ticket-sub">${ViewUtils.escapeHtml(addressLine)}</div>` : ''}
+                ${phoneLine ? `<div class="ticket-sub">${ViewUtils.escapeHtml(phoneLine)}</div>` : ''}
+              </div>
+              <div class="ticket-sep">******************************</div>
+              <div class="ticket-sub" style="text-align:center;">Ticket: ${ViewUtils.escapeHtml(ticketCode)}</div>
+              <div class="ticket-sub" style="text-align:center;">${ViewUtils.escapeHtml(customerLine)}</div>
+              <div class="ticket-sep">------------------------------</div>
+              <div class="ticket-items">
+                ${items.map((item) => `
+                  <div class="ticket-item">
+                    <div class="ticket-item-name">${ViewUtils.escapeHtml(item.name)}</div>
+                    <div class="ticket-item-amount">${ViewUtils.escapeHtml(item.amount)}</div>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="ticket-sep">------------------------------</div>
+              <div class="ticket-total">
+                <div class="ticket-total-row">
+                  <span>TOTAL</span>
+                  <span>${ViewUtils.escapeHtml(order.totalDisplay || '')}</span>
+                </div>
+                <div class="ticket-payment">PAGO: ${ViewUtils.escapeHtml(order.payment || 'N/D')}</div>
+              </div>
+              <div class="ticket-thanks">THANK YOU!</div>
+            </article>
+          `;
+        },
         nextOrderCard(order) {
           const preview = order.specialCase ? (order.exactOrderText || 'Caso especial') : (order.burgerSummary || 'Sin detalle');
           return `
@@ -280,7 +354,7 @@
             return;
           }
 
-          const current = state.current ? UIComponents.currentOrderCard(state.current) : '';
+          const current = state.current ? UIComponents.ticketOrder(state.current) : '';
           const next = state.next ? UIComponents.nextOrderCard(state.next) : '';
           content.innerHTML = `${current}${next}`;
         },
