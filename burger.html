@@ -421,6 +421,7 @@
             state.orders = (result && result.orders) || [];
             state.current = state.orders[0] || null;
             state.pendingOrderId = null;
+            closeConfirm(false);
             render();
           })
           .withFailureHandler((err) => {
@@ -538,14 +539,16 @@
       }
 
       function openConfirm(orderId) {
-        if (!orderId) {
+        const cleanOrderId = String(orderId || '').trim();
+
+        if (!cleanOrderId) {
           showToast('No se encontró el ID del pedido');
           return;
         }
 
-        state.pendingOrderId = orderId;
+        state.pendingOrderId = cleanOrderId;
 
-        const selectedOrder = state.orders.find((o) => o.id === orderId) || state.current;
+        const selectedOrder = state.orders.find((o) => o.id === cleanOrderId) || state.current;
         const customerName = selectedOrder && selectedOrder.name ? selectedOrder.name : 'este cliente';
 
         document.getElementById('confirmText').textContent =
@@ -553,13 +556,15 @@
         document.getElementById('confirmOverlay').classList.add('show');
       }
 
-      function closeConfirm() {
+      function closeConfirm(resetPending = true) {
         document.getElementById('confirmOverlay').classList.remove('show');
-        state.pendingOrderId = null;
+        if (resetPending) {
+          state.pendingOrderId = null;
+        }
       }
 
-      function confirmReady() {
-        const orderId = state.pendingOrderId;
+      function confirmReady(orderIdOverride) {
+        const orderId = String(orderIdOverride || state.pendingOrderId || (state.current && state.current.id) || '').trim();
 
         if (!orderId) {
           showToast('No se encontró el ID del pedido');
