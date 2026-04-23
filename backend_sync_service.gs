@@ -1,5 +1,5 @@
 function syncChekeoFromMasterService_(){
-  const ss=SpreadsheetApp.getActiveSpreadsheet();
+  const ss=getSpreadsheet_();
   const masterSheet=ss.getSheetByName(MASTER_SHEET);
   const chekeoSheet=ss.getSheetByName(CHEKEO_SHEET);
   if(!masterSheet)throw new Error(`No existe la hoja "${MASTER_SHEET}"`);
@@ -62,5 +62,5 @@ function syncChekeoFromMasterService_(){
   }
 
   SpreadsheetApp.flush();
-  SpreadsheetApp.getActive().toast('Chekeo sincronizado.','Burgers OG',4);
+  ss.toast('Chekeo sincronizado.','Burgers OG',4);
 }

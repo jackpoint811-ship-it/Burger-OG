@@ -14,6 +14,12 @@ function showChekeoApp(){
   SpreadsheetApp.getUi().showModelessDialog(html,'Chekeo');
 }
 
+function doGet(){
+  return HtmlService
+    .createHtmlOutputFromFile('burger')
+    .setTitle('Chekeo');
+}
+
 function syncChekeoFromMaster(){
   return syncChekeoFromMasterService_();
 }
