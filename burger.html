@@ -48,6 +48,7 @@
       .status-PENDIENTE{background:#fff4d1}.status-EN-PREP{background:#d9ebfa}
       .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
       .badge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700;border:1px solid rgba(0,0,0,.08);background:#f3f4f6}
+      .badge.manual{background:#fff6cc;color:#7a5a00}
       .badge.warn{background:#ffe7b8}.badge.ok{background:#daf0d2}.badge.danger{background:#f8c9c9}
 
       .section{margin-top:12px}
@@ -178,6 +179,7 @@
         },
         currentOrderCard(order) {
           const badges = [];
+          if (order.specialCase) badges.push(ViewUtils.badge('Manual', 'manual'));
           if (order.specialCase) badges.push(ViewUtils.badge('Caso especial', 'warn'));
           if (order.manualReview) badges.push(ViewUtils.badge('Revisar manual', 'danger'));
           if (order.confirmed === 'Si') badges.push(ViewUtils.badge('Confirmado', 'ok'));

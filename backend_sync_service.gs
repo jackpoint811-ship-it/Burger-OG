@@ -28,6 +28,8 @@ function syncChekeoFromMasterService_(){
     const syncRow=new Array(22).fill('');
     const orderDateTime=normalizeDateValue_(row[MASTER.timestamp]);
     const orderDate=extractOnlyDate_(orderDateTime);
+    const normalTotal=row[MASTER.total]||'';
+    const manualTotal=row[MASTER.manualTotal]||'';
 
     syncRow[CHEKEO.id]=id;
     syncRow[CHEKEO.masterRow]=masterRowNumber;
@@ -38,10 +40,10 @@ function syncChekeoFromMasterService_(){
     syncRow[CHEKEO.qtyOg]=normalizeQty_(row[MASTER.qtyOg]);
     syncRow[CHEKEO.qtyBbq]=normalizeQty_(row[MASTER.qtyBbq]);
     syncRow[CHEKEO.burgerSummary]=specialCase?'PEDIDO ESPECIAL':buildBurgerSummary_(row);
-    syncRow[CHEKEO.exactOrderText]=specialCase?safeTrim_(row[MASTER.exactOrderText]):'';
+    syncRow[CHEKEO.exactOrderText]=specialCase?buildSpecialOrderText_(row):'';
     syncRow[CHEKEO.extras]=specialCase?'':buildExtras_(row);
     syncRow[CHEKEO.sides]=buildSides_(row);
-    syncRow[CHEKEO.total]=row[MASTER.total]||'';
+    syncRow[CHEKEO.total]=specialCase&&manualTotal?manualTotal:normalTotal;
     syncRow[CHEKEO.payment]=safeTrim_(row[MASTER.paymentMethod]);
     syncRow[CHEKEO.confirmed]=normalizeYesNo_(row[MASTER.confirmed]);
     syncRow[CHEKEO.paid]=normalizeYesNo_(row[MASTER.paid]);

@@ -8,6 +8,12 @@ function getSpreadsheet_(){
 function buildExistingChekeoMap_(rows){const map={};rows.forEach(row=>{const id=safeTrim_(row[CHEKEO.id]);if(!id)return;map[id]={kitchenStatus:normalizeKitchenStatus_(row[CHEKEO.kitchenStatus]||''),startTime:row[CHEKEO.startTime]||'',readyTime:row[CHEKEO.readyTime]||'',updatedAt:row[CHEKEO.updatedAt]||''};});return map;}
 function buildOrderId_(masterRowNumber){return `PM-${String(masterRowNumber).padStart(4,'0')}`;}
 function isSpecialCase_(row){return safeTrim_(row[MASTER.specialFlag])==='(+1)'||safeTrim_(row[MASTER.total])==='Chequeo Manual';}
+function buildSpecialOrderText_(row){
+  const exactOrderText=safeTrim_(row[MASTER.exactOrderText]);
+  const notes=safeTrim_(row[MASTER.notes]);
+  if(!notes)return exactOrderText;
+  return exactOrderText?`${exactOrderText}\n\nNotas: ${notes}`:`Notas: ${notes}`;
+}
 function buildBurgerSummary_(row){const parts=[];const qtyOg=normalizeQty_(row[MASTER.qtyOg]);const qtyBbq=normalizeQty_(row[MASTER.qtyBbq]);const ogText=safeTrim_(row[MASTER.ogText]);const bbqText=safeTrim_(row[MASTER.bbqText]);if(qtyOg>0){parts.push(`${qtyOg} x OG`);if(ogText)parts.push(`OG: ${ogText}`);}if(qtyBbq>0){parts.push(`${qtyBbq} x BBQ`);if(bbqText)parts.push(`BBQ: ${bbqText}`);}return parts.join('\n');}
 function buildExtras_(row){const extras=[];if(isYes_(row[MASTER.extraPickles]))extras.push('Pepinillos');if(isYes_(row[MASTER.extraAmerican]))extras.push('Queso americano');if(isYes_(row[MASTER.extraManchego]))extras.push('Queso manchego');if(isYes_(row[MASTER.extraBacon]))extras.push('Tocino');if(isYes_(row[MASTER.extraKetchup]))extras.push('Catsup');if(isYes_(row[MASTER.extraMustard]))extras.push('Mostaza');if(isYes_(row[MASTER.extraTomato]))extras.push('Tomate');return extras.join('\n');}
 function buildSides_(row){const sides=[];const qOg=normalizeQty_(row[MASTER.sideFriesOg]);const qEsp=normalizeQty_(row[MASTER.sideFriesEspeciales]);const qLemon=normalizeQty_(row[MASTER.sideFriesLemon]);const qRings=normalizeQty_(row[MASTER.sideOnionRings]);if(qOg>0)sides.push(`${qOg} x Papas a la francesa OG`);if(qEsp>0)sides.push(`${qEsp} x Papas a la francesa Especiales`);if(qLemon>0)sides.push(`${qLemon} x Papas a la francesa Lemon&Pepper`);if(qRings>0)sides.push(`${qRings} x Aros de Cebolla`);return sides.join('\n');}
