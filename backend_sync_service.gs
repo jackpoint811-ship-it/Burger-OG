@@ -5,6 +5,7 @@ function syncChekeoFromMasterService_(){
   if(!masterSheet)throw new Error(`No existe la hoja "${MASTER_SHEET}"`);
   if(!chekeoSheet)throw new Error(`No existe la hoja "${CHEKEO_SHEET}"`);
 
+  const masterColumns=getMasterColumnMap_(masterSheet);
   const masterLastRow=masterSheet.getLastRow();
   const masterLastCol=masterSheet.getLastColumn();
   if(masterLastRow<2){
@@ -21,32 +22,32 @@ function syncChekeoFromMasterService_(){
   masterValues.forEach((row,i)=>{
     const masterRowNumber=i+2;
     const id=buildOrderId_(masterRowNumber);
-    if(!row[MASTER.timestamp])return;
+    if(!getMasterValue_(row,masterColumns.fields.timestamp))return;
 
-    const specialCase=isSpecialCase_(row);
+    const specialCase=isSpecialCase_(row,masterColumns);
     const preserved=existingById[id]||{};
     const syncRow=new Array(22).fill('');
-    const orderDateTime=normalizeDateValue_(row[MASTER.timestamp]);
+    const orderDateTime=normalizeDateValue_(getMasterValue_(row,masterColumns.fields.timestamp));
     const orderDate=extractOnlyDate_(orderDateTime);
-    const normalTotal=row[MASTER.total]||'';
-    const manualTotal=row[MASTER.manualTotal]||'';
+    const normalTotal=getMasterValue_(row,masterColumns.fields.total)||'';
+    const manualTotal=getMasterValue_(row,masterColumns.fields.manualTotal)||'';
 
     syncRow[CHEKEO.id]=id;
     syncRow[CHEKEO.masterRow]=masterRowNumber;
     syncRow[CHEKEO.orderDateTime]=orderDateTime||'';
     syncRow[CHEKEO.orderDate]=orderDate||'';
-    syncRow[CHEKEO.name]=safeTrim_(row[MASTER.customerName]);
-    syncRow[CHEKEO.phone]=row[MASTER.phone]?String(row[MASTER.phone]):'';
-    syncRow[CHEKEO.qtyOg]=normalizeQty_(row[MASTER.qtyOg]);
-    syncRow[CHEKEO.qtyBbq]=normalizeQty_(row[MASTER.qtyBbq]);
-    syncRow[CHEKEO.burgerSummary]=specialCase?'PEDIDO ESPECIAL':buildBurgerSummary_(row);
-    syncRow[CHEKEO.exactOrderText]=specialCase?buildSpecialOrderText_(row):'';
-    syncRow[CHEKEO.extras]=specialCase?'':buildExtras_(row);
-    syncRow[CHEKEO.sides]=buildSides_(row);
+    syncRow[CHEKEO.name]=safeTrim_(getMasterValue_(row,masterColumns.fields.customerName));
+    syncRow[CHEKEO.phone]=safeTrim_(getMasterValue_(row,masterColumns.fields.phone));
+    syncRow[CHEKEO.qtyOg]=getBurgerQtyByName_(row,masterColumns,'OG');
+    syncRow[CHEKEO.qtyBbq]=getBurgerQtyByName_(row,masterColumns,'BBQ');
+    syncRow[CHEKEO.burgerSummary]=specialCase?'PEDIDO ESPECIAL':buildBurgerSummary_(row,masterColumns);
+    syncRow[CHEKEO.exactOrderText]=specialCase?buildSpecialOrderText_(row,masterColumns):'';
+    syncRow[CHEKEO.extras]=specialCase?'':buildExtras_(row,masterColumns);
+    syncRow[CHEKEO.sides]=buildSides_(row,masterColumns);
     syncRow[CHEKEO.total]=specialCase&&manualTotal?manualTotal:normalTotal;
-    syncRow[CHEKEO.payment]=safeTrim_(row[MASTER.paymentMethod]);
-    syncRow[CHEKEO.confirmed]=normalizeYesNo_(row[MASTER.confirmed]);
-    syncRow[CHEKEO.paid]=normalizeYesNo_(row[MASTER.paid]);
+    syncRow[CHEKEO.payment]=safeTrim_(getMasterValue_(row,masterColumns.fields.paymentMethod));
+    syncRow[CHEKEO.confirmed]=normalizeYesNo_(getMasterValue_(row,masterColumns.fields.confirmed));
+    syncRow[CHEKEO.paid]=normalizeYesNo_(getMasterValue_(row,masterColumns.fields.paid));
     syncRow[CHEKEO.kitchenStatus]=normalizeKitchenStatus_(preserved.kitchenStatus||KITCHEN_STATUS.PENDING);
     syncRow[CHEKEO.startTime]=preserved.startTime||'';
     syncRow[CHEKEO.readyTime]=preserved.readyTime||'';
