@@ -20,10 +20,11 @@
         --radius-md:14px;
         --radius-sm:10px;
         --shadow:0 12px 28px rgba(0,0,0,.22);
+        --ticket-scale:1;
       }
       *{box-sizing:border-box}
       body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(180deg,var(--bg) 0%,#191d24 100%);color:var(--ink)}
-      .app-shell{min-height:100vh;max-width:760px;margin:0 auto;padding:14px 14px calc(18px + env(safe-area-inset-bottom));display:grid;gap:12px;grid-template-rows:auto auto auto auto;align-content:start}
+      .app-shell{min-height:100vh;max-width:760px;margin:0 auto;padding:14px 14px calc(18px + env(safe-area-inset-bottom));display:grid;gap:12px;grid-template-rows:auto auto minmax(0,1fr) auto}
       .panel{background:var(--panel);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.06)}
       .header{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
       .title{font-size:clamp(18px,2.8vw,20px);font-weight:700;color:#0f172a;line-height:1.15}
@@ -34,7 +35,7 @@
       .status-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:700}
       .status-value{font-size:13px;font-weight:700;color:#111827;text-align:right}
 
-      .content-area{display:grid;gap:10px;align-content:start}
+      .content-area{display:grid;gap:10px;align-content:start;min-height:0}
       .card{padding:14px;border-radius:var(--radius-md);background:var(--panel);border:1px solid var(--line)}
       .card.current{border-left:6px solid #111827}
       .card.next{background:#fcfcfd}
@@ -61,17 +62,21 @@
       .meta-value{margin-top:3px;font-size:14px;font-weight:700;color:#111827;word-break:break-word}
       .ticket-card{border-left:6px solid #111827;background:#fff}
       .ticket-header{text-align:center}
-      .ticket-store{font-size:24px;font-weight:700;line-height:1.1;color:#111827;text-transform:uppercase}
-      .ticket-sub{font-size:14px;color:#4b5563;line-height:1.3;margin-top:2px}
-      .ticket-sep{font-family:"Courier New",monospace;font-size:12px;color:#6b7280;letter-spacing:.04em;margin:10px 0;white-space:nowrap;overflow:hidden;text-overflow:clip}
+      .ticket-store{font-size:calc(24px * var(--ticket-scale));font-weight:700;line-height:1.1;color:#111827;text-transform:uppercase}
+      .ticket-sub{font-size:calc(14px * var(--ticket-scale));color:#4b5563;line-height:1.3;margin-top:2px}
+      .ticket-sep{font-family:"Courier New",monospace;font-size:calc(12px * var(--ticket-scale));color:#6b7280;letter-spacing:.04em;margin:10px 0;white-space:nowrap;overflow:hidden;text-overflow:clip}
       .ticket-items{display:grid;gap:6px}
-      .ticket-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:flex-start;font-size:15px;color:#111827}
+      .ticket-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:flex-start;font-size:calc(15px * var(--ticket-scale));color:#111827}
       .ticket-item-name{white-space:pre-wrap;word-break:break-word}
-      .ticket-item-amount{font-family:"Courier New",monospace;font-weight:700;white-space:nowrap;font-size:15px}
+      .ticket-item-amount{font-family:"Courier New",monospace;font-weight:700;white-space:nowrap;font-size:calc(15px * var(--ticket-scale))}
       .ticket-total{margin-top:12px;padding:10px;border:1px dashed #111827;border-radius:8px;background:#f9fafb}
-      .ticket-total-row{display:flex;justify-content:space-between;gap:10px;font-size:20px;font-weight:700;color:#111827}
-      .ticket-payment{margin-top:6px;font-size:15px;font-weight:700;color:#374151;text-transform:uppercase}
-      .ticket-thanks{margin-top:12px;text-align:center;font-weight:700;letter-spacing:.08em;color:#111827;font-size:16px}
+      .ticket-total-row{display:flex;justify-content:space-between;gap:10px;font-size:calc(20px * var(--ticket-scale));font-weight:700;color:#111827}
+      .ticket-payment{margin-top:6px;font-size:calc(15px * var(--ticket-scale));font-weight:700;color:#374151;text-transform:uppercase}
+      .ticket-thanks{margin-top:12px;text-align:center;font-weight:700;letter-spacing:.08em;color:#111827;font-size:calc(16px * var(--ticket-scale))}
+      .view-controls{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+      .view-controls-label{font-size:12px;font-weight:700;color:#4b5563}
+      .view-scale{width:100%;max-width:260px}
+      .view-scale-value{font-size:12px;font-weight:700;color:#111827;background:#e5e7eb;border-radius:999px;padding:4px 10px}
 
       .empty{text-align:center;padding:24px 18px}.empty h3{margin:0 0 8px;font-size:22px;color:#111827}.empty p{margin:0;color:#6b7280;line-height:1.4}
       .error{padding:16px;border:1px solid #fecaca;background:#fff5f5;border-radius:12px;color:#7f1d1d}
@@ -158,6 +163,9 @@
         .confirm-actions{grid-template-columns:1fr}
         .loading{right:10px;top:10px}
         .toast{left:10px;right:10px;bottom:10px;transform:none;text-align:center}
+        .view-controls-label,
+        .view-scale-value{font-size:13px}
+        .view-scale{max-width:none}
       }
     </style>
   </head>
@@ -199,7 +207,8 @@
         current: null,
         next: null,
         pendingOrderId: null,
-        errorMessage: ''
+        errorMessage: '',
+        viewScale: 1
       };
 
       const ChekeoBridge = {
@@ -225,7 +234,27 @@
 
       const UIComponents = {
         appHeader(state) {
-          return `<div><div class="title">Chekeo</div><div class="subtitle">Operación de cocina · órdenes activas</div></div><div class="queue-counter">${state.orders.length}</div>`;
+          return `
+            <div>
+              <div class="title">Chekeo</div>
+              <div class="subtitle">Operación de cocina · órdenes activas</div>
+              <div class="view-controls">
+                <label class="view-controls-label" for="viewScaleInput">Vista cocina</label>
+                <input
+                  class="view-scale"
+                  id="viewScaleInput"
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
+                  value="${state.viewScale}"
+                  data-action="set-view-scale"
+                />
+                <span class="view-scale-value">${state.viewScale}x</span>
+              </div>
+            </div>
+            <div class="queue-counter">${state.orders.length}</div>
+          `;
         },
         queueSummary(state) {
           const map = {
@@ -369,6 +398,7 @@
 
       const UIRenderer = {
         render(state) {
+          document.documentElement.style.setProperty('--ticket-scale', String(state.viewScale || 1));
           document.getElementById('headerArea').innerHTML = UIComponents.appHeader(state);
           document.getElementById('statusArea').innerHTML = UIComponents.queueSummary(state);
           this.renderContent(state);
@@ -423,6 +453,13 @@
             if (action === 'close-confirm') this.closeConfirm();
             if (action === 'confirm-ready') this.confirmReady();
             if (action === 'reload-orders') this.loadOrders();
+            if (action === 'set-view-scale') this.setViewScale(event.target && event.target.value);
+          });
+
+          document.addEventListener('input', (event) => {
+            const input = event.target.closest('[data-action="set-view-scale"]');
+            if (!input) return;
+            this.setViewScale(input.value);
           });
 
           document.addEventListener('keydown', (event) => {
@@ -430,7 +467,27 @@
           });
 
           UIStateMachine.transition(UI_STATES.LOADING);
+          this.loadViewScale();
           this.loadOrders();
+        },
+
+        loadViewScale() {
+          try {
+            const raw = window.localStorage.getItem('chekeo_view_scale');
+            const parsed = Number(raw);
+            if (Number.isFinite(parsed)) {
+              AppState.viewScale = Math.min(10, Math.max(1, Math.round(parsed)));
+            }
+          } catch (_) {}
+        },
+
+        setViewScale(rawValue) {
+          const scale = Math.min(10, Math.max(1, Math.round(Number(rawValue) || 1)));
+          if (scale === AppState.viewScale) return;
+          try {
+            window.localStorage.setItem('chekeo_view_scale', String(scale));
+          } catch (_) {}
+          UIStateMachine.transition(AppState.uiState, { viewScale: scale });
         },
 
         async loadOrders() {
