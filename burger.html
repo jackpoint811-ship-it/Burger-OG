@@ -290,13 +290,6 @@
           const [title, value] = map[state.uiState] || ['Estado', 'Listo'];
           return `<div class="status-title">${title}</div><div class="status-value">${value}</div>`;
         },
-        ticketOrder(order) {
-          const itemLines = toTicketLines(order);
-          const rows = itemLines.map(line => ViewUtils.ticketLine(line.desc, line.price));
-          rows.push(ViewUtils.ticketLine('Total', order.totalDisplay || '', true));
-          rows.push(ViewUtils.ticketLine('Pago', order.payment || '', true));
-          return `<div class="ticket-lines">${rows.join('')}</div>`;
-        },
         currentOrderCard(order) {
           const badges = [];
           if (order.specialCase) badges.push(ViewUtils.badge('Manual', 'manual'));
