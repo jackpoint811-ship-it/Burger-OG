@@ -28,7 +28,8 @@ function isSpecialCase_(row,masterColumns){
   const specialFlag=safeTrim_(getMasterValue_(row,masterColumns.fields.specialFlag));
   const normalTotal=safeTrim_(getMasterValue_(row,masterColumns.fields.total));
   const manualTotal=safeTrim_(getMasterValue_(row,masterColumns.fields.manualTotal));
-  return specialFlag==='(+1)'||normalTotal==='Chequeo Manual'||manualTotal==='Chequeo Manual';
+  const hasPlusOne=(row||[]).some(value=>safeTrim_(value).indexOf('(+1)')!==-1);
+  return hasPlusOne||specialFlag==='(+1)'||normalTotal==='Chequeo Manual'||manualTotal==='Chequeo Manual';
 }
 
 function buildSpecialOrderText_(row,masterColumns){
@@ -56,9 +57,20 @@ function getBurgerCustomizationText_(row,burger){
   for(let i=0;i<burger.customizationColumns.length;i++){
     const colIndex=burger.customizationColumns[i];
     const text=safeTrim_(getMasterValue_(row,colIndex));
-    if(text)return text;
+    if(!text)continue;
+    if(isBooleanLikeText_(text))continue;
+    return text;
   }
   return '';
+}
+
+
+function isBooleanLikeText_(value){
+  const normalized=safeTrim_(value)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'');
+  return ['si','no','yes','true','false','1','0'].indexOf(normalized)!==-1;
 }
 
 function buildExtras_(row,masterColumns){

@@ -37,63 +37,42 @@ function getMasterColumnMap_(masterSheet){
   Object.keys(MASTER_FIELD_ALIASES).forEach(fieldName=>{
     const aliases=MASTER_FIELD_ALIASES[fieldName];
     aliasesByField[fieldName]=aliases;
-    fields[fieldName]=findFirstHeaderIndexByAliases_(headers,normalizedHeaders,aliases);
+    fields[fieldName]=findFirstHeaderIndexByAliases_(normalizedHeaders,aliases);
   });
 
   const extras=[];
   const sides=[];
   const burgers=[];
-  const customizationColumns=[];
 
   headers.forEach((header,index)=>{
     const raw=safeTrim_(header);
     if(!raw)return;
-    const normalized=normalizedHeaders[index];
+
+    const normalizedHeader=normalizedHeaders[index];
     const bracketName=extractBracketName_(raw);
 
     if(/^extras\s*\[/i.test(raw) && bracketName){
-      extras.push({index,name:bracketName,header:raw,normalizedHeader:normalized});
+      extras.push({index,name:bracketName,header:raw,normalizedHeader});
     }
 
-    if(/^date\s+un\s+extra\s*\[/i.test(normalizedHeaderLike_(raw)) && bracketName){
-      sides.push({index,name:bracketName,header:raw,normalizedHeader:normalized});
+    if(/^date\s+un\s+extra\s*\[/i.test(normalizeHeaderLike_(raw)) && bracketName){
+      sides.push({index,name:bracketName,header:raw,normalizedHeader});
     }
 
-    const burgerMatch=raw.match(/^\s*[¿?]?\s*cuantas\??\s*\[([^\]]+)\]\s*$/i);
-    if(burgerMatch){
-      const burgerName=safeTrim_(burgerMatch[1]);
-      if(burgerName){
-        burgers.push({
-          index,
-          name:burgerName,
-          normalizedName:normalizeHeader_(burgerName),
-          header:raw,
-          customizationColumns:[]
-        });
-      }
-    }
-
-    if(normalized.includes('personalizar')||normalized.includes('burger')){
-      customizationColumns.push({index,header:raw,normalizedHeader:normalized});
+    const productName=extractBurgerNameFromHeader_(raw,normalizedHeader);
+    if(productName){
+      burgers.push({
+        index,
+        name:productName,
+        normalizedName:normalizeHeader_(productName),
+        header:raw,
+        customizationColumns:[]
+      });
     }
   });
 
   burgers.forEach(burger=>{
-    const candidates=[];
-    customizationColumns.forEach(column=>{
-      if(column.index===burger.index)return;
-      if(column.normalizedHeader.includes(burger.normalizedName))candidates.push(column.index);
-    });
-
-    const normalizedBurger=burger.normalizedName;
-    if(normalizedBurger==='og'){
-      pushCustomizationAliasCandidates_(candidates,headers,['Burger OG','Personalizar OG']);
-    }
-    if(normalizedBurger==='bbq'){
-      pushCustomizationAliasCandidates_(candidates,headers,['BBQ Burger','Personalizar BBQ','Burger BBQ']);
-    }
-
-    burger.customizationColumns=[...new Set(candidates)];
+    burger.customizationColumns=findCustomizationCandidatesForBurger_(burger,headers,normalizedHeaders);
   });
 
   const detectedColumns={
@@ -110,16 +89,16 @@ function getMasterColumnMap_(masterSheet){
   return detectedColumns;
 }
 
-function normalizedHeaderLike_(rawHeader){
+function normalizeHeaderLike_(rawHeader){
   return String(rawHeader||'')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g,'')
     .toLowerCase();
 }
 
-function findFirstHeaderIndexByAliases_(headers,normalizedHeaders,aliases){
+function findFirstHeaderIndexByAliases_(normalizedHeaders,aliases){
   const normalizedAliases=aliases.map(alias=>normalizeHeader_(alias));
-  for(let i=0;i<headers.length;i++){
+  for(let i=0;i<normalizedHeaders.length;i++){
     if(normalizedAliases.indexOf(normalizedHeaders[i])!==-1)return i;
   }
   return -1;
@@ -130,13 +109,79 @@ function extractBracketName_(header){
   return match?safeTrim_(match[1]):'';
 }
 
-function pushCustomizationAliasCandidates_(target,headers,aliases){
-  const normalizedByIndex=headers.map(header=>normalizeHeader_(header));
-  aliases.forEach(alias=>{
-    const normalizedAlias=normalizeHeader_(alias);
-    const idx=normalizedByIndex.findIndex(value=>value===normalizedAlias);
-    if(idx!==-1)target.push(idx);
+function extractBurgerNameFromHeader_(rawHeader,normalizedHeader){
+  const bracketName=extractBracketName_(rawHeader);
+  if(!bracketName)return '';
+
+  // Tolerante a: ¿Cuantas?, ¿Cuántas?, Cuantas, Cuántas.
+  const cleanNormalized=String(normalizedHeader||'').replace(/\s+/g,' ').trim();
+  if(/^cuantas\s+[a-z0-9&ñ\s]+$/.test(cleanNormalized)){
+    return bracketName;
+  }
+
+  return '';
+}
+
+function findCustomizationCandidatesForBurger_(burger,headers,normalizedHeaders){
+  const preferred=[];
+  const secondary=[];
+
+  const productNameNormalized=burger.normalizedName;
+  const productNameOriginal=burger.name;
+
+  headers.forEach((header,index)=>{
+    if(index===burger.index)return;
+
+    const raw=safeTrim_(header);
+    if(!raw)return;
+
+    const normalized=normalizedHeaders[index];
+    if(!normalized)return;
+    if(normalized.startsWith('personalizar '))return; // nunca usar bandera Si/No como texto
+
+    const containsProduct=normalized.includes(productNameNormalized);
+    if(!containsProduct)return;
+
+    if(isPreferredCustomizationHeader_(raw,normalized,productNameOriginal,productNameNormalized)){
+      preferred.push(index);
+      return;
+    }
+
+    if(isSecondaryCustomizationHeader_(normalized)){
+      secondary.push(index);
+    }
   });
+
+  return [...new Set(preferred.concat(secondary))];
+}
+
+function isPreferredCustomizationHeader_(rawHeader,normalizedHeader,productNameOriginal,productNameNormalized){
+  const escapedOriginal=escapeRegExp_(safeTrim_(productNameOriginal));
+  const escapedNormalized=escapeRegExp_(productNameNormalized);
+  const raw=String(rawHeader||'').trim();
+
+  const preferredRawPatterns=[
+    new RegExp(`^Burger\\s+${escapedOriginal}$`,'i'),
+    new RegExp(`^${escapedOriginal}\\s+Burger$`,'i')
+  ];
+  if(preferredRawPatterns.some(pattern=>pattern.test(raw)))return true;
+
+  const preferredNormalizedPatterns=[
+    new RegExp(`^burger\\s+${escapedNormalized}$`),
+    new RegExp(`^${escapedNormalized}\\s+burger$`),
+    new RegExp(`^descripcion\\s+${escapedNormalized}$`),
+    new RegExp(`^detalle\\s+${escapedNormalized}$`)
+  ];
+
+  return preferredNormalizedPatterns.some(pattern=>pattern.test(normalizedHeader));
+}
+
+function isSecondaryCustomizationHeader_(normalizedHeader){
+  return normalizedHeader.includes('burger')||normalizedHeader.includes('descripcion')||normalizedHeader.includes('detalle');
+}
+
+function escapeRegExp_(value){
+  return String(value||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 }
 
 function getMasterValue_(row,columnIndex){
