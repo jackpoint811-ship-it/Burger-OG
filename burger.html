@@ -20,10 +20,11 @@
         --radius-md:14px;
         --radius-sm:10px;
         --shadow:0 12px 28px rgba(0,0,0,.22);
+        --ticket-scale:1;
       }
       *{box-sizing:border-box}
       body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(180deg,var(--bg) 0%,#191d24 100%);color:var(--ink)}
-      .app-shell{min-height:100vh;max-width:760px;margin:0 auto;padding:14px 14px calc(18px + env(safe-area-inset-bottom));display:grid;gap:12px;grid-template-rows:auto auto auto auto;align-content:start}
+      .app-shell{min-height:100vh;max-width:760px;margin:0 auto;padding:14px 14px calc(18px + env(safe-area-inset-bottom));display:grid;gap:12px;grid-template-rows:auto auto minmax(0,1fr) auto}
       .panel{background:var(--panel);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.06)}
       .header{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
       .title{font-size:clamp(18px,2.8vw,20px);font-weight:700;color:#0f172a;line-height:1.15}
@@ -34,7 +35,7 @@
       .status-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:700}
       .status-value{font-size:13px;font-weight:700;color:#111827;text-align:right}
 
-      .content-area{display:grid;gap:10px;align-content:start}
+      .content-area{display:grid;gap:10px;align-content:start;min-height:0}
       .card{padding:14px;border-radius:var(--radius-md);background:var(--panel);border:1px solid var(--line)}
       .card.current{border-left:6px solid #111827}
       .card.next{background:#fcfcfd}
@@ -61,17 +62,34 @@
       .meta-value{margin-top:3px;font-size:14px;font-weight:700;color:#111827;word-break:break-word}
       .ticket-card{border-left:6px solid #111827;background:#fff}
       .ticket-header{text-align:center}
-      .ticket-store{font-size:24px;font-weight:700;line-height:1.1;color:#111827;text-transform:uppercase}
-      .ticket-sub{font-size:14px;color:#4b5563;line-height:1.3;margin-top:2px}
-      .ticket-sep{font-family:"Courier New",monospace;font-size:12px;color:#6b7280;letter-spacing:.04em;margin:10px 0;white-space:nowrap;overflow:hidden;text-overflow:clip}
+      .ticket-store{font-size:calc(24px * var(--ticket-scale));font-weight:700;line-height:1.1;color:#111827;text-transform:uppercase}
+      .ticket-sub{font-size:calc(14px * var(--ticket-scale));color:#4b5563;line-height:1.3;margin-top:2px}
+      .ticket-sep{font-family:"Courier New",monospace;font-size:calc(12px * var(--ticket-scale));color:#6b7280;letter-spacing:.04em;margin:10px 0;white-space:nowrap;overflow:hidden;text-overflow:clip}
       .ticket-items{display:grid;gap:6px}
-      .ticket-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:flex-start;font-size:15px;color:#111827}
+      .ticket-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:flex-start;font-size:calc(15px * var(--ticket-scale));color:#111827}
       .ticket-item-name{white-space:pre-wrap;word-break:break-word}
-      .ticket-item-amount{font-family:"Courier New",monospace;font-weight:700;white-space:nowrap;font-size:15px}
+      .ticket-item-amount{font-family:"Courier New",monospace;font-weight:700;white-space:nowrap;font-size:calc(15px * var(--ticket-scale))}
       .ticket-total{margin-top:12px;padding:10px;border:1px dashed #111827;border-radius:8px;background:#f9fafb}
-      .ticket-total-row{display:flex;justify-content:space-between;gap:10px;font-size:20px;font-weight:700;color:#111827}
-      .ticket-payment{margin-top:6px;font-size:15px;font-weight:700;color:#374151;text-transform:uppercase}
-      .ticket-thanks{margin-top:12px;text-align:center;font-weight:700;letter-spacing:.08em;color:#111827;font-size:16px}
+      .ticket-total-row{display:flex;justify-content:space-between;gap:10px;font-size:calc(20px * var(--ticket-scale));font-weight:700;color:#111827}
+      .ticket-payment{margin-top:6px;font-size:calc(15px * var(--ticket-scale));font-weight:700;color:#374151;text-transform:uppercase}
+      .ticket-thanks{margin-top:12px;text-align:center;font-weight:700;letter-spacing:.08em;color:#111827;font-size:calc(16px * var(--ticket-scale))}
+      .view-controls{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+      .view-controls-label{font-size:12px;font-weight:700;color:#4b5563}
+      .view-scale{width:100%;max-width:260px}
+      .view-scale-value{font-size:12px;font-weight:700;color:#111827;background:#e5e7eb;border-radius:999px;padding:4px 10px}
+      .filter-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+      .filter-btn{border:1px solid #d1d5db;background:#fff;color:#1f2937;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer}
+      .filter-btn.active{background:#111827;color:#fff;border-color:#111827}
+      .mode-btn{border:1px solid #d1d5db;background:#eef2ff;color:#1f2937;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer}
+      .mode-btn.active{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+      .side-ready-banner{margin-bottom:8px;background:#dcfce7;color:#166534;border:1px solid #86efac;padding:6px 10px;border-radius:8px;font-size:14px;font-weight:700;text-align:center}
+      .side-list{display:grid;gap:10px}
+      .side-card{padding:12px;border-radius:12px;border:1px solid var(--line);background:#fff}
+      .side-card-head{display:flex;justify-content:space-between;gap:8px;align-items:center}
+      .side-card-title{margin:0;font-size:18px;line-height:1.15;color:#111827}
+      .side-card-meta{font-size:13px;color:#4b5563;margin-top:4px}
+      .side-card-status{margin-top:8px;font-size:12px;font-weight:700;color:#166534}
+      .side-chip{display:inline-flex;align-items:center;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:700;background:#e5e7eb;color:#111827}
 
       .empty{text-align:center;padding:24px 18px}.empty h3{margin:0 0 8px;font-size:22px;color:#111827}.empty p{margin:0;color:#6b7280;line-height:1.4}
       .error{padding:16px;border:1px solid #fecaca;background:#fff5f5;border-radius:12px;color:#7f1d1d}
@@ -158,6 +176,10 @@
         .confirm-actions{grid-template-columns:1fr}
         .loading{right:10px;top:10px}
         .toast{left:10px;right:10px;bottom:10px;transform:none;text-align:center}
+        .view-controls-label,
+        .view-scale-value{font-size:13px}
+        .view-scale{max-width:none}
+        .side-card-title{font-size:20px}
       }
     </style>
   </head>
@@ -195,11 +217,17 @@
 
       const AppState = {
         uiState: UI_STATES.LOADING,
+        allOrders: [],
         orders: [],
         current: null,
         next: null,
         pendingOrderId: null,
-        errorMessage: ''
+        errorMessage: '',
+        viewScale: 1,
+        burgerFilter: 'ALL',
+        viewMode: 'ORDERS',
+        sideFilter: 'ALL',
+        sideReadyMap: {}
       };
 
       const ChekeoBridge = {
@@ -225,16 +253,73 @@
 
       const UIComponents = {
         appHeader(state) {
-          return `<div><div class="title">Chekeo</div><div class="subtitle">Operación de cocina · órdenes activas</div></div><div class="queue-counter">${state.orders.length}</div>`;
+          const burgerFilterOptions = [
+            { label: 'Todos', value: 'ALL' },
+            { label: 'OG', value: 'OG' },
+            { label: 'BBQ', value: 'BBQ' },
+            { label: 'Mix', value: 'MIX' }
+          ];
+          const sideFilterOptions = ChekeoActions.getAvailableSideFilters(state);
+          const modeLabel = state.viewMode === 'SIDES' ? 'Vista guarniciones' : 'Vista pedidos';
+          const counter = state.viewMode === 'SIDES' ? ChekeoActions.getSideOrders(state).length : state.orders.length;
+          return `
+            <div>
+              <div class="title">Chekeo</div>
+              <div class="subtitle">Operación de cocina · órdenes activas · ${modeLabel}</div>
+              <div class="view-controls">
+                <label class="view-controls-label" for="viewScaleInput">Vista cocina</label>
+                <input
+                  class="view-scale"
+                  id="viewScaleInput"
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
+                  value="${state.viewScale}"
+                  data-action="set-view-scale"
+                />
+                <span class="view-scale-value">${state.viewScale}x</span>
+                <button
+                  class="mode-btn ${state.viewMode === 'SIDES' ? 'active' : ''}"
+                  data-action="toggle-view-mode"
+                  type="button"
+                >${state.viewMode === 'SIDES' ? 'Ver pedidos' : 'Guarniciones'}</button>
+              </div>
+              <div class="filter-controls">
+                ${(state.viewMode === 'SIDES' ? sideFilterOptions : burgerFilterOptions).map((option) => `
+                  <button
+                    class="filter-btn ${(state.viewMode === 'SIDES' ? state.sideFilter : state.burgerFilter) === option.value ? 'active' : ''}"
+                    data-action="${state.viewMode === 'SIDES' ? 'set-side-filter' : 'set-burger-filter'}"
+                    data-filter="${option.value}"
+                    type="button"
+                  >${option.label}</button>
+                `).join('')}
+              </div>
+            </div>
+            <div class="queue-counter">${counter}</div>
+          `;
         },
         queueSummary(state) {
+          const filterLabelMap = {
+            ALL: 'Todas',
+            OG: 'OG',
+            BBQ: 'BBQ',
+            MIX: 'Mix'
+          };
+          const activeFilterLabel = state.viewMode === 'SIDES'
+            ? (state.sideFilter === 'ALL' ? 'Todas' : state.sideFilter)
+            : (filterLabelMap[state.burgerFilter] || 'Todas');
+          const activeCount = state.viewMode === 'SIDES' ? ChekeoActions.getSideOrders(state).length : state.orders.length;
           const map = {
             [UI_STATES.LOADING]: ['Estado', 'Cargando pedidos...'],
             [UI_STATES.READY_EMPTY]: ['Estado', 'Sin órdenes activas'],
             [UI_STATES.ERROR]: ['Estado', 'Error de carga'],
             [UI_STATES.CONFIRMING_READY]: ['Acción', 'Confirmar pedido LISTO'],
             [UI_STATES.SUBMITTING_READY]: ['Estado', 'Marcando pedido como LISTO...'],
-            [UI_STATES.READY_WITH_ORDERS]: ['Cola activa', `${state.orders.length} pedido(s) en flujo`]
+            [UI_STATES.READY_WITH_ORDERS]: [
+              state.viewMode === 'SIDES' ? 'Guarniciones' : 'Cola activa',
+              `${activeCount} pedido(s) · filtro ${activeFilterLabel}`
+            ]
           };
           const [title, value] = map[state.uiState] || ['Estado', 'Listo'];
           return `<div class="status-title">${title}</div><div class="status-value">${value}</div>`;
@@ -303,6 +388,7 @@
 
           return `
             <article class="card ticket-card" id="currentCard">
+              ${ChekeoActions.isSideReady(order) ? '<div class="side-ready-banner">LISTO</div>' : ''}
               <div class="ticket-header">
                 <div class="ticket-store">${ViewUtils.escapeHtml(storeName)}</div>
                 ${addressLine ? `<div class="ticket-sub">${ViewUtils.escapeHtml(addressLine)}</div>` : ''}
@@ -344,6 +430,34 @@
             </article>
           `;
         },
+        sidesView(state) {
+          const sideOrders = ChekeoActions.getSideOrders(state);
+          if (!sideOrders.length) {
+            return `<section class="panel empty"><h3>Sin guarniciones activas</h3><p>No hay órdenes con guarniciones para el filtro seleccionado.</p></section>`;
+          }
+          return `
+            <section class="panel side-list">
+              ${sideOrders.map((entry) => `
+                <article class="side-card">
+                  <div class="side-card-head">
+                    <div>
+                      <h3 class="side-card-title">${ViewUtils.escapeHtml(entry.order.name || 'Sin nombre')}</h3>
+                      <div class="side-card-meta">${ViewUtils.escapeHtml(entry.order.id || 'Sin folio')} · ${ViewUtils.escapeHtml(entry.order.phone || '')}</div>
+                    </div>
+                    <span class="side-chip">${ViewUtils.escapeHtml(entry.sideType)}</span>
+                  </div>
+                  ${ViewUtils.sectionBlock('Guarnición', entry.rawSides)}
+                  <div class="side-card-status">${ChekeoActions.isSideReady(entry.order) ? 'LISTO en ticket' : 'Pendiente por preparar'}</div>
+                  <div style="margin-top:10px;">
+                    <button class="btn btn-primary" data-action="mark-side-ready" data-order-id="${ViewUtils.escapeHtml(entry.order.id)}" ${ChekeoActions.isSideReady(entry.order) ? 'disabled' : ''}>
+                      ${ChekeoActions.isSideReady(entry.order) ? 'Guarnición lista' : 'Marcar guarnición LISTA'}
+                    </button>
+                  </div>
+                </article>
+              `).join('')}
+            </section>
+          `;
+        },
         emptyState() {
           return `<section class="panel empty"><h3>Sin pedidos activos</h3><p>No hay órdenes en estado PENDIENTE o EN PREP.</p></section>`;
         },
@@ -369,6 +483,7 @@
 
       const UIRenderer = {
         render(state) {
+          document.documentElement.style.setProperty('--ticket-scale', String(state.viewScale || 1));
           document.getElementById('headerArea').innerHTML = UIComponents.appHeader(state);
           document.getElementById('statusArea').innerHTML = UIComponents.queueSummary(state);
           this.renderContent(state);
@@ -382,8 +497,18 @@
             content.innerHTML = UIComponents.errorState(state.errorMessage);
             return;
           }
+          if (state.uiState === UI_STATES.LOADING) {
+            content.innerHTML = '';
+            return;
+          }
+
+          if (state.viewMode === 'SIDES') {
+            content.innerHTML = UIComponents.sidesView(state);
+            return;
+          }
+
           if (state.uiState === UI_STATES.READY_EMPTY || state.uiState === UI_STATES.LOADING) {
-            content.innerHTML = state.uiState === UI_STATES.LOADING ? '' : UIComponents.emptyState();
+            content.innerHTML = UIComponents.emptyState();
             return;
           }
 
@@ -394,7 +519,7 @@
         renderActions(state) {
           const action = document.getElementById('actionArea');
           const isReadyState = [UI_STATES.READY_WITH_ORDERS, UI_STATES.CONFIRMING_READY, UI_STATES.SUBMITTING_READY].includes(state.uiState);
-          const canOpenConfirm = isReadyState && !!state.current;
+          const canOpenConfirm = isReadyState && !!state.current && state.viewMode !== 'SIDES';
           action.innerHTML = `
             ${canOpenConfirm ? UIComponents.primaryAction(state) : ''}
             ${UIComponents.secondaryAction()}
@@ -413,6 +538,123 @@
       };
 
       const ChekeoActions = {
+        getSideTypeLabel(rawSides) {
+          const value = String(rawSides || '').toUpperCase();
+          if (!value) return 'Sin tipo';
+          if (value.includes('AROS')) return 'Aros';
+          if (value.includes('LIMON')) return 'Papas limón';
+          if (value.includes('ESPECIALES')) return 'Papas especiales';
+          if (value.includes('PAPAS') || value.includes('FRIES')) return 'Papas';
+          return 'Otros';
+        },
+
+        getSideOrders(state = AppState) {
+          const sourceOrders = state.allOrders || [];
+          return sourceOrders
+            .filter((order) => String(order && order.sides || '').trim())
+            .map((order) => ({
+              order,
+              rawSides: String(order.sides || '').trim(),
+              sideType: this.getSideTypeLabel(order.sides)
+            }))
+            .filter((entry) => state.sideFilter === 'ALL' ? true : entry.sideType === state.sideFilter);
+        },
+
+        getAvailableSideFilters(state = AppState) {
+          const types = Array.from(new Set(
+            (state.allOrders || [])
+              .map((order) => this.getSideTypeLabel(order && order.sides))
+              .filter((type) => type !== 'Sin tipo')
+          ));
+          return [{ label: 'Todas', value: 'ALL' }, ...types.map((type) => ({ label: type, value: type }))];
+        },
+
+        isSideReady(order) {
+          const orderId = String(order && order.id || '').trim();
+          return !!(orderId && AppState.sideReadyMap && AppState.sideReadyMap[orderId]);
+        },
+
+        loadSideReadyMap() {
+          try {
+            const raw = window.localStorage.getItem('chekeo_side_ready_map');
+            const parsed = raw ? JSON.parse(raw) : {};
+            AppState.sideReadyMap = parsed && typeof parsed === 'object' ? parsed : {};
+          } catch (_) {
+            AppState.sideReadyMap = {};
+          }
+        },
+
+        saveSideReadyMap() {
+          try {
+            window.localStorage.setItem('chekeo_side_ready_map', JSON.stringify(AppState.sideReadyMap || {}));
+          } catch (_) {}
+        },
+
+        markSideReady(orderId) {
+          const cleanId = String(orderId || '').trim();
+          if (!cleanId) return;
+          AppState.sideReadyMap[cleanId] = true;
+          this.saveSideReadyMap();
+          UIStateMachine.transition(AppState.uiState, { sideReadyMap: AppState.sideReadyMap });
+          this.showToast(`Guarnición lista para ${cleanId}`);
+        },
+
+        toggleViewMode() {
+          const nextMode = AppState.viewMode === 'SIDES' ? 'ORDERS' : 'SIDES';
+          const hasSides = this.getSideOrders(AppState).length > 0;
+          const hasOrders = (AppState.orders || []).length > 0;
+          const nextState = nextMode === 'SIDES'
+            ? (hasSides ? UI_STATES.READY_WITH_ORDERS : UI_STATES.READY_EMPTY)
+            : (hasOrders ? UI_STATES.READY_WITH_ORDERS : UI_STATES.READY_EMPTY);
+          UIStateMachine.transition(nextState, { viewMode: nextMode });
+        },
+
+        applySideFilter(nextFilter) {
+          const available = this.getAvailableSideFilters(AppState).map((option) => option.value);
+          const filter = available.includes(nextFilter) ? nextFilter : 'ALL';
+          const sideCount = this.getSideOrders({ ...AppState, sideFilter: filter }).length;
+          UIStateMachine.transition(sideCount ? UI_STATES.READY_WITH_ORDERS : UI_STATES.READY_EMPTY, { sideFilter: filter });
+        },
+
+        getOrderBurgerProfile(order) {
+          const source = [
+            order && order.burgerSummary,
+            order && order.exactOrderText,
+            order && order.extras
+          ].filter(Boolean).join(' ').toUpperCase();
+          const hasOG = /\bOG\b/.test(source);
+          const hasBBQ = /\bBBQ\b/.test(source);
+          return { hasOG, hasBBQ };
+        },
+
+        orderMatchesFilter(order, filter) {
+          if (filter === 'ALL') return true;
+          const profile = this.getOrderBurgerProfile(order);
+          if (filter === 'MIX') return profile.hasOG && profile.hasBBQ;
+          if (filter === 'OG') return profile.hasOG;
+          if (filter === 'BBQ') return profile.hasBBQ;
+          return true;
+        },
+
+        applyBurgerFilter(nextFilter) {
+          const filter = ['ALL', 'OG', 'BBQ', 'MIX'].includes(nextFilter) ? nextFilter : AppState.burgerFilter;
+          const filteredOrders = (AppState.allOrders || []).filter((order) => this.orderMatchesFilter(order, filter));
+          const sideCount = this.getSideOrders(AppState).length;
+          const nextState = AppState.viewMode === 'SIDES'
+            ? (sideCount ? UI_STATES.READY_WITH_ORDERS : UI_STATES.READY_EMPTY)
+            : (filteredOrders.length ? UI_STATES.READY_WITH_ORDERS : UI_STATES.READY_EMPTY);
+          UIStateMachine.transition(nextState, {
+            burgerFilter: filter,
+            orders: filteredOrders,
+            current: filteredOrders[0] || null,
+            next: filteredOrders[1] || null,
+            pendingOrderId: null,
+            viewMode: AppState.viewMode,
+            sideFilter: AppState.sideFilter,
+            sideReadyMap: AppState.sideReadyMap
+          });
+        },
+
         init() {
           document.addEventListener('click', (event) => {
             const actionEl = event.target.closest('[data-action]');
@@ -423,6 +665,17 @@
             if (action === 'close-confirm') this.closeConfirm();
             if (action === 'confirm-ready') this.confirmReady();
             if (action === 'reload-orders') this.loadOrders();
+            if (action === 'set-view-scale') this.setViewScale(event.target && event.target.value);
+            if (action === 'set-burger-filter') this.applyBurgerFilter(actionEl.dataset.filter);
+            if (action === 'toggle-view-mode') this.toggleViewMode();
+            if (action === 'set-side-filter') this.applySideFilter(actionEl.dataset.filter);
+            if (action === 'mark-side-ready') this.markSideReady(actionEl.dataset.orderId);
+          });
+
+          document.addEventListener('input', (event) => {
+            const input = event.target.closest('[data-action="set-view-scale"]');
+            if (!input) return;
+            this.setViewScale(input.value);
           });
 
           document.addEventListener('keydown', (event) => {
@@ -430,7 +683,28 @@
           });
 
           UIStateMachine.transition(UI_STATES.LOADING);
+          this.loadViewScale();
+          this.loadSideReadyMap();
           this.loadOrders();
+        },
+
+        loadViewScale() {
+          try {
+            const raw = window.localStorage.getItem('chekeo_view_scale');
+            const parsed = Number(raw);
+            if (Number.isFinite(parsed)) {
+              AppState.viewScale = Math.min(10, Math.max(1, Math.round(parsed)));
+            }
+          } catch (_) {}
+        },
+
+        setViewScale(rawValue) {
+          const scale = Math.min(10, Math.max(1, Math.round(Number(rawValue) || 1)));
+          if (scale === AppState.viewScale) return;
+          try {
+            window.localStorage.setItem('chekeo_view_scale', String(scale));
+          } catch (_) {}
+          UIStateMachine.transition(AppState.uiState, { viewScale: scale });
         },
 
         async loadOrders() {
@@ -438,14 +712,8 @@
           try {
             const result = await ChekeoBridge.getOrders();
             const orders = (result && result.orders) || [];
-            const nextState = orders.length ? UI_STATES.READY_WITH_ORDERS : UI_STATES.READY_EMPTY;
-            UIStateMachine.transition(nextState, {
-              orders,
-              current: orders[0] || null,
-              next: orders[1] || null,
-              pendingOrderId: null,
-              errorMessage: ''
-            });
+            UIStateMachine.transition(UI_STATES.LOADING, { allOrders: orders, errorMessage: '' });
+            this.applyBurgerFilter(AppState.burgerFilter);
           } catch (err) {
             UIStateMachine.transition(UI_STATES.ERROR, {
               errorMessage: err && err.message ? err.message : 'Error al cargar pedidos'
