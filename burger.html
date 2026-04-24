@@ -69,6 +69,10 @@
       .ticket-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:flex-start;font-size:calc(15px * var(--ticket-scale));color:#111827}
       .ticket-item-name{white-space:pre-wrap;word-break:break-word}
       .ticket-item-amount{font-family:"Courier New",monospace;font-weight:700;white-space:nowrap;font-size:calc(15px * var(--ticket-scale))}
+      .ticket-section{margin:6px 0}
+      .ticket-section-title{font-size:calc(14px * var(--ticket-scale));font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#111827;margin-bottom:2px}
+      .ticket-section-body{display:grid;gap:2px}
+      .ticket-list-item{font-size:calc(15px * var(--ticket-scale));color:#111827;white-space:pre-wrap;word-break:break-word}
       .ticket-total{margin-top:12px;padding:10px;border:1px dashed #111827;border-radius:8px;background:#f9fafb}
       .ticket-total-row{display:flex;justify-content:space-between;gap:10px;font-size:calc(20px * var(--ticket-scale));font-weight:700;color:#111827}
       .ticket-payment{margin-top:6px;font-size:calc(15px * var(--ticket-scale));font-weight:700;color:#374151;text-transform:uppercase}
@@ -247,6 +251,12 @@
         escapeHtml(value) { return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); },
         escapeClass(value) { return String(value || '').replace(/[^A-Za-z0-9_-]/g, '-'); },
         shorten(text, max) { const value = String(text || ''); return value.length > max ? value.slice(0, max - 1) + '…' : value; },
+        collectLines(text) {
+          return String(text || '')
+            .split('\n')
+            .map((line) => line.replace(/^[•\-\*]\s*/, '').trim())
+            .filter(Boolean);
+        },
         sectionBlock(title, body) { return `<section class="section"><div class="section-title">${this.escapeHtml(title)}</div><div class="section-body">${this.escapeHtml(body || '')}</div></section>`; },
         badge(label, type='') { return `<span class="badge ${type}">${this.escapeHtml(label)}</span>`; }
       };
@@ -332,14 +342,19 @@
           if (order.confirmed === 'Si') badges.push(ViewUtils.badge('Confirmado', 'ok'));
           if (order.paid === 'Si') badges.push(ViewUtils.badge('Pagado', 'ok'));
 
-          const sections = order.specialCase
-            ? [ViewUtils.sectionBlock('Orden exacta', order.exactOrderText || 'Sin texto exacto')]
-            : [
-                ViewUtils.sectionBlock('Burgers', order.burgerSummary || 'Sin detalle'),
-                order.extras ? ViewUtils.sectionBlock('Extras / Detalles', order.extras) : ''
-              ];
+          const sections = [];
+          if (order.specialCase) {
+            sections.push(ViewUtils.sectionBlock('Orden exacta', order.exactOrderText || 'Sin texto exacto'));
+          } else {
+            const burgerLines = ViewUtils.collectLines(order.burgerSummary || '');
+            const extraLines = ViewUtils.collectLines(order.extras || '');
+            const sideLines = ViewUtils.collectLines(order.sides || '');
 
-          if (order.sides) sections.push(ViewUtils.sectionBlock('Guarnición', order.sides));
+            if (burgerLines.length) sections.push(ViewUtils.sectionBlock('Burgers', burgerLines.join('\n')));
+            if (extraLines.length) sections.push(ViewUtils.sectionBlock('Extras', extraLines.map((line) => `- ${line}`).join('\n')));
+            if (sideLines.length) sections.push(ViewUtils.sectionBlock('Guarnición', sideLines.join('\n')));
+            if (!sections.length) sections.push(ViewUtils.sectionBlock('Burgers', 'Sin detalle'));
+          }
 
           return `
             <article class="card current" id="currentCard">
@@ -366,19 +381,47 @@
             return { name: match[1].trim(), amount: match[2].trim() };
           };
 
-          const collectLines = (text) => String(text || '')
-            .split('\n')
-            .map((line) => line.replace(/^[•\-\*]\s*/, '').trim())
-            .filter(Boolean);
+          const renderTicketList = (lines, options = {}) => {
+            const prefix = options.prefix || '';
+            return lines.map((line) => `<div class="ticket-list-item">${ViewUtils.escapeHtml(prefix + line)}</div>`).join('');
+          };
+          const renderTicketSection = (title, lines, options = {}) => {
+            if (!lines.length) return '';
+            return `
+              <section class="ticket-section">
+                <div class="ticket-section-title">${ViewUtils.escapeHtml(title)}</div>
+                <div class="ticket-section-body">${renderTicketList(lines, options)}</div>
+              </section>
+            `;
+          };
 
-          const itemLines = order.specialCase
-            ? collectLines(order.exactOrderText || '')
-            : [
-                ...collectLines(order.burgerSummary || ''),
-                ...collectLines(order.extras || ''),
-                ...collectLines(order.sides || '')
-              ];
-          const items = (itemLines.length ? itemLines : ['Sin detalle']).map(splitAmount).filter(Boolean);
+          const exactLines = ViewUtils.collectLines(order.exactOrderText || '');
+          const burgerLines = ViewUtils.collectLines(order.burgerSummary || '');
+          const extraLines = ViewUtils.collectLines(order.extras || '');
+          const sideLines = ViewUtils.collectLines(order.sides || '');
+          const specialCaseItems = (exactLines.length ? exactLines : ['Sin detalle']).map(splitAmount).filter(Boolean);
+
+          const ticketBody = order.specialCase
+            ? `
+              <div class="ticket-items">
+                ${specialCaseItems.map((item) => `
+                  <div class="ticket-item">
+                    <div class="ticket-item-name">${ViewUtils.escapeHtml(item.name)}</div>
+                    <div class="ticket-item-amount">${ViewUtils.escapeHtml(item.amount)}</div>
+                  </div>
+                `).join('')}
+              </div>
+            `
+            : `
+              <div class="ticket-items">
+                ${
+                  renderTicketSection('BURGERS', burgerLines) ||
+                  (!extraLines.length && !sideLines.length ? renderTicketSection('BURGERS', ['Sin detalle']) : '')
+                }
+                ${renderTicketSection('EXTRAS', extraLines, { prefix: '- ' })}
+                ${renderTicketSection('GUARNICIÓN', sideLines)}
+              </div>
+            `;
 
           const storeName = order.storeName || 'CHEKEO BURGER';
           const addressLine = order.storeAddress || '';
@@ -398,14 +441,7 @@
               <div class="ticket-sub" style="text-align:center;">Ticket: ${ViewUtils.escapeHtml(ticketCode)}</div>
               <div class="ticket-sub" style="text-align:center;">${ViewUtils.escapeHtml(customerLine)}</div>
               <div class="ticket-sep">------------------------------</div>
-              <div class="ticket-items">
-                ${items.map((item) => `
-                  <div class="ticket-item">
-                    <div class="ticket-item-name">${ViewUtils.escapeHtml(item.name)}</div>
-                    <div class="ticket-item-amount">${ViewUtils.escapeHtml(item.amount)}</div>
-                  </div>
-                `).join('')}
-              </div>
+              ${ticketBody}
               <div class="ticket-sep">------------------------------</div>
               <div class="ticket-total">
                 <div class="ticket-total-row">
