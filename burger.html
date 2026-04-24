@@ -77,6 +77,9 @@
       .view-controls-label{font-size:12px;font-weight:700;color:#4b5563}
       .view-scale{width:100%;max-width:260px}
       .view-scale-value{font-size:12px;font-weight:700;color:#111827;background:#e5e7eb;border-radius:999px;padding:4px 10px}
+      .filter-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+      .filter-btn{border:1px solid #d1d5db;background:#fff;color:#1f2937;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer}
+      .filter-btn.active{background:#111827;color:#fff;border-color:#111827}
 
       .empty{text-align:center;padding:24px 18px}.empty h3{margin:0 0 8px;font-size:22px;color:#111827}.empty p{margin:0;color:#6b7280;line-height:1.4}
       .error{padding:16px;border:1px solid #fecaca;background:#fff5f5;border-radius:12px;color:#7f1d1d}
@@ -203,12 +206,14 @@
 
       const AppState = {
         uiState: UI_STATES.LOADING,
+        allOrders: [],
         orders: [],
         current: null,
         next: null,
         pendingOrderId: null,
         errorMessage: '',
-        viewScale: 1
+        viewScale: 1,
+        burgerFilter: 'ALL'
       };
 
       const ChekeoBridge = {
@@ -234,6 +239,12 @@
 
       const UIComponents = {
         appHeader(state) {
+          const filterOptions = [
+            { label: 'Todos', value: 'ALL' },
+            { label: 'OG', value: 'OG' },
+            { label: 'BBQ', value: 'BBQ' },
+            { label: 'Mix', value: 'MIX' }
+          ];
           return `
             <div>
               <div class="title">Chekeo</div>
@@ -252,18 +263,35 @@
                 />
                 <span class="view-scale-value">${state.viewScale}x</span>
               </div>
+              <div class="filter-controls">
+                ${filterOptions.map((option) => `
+                  <button
+                    class="filter-btn ${state.burgerFilter === option.value ? 'active' : ''}"
+                    data-action="set-burger-filter"
+                    data-filter="${option.value}"
+                    type="button"
+                  >${option.label}</button>
+                `).join('')}
+              </div>
             </div>
             <div class="queue-counter">${state.orders.length}</div>
           `;
         },
         queueSummary(state) {
+          const filterLabelMap = {
+            ALL: 'Todas',
+            OG: 'OG',
+            BBQ: 'BBQ',
+            MIX: 'Mix'
+          };
+          const activeFilterLabel = filterLabelMap[state.burgerFilter] || 'Todas';
           const map = {
             [UI_STATES.LOADING]: ['Estado', 'Cargando pedidos...'],
             [UI_STATES.READY_EMPTY]: ['Estado', 'Sin órdenes activas'],
             [UI_STATES.ERROR]: ['Estado', 'Error de carga'],
             [UI_STATES.CONFIRMING_READY]: ['Acción', 'Confirmar pedido LISTO'],
             [UI_STATES.SUBMITTING_READY]: ['Estado', 'Marcando pedido como LISTO...'],
-            [UI_STATES.READY_WITH_ORDERS]: ['Cola activa', `${state.orders.length} pedido(s) en flujo`]
+            [UI_STATES.READY_WITH_ORDERS]: ['Cola activa', `${state.orders.length} pedido(s) · filtro ${activeFilterLabel}`]
           };
           const [title, value] = map[state.uiState] || ['Estado', 'Listo'];
           return `<div class="status-title">${title}</div><div class="status-value">${value}</div>`;
@@ -443,6 +471,39 @@
       };
 
       const ChekeoActions = {
+        getOrderBurgerProfile(order) {
+          const source = [
+            order && order.burgerSummary,
+            order && order.exactOrderText,
+            order && order.extras
+          ].filter(Boolean).join(' ').toUpperCase();
+          const hasOG = /\bOG\b/.test(source);
+          const hasBBQ = /\bBBQ\b/.test(source);
+          return { hasOG, hasBBQ };
+        },
+
+        orderMatchesFilter(order, filter) {
+          if (filter === 'ALL') return true;
+          const profile = this.getOrderBurgerProfile(order);
+          if (filter === 'MIX') return profile.hasOG && profile.hasBBQ;
+          if (filter === 'OG') return profile.hasOG;
+          if (filter === 'BBQ') return profile.hasBBQ;
+          return true;
+        },
+
+        applyBurgerFilter(nextFilter) {
+          const filter = ['ALL', 'OG', 'BBQ', 'MIX'].includes(nextFilter) ? nextFilter : AppState.burgerFilter;
+          const filteredOrders = (AppState.allOrders || []).filter((order) => this.orderMatchesFilter(order, filter));
+          const nextState = filteredOrders.length ? UI_STATES.READY_WITH_ORDERS : UI_STATES.READY_EMPTY;
+          UIStateMachine.transition(nextState, {
+            burgerFilter: filter,
+            orders: filteredOrders,
+            current: filteredOrders[0] || null,
+            next: filteredOrders[1] || null,
+            pendingOrderId: null
+          });
+        },
+
         init() {
           document.addEventListener('click', (event) => {
             const actionEl = event.target.closest('[data-action]');
@@ -454,6 +515,7 @@
             if (action === 'confirm-ready') this.confirmReady();
             if (action === 'reload-orders') this.loadOrders();
             if (action === 'set-view-scale') this.setViewScale(event.target && event.target.value);
+            if (action === 'set-burger-filter') this.applyBurgerFilter(actionEl.dataset.filter);
           });
 
           document.addEventListener('input', (event) => {
@@ -495,14 +557,8 @@
           try {
             const result = await ChekeoBridge.getOrders();
             const orders = (result && result.orders) || [];
-            const nextState = orders.length ? UI_STATES.READY_WITH_ORDERS : UI_STATES.READY_EMPTY;
-            UIStateMachine.transition(nextState, {
-              orders,
-              current: orders[0] || null,
-              next: orders[1] || null,
-              pendingOrderId: null,
-              errorMessage: ''
-            });
+            UIStateMachine.transition(UI_STATES.LOADING, { allOrders: orders, errorMessage: '' });
+            this.applyBurgerFilter(AppState.burgerFilter);
           } catch (err) {
             UIStateMachine.transition(UI_STATES.ERROR, {
               errorMessage: err && err.message ? err.message : 'Error al cargar pedidos'
