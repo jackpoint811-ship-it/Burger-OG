@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root{
+        --bg:#0f1117;
+        --panel:#ffffff;
+        --panel-soft:#f5f7fb;
+        --ink:#1e2430;
+        --muted:#637083;
+        --line:#dfe4ec;
+        --brand:#1f8f48;
+        --brand-dark:#146635;
+        --accent:#1d4ed8;
+      }
+      *{box-sizing:border-box}
+      body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(180deg,#0d1016 0%,#171d26 100%);color:var(--ink)}
+      .app{max-width:460px;margin:0 auto;min-height:100vh;padding:10px 10px calc(16px + env(safe-area-inset-bottom));display:grid;grid-template-rows:auto auto 1fr auto;gap:10px}
+      .panel{background:var(--panel);border-radius:16px;border:1px solid rgba(0,0,0,.06);box-shadow:0 10px 24px rgba(0,0,0,.18)}
+      .header{padding:12px}
+      .title{font-size:21px;font-weight:700;color:#0f172a}
+      .subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+      .queue{margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--panel-soft);font-size:12px;font-weight:700;color:#334155}
+
+      .order-picker{padding:10px}
+      .select{width:100%;padding:12px;border-radius:10px;border:1px solid #cfd7e4;font-size:15px;background:#fff}
+
+      .content{padding:12px;display:grid;gap:10px}
+      .label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:#6b7280;margin-bottom:4px}
+      .value{font-size:15px;line-height:1.3;color:#111827;white-space:pre-wrap;word-break:break-word}
+      .card{padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff}
+      .split{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+      .chip{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;background:#eef2ff;color:#243b8f;font-size:12px;font-weight:700}
+      .chip.warn{background:#fff7d1;color:#8b6a00}
+
+      .manual-box{padding:10px;border-radius:12px;border:1px dashed #d4af37;background:#fffbeb;display:grid;gap:10px}
+      .manual-title{font-size:15px;font-weight:700;color:#7a5a00}
+      .extras-grid{display:grid;gap:8px}
+      .extra-row{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center}
+      .extra-main,.extra-minus{border:1px solid #cad3df;background:#fff;border-radius:10px;min-height:44px;padding:8px 10px;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s,color .2s,transform .12s}
+      .extra-main.flash{background:#dcfce7;color:#166534;border-color:#86efac;transform:scale(.98)}
+      .extra-minus{width:46px;padding:0}
+      .count{font-size:12px;color:#166534;font-weight:700}
+      .total-input{width:100%;padding:12px;border-radius:10px;border:1px solid #cfd7e4;font-size:18px;font-weight:700}
+
+      .ticket-preview-wrap{display:flex;justify-content:center;padding:12px;background:#e8ebf0;border-radius:12px;border:1px solid #d8dde8}
+      .ticket{
+        width:300px;
+        background:#fff;
+        border:1px solid #e6ebf3;
+        border-radius:10px;
+        font-family:"Courier New",monospace;
+        font-size:13px;
+        color:#161616;
+        line-height:1.28;
+        padding:10px 12px;
+      }
+      .ticket h3{margin:0;text-align:center;font-size:16px;letter-spacing:.06em}
+      .sep{margin:6px 0;color:#4b5563;white-space:nowrap;overflow:hidden}
+      .ticket .item{margin:2px 0;white-space:pre-wrap;word-break:break-word}
+      .ticket .total{margin-top:8px;padding-top:8px;border-top:1px solid #cfd5de;font-size:16px;font-weight:700;display:flex;justify-content:space-between}
+      .warn-msg{font-size:12px;color:#b91c1c;font-weight:700}
+
+      .actions{display:grid;gap:8px}
+      .btn{border:0;border-radius:12px;min-height:46px;padding:12px;font-size:15px;font-weight:700;cursor:pointer}
+      .btn.primary{background:var(--brand);color:#fff}
+      .btn.primary:hover{background:var(--brand-dark)}
+      .btn.secondary{background:#e5e7eb;color:#111827}
+      .btn.blue{background:var(--accent);color:#fff}
+      .btn:disabled{opacity:.55;cursor:not-allowed}
+
+      .toast{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 12px;border-radius:999px;font-size:12px;display:none;z-index:30}
+      .toast.show{display:block}
+      .loading{position:fixed;right:10px;top:10px;background:#111827;color:#fff;padding:8px 12px;border-radius:999px;font-size:12px;display:none;z-index:30}
+      .loading.show{display:block}
+    </style>
+  </head>
+  <body>
+    <div class="loading" id="loading">Cargando…</div>
+    <div class="toast" id="toast"></div>
+
+    <main class="app">
+      <header class="panel header" id="header"></header>
+      <section class="panel order-picker" id="picker"></section>
+      <section class="panel content" id="content"></section>
+      <footer class="panel" style="padding:10px;" id="actions"></footer>
+    </main>
+
+    <script>
+      const EXTRA_ITEMS = ['Pepinillos','Queso americano','Queso manchego','Tocino','Catsup','Mostaza','Tomate'];
+
+      const App = {
+        loading: true,
+        orders: [],
+        selectedId: '',
+        selected: null,
+        extrasManual: {},
+        finalTotal: '',
+        generatedImage: '',
+        ticketMessage: '',
+        sentMap: {}
+      };
+
+      const Bridge = {
+        getOrders() {
+          return new Promise((resolve, reject) => {
+            google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getChekeoOrders();
+          });
+        }
+      };
+
+      const Utils = {
+        escapeHtml(v) { return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); },
+        collectLines(v) {
+          return String(v || '')
+            .split('\n')
+            .map((line) => line.replace(/^[•\-*]\s*/, '').trim())
+            .filter(Boolean);
+        },
+        isManual(order) {
+          if (!order) return false;
+          const special = String(order.specialCase || '').toLowerCase();
+          const review = String(order.manualReview || '').toLowerCase();
+          return order.specialCase === true || order.manualReview === true || special === 'true' || review === 'true' || special === 'si' || review === 'si';
+        },
+        parseMoney(raw) {
+          const str = String(raw || '').trim();
+          if (!str) return '';
+          return str;
+        },
+        qtyBadge(order) {
+          const og = Number(order && order.qtyOg || 0);
+          const bbq = Number(order && order.qtyBbq || 0);
+          return `OG ${og} · BBQ ${bbq}`;
+        }
+      };
+
+      const Renderer = {
+        render() {
+          this.renderHeader();
+          this.renderPicker();
+          this.renderContent();
+          this.renderActions();
+          document.getElementById('loading').classList.toggle('show', App.loading);
+        },
+        renderHeader() {
+          const manual = Utils.isManual(App.selected);
+          const total = App.orders.length;
+          document.getElementById('header').innerHTML = `
+            <div class="title">Tickets cliente</div>
+            <div class="subtitle">Módulo separado de cocina · imagen PNG</div>
+            <div class="queue">${total} pedido(s) activos · ${manual ? 'Modo manual activo' : 'Modo automático'}</div>
+          `;
+        },
+        renderPicker() {
+          const options = App.orders.map((order) => {
+            const manual = Utils.isManual(order);
+            return `<option value="${Utils.escapeHtml(order.id)}" ${order.id === App.selectedId ? 'selected' : ''}>${Utils.escapeHtml(order.name || 'Sin nombre')} · ${Utils.escapeHtml(order.id)}${manual ? ' · MANUAL' : ''}</option>`;
+          }).join('');
+          document.getElementById('picker').innerHTML = `
+            <div class="label">Seleccionar pedido</div>
+            <select class="select" data-action="select-order">
+              ${options || '<option value="">Sin pedidos</option>'}
+            </select>
+          `;
+        },
+        renderContent() {
+          const container = document.getElementById('content');
+          const order = App.selected;
+          if (!order) {
+            container.innerHTML = '<div class="value">No hay pedido seleccionado.</div>';
+            return;
+          }
+
+          const manual = Utils.isManual(order);
+          const extrasLines = Object.entries(App.extrasManual).filter(([,count]) => count > 0).map(([name,count]) => `${name} x${count}`);
+          const baseLines = Utils.collectLines(order.burgerSummary || order.exactOrderText || 'Sin detalle');
+          const sideLines = Utils.collectLines(order.sides || 'Sin guarnición');
+
+          container.innerHTML = `
+            <div class="split">
+              <div class="card">
+                <div class="label">Cliente</div>
+                <div class="value">${Utils.escapeHtml(order.name || 'Sin nombre')}</div>
+              </div>
+              <div class="card">
+                <div class="label">Detectado</div>
+                <div class="value">${Utils.escapeHtml(Utils.qtyBadge(order))}</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="label">Guarniciones detectadas</div>
+              <div class="value">${Utils.escapeHtml(sideLines.join('\n'))}</div>
+            </div>
+            <div class="card">
+              <div class="label">Texto exacto del pedido</div>
+              <div class="value">${Utils.escapeHtml(order.exactOrderText || 'Sin texto')}</div>
+            </div>
+            <div class="card">
+              <div class="label">Total detectado</div>
+              <div class="value">${Utils.escapeHtml(order.totalDisplay || 'No detectado')}</div>
+            </div>
+            ${manual ? this.manualSection(order, extrasLines) : '<div class="chip">Generación automática habilitada</div>'}
+            <div class="card">
+              <div class="label">Total final (obligatorio)</div>
+              <input class="total-input" data-action="set-final-total" placeholder="$0.00" value="${Utils.escapeHtml(App.finalTotal)}" />
+              ${!App.finalTotal.trim() ? '<div class="warn-msg">Debes confirmar el total final para generar imagen.</div>' : ''}
+            </div>
+            <div class="card">
+              <div class="label">Resumen para ticket</div>
+              <div class="value">Pedido base detectado:\n${Utils.escapeHtml(baseLines.join('\n') || 'Sin detalle')}\n\nTexto exacto:\n${Utils.escapeHtml(order.exactOrderText || 'Sin texto')}\n\nExtras confirmados manualmente:\n${Utils.escapeHtml(extrasLines.join('\n') || 'Sin extras')}\n\nGuarnición:\n${Utils.escapeHtml(sideLines.join('\n') || 'Sin guarnición')}\n\nTotal final:\n${Utils.escapeHtml(App.finalTotal || 'Pendiente')}</div>
+            </div>
+            ${App.generatedImage ? this.ticketPreview() : ''}
+          `;
+        },
+        manualSection(order, extrasLines) {
+          return `
+            <section class="manual-box">
+              <div class="manual-title">Confirmación manual</div>
+              <div class="chip warn">Caso especial / revisar manual detectado</div>
+              <div class="label">Extras manuales</div>
+              <div class="extras-grid">
+                ${EXTRA_ITEMS.map((item) => {
+                  const count = Number(App.extrasManual[item] || 0);
+                  return `
+                    <div class="extra-row">
+                      <button class="extra-main" data-action="add-extra" data-item="${Utils.escapeHtml(item)}">${Utils.escapeHtml(item)}${count > 0 ? ` x${count}` : ''}</button>
+                      <button class="extra-minus" data-action="remove-extra" data-item="${Utils.escapeHtml(item)}">−</button>
+                      <span class="count">${count > 0 ? `x${count}` : ''}</span>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+              <div class="value">Extras confirmados: ${Utils.escapeHtml(extrasLines.join(', ') || 'Ninguno')}</div>
+            </section>
+          `;
+        },
+        ticketPreview() {
+          return `
+            <div class="ticket-preview-wrap">
+              <img src="${App.generatedImage}" alt="Ticket generado" style="width:300px;max-width:100%;border-radius:10px;border:1px solid #d1d5db;" />
+            </div>
+          `;
+        },
+        renderActions() {
+          const order = App.selected;
+          const canGenerate = !!order && !!App.finalTotal.trim();
+          const sent = order && App.sentMap[order.id];
+          document.getElementById('actions').innerHTML = `
+            <div class="actions">
+              <button class="btn primary" data-action="generate-image" ${canGenerate ? '' : 'disabled'}>Generar imagen</button>
+              <button class="btn secondary" data-action="download-image" ${App.generatedImage ? '' : 'disabled'}>Descargar imagen</button>
+              <button class="btn secondary" data-action="copy-message" ${App.ticketMessage ? '' : 'disabled'}>Copiar mensaje</button>
+              <button class="btn blue" data-action="open-whatsapp" ${App.ticketMessage ? '' : 'disabled'}>Abrir WhatsApp</button>
+              <button class="btn secondary" data-action="regenerate-ticket" ${order ? '' : 'disabled'}>Regenerar ticket</button>
+              <button class="btn ${sent ? 'secondary' : 'primary'}" data-action="mark-sent" ${order ? '' : 'disabled'}>${sent ? 'Enviado ✓' : 'Marcar como enviado'}</button>
+            </div>
+          `;
+        }
+      };
+
+      const Actions = {
+        init() {
+          this.loadSentMap();
+          document.addEventListener('change', (event) => {
+            const actionEl = event.target.closest('[data-action]');
+            if (!actionEl) return;
+            if (actionEl.dataset.action === 'select-order') {
+              this.selectOrder(actionEl.value);
+            }
+          });
+
+          document.addEventListener('input', (event) => {
+            const input = event.target.closest('[data-action="set-final-total"]');
+            if (!input) return;
+            App.finalTotal = input.value;
+            Renderer.render();
+          });
+
+          document.addEventListener('click', (event) => {
+            const actionEl = event.target.closest('[data-action]');
+            if (!actionEl) return;
+            const action = actionEl.dataset.action;
+            if (action === 'add-extra') this.addExtra(actionEl.dataset.item, actionEl);
+            if (action === 'remove-extra') this.removeExtra(actionEl.dataset.item);
+            if (action === 'generate-image') this.generateImage();
+            if (action === 'download-image') this.downloadImage();
+            if (action === 'copy-message') this.copyMessage();
+            if (action === 'open-whatsapp') this.openWhatsApp();
+            if (action === 'regenerate-ticket') this.regenerate();
+            if (action === 'mark-sent') this.markSent();
+          });
+
+          this.loadOrders();
+        },
+
+        async loadOrders() {
+          App.loading = true;
+          Renderer.render();
+          try {
+            const result = await Bridge.getOrders();
+            App.orders = (result && result.orders) || [];
+            const first = App.orders[0] || null;
+            App.selectedId = first ? first.id : '';
+            this.applySelected();
+          } catch (err) {
+            this.toast(err && err.message ? err.message : 'Error al cargar pedidos');
+          }
+          App.loading = false;
+          Renderer.render();
+          if (App.selected && !Utils.isManual(App.selected)) {
+            this.generateImage();
+          }
+        },
+
+        applySelected() {
+          App.selected = App.orders.find((o) => o.id === App.selectedId) || null;
+          App.generatedImage = '';
+          App.ticketMessage = '';
+          App.extrasManual = {};
+          App.finalTotal = Utils.parseMoney(App.selected && App.selected.totalDisplay || '');
+          EXTRA_ITEMS.forEach((item) => { App.extrasManual[item] = 0; });
+        },
+
+        selectOrder(orderId) {
+          App.selectedId = orderId;
+          this.applySelected();
+          Renderer.render();
+          if (App.selected && !Utils.isManual(App.selected) && App.finalTotal.trim()) {
+            this.generateImage();
+          }
+        },
+
+        addExtra(name, btn) {
+          const value = Number(App.extrasManual[name] || 0) + 1;
+          App.extrasManual[name] = value;
+          if (btn) {
+            btn.classList.add('flash');
+            setTimeout(() => btn.classList.remove('flash'), 260);
+          }
+          Renderer.render();
+        },
+
+        removeExtra(name) {
+          const current = Number(App.extrasManual[name] || 0);
+          App.extrasManual[name] = Math.max(0, current - 1);
+          Renderer.render();
+        },
+
+        buildSummary(order) {
+          const base = Utils.collectLines(order.burgerSummary || order.exactOrderText || 'Sin detalle');
+          const sides = Utils.collectLines(order.sides || 'Sin guarnición');
+          const extras = Object.entries(App.extrasManual).filter(([,qty]) => qty > 0).map(([item,qty]) => `${item} x${qty}`);
+
+          const lines = [
+            'BURGERS OG',
+            `Cliente: ${order.name || 'Sin nombre'}`,
+            '',
+            'Pedido:',
+            ...(base.length ? base : ['Sin detalle']),
+            '',
+            'Detalles:',
+            order.exactOrderText || 'Sin texto exacto',
+            '',
+            'Extras confirmados:',
+            ...(extras.length ? extras : ['Sin extras']),
+            '',
+            'Guarnición:',
+            ...(sides.length ? sides : ['Sin guarnición']),
+            '',
+            `Total a pagar: ${App.finalTotal}`,
+            '',
+            'Cuenta de banco: 012180015645465369',
+            'Nombre: Yolitzin Zarate Otero',
+            '',
+            '*Si no se envía captura de depósito la orden no será confirmada'
+          ];
+          return { lines, extras };
+        },
+
+        drawTicket(lines) {
+          const width = 360;
+          const lineHeight = 23;
+          const margin = 18;
+          const totalLines = lines.reduce((acc, line) => {
+            const wraps = Math.max(1, Math.ceil(String(line).length / 34));
+            return acc + wraps;
+          }, 0);
+          const height = margin * 2 + totalLines * lineHeight + 20;
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, width, height);
+          ctx.fillStyle = '#111';
+          ctx.font = '18px Courier New';
+
+          let y = margin + 16;
+          lines.forEach((line) => {
+            const text = String(line || '');
+            const chunks = text.match(/.{1,34}/g) || [''];
+            chunks.forEach((chunk) => {
+              ctx.fillText(chunk, margin, y);
+              y += lineHeight;
+            });
+          });
+
+          return canvas.toDataURL('image/png');
+        },
+
+        generateImage() {
+          const order = App.selected;
+          if (!order) return;
+          if (!App.finalTotal.trim()) {
+            this.toast('Confirma el total final para generar la imagen');
+            return;
+          }
+          const summary = this.buildSummary(order);
+          const dataUrl = this.drawTicket(summary.lines);
+          App.generatedImage = dataUrl;
+          App.ticketMessage = summary.lines.join('\n');
+          Renderer.render();
+          this.toast('Ticket PNG generado');
+        },
+
+        downloadImage() {
+          if (!App.generatedImage) return;
+          const order = App.selected || {};
+          const link = document.createElement('a');
+          link.href = App.generatedImage;
+          link.download = `ticket-${(order.id || 'cliente').replace(/\s+/g, '-')}.png`;
+          link.click();
+        },
+
+        async copyMessage() {
+          if (!App.ticketMessage) return;
+          try {
+            await navigator.clipboard.writeText(App.ticketMessage);
+            this.toast('Mensaje copiado');
+          } catch (_) {
+            this.toast('No se pudo copiar el mensaje');
+          }
+        },
+
+        openWhatsApp() {
+          if (!App.ticketMessage) return;
+          const phone = String(App.selected && App.selected.phone || '').replace(/\D/g, '');
+          const text = encodeURIComponent(App.ticketMessage);
+          const base = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+          window.open(base, '_blank');
+        },
+
+        regenerate() {
+          App.generatedImage = '';
+          App.ticketMessage = '';
+          Renderer.render();
+          this.toast('Ticket reiniciado');
+        },
+
+        markSent() {
+          const order = App.selected;
+          if (!order) return;
+          App.sentMap[order.id] = true;
+          try {
+            localStorage.setItem('chekeo_client_tickets_sent', JSON.stringify(App.sentMap));
+          } catch (_) {}
+          Renderer.render();
+          this.toast('Pedido marcado como enviado');
+        },
+
+        loadSentMap() {
+          try {
+            const raw = localStorage.getItem('chekeo_client_tickets_sent');
+            App.sentMap = raw ? JSON.parse(raw) : {};
+          } catch (_) {
+            App.sentMap = {};
+          }
+        },
+
+        toast(message) {
+          const toast = document.getElementById('toast');
+          toast.textContent = message;
+          toast.classList.add('show');
+          clearTimeout(window.__toastTimer);
+          window.__toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+        }
+      };
+
+      document.addEventListener('DOMContentLoaded', () => {
+        Renderer.render();
+        Actions.init();
+      });
+    </script>
+  </body>
+</html>

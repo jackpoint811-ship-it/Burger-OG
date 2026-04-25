@@ -69,6 +69,8 @@ function mapChekeoRowToOrder_(row,index){
     masterRow,
     name:safeTrim_(row[CHEKEO.name]),
     phone:safeTrim_(row[CHEKEO.phone]),
+    qtyOg:Number(row[CHEKEO.qtyOg])||0,
+    qtyBbq:Number(row[CHEKEO.qtyBbq])||0,
     burgerSummary:safeTrim_(row[CHEKEO.burgerSummary]),
     exactOrderText:safeTrim_(row[CHEKEO.exactOrderText]),
     extras:safeTrim_(row[CHEKEO.extras]),
@@ -78,7 +80,12 @@ function mapChekeoRowToOrder_(row,index){
     confirmed:safeTrim_(row[CHEKEO.confirmed]),
     paid:safeTrim_(row[CHEKEO.paid]),
     kitchenStatus:normalizeKitchenStatus_(row[CHEKEO.kitchenStatus]),
-    specialCase:safeTrim_(row[CHEKEO.specialCase]).toUpperCase()==='SI',
-    manualReview:safeTrim_(row[CHEKEO.manualReview]).toUpperCase()==='SI'
+    specialCase:isManualFlag_(row[CHEKEO.specialCase]),
+    manualReview:isManualFlag_(row[CHEKEO.manualReview])
   };
+}
+
+function isManualFlag_(rawValue){
+  const value=safeTrim_(rawValue).toUpperCase();
+  return value==='SI'||value==='TRUE'||value==='1';
 }
