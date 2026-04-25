@@ -24,8 +24,14 @@
       .subtitle{font-size:12px;color:var(--muted);margin-top:2px}
       .queue{margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--panel-soft);font-size:12px;font-weight:700;color:#334155}
 
-      .order-picker{padding:10px}
-      .select{width:100%;padding:12px;border-radius:10px;border:1px solid #cfd7e4;font-size:15px;background:#fff}
+      .search-wrap{padding:10px;display:grid;gap:8px}
+      .search-input{width:100%;padding:12px;border-radius:10px;border:1px solid #cfd7e4;font-size:15px;background:#fff}
+      .results{display:grid;gap:6px;max-height:220px;overflow:auto;padding-bottom:2px}
+      .result-btn{border:1px solid #d7deea;background:#fff;border-radius:10px;padding:10px;text-align:left;cursor:pointer}
+      .result-btn.active{border-color:#1d4ed8;background:#eff6ff}
+      .result-name{font-size:14px;font-weight:700;color:#111827}
+      .result-meta{font-size:12px;color:#64748b;margin-top:2px}
+      .empty{font-size:12px;color:#6b7280;padding:6px 2px}
 
       .content{padding:12px;display:grid;gap:10px}
       .label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:#6b7280;margin-bottom:4px}
@@ -46,21 +52,6 @@
       .total-input{width:100%;padding:12px;border-radius:10px;border:1px solid #cfd7e4;font-size:18px;font-weight:700}
 
       .ticket-preview-wrap{display:flex;justify-content:center;padding:12px;background:#e8ebf0;border-radius:12px;border:1px solid #d8dde8}
-      .ticket{
-        width:300px;
-        background:#fff;
-        border:1px solid #e6ebf3;
-        border-radius:10px;
-        font-family:"Courier New",monospace;
-        font-size:13px;
-        color:#161616;
-        line-height:1.28;
-        padding:10px 12px;
-      }
-      .ticket h3{margin:0;text-align:center;font-size:16px;letter-spacing:.06em}
-      .sep{margin:6px 0;color:#4b5563;white-space:nowrap;overflow:hidden}
-      .ticket .item{margin:2px 0;white-space:pre-wrap;word-break:break-word}
-      .ticket .total{margin-top:8px;padding-top:8px;border-top:1px solid #cfd5de;font-size:16px;font-weight:700;display:flex;justify-content:space-between}
       .warn-msg{font-size:12px;color:#b91c1c;font-weight:700}
 
       .actions{display:grid;gap:8px}
@@ -83,7 +74,7 @@
 
     <main class="app">
       <header class="panel header" id="header"></header>
-      <section class="panel order-picker" id="picker"></section>
+      <section class="panel search-wrap" id="search"></section>
       <section class="panel content" id="content"></section>
       <footer class="panel" style="padding:10px;" id="actions"></footer>
     </main>
@@ -94,6 +85,7 @@
       const App = {
         loading: true,
         orders: [],
+        searchTerm: '',
         selectedId: '',
         selected: null,
         extrasManual: {},
@@ -119,65 +111,97 @@
             .map((line) => line.replace(/^[•\-*]\s*/, '').trim())
             .filter(Boolean);
         },
+        normalize(v) { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); },
         isManual(order) {
           if (!order) return false;
           const special = String(order.specialCase || '').toLowerCase();
           const review = String(order.manualReview || '').toLowerCase();
           return order.specialCase === true || order.manualReview === true || special === 'true' || review === 'true' || special === 'si' || review === 'si';
         },
-        parseMoney(raw) {
-          const str = String(raw || '').trim();
-          if (!str) return '';
-          return str;
-        },
         qtyBadge(order) {
           const og = Number(order && order.qtyOg || 0);
           const bbq = Number(order && order.qtyBbq || 0);
           return `OG ${og} · BBQ ${bbq}`;
+        },
+        parseExtraLineToKnown(line) {
+          const source = this.normalize(line);
+          const item = EXTRA_ITEMS.find((name) => source.includes(this.normalize(name)));
+          if (!item) return null;
+          const qtyMatch = String(line).match(/x\s*(\d+)/i) || String(line).match(/(\d+)/);
+          const qty = qtyMatch ? Math.max(1, Number(qtyMatch[1]) || 1) : 1;
+          return { item, qty };
+        },
+        sanitizeFileName(name) {
+          const raw = String(name || 'cliente').trim().toLowerCase();
+          const clean = raw
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
+          return clean || 'cliente';
         }
       };
 
       const Renderer = {
         render() {
           this.renderHeader();
-          this.renderPicker();
+          this.renderSearch();
           this.renderContent();
           this.renderActions();
           document.getElementById('loading').classList.toggle('show', App.loading);
         },
         renderHeader() {
           const manual = Utils.isManual(App.selected);
-          const total = App.orders.length;
           document.getElementById('header').innerHTML = `
             <div class="title">Tickets cliente</div>
             <div class="subtitle">Módulo separado de cocina · imagen PNG</div>
-            <div class="queue">${total} pedido(s) activos · ${manual ? 'Modo manual activo' : 'Modo automático'}</div>
+            <div class="queue">${App.orders.length} pedido(s) activos · ${manual ? 'Modo manual activo' : 'Modo automático'}</div>
           `;
         },
-        renderPicker() {
-          const options = App.orders.map((order) => {
-            const manual = Utils.isManual(order);
-            return `<option value="${Utils.escapeHtml(order.id)}" ${order.id === App.selectedId ? 'selected' : ''}>${Utils.escapeHtml(order.name || 'Sin nombre')} · ${Utils.escapeHtml(order.id)}${manual ? ' · MANUAL' : ''}</option>`;
-          }).join('');
-          document.getElementById('picker').innerHTML = `
-            <div class="label">Seleccionar pedido</div>
-            <select class="select" data-action="select-order">
-              ${options || '<option value="">Sin pedidos</option>'}
-            </select>
+        getFilteredOrders() {
+          const query = Utils.normalize(App.searchTerm);
+          if (!query) return App.orders;
+          return App.orders.filter((order) => {
+            const name = Utils.normalize(order.name);
+            const phone = Utils.normalize(order.phone);
+            return name.includes(query) || phone.includes(query);
+          });
+        },
+        renderSearch() {
+          const filtered = this.getFilteredOrders();
+          const hasResults = filtered.length > 0;
+          document.getElementById('search').innerHTML = `
+            <div class="label">Buscar pedido</div>
+            <input class="search-input" data-action="search-orders" placeholder="Buscar por nombre o teléfono" value="${Utils.escapeHtml(App.searchTerm)}" />
+            <div class="results">
+              ${hasResults ? filtered.map((order) => {
+                const manual = Utils.isManual(order);
+                return `
+                  <button class="result-btn ${order.id === App.selectedId ? 'active' : ''}" data-action="pick-order" data-id="${Utils.escapeHtml(order.id)}">
+                    <div class="result-name">${Utils.escapeHtml(order.name || 'Sin nombre')}</div>
+                    <div class="result-meta">${Utils.escapeHtml(order.phone || 'Sin teléfono')} · ${manual ? 'Manual' : 'Normal'}</div>
+                  </button>
+                `;
+              }).join('') : '<div class="empty">Sin resultados para la búsqueda.</div>'}
+            </div>
           `;
         },
         renderContent() {
-          const container = document.getElementById('content');
           const order = App.selected;
+          const container = document.getElementById('content');
           if (!order) {
-            container.innerHTML = '<div class="value">No hay pedido seleccionado.</div>';
+            container.innerHTML = '<div class="value">Selecciona un pedido desde la búsqueda.</div>';
             return;
           }
 
           const manual = Utils.isManual(order);
-          const extrasLines = Object.entries(App.extrasManual).filter(([,count]) => count > 0).map(([name,count]) => `${name} x${count}`);
-          const baseLines = Utils.collectLines(order.burgerSummary || order.exactOrderText || 'Sin detalle');
+          const detectedExtras = Utils.collectLines(order.extras || '');
+          const manualExtras = Object.entries(App.extrasManual).filter(([,count]) => count > 0).map(([name,count]) => `${name} x${count}`);
           const sideLines = Utils.collectLines(order.sides || 'Sin guarnición');
+          const baseLines = manual
+            ? [`OG x${Number(order.qtyOg || 0)}`, `BBQ x${Number(order.qtyBbq || 0)}`]
+            : Utils.collectLines(order.burgerSummary || 'Sin detalle');
 
           container.innerHTML = `
             <div class="split">
@@ -195,14 +219,11 @@
               <div class="value">${Utils.escapeHtml(sideLines.join('\n'))}</div>
             </div>
             <div class="card">
-              <div class="label">Texto exacto del pedido</div>
-              <div class="value">${Utils.escapeHtml(order.exactOrderText || 'Sin texto')}</div>
-            </div>
-            <div class="card">
               <div class="label">Total detectado</div>
               <div class="value">${Utils.escapeHtml(order.totalDisplay || 'No detectado')}</div>
             </div>
-            ${manual ? this.manualSection(order, extrasLines) : '<div class="chip">Generación automática habilitada</div>'}
+            ${order.exactOrderText ? `<div class="card"><div class="label">Texto exacto del pedido</div><div class="value">${Utils.escapeHtml(order.exactOrderText)}</div></div>` : ''}
+            ${manual ? this.manualSection(detectedExtras, manualExtras) : this.normalExtrasSection(detectedExtras)}
             <div class="card">
               <div class="label">Total final (obligatorio)</div>
               <input class="total-input" data-action="set-final-total" placeholder="$0.00" value="${Utils.escapeHtml(App.finalTotal)}" />
@@ -210,16 +231,32 @@
             </div>
             <div class="card">
               <div class="label">Resumen para ticket</div>
-              <div class="value">Pedido base detectado:\n${Utils.escapeHtml(baseLines.join('\n') || 'Sin detalle')}\n\nTexto exacto:\n${Utils.escapeHtml(order.exactOrderText || 'Sin texto')}\n\nExtras confirmados manualmente:\n${Utils.escapeHtml(extrasLines.join('\n') || 'Sin extras')}\n\nGuarnición:\n${Utils.escapeHtml(sideLines.join('\n') || 'Sin guarnición')}\n\nTotal final:\n${Utils.escapeHtml(App.finalTotal || 'Pendiente')}</div>
+              <div class="value">${Utils.escapeHtml(this.summaryPreview(order))}</div>
             </div>
-            ${App.generatedImage ? this.ticketPreview() : ''}
+            ${App.generatedImage ? `<div class="ticket-preview-wrap"><img src="${App.generatedImage}" alt="Ticket generado" style="width:300px;max-width:100%;border-radius:10px;border:1px solid #d1d5db;" /></div>` : ''}
           `;
         },
-        manualSection(order, extrasLines) {
+        summaryPreview(order) {
+          const { lines } = Actions.buildSummary(order);
+          return lines.join('\n');
+        },
+        normalExtrasSection(detectedExtras) {
+          return `
+            <div class="card">
+              <div class="label">Extras</div>
+              <div class="value">${Utils.escapeHtml(detectedExtras.join('\n') || 'Sin extras')}</div>
+            </div>
+          `;
+        },
+        manualSection(detectedExtras, manualExtras) {
           return `
             <section class="manual-box">
               <div class="manual-title">Confirmación manual</div>
               <div class="chip warn">Caso especial / revisar manual detectado</div>
+              <div class="card" style="padding:8px;">
+                <div class="label">Extras detectados en Chekeo</div>
+                <div class="value">${Utils.escapeHtml(detectedExtras.join('\n') || 'Sin extras detectados')}</div>
+              </div>
               <div class="label">Extras manuales</div>
               <div class="extras-grid">
                 ${EXTRA_ITEMS.map((item) => {
@@ -233,24 +270,16 @@
                   `;
                 }).join('')}
               </div>
-              <div class="value">Extras confirmados: ${Utils.escapeHtml(extrasLines.join(', ') || 'Ninguno')}</div>
+              <div class="value">Extras confirmados: ${Utils.escapeHtml(manualExtras.join(', ') || 'Ninguno')}</div>
             </section>
-          `;
-        },
-        ticketPreview() {
-          return `
-            <div class="ticket-preview-wrap">
-              <img src="${App.generatedImage}" alt="Ticket generado" style="width:300px;max-width:100%;border-radius:10px;border:1px solid #d1d5db;" />
-            </div>
           `;
         },
         renderActions() {
           const order = App.selected;
-          const canGenerate = !!order && !!App.finalTotal.trim();
           const sent = order && App.sentMap[order.id];
           document.getElementById('actions').innerHTML = `
             <div class="actions">
-              <button class="btn primary" data-action="generate-image" ${canGenerate ? '' : 'disabled'}>Generar imagen</button>
+              <button class="btn primary" data-action="generate-image" ${order && App.finalTotal.trim() ? '' : 'disabled'}>Generar imagen</button>
               <button class="btn secondary" data-action="download-image" ${App.generatedImage ? '' : 'disabled'}>Descargar imagen</button>
               <button class="btn secondary" data-action="copy-message" ${App.ticketMessage ? '' : 'disabled'}>Copiar mensaje</button>
               <button class="btn blue" data-action="open-whatsapp" ${App.ticketMessage ? '' : 'disabled'}>Abrir WhatsApp</button>
@@ -264,25 +293,26 @@
       const Actions = {
         init() {
           this.loadSentMap();
-          document.addEventListener('change', (event) => {
-            const actionEl = event.target.closest('[data-action]');
-            if (!actionEl) return;
-            if (actionEl.dataset.action === 'select-order') {
-              this.selectOrder(actionEl.value);
-            }
-          });
 
           document.addEventListener('input', (event) => {
-            const input = event.target.closest('[data-action="set-final-total"]');
-            if (!input) return;
-            App.finalTotal = input.value;
-            Renderer.render();
+            const search = event.target.closest('[data-action="search-orders"]');
+            if (search) {
+              App.searchTerm = search.value || '';
+              Renderer.render();
+              return;
+            }
+            const total = event.target.closest('[data-action="set-final-total"]');
+            if (total) {
+              App.finalTotal = total.value || '';
+              Renderer.render();
+            }
           });
 
           document.addEventListener('click', (event) => {
             const actionEl = event.target.closest('[data-action]');
             if (!actionEl) return;
             const action = actionEl.dataset.action;
+            if (action === 'pick-order') this.selectOrder(actionEl.dataset.id);
             if (action === 'add-extra') this.addExtra(actionEl.dataset.item, actionEl);
             if (action === 'remove-extra') this.removeExtra(actionEl.dataset.item);
             if (action === 'generate-image') this.generateImage();
@@ -302,15 +332,14 @@
           try {
             const result = await Bridge.getOrders();
             App.orders = (result && result.orders) || [];
-            const first = App.orders[0] || null;
-            App.selectedId = first ? first.id : '';
+            App.selectedId = App.orders[0] ? App.orders[0].id : '';
             this.applySelected();
           } catch (err) {
             this.toast(err && err.message ? err.message : 'Error al cargar pedidos');
           }
           App.loading = false;
           Renderer.render();
-          if (App.selected && !Utils.isManual(App.selected)) {
+          if (App.selected && !Utils.isManual(App.selected) && App.finalTotal.trim()) {
             this.generateImage();
           }
         },
@@ -319,13 +348,22 @@
           App.selected = App.orders.find((o) => o.id === App.selectedId) || null;
           App.generatedImage = '';
           App.ticketMessage = '';
+          App.finalTotal = String(App.selected && App.selected.totalDisplay || '').trim();
           App.extrasManual = {};
-          App.finalTotal = Utils.parseMoney(App.selected && App.selected.totalDisplay || '');
           EXTRA_ITEMS.forEach((item) => { App.extrasManual[item] = 0; });
+
+          if (App.selected && Utils.isManual(App.selected)) {
+            const detected = Utils.collectLines(App.selected.extras || '');
+            detected.forEach((line) => {
+              const parsed = Utils.parseExtraLineToKnown(line);
+              if (!parsed) return;
+              App.extrasManual[parsed.item] = Math.max(0, Number(App.extrasManual[parsed.item] || 0)) + parsed.qty;
+            });
+          }
         },
 
         selectOrder(orderId) {
-          App.selectedId = orderId;
+          App.selectedId = String(orderId || '');
           this.applySelected();
           Renderer.render();
           if (App.selected && !Utils.isManual(App.selected) && App.finalTotal.trim()) {
@@ -334,8 +372,7 @@
         },
 
         addExtra(name, btn) {
-          const value = Number(App.extrasManual[name] || 0) + 1;
-          App.extrasManual[name] = value;
+          App.extrasManual[name] = Number(App.extrasManual[name] || 0) + 1;
           if (btn) {
             btn.classList.add('flash');
             setTimeout(() => btn.classList.remove('flash'), 260);
@@ -344,50 +381,64 @@
         },
 
         removeExtra(name) {
-          const current = Number(App.extrasManual[name] || 0);
-          App.extrasManual[name] = Math.max(0, current - 1);
+          App.extrasManual[name] = Math.max(0, Number(App.extrasManual[name] || 0) - 1);
           Renderer.render();
         },
 
         buildSummary(order) {
-          const base = Utils.collectLines(order.burgerSummary || order.exactOrderText || 'Sin detalle');
+          const manual = Utils.isManual(order);
           const sides = Utils.collectLines(order.sides || 'Sin guarnición');
-          const extras = Object.entries(App.extrasManual).filter(([,qty]) => qty > 0).map(([item,qty]) => `${item} x${qty}`);
+          const finalTotal = App.finalTotal.trim() || String(order.totalDisplay || '').trim() || 'Pendiente';
+          const lines = ['BURGERS OG', `Cliente: ${order.name || 'Sin nombre'}`, ''];
 
-          const lines = [
-            'BURGERS OG',
-            `Cliente: ${order.name || 'Sin nombre'}`,
-            '',
-            'Pedido:',
-            ...(base.length ? base : ['Sin detalle']),
-            '',
-            'Detalles:',
-            order.exactOrderText || 'Sin texto exacto',
-            '',
-            'Extras confirmados:',
-            ...(extras.length ? extras : ['Sin extras']),
-            '',
-            'Guarnición:',
-            ...(sides.length ? sides : ['Sin guarnición']),
-            '',
-            `Total a pagar: ${App.finalTotal}`,
-            '',
-            'Cuenta de banco: 012180015645465369',
-            'Nombre: Yolitzin Zarate Otero',
-            '',
-            '*Si no se envía captura de depósito la orden no será confirmada'
-          ];
-          return { lines, extras };
+          if (manual) {
+            const extrasManual = Object.entries(App.extrasManual).filter(([,qty]) => qty > 0).map(([item,qty]) => `${item} x${qty}`);
+            lines.push('Pedido:');
+            lines.push(`OG x${Number(order.qtyOg || 0)} · BBQ x${Number(order.qtyBbq || 0)}`);
+            if (order.exactOrderText) {
+              lines.push('');
+              lines.push('Detalles:');
+              lines.push(order.exactOrderText);
+            }
+            lines.push('');
+            lines.push('Extras confirmados:');
+            lines.push(...(extrasManual.length ? extrasManual : ['Sin extras']));
+            lines.push('');
+            lines.push('Guarnición:');
+            lines.push(...(sides.length ? sides : ['Sin guarnición']));
+          } else {
+            const burgers = Utils.collectLines(order.burgerSummary || 'Sin detalle');
+            const extras = Utils.collectLines(order.extras || '');
+            lines.push('Pedido:');
+            lines.push(...burgers);
+            if (order.exactOrderText) {
+              lines.push('');
+              lines.push('Detalles:');
+              lines.push(order.exactOrderText);
+            }
+            lines.push('');
+            lines.push('Extras:');
+            lines.push(...(extras.length ? extras : ['Sin extras']));
+            lines.push('');
+            lines.push('Guarnición:');
+            lines.push(...(sides.length ? sides : ['Sin guarnición']));
+          }
+
+          lines.push('');
+          lines.push(`Total a pagar: ${finalTotal}`);
+          lines.push('');
+          lines.push('Cuenta de banco: 012180015645465369');
+          lines.push('Nombre: Yolitzin Zarate Otero');
+          lines.push('');
+          lines.push('*Si no se envía captura de depósito la orden no será confirmada');
+          return { lines };
         },
 
         drawTicket(lines) {
           const width = 360;
           const lineHeight = 23;
           const margin = 18;
-          const totalLines = lines.reduce((acc, line) => {
-            const wraps = Math.max(1, Math.ceil(String(line).length / 34));
-            return acc + wraps;
-          }, 0);
+          const totalLines = lines.reduce((acc, line) => acc + Math.max(1, Math.ceil(String(line || '').length / 34)), 0);
           const height = margin * 2 + totalLines * lineHeight + 20;
 
           const canvas = document.createElement('canvas');
@@ -401,27 +452,23 @@
 
           let y = margin + 16;
           lines.forEach((line) => {
-            const text = String(line || '');
-            const chunks = text.match(/.{1,34}/g) || [''];
-            chunks.forEach((chunk) => {
-              ctx.fillText(chunk, margin, y);
+            const parts = String(line || '').match(/.{1,34}/g) || [''];
+            parts.forEach((part) => {
+              ctx.fillText(part, margin, y);
               y += lineHeight;
             });
           });
-
           return canvas.toDataURL('image/png');
         },
 
         generateImage() {
-          const order = App.selected;
-          if (!order) return;
+          if (!App.selected) return;
           if (!App.finalTotal.trim()) {
             this.toast('Confirma el total final para generar la imagen');
             return;
           }
-          const summary = this.buildSummary(order);
-          const dataUrl = this.drawTicket(summary.lines);
-          App.generatedImage = dataUrl;
+          const summary = this.buildSummary(App.selected);
+          App.generatedImage = this.drawTicket(summary.lines);
           App.ticketMessage = summary.lines.join('\n');
           Renderer.render();
           this.toast('Ticket PNG generado');
@@ -429,10 +476,10 @@
 
         downloadImage() {
           if (!App.generatedImage) return;
-          const order = App.selected || {};
+          const customer = Utils.sanitizeFileName(App.selected && App.selected.name);
           const link = document.createElement('a');
           link.href = App.generatedImage;
-          link.download = `ticket-${(order.id || 'cliente').replace(/\s+/g, '-')}.png`;
+          link.download = `burgers-og-ticket-${customer}.png`;
           link.click();
         },
 
@@ -449,9 +496,9 @@
         openWhatsApp() {
           if (!App.ticketMessage) return;
           const phone = String(App.selected && App.selected.phone || '').replace(/\D/g, '');
-          const text = encodeURIComponent(App.ticketMessage);
-          const base = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
-          window.open(base, '_blank');
+          const encoded = encodeURIComponent(App.ticketMessage);
+          const url = phone ? `https://wa.me/${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
+          window.open(url, '_blank');
         },
 
         regenerate() {
@@ -462,14 +509,15 @@
         },
 
         markSent() {
-          const order = App.selected;
-          if (!order) return;
-          App.sentMap[order.id] = true;
+          if (!App.selected) return;
+          // Marca local para MVP: solo localStorage del navegador; no persiste en hoja Chekeo.
+          // Futuro (sin activar todavía): guardar en columnas "Ticket Enviado" y "Fecha Ticket Enviado".
+          App.sentMap[App.selected.id] = true;
           try {
             localStorage.setItem('chekeo_client_tickets_sent', JSON.stringify(App.sentMap));
           } catch (_) {}
           Renderer.render();
-          this.toast('Pedido marcado como enviado');
+          this.toast('Pedido marcado como enviado (local)');
         },
 
         loadSentMap() {
@@ -483,7 +531,7 @@
 
         toast(message) {
           const toast = document.getElementById('toast');
-          toast.textContent = message;
+          toast.textContent = message || '';
           toast.classList.add('show');
           clearTimeout(window.__toastTimer);
           window.__toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
