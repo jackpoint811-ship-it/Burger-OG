@@ -20,24 +20,28 @@ function showModuleMenu(){
 }
 
 function showChekeoApp(){
-  const html=HtmlService.createHtmlOutputFromFile('burger').setWidth(460).setHeight(780);
+  const html=HtmlService.createHtmlOutputFromFile('Cocina').setWidth(460).setHeight(780);
   SpreadsheetApp.getUi().showModelessDialog(html,'Chekeo');
 }
 
 function showClientTicketsApp(){
-  const html=HtmlService.createHtmlOutputFromFile('client_tickets').setWidth(460).setHeight(860);
+  const html=HtmlService.createHtmlOutputFromFile('Ticket').setWidth(460).setHeight(860);
   SpreadsheetApp.getUi().showModelessDialog(html,'Tickets cliente');
 }
 
 function doGet(e){
-  const view=safeTrim_(e&&e.parameter&&e.parameter.view).toLowerCase();
-  const fileName=view==='tickets'
-    ? 'client_tickets'
-    : (view==='cocina'||view==='kitchen'||view==='chekeo' ? 'burger' : '');
+  const app=safeTrim_(e&&e.parameter&&e.parameter.app).toLowerCase();
+  const legacyView=safeTrim_(e&&e.parameter&&e.parameter.view).toLowerCase();
+  const route=app||legacyView;
+  const fileName=route==='ticket'||route==='tickets'||route==='recibo'
+    ? 'Ticket'
+    : (route==='cocina'||route==='kitchen'||route==='chekeo'||route==='check'
+      ? 'Cocina'
+      : '');
 
-  const title=view==='tickets'
-    ? 'Tickets cliente'
-    : (fileName==='burger' ? 'Chekeo' : 'Burgers OG');
+  const title=fileName==='Ticket'
+    ? 'Ticket cliente'
+    : (fileName==='Cocina' ? 'Cocina / Chekeo' : 'Burgers OG');
 
   try{
     if(!fileName){
@@ -48,7 +52,7 @@ function doGet(e){
       .createHtmlOutputFromFile(fileName)
       .setTitle(title);
   }catch(error){
-    return renderDoGetError_(view,fileName,error).setTitle('Burgers OG - Error');
+    return renderDoGetError_(route,fileName,error).setTitle('Burgers OG - Error');
   }
 }
 
@@ -89,6 +93,14 @@ function syncChekeoFromMaster(){
 
 function getChekeoOrders(){
   return getChekeoOrdersService_();
+}
+
+function getCocinaOrders(){
+  return getChekeoOrdersService_();
+}
+
+function getTicketOrder(orderId){
+  return getTicketOrderService_(orderId);
 }
 
 function diagnoseChekeoPermissions(){

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body{margin:0;background:#0f172a;color:#e2e8f0;font-family:Arial,sans-serif}
+      .app{max-width:760px;margin:0 auto;padding:12px;display:grid;gap:10px}
+      .panel{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:12px}
+      .title{font-size:22px;font-weight:700}
+      .subtitle{font-size:12px;color:#94a3b8;margin-top:4px}
+      .row{display:flex;justify-content:space-between;gap:8px;align-items:center}
+      .card{background:#fff;color:#111827;border-radius:12px;padding:12px;border-left:6px solid #1d4ed8}
+      .name{font-size:20px;font-weight:700}
+      .meta{font-size:13px;color:#475569;margin-top:4px}
+      .section{margin-top:8px;font-size:14px;white-space:pre-wrap}
+      .badge{display:inline-block;background:#eff6ff;color:#1e3a8a;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:700}
+      .btn{border:0;background:#16a34a;color:#fff;padding:10px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+      .btn:disabled{opacity:.6;cursor:not-allowed}
+      .empty{padding:20px;text-align:center;color:#94a3b8}
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header class="panel">
+        <div class="title">Cocina / Chekeo</div>
+        <div class="subtitle" id="status">Cargando pedidos activos…</div>
+      </header>
+      <section id="orders"></section>
+    </main>
+
+    <script>
+      const App={orders:[],loading:true,sendingId:''};
+      const Bridge={
+        getOrders(){
+          return new Promise((resolve,reject)=>{
+            google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getCocinaOrders();
+          });
+        },
+        markOrderReady(orderId){
+          return new Promise((resolve,reject)=>{
+            google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).markOrderReady(orderId);
+          });
+        }
+      };
+
+      function esc(v){return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+      function lines(v){return String(v||'').split('\n').map(s=>s.trim()).filter(Boolean);}
+      function render(){
+        const status=document.getElementById('status');
+        const container=document.getElementById('orders');
+        if(App.loading){status.textContent='Cargando pedidos activos…';return;}
+        status.textContent=`${App.orders.length} pedido(s) activo(s)`;
+        if(!App.orders.length){container.innerHTML='<div class="panel empty">Sin pedidos activos.</div>';return;}
+        container.innerHTML=App.orders.map(order=>`
+          <article class="card" data-id="${esc(order.id)}">
+            <div class="row">
+              <div>
+                <div class="badge">${esc(order.kitchenStatus||'PENDIENTE')}</div>
+                <div class="name">${esc(order.name||'Sin nombre')}</div>
+                <div class="meta">${esc(order.phone||'Sin teléfono')} · ID ${esc(order.id)}</div>
+              </div>
+              <button class="btn" data-action="ready" data-id="${esc(order.id)}" ${App.sendingId===order.id?'disabled':''}>${App.sendingId===order.id?'Guardando…':'Marcar listo'}</button>
+            </div>
+            <div class="section"><strong>Productos:</strong> ${esc(order.burgerSummary||`OG ${order.qtyOg||0} · BBQ ${order.qtyBbq||0}`)}</div>
+            <div class="section"><strong>Extras:</strong> ${esc(lines(order.extras).join(', ')||'Sin extras')}</div>
+            <div class="section"><strong>Notas:</strong> ${esc(order.exactOrderText||'Sin notas')}</div>
+          </article>
+        `).join('');
+      }
+
+      async function loadOrders(){
+        App.loading=true;render();
+        try{
+          const result=await Bridge.getOrders();
+          App.orders=(result&&Array.isArray(result.orders)?result.orders:[]);
+        }catch(error){
+          document.getElementById('orders').innerHTML=`<div class="panel">Error al cargar: ${esc(error&&error.message||error)}</div>`;
+          App.orders=[];
+        }finally{App.loading=false;render();}
+      }
+
+      document.addEventListener('click',async(event)=>{
+        const btn=event.target.closest('[data-action="ready"]');
+        if(!btn)return;
+        const id=btn.dataset.id;
+        if(!id)return;
+        App.sendingId=id;render();
+        try{await Bridge.markOrderReady(id);await loadOrders();}
+        catch(error){alert(`No se pudo marcar listo: ${error&&error.message?error.message:error}`);}
+        finally{App.sendingId='';render();}
+      });
+
+      loadOrders();
+      setInterval(loadOrders,12000);
+    </script>
+  </body>
+</html>

@@ -17,6 +17,23 @@ function getChekeoOrdersService_(){
   return {orders};
 }
 
+function getTicketOrderService_(orderId){
+  const cleanOrderId=safeTrim_(orderId);
+  const allOrdersResult=getChekeoOrdersService_();
+  if(!cleanOrderId){
+    return {
+      order:null,
+      orders:allOrdersResult.orders
+    };
+  }
+
+  const foundOrder=allOrdersResult.orders.find(order=>order.id===cleanOrderId)||null;
+  return {
+    order:foundOrder,
+    orders:allOrdersResult.orders
+  };
+}
+
 function markOrderReadyService_(orderId){
   const cleanOrderId=safeTrim_(orderId);
   if(!cleanOrderId)throw new Error('No se recibió un ID de pedido válido.');

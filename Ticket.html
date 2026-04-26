@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body{margin:0;background:#f3f4f6;color:#111827;font-family:Arial,sans-serif}
+      .app{max-width:460px;margin:0 auto;padding:12px;display:grid;gap:10px}
+      .panel{background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:12px}
+      .title{font-size:20px;font-weight:700}
+      .muted{font-size:12px;color:#6b7280}
+      .input{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px}
+      .btn{margin-top:8px;border:0;background:#111827;color:#fff;padding:10px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+      .ticket{font-family:"Courier New",monospace;white-space:pre-wrap;line-height:1.35;font-size:14px}
+      .divider{border-top:1px dashed #9ca3af;margin:8px 0}
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header class="panel">
+        <div class="title">Ticket / Recibo</div>
+        <div class="muted">Vista de cliente (solo lectura).</div>
+      </header>
+      <section class="panel" id="searchPanel">
+        <div class="muted">ID pedido</div>
+        <input class="input" id="orderIdInput" placeholder="Ej: ORD-102" />
+        <button class="btn" id="loadBtn">Cargar ticket</button>
+      </section>
+      <section class="panel" id="ticketPanel">
+        <div class="muted">Cargando…</div>
+      </section>
+    </main>
+
+    <script>
+      const App={order:null,orders:[],queryId:''};
+      const Bridge={
+        getTicketOrder(orderId){
+          return new Promise((resolve,reject)=>{
+            google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getTicketOrder(orderId);
+          });
+        }
+      };
+      function esc(v){return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+      function lines(v){return String(v||'').split('\n').map(s=>s.trim()).filter(Boolean);}
+
+      function buildTicket(order){
+        const items=lines(order.burgerSummary||'').length?lines(order.burgerSummary):[`OG x${Number(order.qtyOg||0)}`,`BBQ x${Number(order.qtyBbq||0)}`];
+        const extras=lines(order.extras);
+        const notes=lines(order.exactOrderText);
+        const sides=lines(order.sides);
+        return `Cliente: ${order.name||'Sin nombre'}\nTel: ${order.phone||'N/A'}\nID: ${order.id||''}\n\nProductos:\n${items.map(i=>`- ${i}`).join('\n')||'- Sin productos'}\n\nExtras:\n${extras.map(i=>`- ${i}`).join('\n')||'- Sin extras'}\n\nGuarnición:\n${sides.map(i=>`- ${i}`).join('\n')||'- Sin guarnición'}\n\nNotas:\n${notes.map(i=>`- ${i}`).join('\n')||'- Sin notas'}\n\nSubtotal/Total: ${order.totalDisplay||'No capturado'}`;
+      }
+
+      function render(){
+        const panel=document.getElementById('ticketPanel');
+        if(!App.order){
+          const options=App.orders.slice(0,12).map(o=>`<option value="${esc(o.id)}">${esc(o.id)} · ${esc(o.name||'Sin nombre')}</option>`).join('');
+          panel.innerHTML=`<div class="muted">No hay ticket cargado. Ingresa un ID o elige uno activo:</div><div class="divider"></div><select id="quickPick" class="input"><option value="">Seleccionar pedido activo</option>${options}</select>`;
+          const quickPick=document.getElementById('quickPick');
+          if(quickPick){
+            quickPick.addEventListener('change',()=>{if(quickPick.value){document.getElementById('orderIdInput').value=quickPick.value;loadById(quickPick.value);}});
+          }
+          return;
+        }
+        panel.innerHTML=`<div class="ticket">${esc(buildTicket(App.order))}</div>`;
+      }
+
+      async function loadById(orderId){
+        const clean=String(orderId||'').trim();
+        const result=await Bridge.getTicketOrder(clean);
+        App.orders=Array.isArray(result&&result.orders)?result.orders:[];
+        App.order=result&&result.order?result.order:null;
+        render();
+      }
+
+      async function init(){
+        const params=new URLSearchParams(window.location.search);
+        const id=params.get('orderId')||'';
+        document.getElementById('orderIdInput').value=id;
+        await loadById(id);
+      }
+
+      document.getElementById('loadBtn').addEventListener('click',()=>{
+        loadById(document.getElementById('orderIdInput').value).catch((error)=>{
+          alert(`No se pudo cargar ticket: ${error&&error.message?error.message:error}`);
+        });
+      });
+
+      init().catch((error)=>{
+        document.getElementById('ticketPanel').innerHTML=`<div class="muted">Error: ${esc(error&&error.message||error)}</div>`;
+      });
+    </script>
+  </body>
+</html>
