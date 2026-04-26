@@ -8,6 +8,8 @@ function onOpen(){
     .addItem('Open Chekeo App','showChekeoApp')
     .addItem('Open Tickets Cliente','showClientTicketsApp')
     .addItem('Diagnosticar permisos','diagnoseChekeoPermissions')
+    .addItem('Diagnosticar Schema Chekeo','diagnoseChekeoSchema')
+    .addItem('Agregar Columnas Opcionales Chekeo','setupChekeoOptionalColumns')
     .addToUi();
 }
 
@@ -55,4 +57,20 @@ function diagnoseChekeoPermissions(){
 
 function markOrderReady(orderId){
   return markOrderReadyService_(orderId);
+}
+
+function markTicketSent(orderId){
+  return markTicketSentService_(orderId);
+}
+
+function markSideReady(orderId){
+  return markSideReadyService_(orderId);
+}
+
+function diagnoseChekeoSchema(){
+  return diagnoseChekeoSchemaService_();
+}
+
+function setupChekeoOptionalColumns(){
+  return setupChekeoOptionalColumnsService_();
 }
