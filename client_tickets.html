@@ -100,11 +100,6 @@
           return new Promise((resolve, reject) => {
             google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getChekeoOrders();
           });
-        },
-        markTicketSent(orderId) {
-          return new Promise((resolve, reject) => {
-            google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).markTicketSent(orderId);
-          });
         }
       };
 
@@ -281,7 +276,7 @@
         },
         renderActions() {
           const order = App.selected;
-          const sent = order && (order.ticketSent || App.sentMap[order.id]);
+          const sent = order && App.sentMap[order.id];
           document.getElementById('actions').innerHTML = `
             <div class="actions">
               <button class="btn primary" data-action="generate-image" ${order && App.finalTotal.trim() ? '' : 'disabled'}>Generar imagen</button>
@@ -337,11 +332,6 @@
           try {
             const result = await Bridge.getOrders();
             App.orders = (result && result.orders) || [];
-            App.orders.forEach((order) => {
-              if (order && order.id && order.ticketSent) {
-                App.sentMap[order.id] = true;
-              }
-            });
             App.selectedId = App.orders[0] ? App.orders[0].id : '';
             this.applySelected();
           } catch (err) {
@@ -518,23 +508,16 @@
           this.toast('Ticket reiniciado');
         },
 
-        async markSent() {
+        markSent() {
           if (!App.selected) return;
-          const orderId = String(App.selected.id || '').trim();
-          if (!orderId) return;
-          try {
-            await Bridge.markTicketSent(orderId);
-          } catch (err) {
-            this.toast(err && err.message ? err.message : 'No se pudo marcar como enviado');
-            return;
-          }
-          App.sentMap[orderId] = true;
-          if (App.selected) App.selected.ticketSent = true;
+          // Marca local para MVP: solo localStorage del navegador; no persiste en hoja Chekeo.
+          // Futuro (sin activar todavía): guardar en columnas "Ticket Enviado" y "Fecha Ticket Enviado".
+          App.sentMap[App.selected.id] = true;
           try {
             localStorage.setItem('chekeo_client_tickets_sent', JSON.stringify(App.sentMap));
           } catch (_) {}
           Renderer.render();
-          this.toast('Pedido marcado como enviado');
+          this.toast('Pedido marcado como enviado (local)');
         },
 
         loadSentMap() {

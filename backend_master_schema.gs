@@ -222,6 +222,22 @@ function requireMasterField_(fieldName,detectedColumns){
 }
 
 function getMissingRequiredMasterValues_(row,masterColumns){
-  const fieldsToValidate=['customerName','total','paymentMethod'];
-  return fieldsToValidate.filter(fieldName=>!safeTrim_(getMasterValue_(row,masterColumns.fields[fieldName])));
+  const missing=[];
+  const customerName=safeTrim_(getMasterValue_(row,masterColumns.fields.customerName));
+  const paymentMethod=safeTrim_(getMasterValue_(row,masterColumns.fields.paymentMethod));
+  const total=safeTrim_(getMasterValue_(row,masterColumns.fields.total));
+  const manualTotal=safeTrim_(getMasterValue_(row,masterColumns.fields.manualTotal));
+  const specialFlag=safeTrim_(getMasterValue_(row,masterColumns.fields.specialFlag));
+
+  if(!customerName)missing.push('customerName');
+  if(!paymentMethod)missing.push('paymentMethod');
+
+  const hasChequeoManualMarker=
+    total==='Chequeo Manual'||
+    manualTotal==='Chequeo Manual'||
+    specialFlag==='(+1)';
+  const hasAnyTotal=!!(total||manualTotal||hasChequeoManualMarker);
+  if(!hasAnyTotal)missing.push('total/manualTotal');
+
+  return missing;
 }

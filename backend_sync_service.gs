@@ -20,6 +20,7 @@ function syncChekeoFromMasterService_(){
   const existingById=buildExistingChekeoMap_(existingRows,chekeoColumns);
 
   const output=[];
+  const syncedIds={};
   const skippedByMissingTimestamp=[];
   const skippedByMissingFields=[];
   masterValues.forEach((row,i)=>{
@@ -81,6 +82,7 @@ function syncChekeoFromMasterService_(){
     }
 
     output.push(syncRow);
+    syncedIds[id]=true;
   });
 
   clearChekeoBody_(chekeoSheet,chekeoColumns);
@@ -91,17 +93,25 @@ function syncChekeoFromMasterService_(){
   }
 
   SpreadsheetApp.flush();
+  const removedExistingIds=Object.keys(existingById).filter(id=>!syncedIds[id]);
   const warningCount=skippedByMissingTimestamp.length+skippedByMissingFields.length;
   if(warningCount){
     const warningDetails=skippedByMissingFields
       .slice(0,5)
       .map(item=>`fila ${item.row} (${item.fields.join(', ')})`)
       .join('; ');
+    const removedDetails=removedExistingIds.length?` Pedidos removidos de Chekeo por omisión: ${removedExistingIds.length}.`:'';
     ss.toast(
-      `Chekeo sincronizado con ${warningCount} fila(s) omitidas. ${warningDetails||''}`.trim(),
+      `Chekeo sincronizado con ${warningCount} fila(s) omitidas.${removedDetails} ${warningDetails||''}`.trim(),
       'Burgers OG',
       8
     );
+    Logger.log(JSON.stringify({
+      type:'sync-warning',
+      skippedByMissingTimestamp,
+      skippedByMissingFields,
+      removedExistingIds
+    }));
   }else{
     ss.toast('Chekeo sincronizado.','Burgers OG',4);
   }
@@ -111,6 +121,7 @@ function syncChekeoFromMasterService_(){
     skippedRows:{
       missingTimestamp:skippedByMissingTimestamp,
       missingRequiredValues:skippedByMissingFields
-    }
+    },
+    removedExistingIds
   };
 }
