@@ -100,9 +100,7 @@
   </main>
 
   <script>
-    function isSheetsDialogMode(){
-      return typeof google!=='undefined' && google.script && google.script.run;
-    }
+    const APP_MODE='<?= appMode ?>';
 
     function setBusy(isBusy,message){
       document.querySelectorAll('.module-btn').forEach(function(button){
@@ -129,7 +127,11 @@
     }
 
     function openModule(moduleName){
-      if(isSheetsDialogMode()){
+      if(APP_MODE==='dialog'){
+        if(!(typeof google!=='undefined' && google.script && google.script.run)){
+          showError(new Error('No se detectó el contexto de diálogo de Google Sheets.'));
+          return;
+        }
         setBusy(true,moduleName==='cocina'?'Abriendo Cocina…':'Abriendo Tickets Cliente…');
         const runner=google.script.run
           .withSuccessHandler(function(){
@@ -147,9 +149,7 @@
         return;
       }
 
-      const url=new URL(window.location.href);
-      url.searchParams.set('view',moduleName==='cocina'?'cocina':'tickets');
-      window.location.href=url.toString();
+      window.location.search=moduleName==='cocina'?'?view=cocina':'?view=tickets';
     }
 
     document.addEventListener('click',function(event){
