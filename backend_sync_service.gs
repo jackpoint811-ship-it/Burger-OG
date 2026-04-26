@@ -74,7 +74,8 @@ function syncChekeoFromMasterService_(){
 
   clearChekeoBody_(chekeoSheet,chekeoColumns);
   if(output.length>0){
-    chekeoSheet.getRange(2,1,output.length,chekeoColumns.lastCol).setValues(output);
+    const managedIndexes=getManagedChekeoColumnIndexes_(chekeoColumns);
+    writeChekeoManagedRows_(chekeoSheet,2,output,managedIndexes);
     applyChekeoFormats_(chekeoSheet,output.length,chekeoColumns);
   }
 

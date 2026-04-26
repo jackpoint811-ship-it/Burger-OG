@@ -219,3 +219,52 @@ function getManagedChekeoColumnIndexes_(chekeoColumns){
     .filter(index=>index!==null&&index!==undefined&&index>=0);
   return [...new Set(indexes)].sort((a,b)=>a-b);
 }
+
+function writeChekeoFieldsByRow_(sheet,rowNumber,chekeoColumns,fieldValues){
+  const items=Object.keys(fieldValues||{})
+    .map(fieldName=>({index:chekeoColumns.fields[fieldName],value:fieldValues[fieldName]}))
+    .filter(item=>item.index!==null&&item.index!==undefined&&item.index>=0)
+    .sort((a,b)=>a.index-b.index);
+
+  if(!items.length)return;
+  let blockStart=items[0].index;
+  let blockValues=[items[0].value];
+
+  for(let i=1;i<=items.length;i++){
+    const item=items[i];
+    const prev=items[i-1];
+    const isContiguous=item&&item.index===prev.index+1;
+    if(isContiguous){
+      blockValues.push(item.value);
+      continue;
+    }
+    sheet.getRange(rowNumber,blockStart+1,1,blockValues.length).setValues([blockValues]);
+    if(item){
+      blockStart=item.index;
+      blockValues=[item.value];
+    }
+  }
+}
+
+function writeChekeoManagedRows_(sheet,startRow,rows,managedIndexes){
+  if(!rows||!rows.length||!managedIndexes||!managedIndexes.length)return;
+  let blockStart=managedIndexes[0];
+  let blockIndexes=[managedIndexes[0]];
+
+  for(let i=1;i<=managedIndexes.length;i++){
+    const current=managedIndexes[i];
+    const prev=managedIndexes[i-1];
+    const isContiguous=current===prev+1;
+    if(isContiguous){
+      blockIndexes.push(current);
+      continue;
+    }
+
+    const blockMatrix=rows.map(row=>blockIndexes.map(colIndex=>row[colIndex]));
+    sheet.getRange(startRow,blockStart+1,rows.length,blockIndexes.length).setValues(blockMatrix);
+    if(current!==undefined){
+      blockStart=current;
+      blockIndexes=[current];
+    }
+  }
+}

@@ -32,17 +32,17 @@ function markOrderReadyService_(orderId){
     const rowNumber=findChekeoRowById_(sheet,cleanOrderId,chekeoColumns);
     if(!rowNumber)throw new Error(`No encontré el pedido ${cleanOrderId} en Chekeo`);
 
-    const rowValues=sheet.getRange(rowNumber,1,1,chekeoColumns.lastCol).getValues()[0];
     const now=new Date();
-    const startTime=rowValues[chekeoColumns.fields.startTime];
-
-    rowValues[chekeoColumns.fields.kitchenStatus]=KITCHEN_STATUS.READY;
+    const startTime=sheet.getRange(rowNumber,chekeoColumns.fields.startTime+1,1,1).getValue();
+    const fieldUpdates={
+      kitchenStatus:KITCHEN_STATUS.READY,
+      readyTime:now,
+      updatedAt:now
+    };
     if(!startTime){
-      rowValues[chekeoColumns.fields.startTime]=now;
+      fieldUpdates.startTime=now;
     }
-    rowValues[chekeoColumns.fields.readyTime]=now;
-    rowValues[chekeoColumns.fields.updatedAt]=now;
-    sheet.getRange(rowNumber,1,1,chekeoColumns.lastCol).setValues([rowValues]);
+    writeChekeoFieldsByRow_(sheet,rowNumber,chekeoColumns,fieldUpdates);
 
     return {ok:true,orderId:cleanOrderId,newStatus:KITCHEN_STATUS.READY,updatedAt:formatUiDateTime_(now)};
   }finally{
@@ -122,18 +122,17 @@ function markOrderFlagService_(orderId,config){
     const sheet=ss.getSheetByName(CHEKEO_SHEET);
     if(!sheet)throw new Error(`No existe la hoja "${CHEKEO_SHEET}". Verifica el nombre de la hoja en el archivo de Google Sheets.`);
     const chekeoColumns=getChekeoColumnMap_(sheet);
-    const flagIndex=requireChekeoOptionalField_(config.flagField,chekeoColumns);
-    const dateIndex=requireChekeoOptionalField_(config.dateField,chekeoColumns);
+    requireChekeoOptionalField_(config.flagField,chekeoColumns);
+    requireChekeoOptionalField_(config.dateField,chekeoColumns);
 
     const rowNumber=findChekeoRowById_(sheet,cleanOrderId,chekeoColumns);
     if(!rowNumber)throw new Error(`No encontré el pedido ${cleanOrderId} en ${CHEKEO_SHEET}.`);
 
-    const rowValues=sheet.getRange(rowNumber,1,1,chekeoColumns.lastCol).getValues()[0];
     const now=new Date();
-    rowValues[flagIndex]='Si';
-    rowValues[dateIndex]=now;
-    rowValues[chekeoColumns.fields.updatedAt]=now;
-    sheet.getRange(rowNumber,1,1,chekeoColumns.lastCol).setValues([rowValues]);
+    const fieldUpdates={updatedAt:now};
+    fieldUpdates[config.flagField]='Si';
+    fieldUpdates[config.dateField]=now;
+    writeChekeoFieldsByRow_(sheet,rowNumber,chekeoColumns,fieldUpdates);
 
     return {
       ok:true,
