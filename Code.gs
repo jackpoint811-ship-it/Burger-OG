@@ -15,7 +15,7 @@ function onOpen(){
 }
 
 function showModuleMenu(){
-  const html=HtmlService.createHtmlOutputFromFile('module_menu').setWidth(420).setHeight(520);
+  const html=renderModuleMenu_('dialog').setWidth(420).setHeight(520);
   SpreadsheetApp.getUi().showModelessDialog(html,'Burgers OG');
 }
 
@@ -33,15 +33,54 @@ function doGet(e){
   const view=safeTrim_(e&&e.parameter&&e.parameter.view).toLowerCase();
   const fileName=view==='tickets'
     ? 'client_tickets'
-    : (view==='cocina'||view==='kitchen'||view==='chekeo' ? 'burger' : 'module_menu');
+    : (view==='cocina'||view==='kitchen'||view==='chekeo' ? 'burger' : '');
 
   const title=view==='tickets'
     ? 'Tickets cliente'
     : (fileName==='burger' ? 'Chekeo' : 'Burgers OG');
 
-  return HtmlService
-    .createHtmlOutputFromFile(fileName)
-    .setTitle(title);
+  try{
+    if(!fileName){
+      return renderModuleMenu_('web').setTitle(title);
+    }
+
+    return HtmlService
+      .createHtmlOutputFromFile(fileName)
+      .setTitle(title);
+  }catch(error){
+    return renderDoGetError_(view,fileName,error).setTitle('Burgers OG - Error');
+  }
+}
+
+function renderModuleMenu_(appMode){
+  const template=HtmlService.createTemplateFromFile('module_menu');
+  template.appMode=safeTrim_(appMode).toLowerCase()==='dialog'?'dialog':'web';
+  return template.evaluate();
+}
+
+function renderDoGetError_(view,fileName,error){
+  const requestedView=escapeHtml_(safeTrim_(view)||'(sin view)');
+  const attemptedFile=escapeHtml_(safeTrim_(fileName)||'module_menu');
+  const message=escapeHtml_(safeTrim_(error&&error.message)||String(error||'Error desconocido'));
+  const html=
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">'+
+    '<style>body{font-family:Arial,sans-serif;background:#111827;color:#f8fafc;margin:0;padding:20px}'+
+    '.card{max-width:760px;margin:0 auto;background:#1f2937;border:1px solid #374151;border-radius:12px;padding:16px}'+
+    'h1{margin:0 0 8px;font-size:20px}.meta{color:#cbd5e1;font-size:14px;line-height:1.5}.err{margin-top:10px;color:#fecaca;white-space:pre-wrap}</style>'+
+    '</head><body><main class="card"><h1>Error al cargar la vista</h1>'+
+    `<div class="meta">Vista solicitada: <strong>${requestedView}</strong><br>Archivo intentado: <strong>${attemptedFile}</strong></div>`+
+    `<div class="err">Detalle: ${message}</div>`+
+    '</main></body></html>';
+  return HtmlService.createHtmlOutput(html);
+}
+
+function escapeHtml_(value){
+  return String(value===null||value===undefined?'':value)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
 }
 
 function syncChekeoFromMaster(){
