@@ -119,7 +119,7 @@ function markTicketSentService_(orderId){
 }
 
 function updateOrderStatusService_(orderId,status){
-  const normalizedStatus=normalizeOrderStatus_(status);
+  const normalizedStatus=assertValidOrderStatus_(status);
   const now=new Date();
   return updateOrderWithLock_(orderId,(sheet,rowNumber,chekeoColumns)=>{
     const updates={
@@ -152,9 +152,11 @@ function markOrderPaidService_(orderId){
 function updateOrderNotesService_(orderId,noteInternal,noteClient){
   const now=new Date();
   return updateOrderWithLock_(orderId,(sheet,rowNumber,chekeoColumns)=>{
+    requireChekeoOptionalField_('noteInternal',chekeoColumns);
+    requireChekeoOptionalField_('noteClient',chekeoColumns);
     const updates={updatedAt:now};
-    if(chekeoColumns.fields.noteInternal>=0)updates.noteInternal=safeTrim_(noteInternal);
-    if(chekeoColumns.fields.noteClient>=0)updates.noteClient=safeTrim_(noteClient);
+    updates.noteInternal=safeTrim_(noteInternal);
+    updates.noteClient=safeTrim_(noteClient);
     writeChekeoFieldsByRow_(sheet,rowNumber,chekeoColumns,updates);
     return {ok:true,orderId,updatedAt:formatUiDateTime_(now)};
   });

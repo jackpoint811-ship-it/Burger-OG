@@ -175,6 +175,25 @@ function normalizeOrderStatus_(value){
   return APP_ORDER_STATUS.NEW;
 }
 
+function assertValidOrderStatus_(value){
+  const normalized=normalizeOrderStatus_(value);
+  const raw=safeTrim_(value);
+  const allowed=[APP_ORDER_STATUS.NEW,APP_ORDER_STATUS.CONFIRMED,APP_ORDER_STATUS.PREPARING,APP_ORDER_STATUS.READY];
+  if(!raw){
+    throw new Error(`Estado de pedido inválido. Valores permitidos: ${allowed.join(', ')}.`);
+  }
+
+  const acceptedRawValues=[
+    'nuevo','confirmado','preparando','listo',
+    'pendiente','en prep'
+  ];
+  const rawNormalized=raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+  if(acceptedRawValues.indexOf(rawNormalized)===-1){
+    throw new Error(`Estado de pedido "${raw}" no reconocido. Valores permitidos: ${allowed.join(', ')}.`);
+  }
+  return normalized;
+}
+
 function normalizePaymentStatus_(value){
   const normalized=safeTrim_(value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
   if(normalized==='pagado'||normalized==='si'||normalized==='true'||normalized==='1')return APP_PAYMENT_STATUS.PAID;

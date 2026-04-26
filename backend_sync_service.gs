@@ -62,7 +62,12 @@ function syncAppOrdersFromMasterService_(){
     syncRow[chekeoColumns.fields.extras]=specialCase?'':buildExtras_(row,masterColumns);
     syncRow[chekeoColumns.fields.sides]=buildSides_(row,masterColumns);
     syncRow[chekeoColumns.fields.total]=specialCase&&manualTotal?manualTotal:normalTotal;
-    syncRow[chekeoColumns.fields.payment]=safeTrim_(getMasterValue_(row,masterColumns.fields.paymentMethod));
+    const sourcePaymentMethod=safeTrim_(getMasterValue_(row,masterColumns.fields.paymentMethod));
+    const preservedPaymentMethod=normalizePaymentMethod_(preserved.paymentMethod||'');
+    const finalPaymentMethod=preservedPaymentMethod!==APP_PAYMENT_METHOD.UNDEFINED
+      ? preservedPaymentMethod
+      : normalizePaymentMethod_(sourcePaymentMethod);
+    syncRow[chekeoColumns.fields.payment]=finalPaymentMethod;
     syncRow[chekeoColumns.fields.confirmed]=normalizeYesNo_(getMasterValue_(row,masterColumns.fields.confirmed));
     syncRow[chekeoColumns.fields.paid]=normalizeYesNo_(getMasterValue_(row,masterColumns.fields.paid));
     syncRow[chekeoColumns.fields.kitchenStatus]=normalizeKitchenStatus_(preserved.kitchenStatus||KITCHEN_STATUS.PENDING);
@@ -73,7 +78,7 @@ function syncAppOrdersFromMasterService_(){
       syncRow[chekeoColumns.fields.paymentStatus]=normalizePaymentStatus_(preserved.paymentStatus||syncRow[chekeoColumns.fields.paid]);
     }
     if(chekeoColumns.fields.paymentMethod>=0){
-      syncRow[chekeoColumns.fields.paymentMethod]=normalizePaymentMethod_(preserved.paymentMethod||syncRow[chekeoColumns.fields.payment]);
+      syncRow[chekeoColumns.fields.paymentMethod]=finalPaymentMethod;
     }
     if(chekeoColumns.fields.noteInternal>=0){
       syncRow[chekeoColumns.fields.noteInternal]=preserved.noteInternal||'';
@@ -89,7 +94,7 @@ function syncAppOrdersFromMasterService_(){
     }
     syncRow[chekeoColumns.fields.startTime]=preserved.startTime||'';
     syncRow[chekeoColumns.fields.readyTime]=preserved.readyTime||'';
-    syncRow[chekeoColumns.fields.updatedAt]=preserved.updatedAt||'';
+    syncRow[chekeoColumns.fields.updatedAt]=new Date();
     syncRow[chekeoColumns.fields.specialCase]=specialCase?'SI':'NO';
     syncRow[chekeoColumns.fields.manualReview]=specialCase?'SI':'NO';
 

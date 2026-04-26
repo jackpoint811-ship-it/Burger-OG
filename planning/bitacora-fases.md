@@ -149,6 +149,36 @@ Codex debe registrar aquí los archivos exactos que modifique.
 - Se añadieron normalizadores para estados (`Nuevo`, `Confirmado`, `Preparando`, `Listo`) y pago (`Pendiente`, `Pagado`) conservando compatibilidad con el esquema anterior.
 - Se cerró la fase técnica sin tocar `Chekeo` oficial ni construir UI completa, cumpliendo alcance solicitado para Fase 1.
 
+### Resumen de cambios
+- Se reforzó la validación de `updateOrderStatus` para rechazar estados inválidos con error explícito.
+- En sync, el método de pago ahora preserva una edición operativa previa y se actualiza `Última Actualización` por corrida.
+- `updateOrderNotes` ahora exige columnas `Nota Interna` y `Nota Cliente` para evitar no-op silencioso.
+
+### Archivos modificados
+- `backend_utils.gs`
+- `backend_sync_service.gs`
+- `backend_orders_service.gs`
+- `planning/bitacora-fases.md`
+
+### Funciones creadas/adaptadas
+- `assertValidOrderStatus_()`
+- `updateOrderStatusService_()` (validación estricta)
+- `updateOrderNotesService_()` (validación de columnas requeridas para la acción)
+- `syncAppOrdersFromMasterService_()` (preserva método de pago y actualiza `updatedAt`)
+
+### Pruebas realizadas
+- Validación estática de sintaxis local (`node --check` sobre copias `.js` temporales de `.gs`).
+- Verificación de firmas de funciones nuevas/ajustadas con `rg`.
+
+### Qué no hizo
+- No se construyó UI nueva (sigue fuera de alcance en Fase 1).
+- No se tocaron integraciones de WhatsApp/ticket visual (Fase 3).
+- No se ejecutaron pruebas manuales con hoja real desde este entorno.
+
+### Pendientes
+- Validación funcional en entorno del usuario contra `Chekeo Nuevo` (estado, pago, notas, sync, resumen diario y config bancaria).
+- Confirmar con operación que los encabezados finales de `Configuración` y `Chekeo Nuevo` coinciden con aliases previstos.
+
 ---
 
 ## Fase 2 — Nueva interfaz móvil
