@@ -90,6 +90,9 @@ function escapeHtml_(value){
 function syncChekeoFromMaster(){
   return syncChekeoFromMasterService_();
 }
+function syncAppOrdersFromMaster(){
+  return syncAppOrdersFromMasterService_();
+}
 
 function getChekeoOrders(){
   return getChekeoOrdersService_();
@@ -113,6 +116,34 @@ function markOrderReady(orderId){
 
 function markTicketSent(orderId){
   return markTicketSentService_(orderId);
+}
+
+function getAppOrders(){
+  return getAppOrdersService_();
+}
+
+function getOrderDetail(orderId){
+  return getOrderDetailService_(orderId);
+}
+
+function updateOrderStatus(orderId,status){
+  return updateOrderStatusService_(orderId,status);
+}
+
+function markOrderPaid(orderId){
+  return markOrderPaidService_(orderId);
+}
+
+function updateOrderNotes(orderId,noteInternal,noteClient){
+  return updateOrderNotesService_(orderId,noteInternal,noteClient);
+}
+
+function getDailySummary(){
+  return getDailySummaryService_();
+}
+
+function getBankConfig(){
+  return getBankConfigService_();
 }
 
 function markSideReady(orderId){

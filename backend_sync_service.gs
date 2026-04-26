@@ -1,4 +1,8 @@
 function syncChekeoFromMasterService_(){
+  return syncAppOrdersFromMasterService_();
+}
+
+function syncAppOrdersFromMasterService_(){
   const ss=getSpreadsheet_();
   const masterSheet=ss.getSheetByName(MASTER_SHEET);
   const chekeoSheet=ss.getSheetByName(CHEKEO_SHEET);
@@ -62,6 +66,27 @@ function syncChekeoFromMasterService_(){
     syncRow[chekeoColumns.fields.confirmed]=normalizeYesNo_(getMasterValue_(row,masterColumns.fields.confirmed));
     syncRow[chekeoColumns.fields.paid]=normalizeYesNo_(getMasterValue_(row,masterColumns.fields.paid));
     syncRow[chekeoColumns.fields.kitchenStatus]=normalizeKitchenStatus_(preserved.kitchenStatus||KITCHEN_STATUS.PENDING);
+    if(chekeoColumns.fields.orderStatus>=0){
+      syncRow[chekeoColumns.fields.orderStatus]=normalizeOrderStatus_(preserved.orderStatus||APP_ORDER_STATUS.NEW);
+    }
+    if(chekeoColumns.fields.paymentStatus>=0){
+      syncRow[chekeoColumns.fields.paymentStatus]=normalizePaymentStatus_(preserved.paymentStatus||syncRow[chekeoColumns.fields.paid]);
+    }
+    if(chekeoColumns.fields.paymentMethod>=0){
+      syncRow[chekeoColumns.fields.paymentMethod]=normalizePaymentMethod_(preserved.paymentMethod||syncRow[chekeoColumns.fields.payment]);
+    }
+    if(chekeoColumns.fields.noteInternal>=0){
+      syncRow[chekeoColumns.fields.noteInternal]=preserved.noteInternal||'';
+    }
+    if(chekeoColumns.fields.noteClient>=0){
+      syncRow[chekeoColumns.fields.noteClient]=preserved.noteClient||'';
+    }
+    if(chekeoColumns.fields.alert>=0){
+      syncRow[chekeoColumns.fields.alert]=specialCase?'⚠️':'';
+    }
+    if(chekeoColumns.fields.burgers>=0){
+      syncRow[chekeoColumns.fields.burgers]=syncRow[chekeoColumns.fields.burgerSummary]||'';
+    }
     syncRow[chekeoColumns.fields.startTime]=preserved.startTime||'';
     syncRow[chekeoColumns.fields.readyTime]=preserved.readyTime||'';
     syncRow[chekeoColumns.fields.updatedAt]=preserved.updatedAt||'';

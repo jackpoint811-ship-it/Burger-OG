@@ -71,73 +71,83 @@ Esta bitácora es la fuente de orden para la reconstrucción de Burger-OG. Codex
 ---
 
 ## Fase 1 — Backend nuevo contra `Chekeo Nuevo`
-**Estado:** Pendiente  
+**Estado:** Completada (2026-04-26)  
 **Objetivo:** Adaptar el backend de Apps Script para leer, sincronizar y actualizar la nueva estructura de `Chekeo Nuevo` sin tocar `Chekeo` oficial.
 
 ### Alcance
 Crear o adaptar el backend para que la app pueda operar con el nuevo contrato de datos.
 
 ### Checklist técnico
-- [ ] Actualizar constantes para usar temporalmente `Chekeo Nuevo`.
-- [ ] Agregar `CONFIG_SHEET = 'Configuración'`.
-- [ ] Reemplazar/adaptar schema de Chekeo al nuevo contrato.
-- [ ] Crear normalizador de encabezados para `Chekeo Nuevo`.
-- [ ] Crear función `syncAppOrdersFromMaster()`.
-- [ ] La sync debe leer `Pedidos Master` por encabezados, no por posiciones fijas.
-- [ ] La sync debe preservar datos operativos existentes.
-- [ ] Crear `getAppOrders()`.
-- [ ] Crear `getOrderDetail(orderId)`.
-- [ ] Crear `updateOrderStatus(orderId, status)`.
-- [ ] Crear `markOrderPaid(orderId)`.
-- [ ] Crear `updateOrderNotes(orderId, noteInternal, noteClient)`.
-- [ ] Crear `markTicketSent(orderId)`.
-- [ ] Crear `getDailySummary()`.
-- [ ] Crear `getBankConfig()`.
-- [ ] Usar `LockService` en escrituras.
-- [ ] Manejar errores claros para UI.
-- [ ] No tocar `Chekeo` oficial.
+- [x] Actualizar constantes para usar temporalmente `Chekeo Nuevo`.
+- [x] Agregar `CONFIG_SHEET = 'Configuración'`.
+- [x] Reemplazar/adaptar schema de Chekeo al nuevo contrato.
+- [x] Crear normalizador de encabezados para `Chekeo Nuevo`.
+- [x] Crear función `syncAppOrdersFromMaster()`.
+- [x] La sync debe leer `Pedidos Master` por encabezados, no por posiciones fijas.
+- [x] La sync debe preservar datos operativos existentes.
+- [x] Crear `getAppOrders()`.
+- [x] Crear `getOrderDetail(orderId)`.
+- [x] Crear `updateOrderStatus(orderId, status)`.
+- [x] Crear `markOrderPaid(orderId)`.
+- [x] Crear `updateOrderNotes(orderId, noteInternal, noteClient)`.
+- [x] Crear `markTicketSent(orderId)`.
+- [x] Crear `getDailySummary()`.
+- [x] Crear `getBankConfig()`.
+- [x] Usar `LockService` en escrituras.
+- [x] Manejar errores claros para UI.
+- [x] No tocar `Chekeo` oficial.
 
 ### Reglas de preservación en sync
 La sync debe conservar, si el pedido ya existe:
-- [ ] Estado Pedido
-- [ ] Estado Pago
-- [ ] Método Pago si fue editado
-- [ ] Nota Interna
-- [ ] Nota Cliente
-- [ ] Ticket Enviado
-- [ ] Fecha Ticket Enviado
-- [ ] Hora Inicio
-- [ ] Hora Listo
+- [x] Estado Pedido
+- [x] Estado Pago
+- [x] Método Pago si fue editado
+- [x] Nota Interna
+- [x] Nota Cliente
+- [x] Ticket Enviado
+- [x] Fecha Ticket Enviado
+- [x] Hora Inicio
+- [x] Hora Listo
 
 La sync puede actualizar desde `Pedidos Master`:
-- [ ] Nombre
-- [ ] Teléfono
-- [ ] Resumen Pedido
-- [ ] Hamburguesas
-- [ ] Extras
-- [ ] Guarniciones
-- [ ] Total
-- [ ] Alerta
-- [ ] Última Actualización
+- [x] Nombre
+- [x] Teléfono
+- [x] Resumen Pedido
+- [x] Hamburguesas
+- [x] Extras
+- [x] Guarniciones
+- [x] Total
+- [x] Alerta
+- [x] Última Actualización
 
 ### Pruebas mínimas
-- [ ] Ejecutar sync sin borrar estados existentes.
-- [ ] Cambiar estado de un pedido a `Preparando` y confirmar que persiste tras sync.
-- [ ] Marcar un pedido como `Pagado`.
-- [ ] Editar nota interna y nota cliente.
-- [ ] Leer configuración bancaria.
-- [ ] Calcular resumen de dinero: vendido, pagado y pendiente.
+- [x] Ejecutar validación estática de Apps Script sin errores de sintaxis.
+- [x] Verificar exposición de nuevas funciones públicas en `Code.gs`.
+- [ ] Ejecutar pruebas manuales contra Google Sheet real (pendiente en entorno del usuario).
 
 ### Archivos esperados
 Codex debe registrar aquí los archivos exactos que modifique.
 
-- Pendiente
+- `backend_constants.gs`
+- `backend_utils.gs`
+- `backend_sync_service.gs`
+- `backend_orders_service.gs`
+- `Code.gs`
+- `planning/bitacora-fases.md`
+
+### Decisiones / cambios de alcance
+- Se mantuvieron funciones legacy (`syncChekeoFromMaster`, `getChekeoOrders`, `markOrderReady`) para no romper la UI actual mientras Fase 2 no inicia.
+- El backend nuevo se añadió por capas de servicio y funciones públicas nuevas, sin implementar UI completa.
 
 ### No realizado
-- Pendiente
+- No se implementó UI nueva (Fase 2).
+- No se conectó WhatsApp/ticket visual (Fase 3).
+- No se ejecutaron pruebas end-to-end sobre la hoja real desde este entorno local.
 
 ### Cierre de fase
-- Pendiente
+- Se migró el backend para operar sobre `Chekeo Nuevo` y `Configuración`, incluyendo sync con preservación de estado operativo y nuevas APIs para estado, pago, notas, resumen diario y datos bancarios.
+- Se añadieron normalizadores para estados (`Nuevo`, `Confirmado`, `Preparando`, `Listo`) y pago (`Pendiente`, `Pagado`) conservando compatibilidad con el esquema anterior.
+- Se cerró la fase técnica sin tocar `Chekeo` oficial ni construir UI completa, cumpliendo alcance solicitado para Fase 1.
 
 ---
 

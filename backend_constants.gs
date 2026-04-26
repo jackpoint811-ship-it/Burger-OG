@@ -1,11 +1,18 @@
 const MASTER_SHEET='Pedidos Master';
-const CHEKEO_SHEET='Chekeo';
+const CHEKEO_SHEET='Chekeo Nuevo';
+const CONFIG_SHEET='Configuración';
 const TIME_ZONE='America/Mexico_City';
 const SPREADSHEET_ID=(PropertiesService.getScriptProperties().getProperty('CHEKEO_SPREADSHEET_ID')||'').trim();
 const KITCHEN_STATUS={PENDING:'PENDIENTE',IN_PREP:'EN PREP',READY:'LISTO',DELIVERED:'ENTREGADO',CANCELED:'CANCELADO'};
+const APP_ORDER_STATUS={NEW:'Nuevo',CONFIRMED:'Confirmado',PREPARING:'Preparando',READY:'Listo'};
+const APP_PAYMENT_STATUS={PENDING:'Pendiente',PAID:'Pagado'};
+const APP_PAYMENT_METHOD={CASH:'Efectivo',TRANSFER:'Transferencia',MIXED:'Mixto',UNDEFINED:'No definido'};
 const CHEKEO={id:0,masterRow:1,orderDateTime:2,orderDate:3,name:4,phone:5,qtyOg:6,qtyBbq:7,burgerSummary:8,exactOrderText:9,extras:10,sides:11,total:12,payment:13,confirmed:14,paid:15,kitchenStatus:16,startTime:17,readyTime:18,updatedAt:19,specialCase:20,manualReview:21};
 const CHEKEO_BASE_COLUMN_COUNT=22;
-const CHEKEO_OPTIONAL_FIELDS=['ticketSent','ticketSentAt','sideReady','sideReadyAt'];
+const CHEKEO_OPTIONAL_FIELDS=[
+  'ticketSent','ticketSentAt','sideReady','sideReadyAt',
+  'orderStatus','paymentStatus','paymentMethod','noteInternal','noteClient','alert','burgers'
+];
 const CHEKEO_REQUIRED_FIELDS=[
   'id','masterRow','orderDateTime','orderDate','name','phone','qtyOg','qtyBbq','burgerSummary','exactOrderText',
   'extras','sides','total','payment','confirmed','paid','kitchenStatus','startTime','readyTime','updatedAt','specialCase','manualReview'
@@ -19,18 +26,25 @@ const CHEKEO_FIELD_ALIASES={
   phone:['Teléfono','Telefono','Celular','Phone','phone'],
   qtyOg:['Qty OG','Cantidad OG','OG','qtyOg'],
   qtyBbq:['Qty BBQ','Cantidad BBQ','BBQ','qtyBbq'],
-  burgerSummary:['Burger Summary','Resumen Burgers','Resumen','burgerSummary'],
+  burgerSummary:['Burger Summary','Resumen Burgers','Resumen','Resumen Pedido','burgerSummary'],
+  burgers:['Hamburguesas','Burgers','Detalle Burgers','burgers'],
   exactOrderText:['Exact Order Text','Pedido Exacto','Texto exacto','exactOrderText'],
   extras:['Extras','extras'],
   sides:['Sides','Guarniciones','Guarnición','sides'],
   total:['Total','Monto','total'],
-  payment:['Payment','Forma de pago','Pago','payment'],
+  payment:['Payment','Forma de pago','Pago','Método Pago','Metodo Pago','payment'],
+  paymentMethod:['Método Pago','Metodo Pago','Forma de pago','Payment Method','paymentMethod'],
+  paymentStatus:['Estado Pago','Pago Estado','paymentStatus'],
+  orderStatus:['Estado Pedido','Estado','orderStatus','Kitchen Status','Estado Cocina'],
   confirmed:['Confirmado','Confirmed','confirmed'],
   paid:['Pagado','Pagado?','Paid','paid'],
-  kitchenStatus:['Kitchen Status','Estado Cocina','Estado','kitchenStatus'],
+  kitchenStatus:['Kitchen Status','Estado Cocina','Estado','kitchenStatus','Estado Pedido'],
+  noteInternal:['Nota Interna','Notas Internas','noteInternal'],
+  noteClient:['Nota Cliente','Notas Cliente','noteClient'],
+  alert:['Alerta','alert'],
   startTime:['Start Time','Hora Inicio','Inicio','startTime'],
   readyTime:['Ready Time','Hora Listo','Listo','readyTime'],
-  updatedAt:['Updated At','Actualizado','updatedAt'],
+  updatedAt:['Updated At','Actualizado','Última Actualización','Ultima Actualizacion','updatedAt'],
   specialCase:['Special Case','Caso especial','specialCase'],
   manualReview:['Manual Review','Revisión manual','manualReview'],
   ticketSent:['Ticket Enviado','Ticket enviado','Enviado','ticketSent'],

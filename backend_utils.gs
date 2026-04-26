@@ -15,7 +15,12 @@ function buildExistingChekeoMap_(rows,chekeoColumns){
     const id=safeTrim_(row[fields.id]);
     if(!id)return;
     map[id]={
-      kitchenStatus:normalizeKitchenStatus_(row[fields.kitchenStatus]||''),
+      kitchenStatus:normalizeKitchenStatus_(readByIndex_(row,fields.kitchenStatus)||readByIndex_(row,fields.orderStatus)||''),
+      orderStatus:normalizeOrderStatus_(readByIndex_(row,fields.orderStatus)||readByIndex_(row,fields.kitchenStatus)||''),
+      paymentStatus:normalizePaymentStatus_(readByIndex_(row,fields.paymentStatus)||readByIndex_(row,fields.paid)||''),
+      paymentMethod:normalizePaymentMethod_(readByIndex_(row,fields.paymentMethod)||readByIndex_(row,fields.payment)||''),
+      noteInternal:readByIndex_(row,fields.noteInternal),
+      noteClient:readByIndex_(row,fields.noteClient),
       startTime:row[fields.startTime]||'',
       readyTime:row[fields.readyTime]||'',
       updatedAt:row[fields.updatedAt]||'',
@@ -150,11 +155,44 @@ function isAffirmative_(value){
 
 function normalizeKitchenStatus_(value){
   const normalized=safeTrim_(value).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+  if(normalized==='NUEVO'||normalized==='CONFIRMADO')return KITCHEN_STATUS.PENDING;
+  if(normalized==='PREPARANDO')return KITCHEN_STATUS.IN_PREP;
   if(normalized===KITCHEN_STATUS.PENDING)return KITCHEN_STATUS.PENDING;
   if(normalized===KITCHEN_STATUS.IN_PREP)return KITCHEN_STATUS.IN_PREP;
   if(normalized===KITCHEN_STATUS.READY)return KITCHEN_STATUS.READY;
   if(normalized===KITCHEN_STATUS.DELIVERED)return KITCHEN_STATUS.DELIVERED;
   if(normalized===KITCHEN_STATUS.CANCELED)return KITCHEN_STATUS.CANCELED;
+  return KITCHEN_STATUS.PENDING;
+}
+
+function normalizeOrderStatus_(value){
+  const normalized=safeTrim_(value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+  if(!normalized)return APP_ORDER_STATUS.NEW;
+  if(normalized==='nuevo'||normalized===KITCHEN_STATUS.PENDING.toLowerCase())return APP_ORDER_STATUS.NEW;
+  if(normalized==='confirmado')return APP_ORDER_STATUS.CONFIRMED;
+  if(normalized==='preparando'||normalized===KITCHEN_STATUS.IN_PREP.toLowerCase())return APP_ORDER_STATUS.PREPARING;
+  if(normalized==='listo'||normalized===KITCHEN_STATUS.READY.toLowerCase())return APP_ORDER_STATUS.READY;
+  return APP_ORDER_STATUS.NEW;
+}
+
+function normalizePaymentStatus_(value){
+  const normalized=safeTrim_(value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  if(normalized==='pagado'||normalized==='si'||normalized==='true'||normalized==='1')return APP_PAYMENT_STATUS.PAID;
+  return APP_PAYMENT_STATUS.PENDING;
+}
+
+function normalizePaymentMethod_(value){
+  const normalized=safeTrim_(value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  if(normalized==='efectivo')return APP_PAYMENT_METHOD.CASH;
+  if(normalized==='transferencia'||normalized==='transfer')return APP_PAYMENT_METHOD.TRANSFER;
+  if(normalized==='mixto'||normalized==='mix')return APP_PAYMENT_METHOD.MIXED;
+  return APP_PAYMENT_METHOD.UNDEFINED;
+}
+
+function mapOrderStatusToKitchenStatus_(orderStatus){
+  const normalized=normalizeOrderStatus_(orderStatus);
+  if(normalized===APP_ORDER_STATUS.PREPARING)return KITCHEN_STATUS.IN_PREP;
+  if(normalized===APP_ORDER_STATUS.READY)return KITCHEN_STATUS.READY;
   return KITCHEN_STATUS.PENDING;
 }
 
