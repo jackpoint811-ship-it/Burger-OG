@@ -4,10 +4,16 @@ function onOpen(){
     .createMenu('M Tools')
     .addItem('Sync Chekeo','syncChekeoFromMaster')
     .addSeparator()
+    .addItem('Open Burgers OG','showModuleMenu')
     .addItem('Open Chekeo App','showChekeoApp')
     .addItem('Open Tickets Cliente','showClientTicketsApp')
     .addItem('Diagnosticar permisos','diagnoseChekeoPermissions')
     .addToUi();
+}
+
+function showModuleMenu(){
+  const html=HtmlService.createHtmlOutputFromFile('module_menu').setWidth(420).setHeight(520);
+  SpreadsheetApp.getUi().showModelessDialog(html,'Burgers OG');
 }
 
 function showChekeoApp(){
@@ -22,8 +28,14 @@ function showClientTicketsApp(){
 
 function doGet(e){
   const view=safeTrim_(e&&e.parameter&&e.parameter.view).toLowerCase();
-  const fileName=view==='tickets'?'client_tickets':'burger';
-  const title=view==='tickets'?'Tickets cliente':'Chekeo';
+  const fileName=view==='tickets'
+    ? 'client_tickets'
+    : (view==='cocina'||view==='kitchen'||view==='chekeo' ? 'burger' : 'module_menu');
+
+  const title=view==='tickets'
+    ? 'Tickets cliente'
+    : (fileName==='burger' ? 'Chekeo' : 'Burgers OG');
+
   return HtmlService
     .createHtmlOutputFromFile(fileName)
     .setTitle(title);
