@@ -1,20 +1,27 @@
 function getSpreadsheet_(){
   if(!SPREADSHEET_ID){
-    throw new Error('Falta configurar CHEKEO_SPREADSHEET_ID en Script Properties.');
+    throw new Error(
+      'Falta configurar CHEKEO_SPREADSHEET_ID en Script Properties. '+
+      'Abre Extensiones > Apps Script > Configuración del proyecto > Propiedades del script y agrega el ID del Google Sheet.'
+    );
   }
   return SpreadsheetApp.openById(SPREADSHEET_ID);
 }
 
-function buildExistingChekeoMap_(rows){
+function buildExistingChekeoMap_(rows,chekeoColumns){
   const map={};
   rows.forEach(row=>{
-    const id=safeTrim_(row[CHEKEO.id]);
+    const id=safeTrim_(row[chekeoColumns.fields.id]);
     if(!id)return;
     map[id]={
-      kitchenStatus:normalizeKitchenStatus_(row[CHEKEO.kitchenStatus]||''),
-      startTime:row[CHEKEO.startTime]||'',
-      readyTime:row[CHEKEO.readyTime]||'',
-      updatedAt:row[CHEKEO.updatedAt]||''
+      kitchenStatus:normalizeKitchenStatus_(row[chekeoColumns.fields.kitchenStatus]||''),
+      startTime:row[chekeoColumns.fields.startTime]||'',
+      readyTime:row[chekeoColumns.fields.readyTime]||'',
+      updatedAt:row[chekeoColumns.fields.updatedAt]||'',
+      ticketSent:normalizeYesNo_(row[chekeoColumns.fields.ticketSent]||''),
+      ticketSentAt:chekeoColumns.fields.ticketSentAt>=0?row[chekeoColumns.fields.ticketSentAt]||'':'',
+      sideReady:normalizeYesNo_(row[chekeoColumns.fields.sideReady]||''),
+      sideReadyAt:chekeoColumns.fields.sideReadyAt>=0?row[chekeoColumns.fields.sideReadyAt]||'':''
     };
   });
   return map;
@@ -153,26 +160,111 @@ function formatUiDateTime_(dateValue){
   return Utilities.formatDate(dateValue,TIME_ZONE,'dd/MM/yyyy HH:mm:ss');
 }
 
-function findChekeoRowById_(sheet,orderId){
+function findChekeoRowById_(sheet,orderId,chekeoColumns){
   const cleanOrderId=safeTrim_(orderId);
   if(!cleanOrderId)return 0;
   const lastRow=sheet.getLastRow();
   if(lastRow<2)return 0;
-  const ids=sheet.getRange(2,CHEKEO.id+1,lastRow-1,1).getDisplayValues().flat();
+  const ids=sheet.getRange(2,chekeoColumns.fields.id+1,lastRow-1,1).getDisplayValues().flat();
   const index=ids.findIndex(id=>safeTrim_(id)===cleanOrderId);
   return index===-1?0:index+2;
 }
 
-function clearChekeoBody_(sheet){
+function clearChekeoBody_(sheet,chekeoColumns){
   const maxRows=sheet.getMaxRows();
-  if(maxRows>1){
-    sheet.getRange(2,1,maxRows-1,22).clearContent();
+  if(maxRows<=1)return;
+
+  const columns=getManagedChekeoColumnIndexes_(chekeoColumns||getChekeoColumnMap_(sheet,{skipRequiredValidation:true}));
+  if(!columns.length)return;
+
+  const rowCount=maxRows-1;
+  let rangeStart=columns[0];
+  let previous=columns[0];
+
+  for(let i=1;i<=columns.length;i++){
+    const current=columns[i];
+    const isContiguous=current===previous+1;
+    if(isContiguous){
+      previous=current;
+      continue;
+    }
+    const width=previous-rangeStart+1;
+    sheet.getRange(2,rangeStart+1,rowCount,width).clearContent();
+    rangeStart=current;
+    previous=current;
   }
 }
 
-function applyChekeoFormats_(sheet,rowCount){
+function applyChekeoFormats_(sheet,rowCount,chekeoColumns){
   if(rowCount<=0)return;
-  sheet.getRange(2,CHEKEO.orderDateTime+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
-  sheet.getRange(2,CHEKEO.orderDate+1,rowCount,1).setNumberFormat('dd/MM/yyyy');
-  sheet.getRange(2,CHEKEO.startTime+1,rowCount,3).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+  sheet.getRange(2,chekeoColumns.fields.orderDateTime+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+  sheet.getRange(2,chekeoColumns.fields.orderDate+1,rowCount,1).setNumberFormat('dd/MM/yyyy');
+  sheet.getRange(2,chekeoColumns.fields.startTime+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+  sheet.getRange(2,chekeoColumns.fields.readyTime+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+  sheet.getRange(2,chekeoColumns.fields.updatedAt+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+
+  if(chekeoColumns.fields.ticketSentAt>=0){
+    sheet.getRange(2,chekeoColumns.fields.ticketSentAt+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+  }
+  if(chekeoColumns.fields.sideReadyAt>=0){
+    sheet.getRange(2,chekeoColumns.fields.sideReadyAt+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+  }
+}
+
+function getManagedChekeoColumnIndexes_(chekeoColumns){
+  const fields=chekeoColumns&&chekeoColumns.fields?chekeoColumns.fields:{};
+  const allFields=CHEKEO_REQUIRED_FIELDS.concat(CHEKEO_OPTIONAL_FIELDS);
+  const indexes=allFields
+    .map(fieldName=>fields[fieldName])
+    .filter(index=>index!==null&&index!==undefined&&index>=0);
+  return [...new Set(indexes)].sort((a,b)=>a-b);
+}
+
+function writeChekeoFieldsByRow_(sheet,rowNumber,chekeoColumns,fieldValues){
+  const items=Object.keys(fieldValues||{})
+    .map(fieldName=>({index:chekeoColumns.fields[fieldName],value:fieldValues[fieldName]}))
+    .filter(item=>item.index!==null&&item.index!==undefined&&item.index>=0)
+    .sort((a,b)=>a.index-b.index);
+
+  if(!items.length)return;
+  let blockStart=items[0].index;
+  let blockValues=[items[0].value];
+
+  for(let i=1;i<=items.length;i++){
+    const item=items[i];
+    const prev=items[i-1];
+    const isContiguous=item&&item.index===prev.index+1;
+    if(isContiguous){
+      blockValues.push(item.value);
+      continue;
+    }
+    sheet.getRange(rowNumber,blockStart+1,1,blockValues.length).setValues([blockValues]);
+    if(item){
+      blockStart=item.index;
+      blockValues=[item.value];
+    }
+  }
+}
+
+function writeChekeoManagedRows_(sheet,startRow,rows,managedIndexes){
+  if(!rows||!rows.length||!managedIndexes||!managedIndexes.length)return;
+  let blockStart=managedIndexes[0];
+  let blockIndexes=[managedIndexes[0]];
+
+  for(let i=1;i<=managedIndexes.length;i++){
+    const current=managedIndexes[i];
+    const prev=managedIndexes[i-1];
+    const isContiguous=current===prev+1;
+    if(isContiguous){
+      blockIndexes.push(current);
+      continue;
+    }
+
+    const blockMatrix=rows.map(row=>blockIndexes.map(colIndex=>row[colIndex]));
+    sheet.getRange(startRow,blockStart+1,rows.length,blockIndexes.length).setValues(blockMatrix);
+    if(current!==undefined){
+      blockStart=current;
+      blockIndexes=[current];
+    }
+  }
 }
