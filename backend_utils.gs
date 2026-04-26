@@ -170,11 +170,28 @@ function findChekeoRowById_(sheet,orderId,chekeoColumns){
   return index===-1?0:index+2;
 }
 
-function clearChekeoBody_(sheet){
+function clearChekeoBody_(sheet,chekeoColumns){
   const maxRows=sheet.getMaxRows();
-  const maxCols=Math.max(sheet.getLastColumn(),CHEKEO_BASE_COLUMN_COUNT);
-  if(maxRows>1){
-    sheet.getRange(2,1,maxRows-1,maxCols).clearContent();
+  if(maxRows<=1)return;
+
+  const columns=getManagedChekeoColumnIndexes_(chekeoColumns||getChekeoColumnMap_(sheet,{skipRequiredValidation:true}));
+  if(!columns.length)return;
+
+  const rowCount=maxRows-1;
+  let rangeStart=columns[0];
+  let previous=columns[0];
+
+  for(let i=1;i<=columns.length;i++){
+    const current=columns[i];
+    const isContiguous=current===previous+1;
+    if(isContiguous){
+      previous=current;
+      continue;
+    }
+    const width=previous-rangeStart+1;
+    sheet.getRange(2,rangeStart+1,rowCount,width).clearContent();
+    rangeStart=current;
+    previous=current;
   }
 }
 
@@ -192,4 +209,13 @@ function applyChekeoFormats_(sheet,rowCount,chekeoColumns){
   if(chekeoColumns.fields.sideReadyAt>=0){
     sheet.getRange(2,chekeoColumns.fields.sideReadyAt+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
   }
+}
+
+function getManagedChekeoColumnIndexes_(chekeoColumns){
+  const fields=chekeoColumns&&chekeoColumns.fields?chekeoColumns.fields:{};
+  const allFields=CHEKEO_REQUIRED_FIELDS.concat(CHEKEO_OPTIONAL_FIELDS);
+  const indexes=allFields
+    .map(fieldName=>fields[fieldName])
+    .filter(index=>index!==null&&index!==undefined&&index>=0);
+  return [...new Set(indexes)].sort((a,b)=>a-b);
 }

@@ -10,7 +10,7 @@ function syncChekeoFromMasterService_(){
   const masterLastRow=masterSheet.getLastRow();
   const masterLastCol=masterSheet.getLastColumn();
   if(masterLastRow<2){
-    clearChekeoBody_(chekeoSheet);
+    clearChekeoBody_(chekeoSheet,chekeoColumns);
     return;
   }
 
@@ -72,7 +72,7 @@ function syncChekeoFromMasterService_(){
     output.push(syncRow);
   });
 
-  clearChekeoBody_(chekeoSheet);
+  clearChekeoBody_(chekeoSheet,chekeoColumns);
   if(output.length>0){
     chekeoSheet.getRange(2,1,output.length,chekeoColumns.lastCol).setValues(output);
     applyChekeoFormats_(chekeoSheet,output.length,chekeoColumns);
