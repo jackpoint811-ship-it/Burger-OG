@@ -9,6 +9,7 @@ function onOpen(){
     .addItem('Open Tickets Cliente','showClientTicketsApp')
     .addItem('Diagnosticar permisos','diagnoseChekeoPermissions')
     .addItem('Diagnosticar Schema Chekeo','diagnoseChekeoSchema')
+    .addItem('Diagnosticar Schemas (Master + Chekeo)','diagnoseSchemas')
     .addItem('Agregar Columnas Opcionales Chekeo','setupChekeoOptionalColumns')
     .addToUi();
 }
@@ -112,4 +113,8 @@ function diagnoseChekeoSchema(){
 
 function setupChekeoOptionalColumns(){
   return setupChekeoOptionalColumnsService_();
+}
+
+function diagnoseSchemas(){
+  return diagnoseSchemasService_();
 }

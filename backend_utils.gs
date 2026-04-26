@@ -10,18 +10,19 @@ function getSpreadsheet_(){
 
 function buildExistingChekeoMap_(rows,chekeoColumns){
   const map={};
+  const fields=chekeoColumns&&chekeoColumns.fields?chekeoColumns.fields:CHEKEO;
   rows.forEach(row=>{
-    const id=safeTrim_(row[chekeoColumns.fields.id]);
+    const id=safeTrim_(row[fields.id]);
     if(!id)return;
     map[id]={
-      kitchenStatus:normalizeKitchenStatus_(row[chekeoColumns.fields.kitchenStatus]||''),
-      startTime:row[chekeoColumns.fields.startTime]||'',
-      readyTime:row[chekeoColumns.fields.readyTime]||'',
-      updatedAt:row[chekeoColumns.fields.updatedAt]||'',
-      ticketSent:normalizeYesNo_(row[chekeoColumns.fields.ticketSent]||''),
-      ticketSentAt:chekeoColumns.fields.ticketSentAt>=0?row[chekeoColumns.fields.ticketSentAt]||'':'',
-      sideReady:normalizeYesNo_(row[chekeoColumns.fields.sideReady]||''),
-      sideReadyAt:chekeoColumns.fields.sideReadyAt>=0?row[chekeoColumns.fields.sideReadyAt]||'':''
+      kitchenStatus:normalizeKitchenStatus_(row[fields.kitchenStatus]||''),
+      startTime:row[fields.startTime]||'',
+      readyTime:row[fields.readyTime]||'',
+      updatedAt:row[fields.updatedAt]||'',
+      ticketSent:normalizeFlagForPreservation_(readByIndex_(row,fields.ticketSent)),
+      ticketSentAt:readByIndex_(row,fields.ticketSentAt),
+      sideReady:normalizeFlagForPreservation_(readByIndex_(row,fields.sideReady)),
+      sideReadyAt:readByIndex_(row,fields.sideReadyAt)
     };
   });
   return map;
@@ -114,6 +115,29 @@ function normalizeYesNo_(value){
   if(v==='si'||v==='sí')return'Si';
   if(v==='no')return'No';
   return'';
+}
+
+function normalizeFlagForPreservation_(value){
+  if(value===null||value===undefined)return'';
+  if(typeof value==='boolean')return value?'Si':'No';
+  if(typeof value==='number'){
+    if(value===1)return'Si';
+    if(value===0)return'No';
+  }
+
+  const raw=safeTrim_(value);
+  if(!raw)return'';
+  const normalized=raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(['si','yes','true','1','x','ok'].indexOf(normalized)!==-1)return'Si';
+  if(['no','false','0'].indexOf(normalized)!==-1)return'No';
+  return raw;
+}
+
+function readByIndex_(row,index){
+  if(index===null||index===undefined||index<0)return'';
+  if(index>=row.length)return'';
+  const value=row[index];
+  return value===null||value===undefined?'':value;
 }
 
 function isAffirmative_(value){

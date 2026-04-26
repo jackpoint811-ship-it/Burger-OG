@@ -26,7 +26,8 @@ function normalizeHeader_(value){
     .trim();
 }
 
-function getMasterColumnMap_(masterSheet){
+function getMasterColumnMap_(masterSheet,options){
+  const opts=options||{};
   const lastCol=masterSheet.getLastColumn();
   const headers=lastCol>0?masterSheet.getRange(1,1,1,lastCol).getDisplayValues()[0]:[];
   const detectedHeaders=headers.map(header=>safeTrim_(header));
@@ -85,8 +86,23 @@ function getMasterColumnMap_(masterSheet){
     normalizedHeaders
   };
 
-  REQUIRED_MASTER_FIELDS.forEach(fieldName=>requireMasterField_(fieldName,detectedColumns));
+  if(!opts.skipRequiredValidation){
+    REQUIRED_MASTER_FIELDS.forEach(fieldName=>requireMasterField_(fieldName,detectedColumns));
+  }
   return detectedColumns;
+}
+
+function buildMasterSchemaDiagnosis_(masterSheet){
+  const map=getMasterColumnMap_(masterSheet,{skipRequiredValidation:true});
+  const missingRequired=REQUIRED_MASTER_FIELDS
+    .filter(fieldName=>map.fields[fieldName]===null||map.fields[fieldName]===undefined||map.fields[fieldName]<0)
+    .map(fieldName=>({field:fieldName,aliases:map.aliasesByField[fieldName]||[]}));
+
+  return {
+    missingRequired,
+    detectedHeaders:map.headers.filter(Boolean),
+    aliasesByField:map.aliasesByField
+  };
 }
 
 function normalizeHeaderLike_(rawHeader){
@@ -203,4 +219,25 @@ function requireMasterField_(fieldName,detectedColumns){
     `Aliases intentados: ${aliases}. `+
     `Encabezados detectados: ${headers}`
   );
+}
+
+function getMissingRequiredMasterValues_(row,masterColumns){
+  const missing=[];
+  const customerName=safeTrim_(getMasterValue_(row,masterColumns.fields.customerName));
+  const paymentMethod=safeTrim_(getMasterValue_(row,masterColumns.fields.paymentMethod));
+  const total=safeTrim_(getMasterValue_(row,masterColumns.fields.total));
+  const manualTotal=safeTrim_(getMasterValue_(row,masterColumns.fields.manualTotal));
+  const specialFlag=safeTrim_(getMasterValue_(row,masterColumns.fields.specialFlag));
+
+  if(!customerName)missing.push('customerName');
+  if(!paymentMethod)missing.push('paymentMethod');
+
+  const hasChequeoManualMarker=
+    total==='Chequeo Manual'||
+    manualTotal==='Chequeo Manual'||
+    specialFlag==='(+1)';
+  const hasAnyTotal=!!(total||manualTotal||hasChequeoManualMarker);
+  if(!hasAnyTotal)missing.push('total/manualTotal');
+
+  return missing;
 }
