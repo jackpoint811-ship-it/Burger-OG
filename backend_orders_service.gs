@@ -1,4 +1,6 @@
-function getChekeoOrdersService_(){
+function getChekeoOrdersService_(options){
+  const config=options||{};
+  const activeOnly=config.activeOnly!==false;
   const ss=getSpreadsheet_();
   const sheet=ss.getSheetByName(CHEKEO_SHEET);
   if(!sheet)throw new Error(`No existe la hoja "${CHEKEO_SHEET}". Verifica el nombre de la hoja en el archivo de Google Sheets.`);
@@ -8,13 +10,33 @@ function getChekeoOrdersService_(){
   if(lastRow<2)return{orders:[]};
 
   const values=sheet.getRange(2,1,lastRow-1,chekeoColumns.lastCol).getDisplayValues();
-  const orders=values
+  let orders=values
     .map((row,index)=>mapChekeoRowToOrder_(row,index,chekeoColumns))
     .filter(order=>order.id)
-    .filter(order=>isActiveKitchenStatus_(order.kitchenStatus))
     .sort((a,b)=>a.masterRow-b.masterRow);
+  if(activeOnly){
+    orders=orders.filter(order=>isActiveKitchenStatus_(order.kitchenStatus));
+  }
 
   return {orders};
+}
+
+function getTicketOrderService_(orderId){
+  const cleanOrderId=safeTrim_(orderId);
+  const allOrdersResult=getChekeoOrdersService_({activeOnly:false});
+  const activeOrders=allOrdersResult.orders.filter(order=>isActiveKitchenStatus_(order.kitchenStatus));
+  if(!cleanOrderId){
+    return {
+      order:null,
+      orders:activeOrders
+    };
+  }
+
+  const foundOrder=allOrdersResult.orders.find(order=>order.id===cleanOrderId)||null;
+  return {
+    order:foundOrder,
+    orders:activeOrders
+  };
 }
 
 function markOrderReadyService_(orderId){
