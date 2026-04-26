@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Burgers OG</title>
+  <style>
+    :root{
+      --bg:#0f172a;
+      --card:#111827;
+      --text:#f8fafc;
+      --muted:#cbd5e1;
+      --primary:#f97316;
+      --primary-hover:#ea580c;
+      --secondary:#1d4ed8;
+      --secondary-hover:#1e40af;
+    }
+
+    *{box-sizing:border-box;}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:Arial, sans-serif;
+      background:linear-gradient(160deg,#020617,#0f172a 45%,#1e293b);
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+    }
+
+    .menu{
+      width:100%;
+      max-width:420px;
+      background:rgba(17,24,39,.95);
+      border:1px solid rgba(148,163,184,.25);
+      border-radius:16px;
+      padding:24px 16px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      text-align:center;
+      box-shadow:0 18px 42px rgba(2,6,23,.45);
+    }
+
+    h1{
+      margin:0;
+      font-size:1.8rem;
+      letter-spacing:.06em;
+    }
+
+    p{
+      margin:0 0 6px;
+      color:var(--muted);
+      font-size:1rem;
+    }
+
+    .module-btn{
+      width:100%;
+      border:0;
+      border-radius:12px;
+      padding:18px 14px;
+      color:#fff;
+      font-size:1.15rem;
+      font-weight:700;
+      cursor:pointer;
+      transition:transform .12s ease, filter .12s ease;
+    }
+
+    .module-btn:active{transform:scale(.98);}
+    .module-btn:hover{filter:brightness(1.08);}
+
+    .btn-cocina{background:var(--primary);}
+    .btn-cocina:hover{background:var(--primary-hover);}
+
+    .btn-tickets{background:var(--secondary);}
+    .btn-tickets:hover{background:var(--secondary-hover);}
+  </style>
+</head>
+<body>
+  <main class="menu" role="main">
+    <h1>BURGERS OG</h1>
+    <p>Selecciona un módulo</p>
+
+    <button class="module-btn btn-cocina" type="button" onclick="openModule('cocina')">Cocina</button>
+    <button class="module-btn btn-tickets" type="button" onclick="openModule('tickets')">Tickets Cliente</button>
+  </main>
+
+  <script>
+    function isSheetsDialogMode(){
+      return typeof google!=='undefined' && google.script && google.script.run;
+    }
+
+    function closeDialogIfPossible(){
+      if(typeof google!=='undefined' && google.script && google.script.host && google.script.host.close){
+        google.script.host.close();
+      }
+    }
+
+    function openModule(moduleName){
+      if(isSheetsDialogMode()){
+        if(moduleName==='cocina'){
+          google.script.run.showChekeoApp();
+        }else{
+          google.script.run.showClientTicketsApp();
+        }
+        closeDialogIfPossible();
+        return;
+      }
+
+      const params=new URLSearchParams(window.location.search);
+      params.set('view',moduleName==='cocina'?'cocina':'tickets');
+      window.location.search=params.toString();
+    }
+  </script>
+</body>
+</html>
