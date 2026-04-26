@@ -96,7 +96,7 @@ function getChekeoOrders(){
 }
 
 function getCocinaOrders(){
-  return getChekeoOrdersService_();
+  return getChekeoOrdersService_({activeOnly:true});
 }
 
 function getTicketOrder(orderId){
