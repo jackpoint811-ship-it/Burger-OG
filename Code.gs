@@ -14,7 +14,7 @@ function onOpen(){
 }
 
 function showModuleMenu(){
-  const html=HtmlService.createHtmlOutputFromFile('module_menu').setWidth(420).setHeight(520);
+  const html=renderModuleMenu_('dialog').setWidth(420).setHeight(520);
   SpreadsheetApp.getUi().showModelessDialog(html,'Burgers OG');
 }
 
@@ -32,15 +32,25 @@ function doGet(e){
   const view=safeTrim_(e&&e.parameter&&e.parameter.view).toLowerCase();
   const fileName=view==='tickets'
     ? 'client_tickets'
-    : (view==='cocina'||view==='kitchen'||view==='chekeo' ? 'burger' : 'module_menu');
+    : (view==='cocina'||view==='kitchen'||view==='chekeo' ? 'burger' : '');
 
   const title=view==='tickets'
     ? 'Tickets cliente'
     : (fileName==='burger' ? 'Chekeo' : 'Burgers OG');
 
+  if(!fileName){
+    return renderModuleMenu_('web').setTitle(title);
+  }
+
   return HtmlService
     .createHtmlOutputFromFile(fileName)
     .setTitle(title);
+}
+
+function renderModuleMenu_(appMode){
+  const template=HtmlService.createTemplateFromFile('module_menu');
+  template.appMode=safeTrim_(appMode).toLowerCase()==='dialog'?'dialog':'web';
+  return template.evaluate();
 }
 
 function syncChekeoFromMaster(){
