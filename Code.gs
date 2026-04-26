@@ -56,3 +56,11 @@ function diagnoseChekeoPermissions(){
 function markOrderReady(orderId){
   return markOrderReadyService_(orderId);
 }
+
+function markTicketSent(orderId){
+  return markTicketSentService_(orderId);
+}
+
+function markSideReady(orderId){
+  return markSideReadyService_(orderId);
+}

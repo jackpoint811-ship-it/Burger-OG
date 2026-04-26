@@ -244,6 +244,11 @@
           return new Promise((resolve, reject) => {
             google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).markOrderReady(orderId);
           });
+        },
+        markSideReady(orderId) {
+          return new Promise((resolve, reject) => {
+            google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).markSideReady(orderId);
+          });
         }
       };
 
@@ -607,7 +612,9 @@
 
         isSideReady(order) {
           const orderId = String(order && order.id || '').trim();
-          return !!(orderId && AppState.sideReadyMap && AppState.sideReadyMap[orderId]);
+          const backendReady=!!(order && order.sideReady);
+          const localReady=!!(orderId && AppState.sideReadyMap && AppState.sideReadyMap[orderId]);
+          return backendReady||localReady;
         },
 
         loadSideReadyMap() {
@@ -626,13 +633,18 @@
           } catch (_) {}
         },
 
-        markSideReady(orderId) {
+        async markSideReady(orderId) {
           const cleanId = String(orderId || '').trim();
           if (!cleanId) return;
-          AppState.sideReadyMap[cleanId] = true;
-          this.saveSideReadyMap();
-          UIStateMachine.transition(AppState.uiState, { sideReadyMap: AppState.sideReadyMap });
-          this.showToast(`Guarnición lista para ${cleanId}`);
+          try {
+            await ChekeoBridge.markSideReady(cleanId);
+            AppState.sideReadyMap[cleanId] = true;
+            this.saveSideReadyMap();
+            this.showToast(`Guarnición lista para ${cleanId}`);
+            this.loadOrders();
+          } catch (err) {
+            this.showToast(err && err.message ? err.message : 'No se pudo marcar guarnición lista');
+          }
         },
 
         toggleViewMode() {

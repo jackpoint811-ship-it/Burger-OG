@@ -1,20 +1,27 @@
 function getSpreadsheet_(){
   if(!SPREADSHEET_ID){
-    throw new Error('Falta configurar CHEKEO_SPREADSHEET_ID en Script Properties.');
+    throw new Error(
+      'Falta configurar CHEKEO_SPREADSHEET_ID en Script Properties. '+
+      'Abre Extensiones > Apps Script > Configuración del proyecto > Propiedades del script y agrega el ID del Google Sheet.'
+    );
   }
   return SpreadsheetApp.openById(SPREADSHEET_ID);
 }
 
-function buildExistingChekeoMap_(rows){
+function buildExistingChekeoMap_(rows,chekeoColumns){
   const map={};
   rows.forEach(row=>{
-    const id=safeTrim_(row[CHEKEO.id]);
+    const id=safeTrim_(row[chekeoColumns.fields.id]);
     if(!id)return;
     map[id]={
-      kitchenStatus:normalizeKitchenStatus_(row[CHEKEO.kitchenStatus]||''),
-      startTime:row[CHEKEO.startTime]||'',
-      readyTime:row[CHEKEO.readyTime]||'',
-      updatedAt:row[CHEKEO.updatedAt]||''
+      kitchenStatus:normalizeKitchenStatus_(row[chekeoColumns.fields.kitchenStatus]||''),
+      startTime:row[chekeoColumns.fields.startTime]||'',
+      readyTime:row[chekeoColumns.fields.readyTime]||'',
+      updatedAt:row[chekeoColumns.fields.updatedAt]||'',
+      ticketSent:normalizeYesNo_(row[chekeoColumns.fields.ticketSent]||''),
+      ticketSentAt:chekeoColumns.fields.ticketSentAt>=0?row[chekeoColumns.fields.ticketSentAt]||'':'',
+      sideReady:normalizeYesNo_(row[chekeoColumns.fields.sideReady]||''),
+      sideReadyAt:chekeoColumns.fields.sideReadyAt>=0?row[chekeoColumns.fields.sideReadyAt]||'':''
     };
   });
   return map;
@@ -153,26 +160,36 @@ function formatUiDateTime_(dateValue){
   return Utilities.formatDate(dateValue,TIME_ZONE,'dd/MM/yyyy HH:mm:ss');
 }
 
-function findChekeoRowById_(sheet,orderId){
+function findChekeoRowById_(sheet,orderId,chekeoColumns){
   const cleanOrderId=safeTrim_(orderId);
   if(!cleanOrderId)return 0;
   const lastRow=sheet.getLastRow();
   if(lastRow<2)return 0;
-  const ids=sheet.getRange(2,CHEKEO.id+1,lastRow-1,1).getDisplayValues().flat();
+  const ids=sheet.getRange(2,chekeoColumns.fields.id+1,lastRow-1,1).getDisplayValues().flat();
   const index=ids.findIndex(id=>safeTrim_(id)===cleanOrderId);
   return index===-1?0:index+2;
 }
 
 function clearChekeoBody_(sheet){
   const maxRows=sheet.getMaxRows();
+  const maxCols=Math.max(sheet.getLastColumn(),CHEKEO_BASE_COLUMN_COUNT);
   if(maxRows>1){
-    sheet.getRange(2,1,maxRows-1,22).clearContent();
+    sheet.getRange(2,1,maxRows-1,maxCols).clearContent();
   }
 }
 
-function applyChekeoFormats_(sheet,rowCount){
+function applyChekeoFormats_(sheet,rowCount,chekeoColumns){
   if(rowCount<=0)return;
-  sheet.getRange(2,CHEKEO.orderDateTime+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
-  sheet.getRange(2,CHEKEO.orderDate+1,rowCount,1).setNumberFormat('dd/MM/yyyy');
-  sheet.getRange(2,CHEKEO.startTime+1,rowCount,3).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+  sheet.getRange(2,chekeoColumns.fields.orderDateTime+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+  sheet.getRange(2,chekeoColumns.fields.orderDate+1,rowCount,1).setNumberFormat('dd/MM/yyyy');
+  sheet.getRange(2,chekeoColumns.fields.startTime+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+  sheet.getRange(2,chekeoColumns.fields.readyTime+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+  sheet.getRange(2,chekeoColumns.fields.updatedAt+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+
+  if(chekeoColumns.fields.ticketSentAt>=0){
+    sheet.getRange(2,chekeoColumns.fields.ticketSentAt+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+  }
+  if(chekeoColumns.fields.sideReadyAt>=0){
+    sheet.getRange(2,chekeoColumns.fields.sideReadyAt+1,rowCount,1).setNumberFormat('dd/MM/yyyy HH:mm:ss');
+  }
 }

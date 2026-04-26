@@ -1,14 +1,15 @@
 function getChekeoOrdersService_(){
   const ss=getSpreadsheet_();
   const sheet=ss.getSheetByName(CHEKEO_SHEET);
-  if(!sheet)throw new Error(`No existe la hoja "${CHEKEO_SHEET}"`);
+  if(!sheet)throw new Error(`No existe la hoja "${CHEKEO_SHEET}". Verifica el nombre de la hoja en el archivo de Google Sheets.`);
+  const chekeoColumns=getChekeoColumnMap_(sheet);
 
   const lastRow=sheet.getLastRow();
   if(lastRow<2)return{orders:[]};
 
-  const values=sheet.getRange(2,1,lastRow-1,22).getDisplayValues();
+  const values=sheet.getRange(2,1,lastRow-1,chekeoColumns.lastCol).getDisplayValues();
   const orders=values
-    .map((row,index)=>mapChekeoRowToOrder_(row,index))
+    .map((row,index)=>mapChekeoRowToOrder_(row,index,chekeoColumns))
     .filter(order=>order.id)
     .filter(order=>isActiveKitchenStatus_(order.kitchenStatus))
     .sort((a,b)=>a.masterRow-b.masterRow);
@@ -25,21 +26,23 @@ function markOrderReadyService_(orderId){
   try{
     const ss=getSpreadsheet_();
     const sheet=ss.getSheetByName(CHEKEO_SHEET);
-    if(!sheet)throw new Error(`No existe la hoja "${CHEKEO_SHEET}"`);
+    if(!sheet)throw new Error(`No existe la hoja "${CHEKEO_SHEET}". Verifica el nombre de la hoja en el archivo de Google Sheets.`);
+    const chekeoColumns=getChekeoColumnMap_(sheet);
 
-    const rowNumber=findChekeoRowById_(sheet,cleanOrderId);
+    const rowNumber=findChekeoRowById_(sheet,cleanOrderId,chekeoColumns);
     if(!rowNumber)throw new Error(`No encontré el pedido ${cleanOrderId} en Chekeo`);
 
-    const rowValues=sheet.getRange(rowNumber,1,1,22).getValues()[0];
+    const rowValues=sheet.getRange(rowNumber,1,1,chekeoColumns.lastCol).getValues()[0];
     const now=new Date();
-    const startTime=rowValues[CHEKEO.startTime];
+    const startTime=rowValues[chekeoColumns.fields.startTime];
 
-    sheet.getRange(rowNumber,CHEKEO.kitchenStatus+1).setValue(KITCHEN_STATUS.READY);
+    rowValues[chekeoColumns.fields.kitchenStatus]=KITCHEN_STATUS.READY;
     if(!startTime){
-      sheet.getRange(rowNumber,CHEKEO.startTime+1).setValue(now);
+      rowValues[chekeoColumns.fields.startTime]=now;
     }
-    sheet.getRange(rowNumber,CHEKEO.readyTime+1).setValue(now);
-    sheet.getRange(rowNumber,CHEKEO.updatedAt+1).setValue(now);
+    rowValues[chekeoColumns.fields.readyTime]=now;
+    rowValues[chekeoColumns.fields.updatedAt]=now;
+    sheet.getRange(rowNumber,1,1,chekeoColumns.lastCol).setValues([rowValues]);
 
     return {ok:true,orderId:cleanOrderId,newStatus:KITCHEN_STATUS.READY,updatedAt:formatUiDateTime_(now)};
   }finally{
@@ -55,34 +58,92 @@ function diagnoseChekeoPermissionsService_(){
     ui.alert('Diagnóstico Chekeo',`No existe la hoja "${CHEKEO_SHEET}".`,ui.ButtonSet.OK);
     return;
   }
+  const chekeoColumns=getChekeoColumnMap_(sheet);
 
   const lastRow=sheet.getLastRow();
-  const statusValues=lastRow>=2?sheet.getRange(2,CHEKEO.kitchenStatus+1,lastRow-1,1).getDisplayValues().flat():[];
+  const statusValues=lastRow>=2?sheet.getRange(2,chekeoColumns.fields.kitchenStatus+1,lastRow-1,1).getDisplayValues().flat():[];
   const activeCount=statusValues.filter(value=>isActiveKitchenStatus_(value)).length;
   ui.alert('Diagnóstico Chekeo',`Hoja: ${CHEKEO_SHEET}\nFilas con datos: ${Math.max(lastRow-1,0)}\nÓrdenes activas detectadas: ${activeCount}`,ui.ButtonSet.OK);
 }
 
-function mapChekeoRowToOrder_(row,index){
-  const masterRow=Number(row[CHEKEO.masterRow])||(index+2);
+function mapChekeoRowToOrder_(row,index,chekeoColumns){
+  const masterRow=Number(row[chekeoColumns.fields.masterRow])||(index+2);
   return {
-    id:safeTrim_(row[CHEKEO.id])||buildOrderId_(masterRow),
+    id:safeTrim_(row[chekeoColumns.fields.id])||buildOrderId_(masterRow),
     masterRow,
-    name:safeTrim_(row[CHEKEO.name]),
-    phone:safeTrim_(row[CHEKEO.phone]),
-    qtyOg:Number(row[CHEKEO.qtyOg])||0,
-    qtyBbq:Number(row[CHEKEO.qtyBbq])||0,
-    burgerSummary:safeTrim_(row[CHEKEO.burgerSummary]),
-    exactOrderText:safeTrim_(row[CHEKEO.exactOrderText]),
-    extras:safeTrim_(row[CHEKEO.extras]),
-    sides:safeTrim_(row[CHEKEO.sides]),
-    totalDisplay:safeTrim_(row[CHEKEO.total]),
-    payment:safeTrim_(row[CHEKEO.payment]),
-    confirmed:safeTrim_(row[CHEKEO.confirmed]),
-    paid:safeTrim_(row[CHEKEO.paid]),
-    kitchenStatus:normalizeKitchenStatus_(row[CHEKEO.kitchenStatus]),
-    specialCase:isManualFlag_(row[CHEKEO.specialCase]),
-    manualReview:isManualFlag_(row[CHEKEO.manualReview])
+    name:safeTrim_(row[chekeoColumns.fields.name]),
+    phone:safeTrim_(row[chekeoColumns.fields.phone]),
+    qtyOg:Number(row[chekeoColumns.fields.qtyOg])||0,
+    qtyBbq:Number(row[chekeoColumns.fields.qtyBbq])||0,
+    burgerSummary:safeTrim_(row[chekeoColumns.fields.burgerSummary]),
+    exactOrderText:safeTrim_(row[chekeoColumns.fields.exactOrderText]),
+    extras:safeTrim_(row[chekeoColumns.fields.extras]),
+    sides:safeTrim_(row[chekeoColumns.fields.sides]),
+    totalDisplay:safeTrim_(row[chekeoColumns.fields.total]),
+    payment:safeTrim_(row[chekeoColumns.fields.payment]),
+    confirmed:safeTrim_(row[chekeoColumns.fields.confirmed]),
+    paid:safeTrim_(row[chekeoColumns.fields.paid]),
+    kitchenStatus:normalizeKitchenStatus_(row[chekeoColumns.fields.kitchenStatus]),
+    specialCase:isManualFlag_(row[chekeoColumns.fields.specialCase]),
+    manualReview:isManualFlag_(row[chekeoColumns.fields.manualReview]),
+    ticketSent:chekeoColumns.fields.ticketSent>=0?isManualFlag_(row[chekeoColumns.fields.ticketSent]):false,
+    ticketSentAt:chekeoColumns.fields.ticketSentAt>=0?safeTrim_(row[chekeoColumns.fields.ticketSentAt]):'',
+    sideReady:chekeoColumns.fields.sideReady>=0?isManualFlag_(row[chekeoColumns.fields.sideReady]):false,
+    sideReadyAt:chekeoColumns.fields.sideReadyAt>=0?safeTrim_(row[chekeoColumns.fields.sideReadyAt]):''
   };
+}
+
+function markTicketSentService_(orderId){
+  return markOrderFlagService_(orderId,{
+    actionLabel:'marcar ticket como enviado',
+    flagField:'ticketSent',
+    dateField:'ticketSentAt',
+    successMessage:'Ticket marcado como enviado'
+  });
+}
+
+function markSideReadyService_(orderId){
+  return markOrderFlagService_(orderId,{
+    actionLabel:'marcar guarnición como lista',
+    flagField:'sideReady',
+    dateField:'sideReadyAt',
+    successMessage:'Guarnición marcada como lista'
+  });
+}
+
+function markOrderFlagService_(orderId,config){
+  const cleanOrderId=safeTrim_(orderId);
+  if(!cleanOrderId)throw new Error('No se recibió un ID de pedido válido.');
+
+  const lock=LockService.getDocumentLock();
+  lock.waitLock(10000);
+  try{
+    const ss=getSpreadsheet_();
+    const sheet=ss.getSheetByName(CHEKEO_SHEET);
+    if(!sheet)throw new Error(`No existe la hoja "${CHEKEO_SHEET}". Verifica el nombre de la hoja en el archivo de Google Sheets.`);
+    const chekeoColumns=getChekeoColumnMap_(sheet);
+    const flagIndex=requireChekeoOptionalField_(config.flagField,chekeoColumns);
+    const dateIndex=requireChekeoOptionalField_(config.dateField,chekeoColumns);
+
+    const rowNumber=findChekeoRowById_(sheet,cleanOrderId,chekeoColumns);
+    if(!rowNumber)throw new Error(`No encontré el pedido ${cleanOrderId} en ${CHEKEO_SHEET}.`);
+
+    const rowValues=sheet.getRange(rowNumber,1,1,chekeoColumns.lastCol).getValues()[0];
+    const now=new Date();
+    rowValues[flagIndex]='Si';
+    rowValues[dateIndex]=now;
+    rowValues[chekeoColumns.fields.updatedAt]=now;
+    sheet.getRange(rowNumber,1,1,chekeoColumns.lastCol).setValues([rowValues]);
+
+    return {
+      ok:true,
+      orderId:cleanOrderId,
+      message:config.successMessage,
+      updatedAt:formatUiDateTime_(now)
+    };
+  }finally{
+    lock.releaseLock();
+  }
 }
 
 function isManualFlag_(rawValue){
