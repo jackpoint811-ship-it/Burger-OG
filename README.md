@@ -13,8 +13,14 @@ Todo el código anterior quedó archivado en `legacy/` como referencia históric
 No se debe reactivar ni mezclar directamente en la nueva base; cualquier reutilización debe ser explícita y controlada por fase.
 
 ## Flujo por fases
-1. **Fase 0**: reset del repo, traslado a `legacy/`, documentación base.
-2. **Fase 1+**: reconstrucción incremental sobre base limpia, validando alcance por fase antes de implementar.
+- Fase 0: Reset legacy.
+- Fase 1: Contrato de datos y hojas.
+- Fase 2: Backend Apps Script base.
+- Fase 3: Web App shell móvil.
+- Fase 4: Pedidos + Cocina.
+- Fase 5: Ticket cliente + WhatsApp.
+- Fase 6: Resumen operativo.
+- Fase 7: Migración a producción.
 
 ## Restricción clave
 No usar servicios externos, librerías externas, APIs externas ni bases de datos externas.
