@@ -1,14 +1,27 @@
-function doGet() {
-  return ContentService
-    .createTextOutput(JSON.stringify(healthCheck()))
-    .setMimeType(ContentService.MimeType.JSON);
+function doGet(e) {
+  var params = (e && e.parameter) || {};
+  if (params.format === 'json') {
+    return ContentService
+      .createTextOutput(JSON.stringify(healthCheck()))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  return HtmlService
+    .createTemplateFromFile('webapp_shell')
+    .evaluate()
+    .setTitle('Burger-OG')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function bogInclude_(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
 function healthCheck() {
   return bogPublicRead_(function () {
     return {
-      phase: 2,
-      service: 'Burger-OG Backend Apps Script base',
+      phase: 3,
+      service: 'Burger-OG Web App shell móvil',
       activeSheet: BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME,
       timestamp: bogNowIso_()
     };

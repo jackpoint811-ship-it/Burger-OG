@@ -1,0 +1,71 @@
+<script>
+  (function () {
+    var syncButton = document.getElementById('syncButton');
+    var statusText = document.getElementById('statusText');
+    var navButtons = Array.prototype.slice.call(document.querySelectorAll('.nav-item'));
+
+    function setStatus(message) {
+      statusText.textContent = message;
+    }
+
+    function runServer(methodName, args, onSuccess, onError) {
+      var runner = google.script.run
+        .withSuccessHandler(function (response) {
+          if (!response || !response.ok) {
+            var errorMessage = response && response.error && response.error.message ? response.error.message : 'Error inesperado.';
+            onError(errorMessage);
+            return;
+          }
+          onSuccess(response);
+        })
+        .withFailureHandler(function (err) {
+          onError('Error de comunicación: ' + err.message);
+        });
+
+      runner[methodName].apply(runner, args || []);
+    }
+
+    function refreshHealth() {
+      setStatus('Validando estado...');
+      runServer('healthCheck', [], function (response) {
+        var data = response.data || {};
+        setStatus('OK · Fase ' + data.phase + ' · Hoja activa: ' + data.activeSheet);
+      }, function (message) {
+        setStatus(message);
+      });
+    }
+
+    syncButton.addEventListener('click', function () {
+      syncButton.disabled = true;
+      setStatus('Sincronizando desde Pedidos Master...');
+      runServer('syncOrdersFromMaster', [], function (response) {
+        var data = response.data || {};
+        setStatus('Sync lista · Nuevos: ' + (data.inserted || 0) + ' · Actualizados: ' + (data.updated || 0));
+        syncButton.disabled = false;
+      }, function (message) {
+        setStatus(message);
+        syncButton.disabled = false;
+      });
+    });
+
+    navButtons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        navButtons.forEach(function (item) {
+          item.classList.remove('is-active');
+        });
+        button.classList.add('is-active');
+
+        var target = button.getAttribute('data-tab');
+        Array.prototype.slice.call(document.querySelectorAll('.app-content > .card[id]')).forEach(function (card) {
+          if (card.id === target) {
+            card.classList.remove('is-hidden');
+          } else {
+            card.classList.add('is-hidden');
+          }
+        });
+      });
+    });
+
+    refreshHealth();
+  })();
+</script>

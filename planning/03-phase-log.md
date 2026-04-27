@@ -196,3 +196,32 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
   - sin bloqueo de pedido.
 - Se endureció `getBankConfig()` para validar estrictamente los 3 campos requeridos (`Banco`, `Nombre`, `Número de cuenta`) tanto en formato `Campo | Valor` como en formato por columnas.
 - Se mejoró la normalización de `Estado Pedido` mapeando alias de preparación (`En preparacion`, `En preparación`, `Preparacion`, `Preparación`) al catálogo final `Preparando`.
+
+---
+
+## 2026-04-27 — Implementación Fase 3 (Web App shell móvil)
+
+### Estado
+🟡 Implementación de shell móvil base.
+
+### Qué se implementó
+- `doGet` ahora sirve una interfaz Web App en HTML para operación móvil, manteniendo salida JSON opcional con `?format=json` para diagnóstico rápido.
+- Se agregó `bogInclude_` para componer plantillas HTML parciales (`styles` y `scripts`) sin librerías externas.
+- Se creó shell móvil `webapp_shell.html` con:
+  - encabezado de app,
+  - tarjeta de estado del sistema,
+  - navegación inferior mobile-first,
+  - secciones placeholder de `Pedidos`, `Cocina` y `Resumen` para fases posteriores.
+- Se creó `webapp_styles.html` con estilos responsive puros (HTML/CSS/JS nativo de Apps Script).
+- Se creó `webapp_scripts.html` con bootstrap del shell:
+  - health check inicial,
+  - botón de sincronización `Pedidos Master → Chekeo Nuevo`,
+  - navegación de tabs sin frameworks.
+
+### Alcance respetado
+- Sin cocina completa (Fase 4 pendiente).
+- Sin ticket cliente.
+- Sin WhatsApp.
+- Sin cambios en `legacy/`.
+- Sin migración a `Chekeo` oficial; operación mantiene `Chekeo Nuevo`.
+- Sin librerías externas, sin CDN y sin frameworks.
