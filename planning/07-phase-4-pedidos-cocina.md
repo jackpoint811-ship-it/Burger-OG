@@ -3,41 +3,52 @@
 ## Objetivo
 Habilitar operación diaria de pedidos y flujo de cocina en la Web App móvil usando `Chekeo Nuevo` como hoja activa.
 
-## Alcance
-- Edición operativa de pedidos desde tab `Pedidos`:
+## Alcance implementado
+- Tab `Pedidos` con filtros/chips mobile-first en memoria (sin recargar backend por filtro):
+  - `Todos`
+  - `Nuevo`
+  - `Confirmado`
+  - `Preparando`
+  - `Listo`
+  - `Pendiente pago`
+  - `Con alerta`
+- Estado visual del filtro activo y empty state claro cuando no hay resultados.
+- Detalle de pedido en modal/drawer mobile-first con cierre explícito.
+- Edición operativa movida al detalle para evitar saturación en tarjetas:
   - `Estado Pedido`
   - `Estado Pago`
   - `Método Pago`
   - `Nota Interna`
   - `Nota Cliente`
-- Acciones rápidas:
+- Acciones operativas en detalle:
   - `Guardar pedido`
-  - `Marcar pagado`
-- Tab `Cocina` con cola activa y cambios de estado:
-  - `Confirmado`
-  - `Preparando`
-  - `Listo`
-- Refresco de resumen diario y listado tras cada operación.
+  - `Marcar pagado` (solo si `Estado Pago` no es `Pagado`)
+- Tab `Inicio` con resumen rápido:
+  - pedidos activos
+  - pedidos listos
+  - pedidos pendientes de pago
+  - total pendiente
+- Tab `Resumen` con tarjetas de montos y conteo adicional `Con alerta`.
+- Tab `Cocina` se mantiene como decisión UI para flujo operativo rápido por estado (`Confirmar`, `Preparando`, `Listo`).
 
-## Backend requerido
-- `updateOrderOperationalData(orderId, payload)` para actualizar en una sola escritura:
-  - estado de pedido
-  - estado/método de pago
-  - notas internas/cliente
-  - actualización de timestamps (`Hora Inicio`, `Hora Listo`, `Última Actualización`) según transición.
-- Se mantienen endpoints existentes para compatibilidad:
-  - `updateOrderStatus`
-  - `updateOrderPayment`
-  - `markOrderPaid`
-  - `updateOrderNotes`
+## Decisión de datos para detalle
+El detalle/modal usa el objeto ya cargado en `APP_STATE.orders` para evitar llamada extra a `getOrderDetail(orderId)`.
+Después de escrituras (`Guardar pedido`, `Marcar pagado`, cambios en Cocina), la app hace reload de datos (`getAppOrders()` + `getDailySummary()`) para mantener consistencia.
 
-## UI móvil
-- Tabs visibles: `Inicio`, `Pedidos`, `Cocina`, `Resumen`, `Ajustes`.
-- Diseño mobile-first (teléfono vertical) sin librerías externas.
-- Sin ticket cliente y sin WhatsApp en esta fase.
+## Backend utilizado
+- `updateOrderOperationalData(orderId, payload)` para guardar edición operativa en una sola escritura.
+- `markOrderPaid(orderId)` para acción rápida de pago.
+- `updateOrderStatus(orderId, nextStatus)` para flujo Cocina.
+
+## Seguridad cliente
+- Se mantiene `escapeHtml(value)` para render de datos dinámicos.
+- No se usa `alert()`.
+- No se usa `localStorage` para datos críticos.
+- Mensajes de error al usuario se acotan para evitar mostrar errores técnicos extensos.
 
 ## Fuera de alcance
 - Ticket cliente.
 - Envío de WhatsApp.
 - Migración a hoja `Chekeo` oficial.
 - Cambios en `legacy/`.
+- Librerías externas, CDN o frameworks.

@@ -5,16 +5,28 @@
     health: null,
     summary: null,
     orders: [],
-    bankConfigOk: false
+    bankConfigOk: false,
+    activeOrdersFilter: 'all',
+    detailOrderId: ''
   };
 
   var ORDER_STATUS_OPTIONS = ['Nuevo', 'Confirmado', 'Preparando', 'Listo'];
   var PAYMENT_STATUS_OPTIONS = ['Pendiente', 'Pagado'];
   var PAYMENT_METHOD_OPTIONS = ['Efectivo', 'Transferencia', 'Mixto', 'No definido'];
+  var ORDERS_FILTERS = [
+    { key: 'all', label: 'Todos' },
+    { key: 'Nuevo', label: 'Nuevo' },
+    { key: 'Confirmado', label: 'Confirmado' },
+    { key: 'Preparando', label: 'Preparando' },
+    { key: 'Listo', label: 'Listo' },
+    { key: 'pending-payment', label: 'Pendiente pago' },
+    { key: 'with-alert', label: 'Con alerta' }
+  ];
 
   function initApp() {
     bindEvents();
     setActiveTab('Inicio');
+    renderOrderFilters();
     loadHealth();
     loadSummary();
     loadOrders();
@@ -61,7 +73,8 @@
           return renderError(response && response.error ? response.error : { message: 'getDailySummary falló.' });
         }
         APP_STATE.summary = response.data || {};
-        renderSummary(APP_STATE.summary);
+        renderSummary(APP_STATE.summary, APP_STATE.orders);
+        renderHomeQuickSummary(APP_STATE.orders, APP_STATE.summary);
       })
       .withFailureHandler(function (error) {
         setLoading('summary', false);
@@ -78,11 +91,19 @@
         if (!response || !response.ok) {
           return renderError(response && response.error ? response.error : { message: 'getAppOrders falló.' });
         }
+
         APP_STATE.orders = (response.data || []).slice().sort(function (a, b) {
           return String(a['ID Pedido'] || '').localeCompare(String(b['ID Pedido'] || ''));
         });
-        renderOrders(APP_STATE.orders);
+
+        if (APP_STATE.detailOrderId && !findOrderById_(APP_STATE.detailOrderId)) {
+          closeOrderDetail();
+        }
+
+        renderOrders();
         renderKitchen(APP_STATE.orders);
+        renderHomeQuickSummary(APP_STATE.orders, APP_STATE.summary);
+        renderSummary(APP_STATE.summary, APP_STATE.orders);
       })
       .withFailureHandler(function (error) {
         setLoading('orders', false);
@@ -147,28 +168,12 @@
       .updateOrderStatus(orderId, nextStatus);
   }
 
-  function updateOrderPayment(orderId, paymentStatus, paymentMethod) {
-    showToast('Actualizando pago...', 'info');
-    google.script.run
-      .withSuccessHandler(handleWriteSuccess_)
-      .withFailureHandler(renderError)
-      .updateOrderPayment(orderId, paymentStatus, paymentMethod);
-  }
-
   function markOrderPaid(orderId) {
     showToast('Marcando pedido como pagado...', 'info');
     google.script.run
       .withSuccessHandler(handleWriteSuccess_)
       .withFailureHandler(renderError)
       .markOrderPaid(orderId);
-  }
-
-  function updateOrderNotes(orderId, noteInternal, noteClient) {
-    showToast('Guardando notas...', 'info');
-    google.script.run
-      .withSuccessHandler(handleWriteSuccess_)
-      .withFailureHandler(renderError)
-      .updateOrderNotes(orderId, noteInternal, noteClient);
   }
 
   function updateOrderOperationalData(orderId, payload) {
@@ -205,10 +210,45 @@
     toast.className = 'toast' + (type ? ' ' + type : '');
   }
 
-  function renderOrders(orders) {
+  function renderOrderFilters() {
+    var container = document.getElementById('ordersFilters');
+    container.innerHTML = ORDERS_FILTERS.map(function (filter) {
+      var activeClass = APP_STATE.activeOrdersFilter === filter.key ? ' is-active' : '';
+      return '<button type="button" class="chip' + activeClass + '" data-filter="' + escapeHtml(filter.key) + '">' + escapeHtml(filter.label) + '</button>';
+    }).join('');
+  }
+
+  function getFilteredOrders_() {
+    var filterKey = APP_STATE.activeOrdersFilter;
+    var allOrders = APP_STATE.orders || [];
+
+    if (filterKey === 'all') {
+      return allOrders;
+    }
+    if (filterKey === 'pending-payment') {
+      return allOrders.filter(function (order) {
+        return String(order['Estado Pago'] || '') !== 'Pagado';
+      });
+    }
+    if (filterKey === 'with-alert') {
+      return allOrders.filter(function (order) {
+        return String(order['Alerta'] || '').trim() === '⚠️';
+      });
+    }
+
+    return allOrders.filter(function (order) {
+      return String(order['Estado Pedido'] || '') === filterKey;
+    });
+  }
+
+  function renderOrders() {
+    renderOrderFilters();
+
     var container = document.getElementById('ordersContainer');
-    if (!orders || !orders.length) {
-      container.textContent = 'Sin pedidos para mostrar.';
+    var orders = getFilteredOrders_();
+
+    if (!orders.length) {
+      container.innerHTML = '<div class="empty-state">No hay pedidos para el filtro seleccionado.</div>';
       return;
     }
 
@@ -216,40 +256,18 @@
       var orderId = String(order['ID Pedido'] || '');
       var safeAlert = escapeHtml(order['Alerta'] || '');
       var alertTag = safeAlert ? '<span class="badge-alert">' + safeAlert + '</span>' : '';
+      var isPaid = String(order['Estado Pago'] || '') === 'Pagado';
+      var paidButton = isPaid ? '' : '<button type="button" class="btn btn-primary" data-action="mark-paid">Marcar pagado</button>';
 
       return '' +
         '<li class="orders-item" data-order-id="' + escapeHtml(orderId) + '">' +
-          '<p><strong>' + escapeHtml(orderId || '-') + '</strong>' + alertTag +
-            '<span class="pill">' + escapeHtml(order['Estado Pedido'] || '-') + '</span>' +
-          '</p>' +
+          '<p><strong>' + escapeHtml(orderId || '-') + '</strong>' + alertTag + '<span class="pill">' + escapeHtml(order['Estado Pedido'] || '-') + '</span></p>' +
           '<p><strong>Nombre:</strong> ' + escapeHtml(order['Nombre'] || '-') + '</p>' +
           '<p><strong>Resumen:</strong> ' + escapeHtml(order['Resumen Pedido'] || '-') + '</p>' +
           '<p><strong>Total:</strong> ' + escapeHtml(formatMoney(order['Total'])) + '</p>' +
-          '<div class="status-row">' +
-            '<div class="field">' +
-              '<label>Estado Pedido</label>' +
-              '<select data-role="order-status">' + buildOptions_(ORDER_STATUS_OPTIONS, order['Estado Pedido']) + '</select>' +
-            '</div>' +
-            '<div class="field">' +
-              '<label>Estado Pago</label>' +
-              '<select data-role="payment-status">' + buildOptions_(PAYMENT_STATUS_OPTIONS, order['Estado Pago']) + '</select>' +
-            '</div>' +
-          '</div>' +
-          '<div class="field" style="margin-top:6px;">' +
-            '<label>Método Pago</label>' +
-            '<select data-role="payment-method">' + buildOptions_(PAYMENT_METHOD_OPTIONS, order['Método Pago']) + '</select>' +
-          '</div>' +
-          '<div class="field" style="margin-top:6px;">' +
-            '<label>Nota Interna</label>' +
-            '<textarea data-role="note-internal" placeholder="Operación interna">' + escapeHtml(order['Nota Interna'] || '') + '</textarea>' +
-          '</div>' +
-          '<div class="field" style="margin-top:6px;">' +
-            '<label>Nota Cliente</label>' +
-            '<textarea data-role="note-client" placeholder="Nota visible para cliente">' + escapeHtml(order['Nota Cliente'] || '') + '</textarea>' +
-          '</div>' +
-          '<div class="action-row">' +
-            '<button type="button" class="btn btn-secondary" data-action="save-order">Guardar pedido</button>' +
-            '<button type="button" class="btn btn-primary" data-action="mark-paid">Marcar pagado</button>' +
+          '<div class="order-actions-inline">' +
+            '<button type="button" class="btn btn-secondary" data-action="view-detail">Ver detalle</button>' +
+            paidButton +
           '</div>' +
         '</li>';
     }).join('');
@@ -264,7 +282,7 @@
     });
 
     if (!kitchenOrders.length) {
-      container.textContent = 'Sin pedidos activos en cocina.';
+      container.innerHTML = '<div class="empty-state">Sin pedidos activos en cocina.</div>';
       return;
     }
 
@@ -272,9 +290,7 @@
       var orderId = String(order['ID Pedido'] || '');
       return '' +
         '<li class="kitchen-item" data-order-id="' + escapeHtml(orderId) + '">' +
-          '<p><strong>' + escapeHtml(orderId || '-') + '</strong>' +
-            '<span class="pill">' + escapeHtml(order['Estado Pedido'] || '-') + '</span>' +
-          '</p>' +
+          '<p><strong>' + escapeHtml(orderId || '-') + '</strong><span class="pill">' + escapeHtml(order['Estado Pedido'] || '-') + '</span></p>' +
           '<p><strong>Nombre:</strong> ' + escapeHtml(order['Nombre'] || '-') + '</p>' +
           '<p><strong>Hamburguesas:</strong> ' + escapeHtml(order['Hamburguesas'] || '-') + '</p>' +
           '<p><strong>Extras:</strong> ' + escapeHtml(order['Extras'] || '-') + '</p>' +
@@ -291,24 +307,129 @@
     container.innerHTML = '<ul class="kitchen-list">' + items + '</ul>';
   }
 
-  function renderSummary(summary) {
+  function openOrderDetail(orderId) {
+    var order = findOrderById_(orderId);
+    if (!order) {
+      showToast('Pedido no disponible en memoria.', 'error');
+      return;
+    }
+
+    APP_STATE.detailOrderId = orderId;
+
+    var isPaid = String(order['Estado Pago'] || '') === 'Pagado';
+    var markPaidButton = isPaid ? '' : '<button type="button" class="btn btn-primary" data-action="detail-mark-paid">Marcar pagado</button>';
+    var alertRow = String(order['Alerta'] || '').trim() ? '<p><strong>Alerta:</strong> ' + escapeHtml(order['Alerta']) + '</p>' : '';
+
+    document.getElementById('orderDetailContent').innerHTML = '' +
+      '<p><strong>ID Pedido:</strong> ' + escapeHtml(order['ID Pedido'] || '-') + '</p>' +
+      '<p><strong>Nombre:</strong> ' + escapeHtml(order['Nombre'] || '-') + '</p>' +
+      '<p><strong>Resumen Pedido:</strong> ' + escapeHtml(order['Resumen Pedido'] || '-') + '</p>' +
+      '<p><strong>Hamburguesas:</strong> ' + escapeHtml(order['Hamburguesas'] || '-') + '</p>' +
+      '<p><strong>Extras:</strong> ' + escapeHtml(order['Extras'] || '-') + '</p>' +
+      '<p><strong>Guarniciones:</strong> ' + escapeHtml(order['Guarniciones'] || '-') + '</p>' +
+      '<p><strong>Total:</strong> ' + escapeHtml(formatMoney(order['Total'])) + '</p>' +
+      '<p><strong>Estado Pedido:</strong> ' + escapeHtml(order['Estado Pedido'] || '-') + '</p>' +
+      '<p><strong>Estado Pago:</strong> ' + escapeHtml(order['Estado Pago'] || '-') + '</p>' +
+      '<p><strong>Método Pago:</strong> ' + escapeHtml(order['Método Pago'] || '-') + '</p>' +
+      alertRow +
+      '<div class="field"><label>Estado Pedido</label><select id="detailOrderStatus">' + buildOptions_(ORDER_STATUS_OPTIONS, order['Estado Pedido']) + '</select></div>' +
+      '<div class="field"><label>Estado Pago</label><select id="detailPaymentStatus">' + buildOptions_(PAYMENT_STATUS_OPTIONS, order['Estado Pago']) + '</select></div>' +
+      '<div class="field"><label>Método Pago</label><select id="detailPaymentMethod">' + buildOptions_(PAYMENT_METHOD_OPTIONS, order['Método Pago']) + '</select></div>' +
+      '<div class="field"><label>Nota Interna</label><textarea id="detailNoteInternal" placeholder="Operación interna">' + escapeHtml(order['Nota Interna'] || '') + '</textarea></div>' +
+      '<div class="field"><label>Nota Cliente</label><textarea id="detailNoteClient" placeholder="Nota visible para cliente">' + escapeHtml(order['Nota Cliente'] || '') + '</textarea></div>' +
+      '<div class="modal-actions">' +
+        '<button type="button" class="btn btn-secondary" data-action="detail-save">Guardar pedido</button>' +
+        markPaidButton +
+      '</div>';
+
+    document.getElementById('orderDetailModal').classList.remove('is-hidden');
+  }
+
+  function closeOrderDetail() {
+    APP_STATE.detailOrderId = '';
+    document.getElementById('orderDetailModal').classList.add('is-hidden');
+    document.getElementById('orderDetailContent').innerHTML = '';
+  }
+
+  function saveOrderFromDetail() {
+    if (!APP_STATE.detailOrderId) {
+      return;
+    }
+
+    var payload = {
+      status: document.getElementById('detailOrderStatus').value,
+      paymentStatus: document.getElementById('detailPaymentStatus').value,
+      paymentMethod: document.getElementById('detailPaymentMethod').value,
+      noteInternal: document.getElementById('detailNoteInternal').value,
+      noteClient: document.getElementById('detailNoteClient').value
+    };
+
+    updateOrderOperationalData(APP_STATE.detailOrderId, payload);
+    closeOrderDetail();
+  }
+
+  function markCurrentDetailOrderPaid() {
+    if (!APP_STATE.detailOrderId) {
+      return;
+    }
+    markOrderPaid(APP_STATE.detailOrderId);
+    closeOrderDetail();
+  }
+
+  function renderHomeQuickSummary(orders, summary) {
+    var totalOrders = orders || [];
+    var activeOrders = totalOrders.filter(function (order) {
+      return String(order['Estado Pedido'] || '') !== 'Listo';
+    }).length;
+    var readyOrders = totalOrders.filter(function (order) {
+      return String(order['Estado Pedido'] || '') === 'Listo';
+    }).length;
+    var pendingPayment = totalOrders.filter(function (order) {
+      return String(order['Estado Pago'] || '') !== 'Pagado';
+    }).length;
+    var pendingTotal = summary && typeof summary.totalPendiente !== 'undefined'
+      ? Number(summary.totalPendiente || 0)
+      : totalOrders.reduce(function (acc, order) {
+        return acc + toMoneyNumber_(order['Estado Pago'] === 'Pagado' ? 0 : order['Total']);
+      }, 0);
+
+    document.getElementById('homeQuickSummary').innerHTML = [
+      quickItem_('Pedidos activos', activeOrders),
+      quickItem_('Pedidos listos', readyOrders),
+      quickItem_('Pendientes pago', pendingPayment),
+      quickItem_('Total pendiente', formatMoney(pendingTotal))
+    ].join('');
+  }
+
+  function renderSummary(summary, orders) {
+    var safeSummary = summary || {};
+    var alertCount = (orders || []).filter(function (order) {
+      return String(order['Alerta'] || '').trim() === '⚠️';
+    }).length;
+
     var cards = document.getElementById('summaryCards');
     cards.innerHTML = [
-      summaryCard('Total vendido', formatMoney(summary.totalVendido)),
-      summaryCard('Total pagado', formatMoney(summary.totalPagado)),
-      summaryCard('Total pendiente', formatMoney(summary.totalPendiente))
+      summaryCard('Total vendido', formatMoney(safeSummary.totalVendido)),
+      summaryCard('Total pagado', formatMoney(safeSummary.totalPagado)),
+      summaryCard('Total pendiente', formatMoney(safeSummary.totalPendiente)),
+      summaryCard('Con alerta', alertCount)
     ].join('');
 
-    renderCountList('orderStatusCount', summary.conteoEstadoPedido || {});
-    renderCountList('paymentStatusCount', summary.conteoEstadoPago || {});
+    renderCountList('orderStatusCount', safeSummary.conteoEstadoPedido || {});
+    renderCountList('paymentStatusCount', safeSummary.conteoEstadoPago || {});
   }
 
   function renderError(error) {
-    var message = (error && error.message) ? error.message : 'Error no controlado.';
-    showToast(message, 'error');
+    var raw = (error && error.message) ? String(error.message) : 'Error no controlado.';
+    var safeMessage = raw.length > 180 ? 'No se pudo completar la acción. Intenta de nuevo.' : raw;
+    showToast(safeMessage, 'error');
     if (APP_STATE.activeTab === 'Ajustes') {
       document.getElementById('backendState').textContent = 'Con error';
     }
+  }
+
+  function quickItem_(label, value) {
+    return '<div class="quick-item"><p class="label">' + escapeHtml(label) + '</p><p class="value">' + escapeHtml(value) + '</p></div>';
   }
 
   function summaryCard(label, value) {
@@ -338,12 +459,28 @@
     return '$' + amount.toFixed(2);
   }
 
+  function toMoneyNumber_(value) {
+    var amount = Number(value);
+    return isFinite(amount) ? amount : 0;
+  }
+
   function buildOptions_(options, selectedValue) {
     var selected = String(selectedValue || '');
     return options.map(function (option) {
       var isSelected = option === selected ? ' selected' : '';
       return '<option value="' + escapeHtml(option) + '"' + isSelected + '>' + escapeHtml(option) + '</option>';
     }).join('');
+  }
+
+  function findOrderById_(orderId) {
+    var target = String(orderId || '');
+    for (var i = 0; i < APP_STATE.orders.length; i += 1) {
+      var order = APP_STATE.orders[i];
+      if (String(order['ID Pedido'] || '') === target) {
+        return order;
+      }
+    }
+    return null;
   }
 
   function escapeHtml(value) {
@@ -365,38 +502,37 @@
       });
     });
 
-    document.getElementById('ordersContainer').addEventListener('click', function (event) {
-      var button = event.target.closest('button[data-action]');
-      if (!button) {
+    document.getElementById('ordersFilters').addEventListener('click', function (event) {
+      var chip = event.target.closest('[data-filter]');
+      if (!chip) {
         return;
       }
+      APP_STATE.activeOrdersFilter = chip.getAttribute('data-filter');
+      renderOrders();
+    });
 
-      var card = button.closest('[data-order-id]');
+    document.getElementById('ordersContainer').addEventListener('click', function (event) {
+      var card = event.target.closest('[data-order-id]');
       if (!card) {
         return;
       }
 
       var orderId = card.getAttribute('data-order-id');
-      var action = button.getAttribute('data-action');
+      var button = event.target.closest('button[data-action]');
+      var action = button ? button.getAttribute('data-action') : '';
 
-      if (action === 'save-order') {
-        var orderStatus = card.querySelector('[data-role="order-status"]').value;
-        var paymentStatus = card.querySelector('[data-role="payment-status"]').value;
-        var paymentMethod = card.querySelector('[data-role="payment-method"]').value;
-        var noteInternal = card.querySelector('[data-role="note-internal"]').value;
-        var noteClient = card.querySelector('[data-role="note-client"]').value;
-
-        updateOrderOperationalData(orderId, {
-          status: orderStatus,
-          paymentStatus: paymentStatus,
-          paymentMethod: paymentMethod,
-          noteInternal: noteInternal,
-          noteClient: noteClient
-        });
+      if (action === 'view-detail') {
+        openOrderDetail(orderId);
+        return;
       }
 
       if (action === 'mark-paid') {
         markOrderPaid(orderId);
+        return;
+      }
+
+      if (!action) {
+        openOrderDetail(orderId);
       }
     });
 
@@ -424,6 +560,25 @@
         updateOrderStatus(orderId, 'Listo');
       }
     });
+
+    document.getElementById('orderDetailModal').addEventListener('click', function (event) {
+      var actionBtn = event.target.closest('[data-action]');
+      if (!actionBtn) {
+        return;
+      }
+      var action = actionBtn.getAttribute('data-action');
+      if (action === 'close-modal') {
+        closeOrderDetail();
+      }
+      if (action === 'detail-save') {
+        saveOrderFromDetail();
+      }
+      if (action === 'detail-mark-paid') {
+        markCurrentDetailOrderPaid();
+      }
+    });
+
+    document.getElementById('closeDetailButton').addEventListener('click', closeOrderDetail);
   }
 
   document.addEventListener('DOMContentLoaded', initApp);

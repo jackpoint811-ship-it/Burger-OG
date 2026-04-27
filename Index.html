@@ -24,10 +24,12 @@
           <h2>Inicio</h2>
           <p id="healthStatus">Cargando estado backend...</p>
           <p class="muted">Hoja activa esperada: <strong>Chekeo Nuevo</strong></p>
+          <div id="homeQuickSummary" class="quick-summary"></div>
         </section>
 
         <section id="tab-Pedidos" class="card tab-panel is-hidden">
           <h2>Pedidos</h2>
+          <div id="ordersFilters" class="chips" aria-label="Filtros pedidos"></div>
           <div id="ordersContainer">Cargando pedidos...</div>
         </section>
 
@@ -57,7 +59,8 @@
             <li><strong>Estado backend:</strong> <span id="backendState">Pendiente</span></li>
             <li><strong>Configuración bancaria:</strong> <span id="bankState">Pendiente</span></li>
             <li><strong>Hoja activa:</strong> Chekeo Nuevo</li>
-            <li><strong>Nota:</strong> Fase operativa interna; sin ticket cliente ni WhatsApp.</li>
+            <li><strong>Nota:</strong> Fase de prueba: no usa Chekeo oficial</li>
+            <li><strong>Alcance actual:</strong> sin ticket cliente ni WhatsApp.</li>
           </ul>
         </section>
       </main>
@@ -69,6 +72,17 @@
         <button class="tab-btn" data-tab="Resumen" type="button">Resumen</button>
         <button class="tab-btn" data-tab="Ajustes" type="button">Ajustes</button>
       </nav>
+    </div>
+
+    <div id="orderDetailModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="orderDetailTitle">
+      <div class="modal-backdrop" data-action="close-modal"></div>
+      <section class="modal-panel" aria-live="polite">
+        <header class="modal-header">
+          <h3 id="orderDetailTitle">Detalle de pedido</h3>
+          <button id="closeDetailButton" type="button" class="btn btn-secondary">Cerrar</button>
+        </header>
+        <div id="orderDetailContent" class="modal-content"></div>
+      </section>
     </div>
 
     <?!= include('scripts'); ?>

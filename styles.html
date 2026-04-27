@@ -8,6 +8,7 @@
     --primary: #0d6efd;
     --danger: #c62828;
     --ok: #2e7d32;
+    --overlay: rgba(28, 28, 28, 0.4);
   }
 
   * { box-sizing: border-box; }
@@ -93,7 +94,58 @@
   .toast.error { color: var(--danger); }
 
   .muted { color: var(--muted); margin-top: 8px; }
-  .is-hidden { display: none; }
+  .is-hidden { display: none !important; }
+
+  .quick-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .quick-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px;
+    background: #fff;
+  }
+
+  .quick-item .label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .quick-item .value {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .chips {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+  }
+
+  .chip {
+    flex: 0 0 auto;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--muted);
+    border-radius: 999px;
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .chip.is-active {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: #eef5ff;
+  }
 
   .orders-list,
   .kitchen-list {
@@ -122,19 +174,46 @@
     font-weight: 700;
   }
 
-  .status-row,
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    margin-left: 6px;
+  }
+
+  .order-actions-inline {
+    margin-top: 8px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .empty-state {
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .kitchen-actions,
+  .modal-actions,
   .action-row {
     display: grid;
     gap: 6px;
     margin-top: 8px;
   }
 
-  .status-row { grid-template-columns: 1fr 1fr; }
-  .action-row { grid-template-columns: repeat(2, 1fr); }
+  .kitchen-actions { grid-template-columns: repeat(3, 1fr); }
+  .action-row,
+  .modal-actions { grid-template-columns: repeat(2, 1fr); }
 
   .field {
     display: grid;
     gap: 4px;
+    margin-top: 8px;
   }
 
   .field label {
@@ -157,22 +236,6 @@
   textarea {
     min-height: 56px;
     resize: vertical;
-  }
-
-  .kitchen-actions {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-    margin-top: 8px;
-  }
-
-  .pill {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 12px;
-    border: 1px solid var(--border);
-    margin-left: 6px;
   }
 
   .summary-grid {
@@ -247,5 +310,44 @@
   .tab-btn.is-active {
     border-color: var(--primary);
     color: var(--primary);
+  }
+
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+  }
+
+  .modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: var(--overlay);
+  }
+
+  .modal-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 16px 16px 0 0;
+    border: 1px solid var(--border);
+    max-height: 88vh;
+    overflow: auto;
+    padding: 12px;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .modal-content p {
+    margin: 4px 0;
   }
 </style>
