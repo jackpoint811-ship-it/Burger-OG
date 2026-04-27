@@ -67,3 +67,31 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 
 ### Siguiente fase recomendada
 ➡️ Fase 2 — Backend Apps Script base.
+
+---
+
+## 2026-04-27 — Implementación base de Fase 2 (Backend Apps Script)
+
+### Estado
+✅ Completado.
+
+### Qué se implementó
+- Base de proyecto Apps Script (`appsscript.json`) con runtime V8 y configuración de Web App.
+- Núcleo backend en `.gs` (sin UI/HTML):
+  - `Code.gs` con endpoints base `doGet`, `apiHealth` y `apiSyncChekeoNuevo`.
+  - `backend_constants.gs` con contrato de hojas, columnas oficiales de `Chekeo Nuevo`, catálogos y defaults.
+  - `backend_utils.gs` con utilidades de ID `BOG-###`, serialización fila↔objeto y normalización.
+  - `backend_validation.gs` con validaciones de contrato (enums, formato ID, alerta, total y regla de ticket enviado).
+  - `backend_sync_service.gs` con sincronización `Pedidos Master` → `Chekeo Nuevo` preservando campos operativos definidos en Fase 1.
+
+### Reglas de Fase 2 respetadas
+- Sin UI nueva.
+- Sin archivos `.html` nuevos.
+- Sin cambios en `legacy/`.
+- Sin servicios ni librerías externas.
+- Sin migración a Chekeo oficial.
+- `Chekeo Nuevo` definido como hoja activa objetivo de operación.
+
+### Notas
+- La sincronización valida encabezados contra el contrato y falla de forma explícita si no coincide.
+- Se marca `Alerta = ⚠️` cuando se detectan señales especiales (`(+1)` / `Chequeo Manual`) sin bloquear el flujo.
