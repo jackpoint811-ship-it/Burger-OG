@@ -199,32 +199,16 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 
 ---
 
-## 2026-04-27 — Implementación Fase 3 (Web App shell móvil)
+## 2026-04-27 — Implementación Fase 3 (Web App shell móvil) [SUPERSEDED]
 
 ### Estado
-🟡 Implementación de shell móvil base.
+⚪ Entrada histórica reemplazada por la corrección final de Fase 3 en PR #40.
 
-### Qué se implementó
-- `doGet` ahora sirve una interfaz Web App en HTML para operación móvil, manteniendo salida JSON opcional con `?format=json` para diagnóstico rápido.
-- Se agregó `bogInclude_` para componer plantillas HTML parciales (`styles` y `scripts`) sin librerías externas.
-- Se creó shell móvil `webapp_shell.html` con:
-  - encabezado de app,
-  - tarjeta de estado del sistema,
-  - navegación inferior mobile-first,
-  - secciones placeholder de `Pedidos`, `Cocina` y `Resumen` para fases posteriores.
-- Se creó `webapp_styles.html` con estilos responsive puros (HTML/CSS/JS nativo de Apps Script).
-- Se creó `webapp_scripts.html` con bootstrap del shell:
-  - health check inicial,
-  - botón de sincronización `Pedidos Master → Chekeo Nuevo`,
-  - navegación de tabs sin frameworks.
-
-### Alcance respetado
-- Sin cocina completa (Fase 4 pendiente).
-- Sin ticket cliente.
-- Sin WhatsApp.
-- Sin cambios en `legacy/`.
-- Sin migración a `Chekeo` oficial; operación mantiene `Chekeo Nuevo`.
-- Sin librerías externas, sin CDN y sin frameworks.
+### Nota de consistencia
+- El resultado vigente de Fase 3 **no** usa `webapp_*` ni tab `Cocina`.
+- La implementación aprobada usa `Index.html`, `styles.html`, `scripts.html` e `include(filename)`.
+- Tabs vigentes: `Inicio`, `Pedidos`, `Resumen`, `Ajustes`.
+- Sin ticket cliente, sin WhatsApp y sin cambios en `legacy/`.
 
 ---
 
@@ -238,10 +222,7 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
   - `Index.html`
   - `styles.html`
   - `scripts.html`
-- Se eliminaron archivos legacy de nomenclatura temporal de Fase 3:
-  - `webapp_shell.html`
-  - `webapp_styles.html`
-  - `webapp_scripts.html`
+- Se eliminaron los archivos temporales de nomenclatura inicial de Fase 3 para evitar duplicidad de entrada HTML.
 - `doGet()` quedó configurado con `HtmlService.createTemplateFromFile('Index')`.
 - Se expuso helper público `include(filename)` para parciales HTML.
 - Tabs visibles finales en app shell:
@@ -255,7 +236,7 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
   - `getAppOrders()`
   - `getBankConfig()`
 - Botón `Sincronizar` ejecuta `syncOrdersFromMaster()` y refresca resumen/pedidos.
-- `Pedidos` quedó en solo lectura (sin cocina/edición).
+- `Pedidos` quedó en solo lectura (sin edición operativa).
 - `Resumen` muestra montos y conteos por estado.
 - `Ajustes` muestra estado backend, estado de config bancaria, hoja activa `Chekeo Nuevo` y nota de no uso de `Chekeo` oficial.
 
@@ -268,11 +249,11 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 - `planning/03-phase-log.md`
 
 ### Confirmación de alcance
-- No se implementó cocina completa.
+- No se implementaron funcionalidades operativas de Fase 4.
 - No se implementó ticket cliente.
 - No se implementó WhatsApp.
 - No se tocó `legacy/`.
 - No se migró a `Chekeo` oficial.
 
 ### Siguiente fase recomendada
-➡️ Fase 4 — Pedidos + Cocina.
+➡️ Fase 4 — Pedidos (operación).

@@ -154,15 +154,16 @@
     }
 
     var items = orders.map(function (order) {
-      var alertTag = order['Alerta'] ? '<span class="badge-alert">' + order['Alerta'] + '</span>' : '';
+      var safeAlert = escapeHtml(order['Alerta'] || '');
+      var alertTag = safeAlert ? '<span class="badge-alert">' + safeAlert + '</span>' : '';
       return '' +
         '<li class="orders-item">' +
-          '<p><strong>' + (order['ID Pedido'] || '-') + '</strong>' + alertTag + '</p>' +
-          '<p><strong>Nombre:</strong> ' + (order['Nombre'] || '-') + '</p>' +
-          '<p><strong>Resumen:</strong> ' + (order['Resumen Pedido'] || '-') + '</p>' +
-          '<p><strong>Total:</strong> ' + formatMoney(order['Total']) + '</p>' +
-          '<p><strong>Estado Pedido:</strong> ' + (order['Estado Pedido'] || '-') + '</p>' +
-          '<p><strong>Estado Pago:</strong> ' + (order['Estado Pago'] || '-') + '</p>' +
+          '<p><strong>' + escapeHtml(order['ID Pedido'] || '-') + '</strong>' + alertTag + '</p>' +
+          '<p><strong>Nombre:</strong> ' + escapeHtml(order['Nombre'] || '-') + '</p>' +
+          '<p><strong>Resumen:</strong> ' + escapeHtml(order['Resumen Pedido'] || '-') + '</p>' +
+          '<p><strong>Total:</strong> ' + escapeHtml(formatMoney(order['Total'])) + '</p>' +
+          '<p><strong>Estado Pedido:</strong> ' + escapeHtml(order['Estado Pedido'] || '-') + '</p>' +
+          '<p><strong>Estado Pago:</strong> ' + escapeHtml(order['Estado Pago'] || '-') + '</p>' +
         '</li>';
     }).join('');
 
@@ -190,7 +191,7 @@
   }
 
   function summaryCard(label, value) {
-    return '<div class="summary-card"><p class="label">' + label + '</p><p class="value">' + value + '</p></div>';
+    return '<div class="summary-card"><p class="label">' + escapeHtml(label) + '</p><p class="value">' + escapeHtml(value) + '</p></div>';
   }
 
   function renderCountList(targetId, counts) {
@@ -202,13 +203,28 @@
     }
 
     list.innerHTML = keys.map(function (key) {
-      return '<li>' + key + ': ' + counts[key] + '</li>';
+      var safeKey = escapeHtml(key);
+      var safeValue = escapeHtml(counts[key]);
+      return '<li>' + safeKey + ': ' + safeValue + '</li>';
     }).join('');
   }
 
   function formatMoney(value) {
-    var amount = Number(value || 0);
+    var amount = Number(value);
+    if (!isFinite(amount)) {
+      return '$0.00';
+    }
     return '$' + amount.toFixed(2);
+  }
+
+  function escapeHtml(value) {
+    var text = String(value === null || value === undefined ? '' : value);
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function bindEvents() {
