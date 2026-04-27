@@ -75,7 +75,8 @@ function bogTransformMasterToChekeo_(masterRecord) {
   var manualTotalRaw = bogSafeGetByAliases_(masterRecord, ['Precio Manual total']);
   var totalUsesManual = bogIsManualTotal_(totalRaw) || !bogHasUsefulValue_(totalRaw);
   var hasManualPrice = bogHasUsefulValue_(manualTotalRaw);
-  var totalValue = totalUsesManual && hasManualPrice ? manualTotalRaw : totalRaw;
+  var missingManualAmount = totalUsesManual && !hasManualPrice;
+  var totalValue = missingManualAmount ? 0 : (totalUsesManual ? manualTotalRaw : totalRaw);
 
   var dynamic = bogCollectDynamicOrderParts_(masterRecord);
   var estadoPedidoRaw = bogSafeGetByAliases_(masterRecord, ['Estado?']);
@@ -103,7 +104,7 @@ function bogTransformMasterToChekeo_(masterRecord) {
     transformed['Detected Alerts'].push('total manual');
   }
 
-  if ((totalUsesManual && !hasManualPrice) || (bogIsManualTotal_(totalRaw) && !hasManualPrice)) {
+  if (missingManualAmount) {
     transformed['Total'] = 0;
     transformed['Detected Alerts'].push('total faltante o manual sin precio');
   }
@@ -241,6 +242,15 @@ function bogNormalizeOrderStatus_(value) {
   if (BurgerOGConstants.ENUMS.ESTADO_PEDIDO.indexOf(clean) !== -1) {
     return clean;
   }
+
+  var normalized = bogNormalizeHeaderKey_(clean);
+  if (
+    normalized === 'en preparacion' ||
+    normalized === 'preparacion'
+  ) {
+    return 'Preparando';
+  }
+
   return BurgerOGConstants.DEFAULTS.ESTADO_PEDIDO;
 }
 

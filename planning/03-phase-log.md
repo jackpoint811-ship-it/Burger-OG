@@ -177,3 +177,22 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 - `Ticket Enviado` con catálogo `Si/No`.
 - `Alerta` solo vacío/`⚠️`.
 - `LockService` seguro con `lockAcquired`.
+
+---
+
+## 2026-04-27 — Correcciones adicionales de Fase 2 (PR #38)
+
+### Estado
+🟡 En revisión final.
+
+### Ajustes aplicados
+- Se aseguraron/normalizaron los helpers de formato de cantidades usados en sync:
+  - `bogFormatBurgerOrSideWithCount_`
+  - `bogFormatExtraWithCount_`
+- Se corrigió el manejo de total manual/faltante sin precio manual para no romper la sync:
+  - `Total = 0`
+  - `Alerta = ⚠️`
+  - razón interna `total faltante o manual sin precio`
+  - sin bloqueo de pedido.
+- Se endureció `getBankConfig()` para validar estrictamente los 3 campos requeridos (`Banco`, `Nombre`, `Número de cuenta`) tanto en formato `Campo | Valor` como en formato por columnas.
+- Se mejoró la normalización de `Estado Pedido` mapeando alias de preparación (`En preparacion`, `En preparación`, `Preparacion`, `Preparación`) al catálogo final `Preparando`.

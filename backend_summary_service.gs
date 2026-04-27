@@ -46,12 +46,14 @@ function bogGetBankConfig_() {
   if (bancoIndex !== undefined && nombreIndex !== undefined && cuentaIndex !== undefined) {
     for (var i = 1; i < values.length; i += 1) {
       var row = values[i];
-      if (bogTrim_(row[bancoIndex]) || bogTrim_(row[nombreIndex]) || bogTrim_(row[cuentaIndex])) {
-        return {
-          Banco: bogTrim_(row[bancoIndex]),
-          Nombre: bogTrim_(row[nombreIndex]),
-          'Número de cuenta': bogTrim_(row[cuentaIndex])
-        };
+      var rowConfig = {
+        Banco: bogTrim_(row[bancoIndex]),
+        Nombre: bogTrim_(row[nombreIndex]),
+        'Número de cuenta': bogTrim_(row[cuentaIndex])
+      };
+
+      if (rowConfig.Banco || rowConfig.Nombre || rowConfig['Número de cuenta']) {
+        return bogValidateBankConfigOrThrow_(rowConfig, 'Formato por columnas incompleto');
       }
     }
   }
@@ -65,15 +67,31 @@ function bogGetBankConfig_() {
     }
   });
 
-  var fallback = {
+  var fieldValueConfig = {
     Banco: keyValue[bogNormalizeHeaderKey_('Banco')] || '',
     Nombre: keyValue[bogNormalizeHeaderKey_('Nombre')] || '',
     'Número de cuenta': keyValue[bogNormalizeHeaderKey_('Número de cuenta')] || ''
   };
 
-  if (!fallback.Banco || !fallback.Nombre || !fallback['Número de cuenta']) {
-    throw new Error('Configuración incompleta: se requiere Banco, Nombre y Número de cuenta.');
+  return bogValidateBankConfigOrThrow_(fieldValueConfig, 'Formato Campo|Valor incompleto');
+}
+
+function bogValidateBankConfigOrThrow_(config, contextLabel) {
+  var missing = [];
+
+  if (!config.Banco) {
+    missing.push('Banco');
+  }
+  if (!config.Nombre) {
+    missing.push('Nombre');
+  }
+  if (!config['Número de cuenta']) {
+    missing.push('Número de cuenta');
   }
 
-  return fallback;
+  if (missing.length) {
+    throw new Error(contextLabel + ': faltan ' + missing.join(', ') + '.');
+  }
+
+  return config;
 }
