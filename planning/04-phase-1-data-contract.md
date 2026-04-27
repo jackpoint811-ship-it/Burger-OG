@@ -16,7 +16,7 @@
 | Columna | Tipo esperado | Origen | Editable por app | Preservar en sync | Aparece en ticket cliente | Aparece en WhatsApp |
 |---|---|---|---|---|---|---|
 | ID Pedido | Texto (`BOG-` + número) | Derivado de `Fila Master` | No | Sí | Sí | No |
-| Fila Master | Número entero | `Pedidos Master` (número de fila) | No | No | No | No |
+| Fila Master | Número entero | `Pedidos Master` (número de fila) | No | Sí | No | No |
 | Fecha Pedido | Fecha (YYYY-MM-DD) | `Pedidos Master` | No | No | No | No |
 | Hora Pedido | Hora (HH:MM) | `Pedidos Master` | No | No | No | No |
 | Nombre | Texto | `Pedidos Master` | No | No | Sí | Sí |
@@ -46,6 +46,8 @@
 
 **Regla general:** `ID Pedido = "BOG-" + (Fila Master - 1)` usando mínimo 3 dígitos con cero a la izquierda y crecimiento variable cuando el número supera 3 dígitos.
 
+**Aclaración operativa:** `ID Pedido` se genera una sola vez al crear/sincronizar por primera vez el pedido. Se deriva de la `Fila Master` original. Después se conserva y no se recalcula en sincronizaciones futuras. `Fila Master` también se conserva como referencia original. La app asume que `Pedidos Master` funciona como hoja *append-only* para pedidos; si se reordenan o insertan filas manualmente, eso debe tratarse como caso de revisión futura.
+
 ## 4) Campos que vienen de `Pedidos Master`
 - `Fila Master`
 - `Fecha Pedido`
@@ -72,7 +74,9 @@
 - `Hora Listo`
 
 ## 6) Campos preservados al sincronizar
-En toda sincronización con `Pedidos Master` se preservan los campos operativos creados o editados en `Chekeo Nuevo`:
+En toda sincronización con `Pedidos Master` se preservan los campos de referencia y operativos en `Chekeo Nuevo`:
+- `Fila Master`
+- `ID Pedido`
 - `Estado Pedido`
 - `Estado Pago`
 - `Método Pago`
@@ -86,7 +90,6 @@ En toda sincronización con `Pedidos Master` se preservan los campos operativos 
 
 ## 7) Campos refrescables desde `Pedidos Master`
 Se refrescan desde `Pedidos Master` cuando cambie la fuente:
-- `Fila Master`
 - `Fecha Pedido`
 - `Hora Pedido`
 - `Nombre`
@@ -98,7 +101,8 @@ Se refrescan desde `Pedidos Master` cuando cambie la fuente:
 - `Total`
 
 No se refrescan por sincronización:
-- `ID Pedido` (derivado localmente de `Fila Master`)
+- `ID Pedido`
+- `Fila Master`
 - Campos operativos preservados (sección 6)
 
 ## 8) Regla para pedidos especiales
@@ -126,6 +130,8 @@ El ticket cliente debe incluir:
 
 No debe incluir:
 - `Teléfono`
+- `Fila Master`
+- `ID Pedido`
 - `Estado Pedido`
 - `Estado Pago`
 - `Método Pago`
