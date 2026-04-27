@@ -31,8 +31,8 @@
 | Método Pago | Enum | Inicial desde `Pedidos Master`; luego operación | Sí | Sí | No | No |
 | Nota Interna | Texto | Operación interna | Sí | Sí | No | No |
 | Nota Cliente | Texto | Operación / aclaraciones | Sí | Sí | Sí | No |
-| Alerta | Enum (`OK` / `⚠️`) | Regla de negocio | Sí (solo ajuste manual excepcional) | Sí | No | No |
-| Ticket Enviado | Enum (`Sí` / `No`) | Operación | Sí | Sí | No | No |
+| Alerta | Texto / indicador visual (vacío o `⚠️`) | Regla de negocio | Sí (solo ajuste manual excepcional) | Sí | No | No |
+| Ticket Enviado | Enum (`Si` / `No`) | Operación | Sí | Sí | No | No |
 | Fecha Ticket Enviado | Fecha | Operación | Sí | Sí | No | No |
 | Hora Inicio | Hora | Operación cocina | Sí | Sí | No | No |
 | Hora Listo | Hora | Operación cocina | Sí | Sí | No | No |
@@ -108,7 +108,8 @@ Si en el pedido aparece cualquiera de estas señales:
 - Ambigüedad en composición/cantidades
 
 Entonces:
-- Marcar `Alerta = ⚠️`.
+- Usar `Alerta` vacío cuando no hay alerta.
+- Usar `Alerta = ⚠️` cuando requiere revisión.
 - **No bloquear** el flujo del pedido.
 - Mantener pedido visible y operable para resolución manual.
 
@@ -152,11 +153,12 @@ Restricciones:
 ## 11) Validaciones esperadas
 - `ID Pedido` único y con formato `BOG-` + número (mínimo 3 dígitos, crecimiento variable).
 - `Fila Master` numérica y sin duplicados en `Chekeo Nuevo`.
-- Enums válidos para `Estado Pedido`, `Estado Pago`, `Método Pago`, `Ticket Enviado`, `Alerta`.
+- Enums válidos para `Estado Pedido`, `Estado Pago`, `Método Pago`, `Ticket Enviado` (`Si`/`No`).
+- `Alerta` solo acepta vacío (sin alerta) o `⚠️` (revisar).
 - `Hamburguesas` debe aceptarse como texto libre estructurado (ej. `1x OG`, `2x BBQ`, `1x OG sin pepinillos`).
 - `Total` numérico mayor o igual a 0.
 - Fechas y horas en formato consistente.
-- Si `Ticket Enviado = Sí`, debe existir `Fecha Ticket Enviado`.
+- Si `Ticket Enviado = Si`, debe existir `Fecha Ticket Enviado`.
 - Si hay señales especiales (`(+1)`, `Chequeo Manual`, ambigüedad), `Alerta` debe quedar en `⚠️`.
 - `Configuración` debe contener `Banco`, `Nombre`, `Número de cuenta` no vacíos para construir mensaje de WhatsApp.
 

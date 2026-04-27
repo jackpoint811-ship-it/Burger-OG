@@ -36,8 +36,8 @@
 - **Estado Pedido:** `Nuevo`, `Confirmado`, `Preparando`, `Listo`.
 - **Estado Pago:** `Pendiente`, `Pagado`.
 - **Método Pago:** `Efectivo`, `Transferencia`, `Mixto`, `No definido`.
-- **Ticket Enviado:** `Sí`, `No`.
-- **Alerta:** `OK`, `⚠️`.
+- **Ticket Enviado:** `Si`, `No`.
+- **Alerta:** vacío = sin alerta, `⚠️` = revisar (no bloquea).
 
 ## Referencia de detalle
 El detalle normativo completo del contrato (tabla campo a campo, reglas de sync, ticket/WhatsApp, validaciones y cierre de fase) está en:
