@@ -8,6 +8,10 @@
     bankConfigOk: false
   };
 
+  var ORDER_STATUS_OPTIONS = ['Nuevo', 'Confirmado', 'Preparando', 'Listo'];
+  var PAYMENT_STATUS_OPTIONS = ['Pendiente', 'Pagado'];
+  var PAYMENT_METHOD_OPTIONS = ['Efectivo', 'Transferencia', 'Mixto', 'No definido'];
+
   function initApp() {
     bindEvents();
     setActiveTab('Inicio');
@@ -74,8 +78,11 @@
         if (!response || !response.ok) {
           return renderError(response && response.error ? response.error : { message: 'getAppOrders falló.' });
         }
-        APP_STATE.orders = response.data || [];
+        APP_STATE.orders = (response.data || []).slice().sort(function (a, b) {
+          return String(a['ID Pedido'] || '').localeCompare(String(b['ID Pedido'] || ''));
+        });
         renderOrders(APP_STATE.orders);
+        renderKitchen(APP_STATE.orders);
       })
       .withFailureHandler(function (error) {
         setLoading('orders', false);
@@ -100,8 +107,7 @@
         }
 
         showToast('Sincronización completada.', 'success');
-        loadSummary();
-        loadOrders();
+        reloadOperationalData();
       })
       .withFailureHandler(function (error) {
         setLoading('sync', false);
@@ -133,6 +139,59 @@
       .getBankConfig();
   }
 
+  function updateOrderStatus(orderId, nextStatus) {
+    showToast('Actualizando estado de pedido...', 'info');
+    google.script.run
+      .withSuccessHandler(handleWriteSuccess_)
+      .withFailureHandler(renderError)
+      .updateOrderStatus(orderId, nextStatus);
+  }
+
+  function updateOrderPayment(orderId, paymentStatus, paymentMethod) {
+    showToast('Actualizando pago...', 'info');
+    google.script.run
+      .withSuccessHandler(handleWriteSuccess_)
+      .withFailureHandler(renderError)
+      .updateOrderPayment(orderId, paymentStatus, paymentMethod);
+  }
+
+  function markOrderPaid(orderId) {
+    showToast('Marcando pedido como pagado...', 'info');
+    google.script.run
+      .withSuccessHandler(handleWriteSuccess_)
+      .withFailureHandler(renderError)
+      .markOrderPaid(orderId);
+  }
+
+  function updateOrderNotes(orderId, noteInternal, noteClient) {
+    showToast('Guardando notas...', 'info');
+    google.script.run
+      .withSuccessHandler(handleWriteSuccess_)
+      .withFailureHandler(renderError)
+      .updateOrderNotes(orderId, noteInternal, noteClient);
+  }
+
+  function updateOrderOperationalData(orderId, payload) {
+    showToast('Guardando pedido...', 'info');
+    google.script.run
+      .withSuccessHandler(handleWriteSuccess_)
+      .withFailureHandler(renderError)
+      .updateOrderOperationalData(orderId, payload);
+  }
+
+  function handleWriteSuccess_(response) {
+    if (!response || !response.ok) {
+      return renderError(response && response.error ? response.error : { message: 'Operación falló.' });
+    }
+    showToast(response.message || 'Operación completada.', 'success');
+    reloadOperationalData();
+  }
+
+  function reloadOperationalData() {
+    loadOrders();
+    loadSummary();
+  }
+
   function setLoading(key, value) {
     APP_STATE.loading[key] = value;
     if (key === 'sync') {
@@ -154,20 +213,82 @@
     }
 
     var items = orders.map(function (order) {
+      var orderId = String(order['ID Pedido'] || '');
       var safeAlert = escapeHtml(order['Alerta'] || '');
       var alertTag = safeAlert ? '<span class="badge-alert">' + safeAlert + '</span>' : '';
+
       return '' +
-        '<li class="orders-item">' +
-          '<p><strong>' + escapeHtml(order['ID Pedido'] || '-') + '</strong>' + alertTag + '</p>' +
+        '<li class="orders-item" data-order-id="' + escapeHtml(orderId) + '">' +
+          '<p><strong>' + escapeHtml(orderId || '-') + '</strong>' + alertTag +
+            '<span class="pill">' + escapeHtml(order['Estado Pedido'] || '-') + '</span>' +
+          '</p>' +
           '<p><strong>Nombre:</strong> ' + escapeHtml(order['Nombre'] || '-') + '</p>' +
           '<p><strong>Resumen:</strong> ' + escapeHtml(order['Resumen Pedido'] || '-') + '</p>' +
           '<p><strong>Total:</strong> ' + escapeHtml(formatMoney(order['Total'])) + '</p>' +
-          '<p><strong>Estado Pedido:</strong> ' + escapeHtml(order['Estado Pedido'] || '-') + '</p>' +
-          '<p><strong>Estado Pago:</strong> ' + escapeHtml(order['Estado Pago'] || '-') + '</p>' +
+          '<div class="status-row">' +
+            '<div class="field">' +
+              '<label>Estado Pedido</label>' +
+              '<select data-role="order-status">' + buildOptions_(ORDER_STATUS_OPTIONS, order['Estado Pedido']) + '</select>' +
+            '</div>' +
+            '<div class="field">' +
+              '<label>Estado Pago</label>' +
+              '<select data-role="payment-status">' + buildOptions_(PAYMENT_STATUS_OPTIONS, order['Estado Pago']) + '</select>' +
+            '</div>' +
+          '</div>' +
+          '<div class="field" style="margin-top:6px;">' +
+            '<label>Método Pago</label>' +
+            '<select data-role="payment-method">' + buildOptions_(PAYMENT_METHOD_OPTIONS, order['Método Pago']) + '</select>' +
+          '</div>' +
+          '<div class="field" style="margin-top:6px;">' +
+            '<label>Nota Interna</label>' +
+            '<textarea data-role="note-internal" placeholder="Operación interna">' + escapeHtml(order['Nota Interna'] || '') + '</textarea>' +
+          '</div>' +
+          '<div class="field" style="margin-top:6px;">' +
+            '<label>Nota Cliente</label>' +
+            '<textarea data-role="note-client" placeholder="Nota visible para cliente">' + escapeHtml(order['Nota Cliente'] || '') + '</textarea>' +
+          '</div>' +
+          '<div class="action-row">' +
+            '<button type="button" class="btn btn-secondary" data-action="save-order">Guardar pedido</button>' +
+            '<button type="button" class="btn btn-primary" data-action="mark-paid">Marcar pagado</button>' +
+          '</div>' +
         '</li>';
     }).join('');
 
     container.innerHTML = '<ul class="orders-list">' + items + '</ul>';
+  }
+
+  function renderKitchen(orders) {
+    var container = document.getElementById('kitchenContainer');
+    var kitchenOrders = (orders || []).filter(function (order) {
+      return String(order['Estado Pedido'] || '') !== 'Listo';
+    });
+
+    if (!kitchenOrders.length) {
+      container.textContent = 'Sin pedidos activos en cocina.';
+      return;
+    }
+
+    var items = kitchenOrders.map(function (order) {
+      var orderId = String(order['ID Pedido'] || '');
+      return '' +
+        '<li class="kitchen-item" data-order-id="' + escapeHtml(orderId) + '">' +
+          '<p><strong>' + escapeHtml(orderId || '-') + '</strong>' +
+            '<span class="pill">' + escapeHtml(order['Estado Pedido'] || '-') + '</span>' +
+          '</p>' +
+          '<p><strong>Nombre:</strong> ' + escapeHtml(order['Nombre'] || '-') + '</p>' +
+          '<p><strong>Hamburguesas:</strong> ' + escapeHtml(order['Hamburguesas'] || '-') + '</p>' +
+          '<p><strong>Extras:</strong> ' + escapeHtml(order['Extras'] || '-') + '</p>' +
+          '<p><strong>Guarniciones:</strong> ' + escapeHtml(order['Guarniciones'] || '-') + '</p>' +
+          '<p><strong>Inicio:</strong> ' + escapeHtml(order['Hora Inicio'] || '-') + ' · <strong>Listo:</strong> ' + escapeHtml(order['Hora Listo'] || '-') + '</p>' +
+          '<div class="kitchen-actions">' +
+            '<button type="button" class="btn btn-secondary" data-action="k-confirm">Confirmar</button>' +
+            '<button type="button" class="btn btn-primary" data-action="k-prep">Preparando</button>' +
+            '<button type="button" class="btn btn-danger" data-action="k-ready">Listo</button>' +
+          '</div>' +
+        '</li>';
+    }).join('');
+
+    container.innerHTML = '<ul class="kitchen-list">' + items + '</ul>';
   }
 
   function renderSummary(summary) {
@@ -217,6 +338,14 @@
     return '$' + amount.toFixed(2);
   }
 
+  function buildOptions_(options, selectedValue) {
+    var selected = String(selectedValue || '');
+    return options.map(function (option) {
+      var isSelected = option === selected ? ' selected' : '';
+      return '<option value="' + escapeHtml(option) + '"' + isSelected + '>' + escapeHtml(option) + '</option>';
+    }).join('');
+  }
+
   function escapeHtml(value) {
     var text = String(value === null || value === undefined ? '' : value);
     return text
@@ -229,10 +358,71 @@
 
   function bindEvents() {
     document.getElementById('syncButton').addEventListener('click', syncOrders);
+
     Array.prototype.slice.call(document.querySelectorAll('.tab-btn')).forEach(function (btn) {
       btn.addEventListener('click', function () {
         setActiveTab(btn.getAttribute('data-tab'));
       });
+    });
+
+    document.getElementById('ordersContainer').addEventListener('click', function (event) {
+      var button = event.target.closest('button[data-action]');
+      if (!button) {
+        return;
+      }
+
+      var card = button.closest('[data-order-id]');
+      if (!card) {
+        return;
+      }
+
+      var orderId = card.getAttribute('data-order-id');
+      var action = button.getAttribute('data-action');
+
+      if (action === 'save-order') {
+        var orderStatus = card.querySelector('[data-role="order-status"]').value;
+        var paymentStatus = card.querySelector('[data-role="payment-status"]').value;
+        var paymentMethod = card.querySelector('[data-role="payment-method"]').value;
+        var noteInternal = card.querySelector('[data-role="note-internal"]').value;
+        var noteClient = card.querySelector('[data-role="note-client"]').value;
+
+        updateOrderOperationalData(orderId, {
+          status: orderStatus,
+          paymentStatus: paymentStatus,
+          paymentMethod: paymentMethod,
+          noteInternal: noteInternal,
+          noteClient: noteClient
+        });
+      }
+
+      if (action === 'mark-paid') {
+        markOrderPaid(orderId);
+      }
+    });
+
+    document.getElementById('kitchenContainer').addEventListener('click', function (event) {
+      var button = event.target.closest('button[data-action]');
+      if (!button) {
+        return;
+      }
+
+      var card = button.closest('[data-order-id]');
+      if (!card) {
+        return;
+      }
+
+      var orderId = card.getAttribute('data-order-id');
+      var action = button.getAttribute('data-action');
+
+      if (action === 'k-confirm') {
+        updateOrderStatus(orderId, 'Confirmado');
+      }
+      if (action === 'k-prep') {
+        updateOrderStatus(orderId, 'Preparando');
+      }
+      if (action === 'k-ready') {
+        updateOrderStatus(orderId, 'Listo');
+      }
     });
   }
 

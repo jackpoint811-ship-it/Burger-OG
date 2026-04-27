@@ -257,3 +257,46 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 
 ### Siguiente fase recomendada
 ➡️ Fase 4 — Pedidos (operación).
+
+---
+
+## 2026-04-27 — Implementación Fase 4 (Pedidos + Cocina)
+
+### Estado final
+✅ Fase 4 completada.
+
+### Cambios backend
+- `healthCheck()` actualizado para reportar `phase: 4` y servicio `Burger-OG Pedidos + Cocina`.
+- Nuevo endpoint público `updateOrderOperationalData(orderId, payload)` para guardar en una sola operación:
+  - estado pedido
+  - estado/método de pago
+  - notas interna/cliente
+  - `Última Actualización`
+  - `Hora Inicio` al pasar a `Preparando` (si estaba vacía)
+  - `Hora Listo` al pasar a `Listo` (si estaba vacía)
+- Se mantiene compatibilidad con endpoints previos (`updateOrderStatus`, `updateOrderPayment`, `markOrderPaid`, `updateOrderNotes`).
+
+### Cambios frontend (mobile-first)
+- Header actualizado a `Fase 4 — Pedidos + Cocina`.
+- Tabs finales de fase:
+  - `Inicio`
+  - `Pedidos`
+  - `Cocina`
+  - `Resumen`
+  - `Ajustes`
+- `Pedidos` ahora permite edición operativa por tarjeta:
+  - `Estado Pedido`, `Estado Pago`, `Método Pago`, `Nota Interna`, `Nota Cliente`.
+  - Acciones: `Guardar pedido` y `Marcar pagado`.
+- `Cocina` ahora muestra pedidos no `Listo` con acciones rápidas:
+  - `Confirmar`
+  - `Preparando`
+  - `Listo`
+- Cada operación refresca automáticamente pedidos + resumen.
+
+### Restricciones respetadas
+- Sin ticket cliente.
+- Sin WhatsApp.
+- Sin migración a `Chekeo` oficial.
+- `Chekeo Nuevo` se mantiene como hoja activa.
+- Sin cambios en `legacy/`.
+- Sin librerías externas ni CDN/frameworks.

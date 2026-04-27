@@ -20,8 +20,8 @@ function include(filename) {
 function healthCheck() {
   return bogPublicRead_(function () {
     return {
-      phase: 3,
-      service: 'Burger-OG Web App shell móvil',
+      phase: 4,
+      service: 'Burger-OG Pedidos + Cocina',
       activeSheet: BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME,
       timestamp: bogNowIso_()
     };
@@ -60,6 +60,20 @@ function updateOrderStatus(orderId, nextStatus) {
   return bogPublicWrite_(function () {
     return bogUpdateOrderStatus_(orderId, nextStatus);
   }, 'Estado de pedido actualizado.');
+}
+
+
+
+function updateOrderOperationalData(orderId, payload) {
+  return bogPublicWrite_(function () {
+    return bogUpdateOrderOperationalData_(orderId, payload);
+  }, 'Pedido actualizado.');
+}
+
+function updateOrderPayment(orderId, paymentStatus, paymentMethod) {
+  return bogPublicWrite_(function () {
+    return bogUpdateOrderPayment_(orderId, paymentStatus, paymentMethod);
+  }, 'Pago del pedido actualizado.');
 }
 
 function markOrderPaid(orderId) {
