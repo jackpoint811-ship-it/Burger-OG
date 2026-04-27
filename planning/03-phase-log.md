@@ -225,3 +225,54 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 - Sin cambios en `legacy/`.
 - Sin migración a `Chekeo` oficial; operación mantiene `Chekeo Nuevo`.
 - Sin librerías externas, sin CDN y sin frameworks.
+
+---
+
+## 2026-04-27 — Corrección final Fase 3 (PR #40)
+
+### Estado final
+✅ Fase 3 completada.
+
+### Correcciones aplicadas
+- Se estandarizaron archivos HTML a:
+  - `Index.html`
+  - `styles.html`
+  - `scripts.html`
+- Se eliminaron archivos legacy de nomenclatura temporal de Fase 3:
+  - `webapp_shell.html`
+  - `webapp_styles.html`
+  - `webapp_scripts.html`
+- `doGet()` quedó configurado con `HtmlService.createTemplateFromFile('Index')`.
+- Se expuso helper público `include(filename)` para parciales HTML.
+- Tabs visibles finales en app shell:
+  - `Inicio`
+  - `Pedidos`
+  - `Resumen`
+  - `Ajustes`
+- `scripts.html` implementa funciones cliente requeridas e inicialización con:
+  - `healthCheck()`
+  - `getDailySummary()`
+  - `getAppOrders()`
+  - `getBankConfig()`
+- Botón `Sincronizar` ejecuta `syncOrdersFromMaster()` y refresca resumen/pedidos.
+- `Pedidos` quedó en solo lectura (sin cocina/edición).
+- `Resumen` muestra montos y conteos por estado.
+- `Ajustes` muestra estado backend, estado de config bancaria, hoja activa `Chekeo Nuevo` y nota de no uso de `Chekeo` oficial.
+
+### Archivos modificados
+- `Code.gs`
+- `Index.html`
+- `styles.html`
+- `scripts.html`
+- `planning/06-phase-3-webapp-shell.md`
+- `planning/03-phase-log.md`
+
+### Confirmación de alcance
+- No se implementó cocina completa.
+- No se implementó ticket cliente.
+- No se implementó WhatsApp.
+- No se tocó `legacy/`.
+- No se migró a `Chekeo` oficial.
+
+### Siguiente fase recomendada
+➡️ Fase 4 — Pedidos + Cocina.

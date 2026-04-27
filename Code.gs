@@ -7,13 +7,13 @@ function doGet(e) {
   }
 
   return HtmlService
-    .createTemplateFromFile('webapp_shell')
+    .createTemplateFromFile('Index')
     .evaluate()
     .setTitle('Burger-OG')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function bogInclude_(filename) {
+function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 

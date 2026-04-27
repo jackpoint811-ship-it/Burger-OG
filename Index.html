@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Burger-OG</title>
+    <?!= include('styles'); ?>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header card">
+        <div>
+          <p class="eyebrow">Burger-OG</p>
+          <h1>Fase 3 — Web App shell móvil</h1>
+        </div>
+        <button id="syncButton" class="btn btn-primary" type="button">Sincronizar</button>
+      </header>
+
+      <section id="toast" class="toast" aria-live="polite"></section>
+
+      <main class="content">
+        <section id="tab-Inicio" class="card tab-panel">
+          <h2>Inicio</h2>
+          <p id="healthStatus">Cargando estado backend...</p>
+          <p class="muted">Hoja activa esperada: <strong>Chekeo Nuevo</strong></p>
+        </section>
+
+        <section id="tab-Pedidos" class="card tab-panel is-hidden">
+          <h2>Pedidos</h2>
+          <div id="ordersContainer">Cargando pedidos...</div>
+        </section>
+
+        <section id="tab-Resumen" class="card tab-panel is-hidden">
+          <h2>Resumen</h2>
+          <div id="summaryCards" class="summary-grid"></div>
+          <div class="summary-lists">
+            <div>
+              <h3>Estado Pedido</h3>
+              <ul id="orderStatusCount"></ul>
+            </div>
+            <div>
+              <h3>Estado Pago</h3>
+              <ul id="paymentStatusCount"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="tab-Ajustes" class="card tab-panel is-hidden">
+          <h2>Ajustes</h2>
+          <ul class="settings-list">
+            <li><strong>Estado backend:</strong> <span id="backendState">Pendiente</span></li>
+            <li><strong>Configuración bancaria:</strong> <span id="bankState">Pendiente</span></li>
+            <li><strong>Hoja activa:</strong> Chekeo Nuevo</li>
+            <li><strong>Nota:</strong> Fase de prueba: no usa Chekeo oficial.</li>
+          </ul>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="Tabs">
+        <button class="tab-btn is-active" data-tab="Inicio" type="button">Inicio</button>
+        <button class="tab-btn" data-tab="Pedidos" type="button">Pedidos</button>
+        <button class="tab-btn" data-tab="Resumen" type="button">Resumen</button>
+        <button class="tab-btn" data-tab="Ajustes" type="button">Ajustes</button>
+      </nav>
+    </div>
+
+    <?!= include('scripts'); ?>
+  </body>
+</html>
