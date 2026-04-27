@@ -9,10 +9,15 @@ function bogSyncOrdersFromMaster_() {
   var chekeoData = bogReadSheetAsObjects_(chekeoSheet, BurgerOGConstants.CHEKEO_REQUIRED_COLUMNS);
 
   var existingByMasterRow = {};
+  var existingByOrderId = {};
   chekeoData.rows.forEach(function (row) {
-    var key = bogTrim_(row.data['Fila Master']);
-    if (key) {
-      existingByMasterRow[key] = row;
+    var masterKey = bogTrim_(row.data['Fila Master']);
+    var orderIdKey = bogTrim_(row.data['ID Pedido']);
+    if (masterKey) {
+      existingByMasterRow[masterKey] = row;
+    }
+    if (orderIdKey) {
+      existingByOrderId[orderIdKey] = row;
     }
   });
 
@@ -29,7 +34,8 @@ function bogSyncOrdersFromMaster_() {
 
     checked += 1;
     var masterRowNumber = masterRow.rowNumber;
-    var existing = existingByMasterRow[String(masterRowNumber)];
+    var expectedOrderId = bogBuildOrderId_(masterRowNumber);
+    var existing = existingByMasterRow[String(masterRowNumber)] || existingByOrderId[expectedOrderId] || null;
 
     var transformed = bogTransformMasterToChekeo_(source);
     var merged = bogBuildChekeoRowFromMaster_(transformed, masterRowNumber, existing && existing.data);
@@ -40,7 +46,8 @@ function bogSyncOrdersFromMaster_() {
     }
 
     if (existing) {
-      bogPatchRowByHeaders_(chekeoSheet, existing.rowNumber, chekeoData.headerMap, merged);
+      var fullRow = bogBuildRowByHeaderMap_(chekeoData.headers, chekeoData.headerMap, merged);
+      chekeoSheet.getRange(existing.rowNumber, 1, 1, chekeoData.headers.length).setValues([fullRow]);
       updated += 1;
       return;
     }
@@ -67,7 +74,8 @@ function bogTransformMasterToChekeo_(masterRecord) {
   var totalRaw = bogSafeGetByAliases_(masterRecord, ['Total']);
   var manualTotalRaw = bogSafeGetByAliases_(masterRecord, ['Precio Manual total']);
   var totalUsesManual = bogIsManualTotal_(totalRaw) || !bogHasUsefulValue_(totalRaw);
-  var totalValue = totalUsesManual && bogHasUsefulValue_(manualTotalRaw) ? manualTotalRaw : totalRaw;
+  var hasManualPrice = bogHasUsefulValue_(manualTotalRaw);
+  var totalValue = totalUsesManual && hasManualPrice ? manualTotalRaw : totalRaw;
 
   var dynamic = bogCollectDynamicOrderParts_(masterRecord);
   var estadoPedidoRaw = bogSafeGetByAliases_(masterRecord, ['Estado?']);
@@ -91,8 +99,13 @@ function bogTransformMasterToChekeo_(masterRecord) {
     'Detected Alerts': dynamic.alertReasons
   };
 
-  if (totalUsesManual && bogHasUsefulValue_(manualTotalRaw)) {
+  if (totalUsesManual && hasManualPrice) {
     transformed['Detected Alerts'].push('total manual');
+  }
+
+  if ((totalUsesManual && !hasManualPrice) || (bogIsManualTotal_(totalRaw) && !hasManualPrice)) {
+    transformed['Total'] = 0;
+    transformed['Detected Alerts'].push('total faltante o manual sin precio');
   }
 
   if (bogIsManualTotal_(totalRaw) || bogIsManualTotal_(manualTotalRaw)) {
@@ -117,7 +130,7 @@ function bogCollectDynamicOrderParts_(masterRecord) {
     if (burgerLabel) {
       var count = bogParseCount_(value);
       if (count) {
-        hamburguesas.push(bogFormatItemWithCount_(count, burgerLabel));
+        hamburguesas.push(bogFormatBurgerOrSideWithCount_(count, burgerLabel));
         burgerNames.push(burgerLabel);
       } else if (bogHasUsefulValue_(value)) {
         hamburguesas.push('1x ' + burgerLabel);
@@ -129,13 +142,13 @@ function bogCollectDynamicOrderParts_(masterRecord) {
 
     var extraLabel = bogExtractBracketLabel_(header, /^Extras\s*\[(.+?)\]/i);
     if (extraLabel && bogHasUsefulValue_(value)) {
-      extras.push(bogFormatItemWithCount_(bogParseCount_(value), extraLabel));
+      extras.push(bogFormatExtraWithCount_(bogParseCount_(value), extraLabel));
       return;
     }
 
     var sideLabel = bogExtractBracketLabel_(header, /^Date\s+un\s+extra\s*\[(.+?)\]/i);
     if (sideLabel && bogHasUsefulValue_(value)) {
-      guarniciones.push(bogFormatItemWithCount_(bogParseCount_(value), sideLabel));
+      guarniciones.push(bogFormatBurgerOrSideWithCount_(bogParseCount_(value), sideLabel));
       return;
     }
   });

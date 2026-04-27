@@ -150,3 +150,30 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 - Sin cambios en `legacy/`.
 - Sin servicios externos ni librerías externas.
 - Sin migración a `Chekeo` oficial; hoja activa se mantiene en `Chekeo Nuevo`.
+
+---
+
+## 2026-04-27 — Ajuste final Fase 2 previo a merge PR #38
+
+### Estado
+🟡 En revisión final.
+
+### Correcciones realizadas
+- Sync ahora detecta pedidos existentes por `Fila Master` **o** por `ID Pedido` esperado (`BOG-###`) para evitar duplicados cuando falta referencia de fila pero ya existe el ID.
+- Se optimizó la escritura de sync para actualizar filas existentes con `setValues([row])` por fila completa (mapeada por encabezados actuales), evitando parcheo celda por celda en la sincronización masiva.
+- Se ajustó formato visible de cantidades:
+  - Hamburguesas: siempre `1x`, `2x`, etc.
+  - Guarniciones: siempre `1x`, `2x`, etc.
+  - Extras: nombre simple para 1; `Nx` para cantidades mayores.
+- Se añadió alerta explícita cuando `Total` está vacío/manual y `Precio Manual total` también está vacío:
+  - se usa `Total = 0` para no bloquear,
+  - se marca `⚠️`,
+  - se registra razón interna `total faltante o manual sin precio`.
+
+### Reglas mantenidas
+- Lectura flexible por encabezados de `Pedidos Master`.
+- Detección dinámica de hamburguesas/extras/guarniciones para crecimiento futuro.
+- `Chekeo Nuevo` como hoja activa.
+- `Ticket Enviado` con catálogo `Si/No`.
+- `Alerta` solo vacío/`⚠️`.
+- `LockService` seguro con `lockAcquired`.

@@ -83,7 +83,16 @@ function bogParseCount_(value) {
   return asNumber;
 }
 
-function bogFormatItemWithCount_(count, name) {
+function bogFormatBurgerOrSideWithCount_(count, name) {
+  var cleanName = bogTrim_(name);
+  if (!cleanName) {
+    return '';
+  }
+  var normalizedCount = count && count > 0 ? count : 1;
+  return String(normalizedCount) + 'x ' + cleanName;
+}
+
+function bogFormatExtraWithCount_(count, name) {
   var cleanName = bogTrim_(name);
   if (!cleanName) {
     return '';
