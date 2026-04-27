@@ -76,7 +76,6 @@
 ## 6) Campos preservados al sincronizar
 En toda sincronización con `Pedidos Master` se preservan los campos de referencia y operativos en `Chekeo Nuevo`:
 - `Fila Master`
-- `ID Pedido`
 - `Estado Pedido`
 - `Estado Pago`
 - `Método Pago`
@@ -131,7 +130,6 @@ El ticket cliente debe incluir:
 No debe incluir:
 - `Teléfono`
 - `Fila Master`
-- `ID Pedido`
 - `Estado Pedido`
 - `Estado Pago`
 - `Método Pago`
