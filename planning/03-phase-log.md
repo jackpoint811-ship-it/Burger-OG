@@ -12,6 +12,7 @@
   - `planning/02-data-contract.md`
   - `planning/03-phase-log.md`
 - Se actualizó `README.md` con stack permitido, estado de reconstrucción, regla de `legacy/`, flujo por fases y restricción de no usar servicios externos.
+- Se completó el contenido documental requerido de Fase 0 según comentarios de revisión del PR #34.
 
 ### Alcance respetado
 - Sin funcionalidad nueva.

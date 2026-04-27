@@ -1,13 +1,25 @@
 # 01 — Roadmap
 
-## Fase 0 (actual)
-- Reset del repositorio.
-- Traslado completo de implementación histórica a `legacy/`.
-- Definición de documentación base para reinicio.
+## Fase 0
+Reset legacy.
 
-## Fases siguientes
-- Fase 1: reconstrucción base sobre raíz limpia (según alcance a definir al iniciar fase).
-- Fase 2+: evolución incremental validada por criterios de fase y bitácora.
+## Fase 1
+Contrato de datos y hojas.
 
-## Regla de avance
-No iniciar una fase nueva sin registrar cierre de la fase anterior en `planning/03-phase-log.md`.
+## Fase 2
+Backend Apps Script base.
+
+## Fase 3
+Web App shell móvil.
+
+## Fase 4
+Pedidos + Cocina.
+
+## Fase 5
+Ticket cliente + WhatsApp.
+
+## Fase 6
+Resumen operativo.
+
+## Fase 7
+Migración a producción.

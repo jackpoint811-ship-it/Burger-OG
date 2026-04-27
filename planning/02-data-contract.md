@@ -1,13 +1,36 @@
 # 02 — Data Contract (Base)
 
-## Estado del contrato
-Contrato funcional **pendiente de redefinición** en fases de implementación.
-Durante Fase 0 solo se establece el marco documental.
+## Hojas del sistema
+- `Pedidos Master`
+- `Chekeo Nuevo`
+- `Chekeo`
+- `Configuración`
 
-## Lineamientos iniciales
-- No introducir contratos nuevos ejecutables en Fase 0.
-- No alterar contratos legacy archivados en `legacy/`.
-- Definir contratos futuros con versionado y validación por fase.
+## Columnas de `Chekeo Nuevo`
+1. ID Pedido
+2. Fila Master
+3. Fecha Pedido
+4. Hora Pedido
+5. Nombre
+6. Teléfono
+7. Resumen Pedido
+8. Hamburguesas
+9. Extras
+10. Guarniciones
+11. Total
+12. Estado Pedido
+13. Estado Pago
+14. Método Pago
+15. Nota Interna
+16. Nota Cliente
+17. Alerta
+18. Ticket Enviado
+19. Fecha Ticket Enviado
+20. Hora Inicio
+21. Hora Listo
+22. Última Actualización
 
-## Fuente histórica
-El comportamiento previo queda únicamente como referencia en `legacy/` y no como base activa de ejecución.
+## Catálogos de estado
+- Estados de pedido: `Nuevo`, `Confirmado`, `Preparando`, `Listo`.
+- Estado pago: `Pendiente`, `Pagado`.
+- Método pago: `Efectivo`, `Transferencia`, `Mixto`, `No definido`.
