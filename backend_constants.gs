@@ -34,15 +34,8 @@ var BurgerOGConstants = (function () {
   ];
 
   var MASTER_REQUIRED_COLUMNS = [
-    'Fecha Pedido',
-    'Hora Pedido',
-    'Nombre',
-    'Teléfono',
-    'Resumen Pedido',
-    'Hamburguesas',
-    'Extras',
-    'Guarniciones',
-    'Total'
+    'Marca temporal',
+    'Nombre'
   ];
 
   var CHEKEO_REQUIRED_COLUMNS = CHEKEO_COLUMNS.slice();

@@ -101,8 +101,10 @@ function bogPublicRead_(operation, successMessage) {
 
 function bogPublicWrite_(operation, successMessage) {
   var lock = LockService.getScriptLock();
+  var lockAcquired = false;
   try {
     lock.waitLock(30000);
+    lockAcquired = true;
     return {
       ok: true,
       data: operation(),
@@ -111,7 +113,9 @@ function bogPublicWrite_(operation, successMessage) {
   } catch (err) {
     return bogErrorEnvelope_(err);
   } finally {
-    lock.releaseLock();
+    if (lockAcquired) {
+      lock.releaseLock();
+    }
   }
 }
 

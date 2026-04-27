@@ -21,9 +21,7 @@ function bogValidateRequiredHeaders_(headers, requiredHeaders, sheetName) {
   });
 
   if (missing.length) {
-    throw new Error(
-      'Faltan columnas obligatorias en ' + sheetName + ': ' + missing.join(', ')
-    );
+    throw new Error('Faltan columnas obligatorias en ' + sheetName + ': ' + missing.join(', '));
   }
 
   return headerMap;
@@ -36,14 +34,14 @@ function bogReadSheetAsObjects_(sheet, requiredHeaders) {
   }
 
   var headers = values[0];
-  var headerMap = bogValidateRequiredHeaders_(headers, requiredHeaders, sheet.getName());
+  var headerMap = bogValidateRequiredHeaders_(headers, requiredHeaders || [], sheet.getName());
   var rows = [];
 
   for (var i = 1; i < values.length; i += 1) {
     rows.push({
       rowNumber: i + 1,
       values: values[i],
-      data: bogToObjectByHeaderMap_(requiredHeaders, headerMap, values[i])
+      data: bogToObjectByHeaderMap_(headers, headerMap, values[i])
     });
   }
 
@@ -57,10 +55,6 @@ function bogReadSheetAsObjects_(sheet, requiredHeaders) {
 
 function bogEnsureChekeoHeaders_(sheet) {
   var lastColumn = Math.max(sheet.getLastColumn(), BurgerOGConstants.CHEKEO_COLUMNS.length);
-  if (lastColumn < BurgerOGConstants.CHEKEO_COLUMNS.length) {
-    lastColumn = BurgerOGConstants.CHEKEO_COLUMNS.length;
-  }
-
   var currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
   var hasAnyHeader = currentHeaders.some(function (value) {
     return bogTrim_(value) !== '';
@@ -106,4 +100,15 @@ function bogPatchRowByHeaders_(sheet, rowNumber, headerMap, patch) {
     }
     sheet.getRange(rowNumber, index + 1).setValue(patch[header]);
   });
+}
+
+function bogBuildRowByHeaderMap_(headers, headerMap, record) {
+  var row = new Array(headers.length).fill('');
+  Object.keys(record).forEach(function (header) {
+    var index = headerMap[bogNormalizeHeaderKey_(header)];
+    if (index !== undefined) {
+      row[index] = record[header];
+    }
+  });
+  return row;
 }

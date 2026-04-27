@@ -16,49 +16,42 @@ function bogSyncOrdersFromMaster_() {
     }
   });
 
-  var writeByChekeoRow = {};
-  var appendRows = [];
   var inserted = 0;
   var updated = 0;
   var checked = 0;
+  var appendRows = [];
 
   masterData.rows.forEach(function (masterRow) {
-    var record = masterRow.data;
-    if (bogIsEffectivelyEmptyOrder_(record)) {
+    var source = masterRow.data;
+    if (bogIsEffectivelyEmptyOrder_(source)) {
       return;
     }
 
     checked += 1;
     var masterRowNumber = masterRow.rowNumber;
-    var key = String(masterRowNumber);
-    var existing = existingByMasterRow[key];
+    var existing = existingByMasterRow[String(masterRowNumber)];
 
-    var merged = bogBuildChekeoRowFromMaster_(record, masterRowNumber, existing && existing.data);
+    var transformed = bogTransformMasterToChekeo_(source);
+    var merged = bogBuildChekeoRowFromMaster_(transformed, masterRowNumber, existing && existing.data);
+
     var validationErrors = bogValidateChekeoRecord_(merged);
     if (validationErrors.length) {
-      throw new Error('Error de validación en Fila Master ' + key + ': ' + validationErrors.join(' | '));
+      throw new Error('Error de validación en Fila Master ' + masterRowNumber + ': ' + validationErrors.join(' | '));
     }
 
     if (existing) {
-      writeByChekeoRow[existing.rowNumber] = bogToRowInContractOrder_(merged);
+      bogPatchRowByHeaders_(chekeoSheet, existing.rowNumber, chekeoData.headerMap, merged);
       updated += 1;
-    } else {
-      appendRows.push(bogToRowInContractOrder_(merged));
-      inserted += 1;
+      return;
     }
-  });
 
-  Object.keys(writeByChekeoRow).forEach(function (rowNumberText) {
-    var rowNumber = Number(rowNumberText);
-    chekeoSheet
-      .getRange(rowNumber, 1, 1, BurgerOGConstants.CHEKEO_COLUMNS.length)
-      .setValues([writeByChekeoRow[rowNumberText]]);
+    appendRows.push(bogBuildRowByHeaderMap_(chekeoData.headers, chekeoData.headerMap, merged));
+    inserted += 1;
   });
 
   if (appendRows.length) {
-    var startRow = chekeoSheet.getLastRow() + 1;
     chekeoSheet
-      .getRange(startRow, 1, appendRows.length, BurgerOGConstants.CHEKEO_COLUMNS.length)
+      .getRange(chekeoSheet.getLastRow() + 1, 1, appendRows.length, chekeoData.headers.length)
       .setValues(appendRows);
   }
 
@@ -67,6 +60,217 @@ function bogSyncOrdersFromMaster_() {
     updated: updated,
     checked: checked
   };
+}
+
+function bogTransformMasterToChekeo_(masterRecord) {
+  var timestamp = bogParseMasterTimestamp_(bogSafeGetByAliases_(masterRecord, ['Marca temporal']));
+  var totalRaw = bogSafeGetByAliases_(masterRecord, ['Total']);
+  var manualTotalRaw = bogSafeGetByAliases_(masterRecord, ['Precio Manual total']);
+  var totalUsesManual = bogIsManualTotal_(totalRaw) || !bogHasUsefulValue_(totalRaw);
+  var totalValue = totalUsesManual && bogHasUsefulValue_(manualTotalRaw) ? manualTotalRaw : totalRaw;
+
+  var dynamic = bogCollectDynamicOrderParts_(masterRecord);
+  var estadoPedidoRaw = bogSafeGetByAliases_(masterRecord, ['Estado?']);
+  var estadoPagoRaw = bogSafeGetByAliases_(masterRecord, ['Pagado?']);
+  var metodoPagoRaw = bogSafeGetByAliases_(masterRecord, ['Tipo', 'Forma de pago']);
+
+  var transformed = {
+    'Fecha Pedido': timestamp.fecha,
+    'Hora Pedido': timestamp.hora,
+    'Nombre': bogSafeGetByAliases_(masterRecord, ['Nombre']),
+    'Teléfono': bogSafeGetByAliases_(masterRecord, ['Telefono', 'Teléfono']),
+    'Resumen Pedido': bogBuildCompactSummary_(dynamic),
+    'Hamburguesas': dynamic.hamburguesas.join(' + '),
+    'Extras': dynamic.extras.join(' + '),
+    'Guarniciones': dynamic.guarniciones.join(' + '),
+    'Total': bogNormalizeMoney_(totalValue),
+    'Estado Pedido': bogNormalizeOrderStatus_(estadoPedidoRaw),
+    'Estado Pago': bogNormalizePaymentStatus_(estadoPagoRaw),
+    'Método Pago': bogNormalizePaymentMethod_(metodoPagoRaw),
+    'Master Notes': dynamic.notes.join(' | '),
+    'Detected Alerts': dynamic.alertReasons
+  };
+
+  if (totalUsesManual && bogHasUsefulValue_(manualTotalRaw)) {
+    transformed['Detected Alerts'].push('total manual');
+  }
+
+  if (bogIsManualTotal_(totalRaw) || bogIsManualTotal_(manualTotalRaw)) {
+    transformed['Detected Alerts'].push('Chequeo Manual');
+  }
+
+  return transformed;
+}
+
+function bogCollectDynamicOrderParts_(masterRecord) {
+  var hamburguesas = [];
+  var extras = [];
+  var guarniciones = [];
+  var notes = [];
+  var alertReasons = [];
+  var burgerNames = [];
+
+  Object.keys(masterRecord).forEach(function (header) {
+    var value = masterRecord[header];
+
+    var burgerLabel = bogExtractBracketLabel_(header, /^¿?\s*Cuantas\?\s*\[(.+?)\]/i);
+    if (burgerLabel) {
+      var count = bogParseCount_(value);
+      if (count) {
+        hamburguesas.push(bogFormatItemWithCount_(count, burgerLabel));
+        burgerNames.push(burgerLabel);
+      } else if (bogHasUsefulValue_(value)) {
+        hamburguesas.push('1x ' + burgerLabel);
+        notes.push('Cantidad no estándar en ' + burgerLabel + ': ' + bogTrim_(value));
+        alertReasons.push('inconsistencias entre cantidad y personalización');
+      }
+      return;
+    }
+
+    var extraLabel = bogExtractBracketLabel_(header, /^Extras\s*\[(.+?)\]/i);
+    if (extraLabel && bogHasUsefulValue_(value)) {
+      extras.push(bogFormatItemWithCount_(bogParseCount_(value), extraLabel));
+      return;
+    }
+
+    var sideLabel = bogExtractBracketLabel_(header, /^Date\s+un\s+extra\s*\[(.+?)\]/i);
+    if (sideLabel && bogHasUsefulValue_(value)) {
+      guarniciones.push(bogFormatItemWithCount_(bogParseCount_(value), sideLabel));
+      return;
+    }
+  });
+
+  var generalPersonalization = [];
+  ['¿Personalizar tu(s) hamburguesa(s)?', 'Describe como quieres tus Burgers'].forEach(function (headerAlias) {
+    var value = bogSafeGetByAliases_(masterRecord, [headerAlias]);
+    if (bogHasUsefulValue_(value)) {
+      generalPersonalization.push(bogTrim_(value));
+    }
+  });
+
+  if (generalPersonalization.length) {
+    notes.push('Personalización general: ' + generalPersonalization.join(' / '));
+    if (hamburguesas.length > 1 || hamburguesas.length === 0) {
+      alertReasons.push('personalización ambigua');
+    }
+  }
+
+  Object.keys(masterRecord).forEach(function (header) {
+    var value = masterRecord[header];
+    if (!bogHasUsefulValue_(value)) {
+      return;
+    }
+
+    var normalizedHeader = bogNormalizeHeaderKey_(header);
+    if (normalizedHeader.indexOf('personalizar ') === 0 || normalizedHeader.indexOf('burger ') === 0) {
+      notes.push(header + ': ' + bogTrim_(value));
+      return;
+    }
+
+    for (var i = 0; i < burgerNames.length; i += 1) {
+      if (normalizedHeader.indexOf(bogNormalizeHeaderKey_(burgerNames[i])) !== -1 && normalizedHeader.indexOf('cuantas? [') === -1) {
+        notes.push(header + ': ' + bogTrim_(value));
+        break;
+      }
+    }
+  });
+
+  var globalNote = bogSafeGetByAliases_(masterRecord, ['Nota']);
+  if (bogHasUsefulValue_(globalNote)) {
+    notes.push('Nota: ' + bogTrim_(globalNote));
+  }
+
+  var valuesText = Object.keys(masterRecord).map(function (header) {
+    return header + ': ' + bogTrim_(masterRecord[header]);
+  }).join(' | ');
+
+  if (/\(\+1\)/i.test(valuesText)) {
+    alertReasons.push('(+1)');
+  }
+  if (/Chequeo\s*Manual/i.test(valuesText)) {
+    alertReasons.push('Chequeo Manual');
+  }
+
+  if (notes.length && hamburguesas.length === 0) {
+    alertReasons.push('descripción libre que no se puede asociar claramente');
+  }
+
+  return {
+    hamburguesas: bogUniqueNonEmpty_(hamburguesas),
+    extras: bogUniqueNonEmpty_(extras),
+    guarniciones: bogUniqueNonEmpty_(guarniciones),
+    notes: bogUniqueNonEmpty_(notes),
+    alertReasons: bogUniqueNonEmpty_(alertReasons)
+  };
+}
+
+function bogBuildCompactSummary_(dynamicParts) {
+  var parts = [];
+  if (dynamicParts.hamburguesas.length) {
+    parts.push(dynamicParts.hamburguesas.join(' + '));
+  }
+  if (dynamicParts.extras.length) {
+    parts.push(dynamicParts.extras.join(' + '));
+  }
+  if (dynamicParts.guarniciones.length) {
+    parts.push(dynamicParts.guarniciones.join(' + '));
+  }
+  return parts.join(' + ');
+}
+
+function bogIsManualTotal_(value) {
+  var text = bogNormalizeHeaderKey_(value);
+  return text.indexOf('chequeo manual') !== -1;
+}
+
+function bogNormalizeOrderStatus_(value) {
+  var clean = bogTrim_(value);
+  if (BurgerOGConstants.ENUMS.ESTADO_PEDIDO.indexOf(clean) !== -1) {
+    return clean;
+  }
+  return BurgerOGConstants.DEFAULTS.ESTADO_PEDIDO;
+}
+
+function bogNormalizePaymentStatus_(value) {
+  var normalized = bogNormalizeHeaderKey_(value);
+  if (normalized === 'si' || normalized === 'sí' || normalized === 'pagado') {
+    return 'Pagado';
+  }
+  return BurgerOGConstants.DEFAULTS.ESTADO_PAGO;
+}
+
+function bogBuildChekeoRowFromMaster_(transformed, masterRowNumber, existingRecord) {
+  var row = {};
+
+  row['ID Pedido'] = existingRecord ? existingRecord['ID Pedido'] : bogBuildOrderId_(masterRowNumber);
+  row['Fila Master'] = existingRecord ? existingRecord['Fila Master'] : String(masterRowNumber);
+
+  row['Fecha Pedido'] = transformed['Fecha Pedido'] || '';
+  row['Hora Pedido'] = transformed['Hora Pedido'] || '';
+  row['Nombre'] = transformed['Nombre'] || '';
+  row['Teléfono'] = transformed['Teléfono'] || '';
+  row['Resumen Pedido'] = transformed['Resumen Pedido'] || '';
+  row['Hamburguesas'] = transformed['Hamburguesas'] || '';
+  row['Extras'] = transformed['Extras'] || '';
+  row['Guarniciones'] = transformed['Guarniciones'] || '';
+  row['Total'] = transformed['Total'] || 0;
+
+  row['Estado Pedido'] = (existingRecord && existingRecord['Estado Pedido']) || transformed['Estado Pedido'] || BurgerOGConstants.DEFAULTS.ESTADO_PEDIDO;
+  row['Estado Pago'] = (existingRecord && existingRecord['Estado Pago']) || transformed['Estado Pago'] || BurgerOGConstants.DEFAULTS.ESTADO_PAGO;
+  row['Método Pago'] = (existingRecord && existingRecord['Método Pago']) || transformed['Método Pago'] || BurgerOGConstants.DEFAULTS.METODO_PAGO;
+  row['Nota Interna'] = (existingRecord && existingRecord['Nota Interna']) || transformed['Master Notes'] || '';
+  row['Nota Cliente'] = (existingRecord && existingRecord['Nota Cliente']) || '';
+
+  var incomingAlert = transformed['Detected Alerts'] && transformed['Detected Alerts'].length ? '⚠️' : '';
+  row['Alerta'] = bogNormalizeAlertValue_((existingRecord && existingRecord['Alerta']) || incomingAlert);
+
+  row['Ticket Enviado'] = (existingRecord && existingRecord['Ticket Enviado']) || BurgerOGConstants.DEFAULTS.TICKET_ENVIADO;
+  row['Fecha Ticket Enviado'] = (existingRecord && existingRecord['Fecha Ticket Enviado']) || '';
+  row['Hora Inicio'] = (existingRecord && existingRecord['Hora Inicio']) || '';
+  row['Hora Listo'] = (existingRecord && existingRecord['Hora Listo']) || '';
+  row['Última Actualización'] = bogNowIso_();
+
+  return row;
 }
 
 function bogGetAppOrders_() {
@@ -170,40 +374,4 @@ function bogMarkTicketSent_(orderId) {
 
   bogPatchRowByHeaders_(chekeoSheet, found.rowNumber, found.headerMap, patch);
   return { orderId: orderId, updatedFields: patch };
-}
-
-function bogBuildChekeoRowFromMaster_(masterRecord, masterRowNumber, existingRecord) {
-  var row = {};
-
-  row['ID Pedido'] = existingRecord ? existingRecord['ID Pedido'] : bogBuildOrderId_(masterRowNumber);
-  row['Fila Master'] = existingRecord ? existingRecord['Fila Master'] : String(masterRowNumber);
-
-  row['Fecha Pedido'] = masterRecord['Fecha Pedido'] || '';
-  row['Hora Pedido'] = masterRecord['Hora Pedido'] || '';
-  row['Nombre'] = masterRecord['Nombre'] || '';
-  row['Teléfono'] = masterRecord['Teléfono'] || '';
-  row['Resumen Pedido'] = masterRecord['Resumen Pedido'] || '';
-  row['Hamburguesas'] = masterRecord['Hamburguesas'] || '';
-  row['Extras'] = masterRecord['Extras'] || '';
-  row['Guarniciones'] = masterRecord['Guarniciones'] || '';
-  row['Total'] = bogNormalizeMoney_(masterRecord['Total']);
-
-  row['Estado Pedido'] = (existingRecord && existingRecord['Estado Pedido']) || BurgerOGConstants.DEFAULTS.ESTADO_PEDIDO;
-  row['Estado Pago'] = (existingRecord && existingRecord['Estado Pago']) || BurgerOGConstants.DEFAULTS.ESTADO_PAGO;
-  row['Método Pago'] = (existingRecord && existingRecord['Método Pago']) || BurgerOGConstants.DEFAULTS.METODO_PAGO;
-  row['Nota Interna'] = (existingRecord && existingRecord['Nota Interna']) || '';
-  row['Nota Cliente'] = (existingRecord && existingRecord['Nota Cliente']) || '';
-
-  row['Alerta'] = bogNormalizeAlertValue_(existingRecord && existingRecord['Alerta']);
-  if (!row['Alerta'] && bogRequiresAlert_(row)) {
-    row['Alerta'] = '⚠️';
-  }
-
-  row['Ticket Enviado'] = (existingRecord && existingRecord['Ticket Enviado']) || BurgerOGConstants.DEFAULTS.TICKET_ENVIADO;
-  row['Fecha Ticket Enviado'] = (existingRecord && existingRecord['Fecha Ticket Enviado']) || '';
-  row['Hora Inicio'] = (existingRecord && existingRecord['Hora Inicio']) || '';
-  row['Hora Listo'] = (existingRecord && existingRecord['Hora Listo']) || '';
-  row['Última Actualización'] = bogNowIso_();
-
-  return row;
 }

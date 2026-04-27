@@ -121,3 +121,32 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 - Sin cambios en `legacy/`.
 - Sin tocar Google Sheets directamente fuera del código Apps Script.
 - Sin migración a Chekeo oficial.
+
+---
+
+## 2026-04-27 — Refuerzo Fase 2 para Pedidos Master real y crecimiento dinámico
+
+### Estado
+🟡 En ajuste de revisión.
+
+### Cambios backend aplicados
+- Compatibilidad con estructura real de `Pedidos Master` leyendo por encabezados normalizados y sin exigir columnas destino (`Fecha Pedido`, `Hora Pedido`, `Resumen Pedido`, `Hamburguesas`, `Extras`, `Guarniciones`) como fuente.
+- Transformador flexible `Pedidos Master` → `Chekeo Nuevo`:
+  - Fecha/Hora desde `Marca temporal`.
+  - Teléfono desde `Telefono` o `Teléfono`.
+  - Total desde `Total` con fallback a `Precio Manual total` cuando corresponde.
+  - Estado Pedido/Pago/Método Pago normalizados con reglas de negocio.
+- Detección dinámica por patrones para crecimiento futuro:
+  - Hamburguesas con `¿Cuantas? [NOMBRE]`.
+  - Extras con `Extras [NOMBRE]`.
+  - Guarniciones con `Date un extra [NOMBRE]`.
+- Resumen compacto generado dinámicamente a partir de hamburguesas, extras y guarniciones detectadas.
+- Alertas (`⚠️`) reforzadas para casos ambiguos, `(+1)`, chequeo manual y descripciones libres no asociables.
+- Escritura en `Chekeo Nuevo` corregida por encabezados (`headerMap`), independiente del orden físico de columnas.
+- `LockService` endurecido con bandera `lockAcquired` para liberar lock solo cuando fue tomado.
+
+### Restricciones mantenidas
+- Sin UI/HTML.
+- Sin cambios en `legacy/`.
+- Sin servicios externos ni librerías externas.
+- Sin migración a `Chekeo` oficial; hoja activa se mantiene en `Chekeo Nuevo`.
