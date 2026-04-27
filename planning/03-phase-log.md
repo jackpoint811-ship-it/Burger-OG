@@ -25,19 +25,26 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 
 ---
 
-## 2026-04-27 — Inicio Fase 1: Contrato de datos y hojas
+## 2026-04-27 — Fase 1: Contrato de datos y hojas (cierre)
 
 ### Estado
-🟡 En progreso.
+✅ Cerrada.
 
-### Inicio documentado
-- Se define el contrato definitivo de datos en `planning/02-data-contract.md`.
-- Se crea el plan de Fase 1 en `planning/04-phase-1-plan.md`.
+### Entregables completos
+- `planning/02-data-contract.md` actualizado con contrato de hojas, catálogos y reglas generales.
+- `planning/04-phase-1-data-contract.md` creado con tabla detallada por cada columna de `Chekeo Nuevo`:
+  - Tipo esperado
+  - Origen
+  - Editable por la app
+  - Preservar en sync
+  - Aparece en ticket cliente
+  - Aparece en WhatsApp
+- Hojas documentadas en el contrato: `Pedidos Master`, `Chekeo Nuevo`, `Chekeo`, `Configuración`, `Resumen Pedidos`, `Historico`.
 
-### Restricciones vigentes
-- No implementar backend todavía.
-- No implementar UI todavía.
-- No tocar Google Sheets todavía.
-
-### Próximo hito
-Aprobación del contrato y del plan de Fase 1 para habilitar implementación en fase posterior.
+### Restricciones respetadas
+- Sin backend.
+- Sin UI.
+- Sin cambios en Google Sheets.
+- Sin archivos `.gs` nuevos.
+- Sin archivos `.html` nuevos.
+- Sin cambios de `legacy/`.
