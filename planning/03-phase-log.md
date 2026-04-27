@@ -1,20 +1,23 @@
-# Phase Log
+# 03 — Phase Log
 
-## 2026-04-26 — Cierre Fase 0: Reset total y traslado a legacy
+## 2026-04-27 — Ajuste documental solicitado en PR #34
 
 ### Estado
-✅ Completada.
+✅ Completado.
 
-### Ejecutado
-- Se movió toda la implementación previa de Apps Script/HTML a `legacy/`.
-- Se movió la documentación histórica de análisis y arquitectura anterior a `legacy/planning/`.
-- Se dejó la raíz del repositorio limpia, conservando solo estructura base de planeación para el reinicio.
+### Cambios realizados
+- Se normalizó la documentación base para usar exactamente:
+  - `planning/00-project-rules.md`
+  - `planning/01-roadmap.md`
+  - `planning/02-data-contract.md`
+  - `planning/03-phase-log.md`
+- Se actualizó `README.md` con stack permitido, estado de reconstrucción, regla de `legacy/`, flujo por fases y restricción de no usar servicios externos.
 
-### Verificación
-- No se implementaron features nuevas.
-- No se agregó backend nuevo.
-- No se agregó UI nueva.
-- No se tocaron integraciones con Google Sheets.
+### Alcance respetado
+- Sin funcionalidad nueva.
+- Sin backend nuevo.
+- Sin UI nueva.
+- Sin cambios en Google Sheets.
 
-### Siguiente paso
-Iniciar Fase 1 sobre una base limpia, tomando `legacy/` únicamente como referencia histórica.
+### Nota
+Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge.
