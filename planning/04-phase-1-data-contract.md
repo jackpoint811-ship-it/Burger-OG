@@ -5,9 +5,9 @@
 | Hoja | Propósito |
 |---|---|
 | `Pedidos Master` | Fuente principal operativa; origen de los pedidos y datos base del cliente/pedido. |
-| `Chekeo Nuevo` | Hoja de trabajo normalizada para operación diaria, seguimiento de estado y envío de ticket/WhatsApp. |
+| `Chekeo Nuevo` | Hoja de trabajo normalizada para operación diaria, seguimiento de estado y preparación de salida a ticket/WhatsApp. |
 | `Chekeo` | Compatibilidad histórica y referencia de control durante transición documental. |
-| `Configuración` | Catálogos permitidos y parámetros de operación (estados y métodos). |
+| `Configuración` | Hoja de datos bancarios para WhatsApp. Campos requeridos: `Banco`, `Nombre`, `Número de cuenta`. |
 | `Resumen Pedidos` | Vista agregada para seguimiento operativo y control de volumen. |
 | `Historico` | Resguardo histórico de pedidos cerrados y trazabilidad. |
 
@@ -15,23 +15,23 @@
 
 | Columna | Tipo esperado | Origen | Editable por app | Preservar en sync | Aparece en ticket cliente | Aparece en WhatsApp |
 |---|---|---|---|---|---|---|
-| ID Pedido | Texto (`BOG-###`) | Derivado de `Fila Master` | No | Sí | Sí | Sí |
-| Fila Master | Número entero | `Pedidos Master` (número de fila) | No | Sí | No | No |
-| Fecha Pedido | Fecha (YYYY-MM-DD) | `Pedidos Master` | No | Sí | Sí | Sí |
-| Hora Pedido | Hora (HH:MM) | `Pedidos Master` | No | Sí | Sí | Sí |
-| Nombre | Texto | `Pedidos Master` | No | Sí | Sí | Sí |
-| Teléfono | Texto | `Pedidos Master` | No | Sí | Sí | Sí |
-| Resumen Pedido | Texto | `Pedidos Master` (normalizado) | No | Sí | Sí | Sí |
-| Hamburguesas | Número entero | `Pedidos Master` | No | Sí | Sí | Sí |
-| Extras | Texto | `Pedidos Master` | No | Sí | Sí | Sí |
-| Guarniciones | Texto | `Pedidos Master` | No | Sí | Sí | Sí |
-| Total | Número decimal | `Pedidos Master` | No | Sí | Sí | Sí |
-| Estado Pedido | Enum | Inicial desde `Pedidos Master`; luego operación | Sí | Sí | Sí | Sí |
-| Estado Pago | Enum | Inicial desde `Pedidos Master`; luego operación | Sí | Sí | Sí | Sí |
-| Método Pago | Enum | Inicial desde `Pedidos Master`; luego operación | Sí | Sí | Sí | Sí |
+| ID Pedido | Texto (`BOG-` + número) | Derivado de `Fila Master` | No | Sí | Sí | No |
+| Fila Master | Número entero | `Pedidos Master` (número de fila) | No | No | No | No |
+| Fecha Pedido | Fecha (YYYY-MM-DD) | `Pedidos Master` | No | No | No | No |
+| Hora Pedido | Hora (HH:MM) | `Pedidos Master` | No | No | No | No |
+| Nombre | Texto | `Pedidos Master` | No | No | Sí | Sí |
+| Teléfono | Texto | `Pedidos Master` | No | No | No | No |
+| Resumen Pedido | Texto | `Pedidos Master` (normalizado) | No | No | Sí | No |
+| Hamburguesas | Texto | `Pedidos Master` | No | No | Sí | No |
+| Extras | Texto | `Pedidos Master` | No | No | Sí | No |
+| Guarniciones | Texto | `Pedidos Master` | No | No | Sí | No |
+| Total | Número decimal | `Pedidos Master` | No | No | Sí | Sí |
+| Estado Pedido | Enum | Inicial desde `Pedidos Master`; luego operación | Sí | Sí | No | No |
+| Estado Pago | Enum | Inicial desde `Pedidos Master`; luego operación | Sí | Sí | No | No |
+| Método Pago | Enum | Inicial desde `Pedidos Master`; luego operación | Sí | Sí | No | No |
 | Nota Interna | Texto | Operación interna | Sí | Sí | No | No |
-| Nota Cliente | Texto | Operación / aclaraciones | Sí | Sí | Sí | Sí |
-| Alerta | Enum (`OK` / `⚠️`) | Regla de negocio | Sí (solo ajuste manual excepcional) | Sí | No | Sí |
+| Nota Cliente | Texto | Operación / aclaraciones | Sí | Sí | Sí | No |
+| Alerta | Enum (`OK` / `⚠️`) | Regla de negocio | Sí (solo ajuste manual excepcional) | Sí | No | No |
 | Ticket Enviado | Enum (`Sí` / `No`) | Operación | Sí | Sí | No | No |
 | Fecha Ticket Enviado | Fecha | Operación | Sí | Sí | No | No |
 | Hora Inicio | Hora | Operación cocina | Sí | Sí | No | No |
@@ -42,8 +42,9 @@
 - Fila Master 2 → `BOG-001`
 - Fila Master 3 → `BOG-002`
 - Fila Master 11 → `BOG-010`
+- Fila Master 1001 → `BOG-1000`
 
-**Regla general:** `ID Pedido = "BOG-" + (Fila Master - 1)` con padding a 3 dígitos.
+**Regla general:** `ID Pedido = "BOG-" + (Fila Master - 1)` usando mínimo 3 dígitos con cero a la izquierda y crecimiento variable cuando el número supera 3 dígitos.
 
 ## 4) Campos que vienen de `Pedidos Master`
 - `Fila Master`
@@ -84,7 +85,8 @@ En toda sincronización con `Pedidos Master` se preservan los campos operativos 
 - `Hora Listo`
 
 ## 7) Campos refrescables desde `Pedidos Master`
-Se pueden refrescar desde `Pedidos Master` cuando cambie la fuente:
+Se refrescan desde `Pedidos Master` cuando cambie la fuente:
+- `Fila Master`
 - `Fecha Pedido`
 - `Hora Pedido`
 - `Nombre`
@@ -95,7 +97,9 @@ Se pueden refrescar desde `Pedidos Master` cuando cambie la fuente:
 - `Guarniciones`
 - `Total`
 
-No se refrescan por sincronización: `ID Pedido`, `Fila Master`, ni campos operativos preservados.
+No se refrescan por sincronización:
+- `ID Pedido` (derivado localmente de `Fila Master`)
+- Campos operativos preservados (sección 6)
 
 ## 8) Regla para pedidos especiales
 Si en el pedido aparece cualquiera de estas señales:
@@ -109,53 +113,52 @@ Entonces:
 - Mantener pedido visible y operable para resolución manual.
 
 ## 9) Reglas de ticket cliente
-El ticket cliente incluye exclusivamente:
+El ticket cliente debe incluir:
 - `ID Pedido`
-- `Fecha Pedido`
-- `Hora Pedido`
 - `Nombre`
-- `Teléfono`
 - `Resumen Pedido`
 - `Hamburguesas`
 - `Extras`
 - `Guarniciones`
+- `Nota Cliente` (si existe)
 - `Total`
+
+No debe incluir:
+- `Teléfono`
 - `Estado Pedido`
 - `Estado Pago`
 - `Método Pago`
-- `Nota Cliente` (si existe)
-
-Nunca incluir en ticket cliente:
-- `Fila Master`
 - `Nota Interna`
 - `Alerta`
 - `Ticket Enviado`
-- `Fecha Ticket Enviado`
-- `Hora Inicio`
-- `Hora Listo`
+- Fechas internas
+- Horas internas
 - `Última Actualización`
 
 ## 10) Reglas de WhatsApp
-Mensaje base de WhatsApp debe incluir:
-- `ID Pedido`
-- `Nombre`
-- `Resumen Pedido`
-- `Total`
-- `Estado Pedido`
-- `Estado Pago`
-- `Nota Cliente` (si aplica)
-- Indicador de `⚠️` cuando `Alerta = ⚠️`.
+El mensaje de WhatsApp debe incluir:
+- Saludo con nombre del cliente.
+- Total de la orden.
+- Datos bancarios desde `Configuración`:
+  - `Banco`
+  - `Nombre`
+  - `Número de cuenta`
+- Frase indicando que se adjunta el ticket con el resumen del pedido.
 
-Nunca exponer datos internos (`Nota Interna`, trazas operativas).
+Restricciones:
+- No intentar adjuntar imagen automáticamente.
+- No convertir WhatsApp en resumen completo del pedido.
 
 ## 11) Validaciones esperadas
-- `ID Pedido` único y con formato `BOG-###`.
+- `ID Pedido` único y con formato `BOG-` + número (mínimo 3 dígitos, crecimiento variable).
 - `Fila Master` numérica y sin duplicados en `Chekeo Nuevo`.
 - Enums válidos para `Estado Pedido`, `Estado Pago`, `Método Pago`, `Ticket Enviado`, `Alerta`.
+- `Hamburguesas` debe aceptarse como texto libre estructurado (ej. `1x OG`, `2x BBQ`, `1x OG sin pepinillos`).
 - `Total` numérico mayor o igual a 0.
 - Fechas y horas en formato consistente.
 - Si `Ticket Enviado = Sí`, debe existir `Fecha Ticket Enviado`.
 - Si hay señales especiales (`(+1)`, `Chequeo Manual`, ambigüedad), `Alerta` debe quedar en `⚠️`.
+- `Configuración` debe contener `Banco`, `Nombre`, `Número de cuenta` no vacíos para construir mensaje de WhatsApp.
 
 ## 12) Criterios de cierre de Fase 1
 Se considera cerrada la Fase 1 cuando:
