@@ -1,0 +1,240 @@
+<script>
+  var APP_STATE = {
+    loading: {},
+    activeTab: 'Inicio',
+    health: null,
+    summary: null,
+    orders: [],
+    bankConfigOk: false
+  };
+
+  function initApp() {
+    bindEvents();
+    setActiveTab('Inicio');
+    loadHealth();
+    loadSummary();
+    loadOrders();
+    loadBankConfig();
+  }
+
+  function setActiveTab(tabName) {
+    APP_STATE.activeTab = tabName;
+    Array.prototype.slice.call(document.querySelectorAll('.tab-btn')).forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.getAttribute('data-tab') === tabName);
+    });
+
+    Array.prototype.slice.call(document.querySelectorAll('.tab-panel')).forEach(function (panel) {
+      panel.classList.toggle('is-hidden', panel.id !== 'tab-' + tabName);
+    });
+  }
+
+  function loadHealth() {
+    setLoading('health', true);
+    google.script.run
+      .withSuccessHandler(function (response) {
+        setLoading('health', false);
+        if (!response || !response.ok) {
+          return renderError(response && response.error ? response.error : { message: 'healthCheck falló.' });
+        }
+        APP_STATE.health = response.data || {};
+        document.getElementById('healthStatus').textContent =
+          'Backend OK · Fase ' + APP_STATE.health.phase + ' · Hoja: ' + (APP_STATE.health.activeSheet || 'N/D');
+        document.getElementById('backendState').textContent = 'Operativo';
+      })
+      .withFailureHandler(function (error) {
+        setLoading('health', false);
+        renderError(error);
+      })
+      .healthCheck();
+  }
+
+  function loadSummary() {
+    setLoading('summary', true);
+    google.script.run
+      .withSuccessHandler(function (response) {
+        setLoading('summary', false);
+        if (!response || !response.ok) {
+          return renderError(response && response.error ? response.error : { message: 'getDailySummary falló.' });
+        }
+        APP_STATE.summary = response.data || {};
+        renderSummary(APP_STATE.summary);
+      })
+      .withFailureHandler(function (error) {
+        setLoading('summary', false);
+        renderError(error);
+      })
+      .getDailySummary();
+  }
+
+  function loadOrders() {
+    setLoading('orders', true);
+    google.script.run
+      .withSuccessHandler(function (response) {
+        setLoading('orders', false);
+        if (!response || !response.ok) {
+          return renderError(response && response.error ? response.error : { message: 'getAppOrders falló.' });
+        }
+        APP_STATE.orders = response.data || [];
+        renderOrders(APP_STATE.orders);
+      })
+      .withFailureHandler(function (error) {
+        setLoading('orders', false);
+        renderError(error);
+      })
+      .getAppOrders();
+  }
+
+  function syncOrders() {
+    if (APP_STATE.loading.sync) {
+      return;
+    }
+
+    setLoading('sync', true);
+    showToast('Sincronizando pedidos...', 'info');
+
+    google.script.run
+      .withSuccessHandler(function (response) {
+        setLoading('sync', false);
+        if (!response || !response.ok) {
+          return renderError(response && response.error ? response.error : { message: 'syncOrdersFromMaster falló.' });
+        }
+
+        showToast('Sincronización completada.', 'success');
+        loadSummary();
+        loadOrders();
+      })
+      .withFailureHandler(function (error) {
+        setLoading('sync', false);
+        renderError(error);
+      })
+      .syncOrdersFromMaster();
+  }
+
+  function loadBankConfig() {
+    setLoading('bank', true);
+    google.script.run
+      .withSuccessHandler(function (response) {
+        setLoading('bank', false);
+        if (!response || !response.ok) {
+          APP_STATE.bankConfigOk = false;
+          document.getElementById('bankState').textContent = 'Incompleta';
+          return;
+        }
+
+        var data = response.data || {};
+        APP_STATE.bankConfigOk = Boolean(data.Banco && data.Nombre && data['Número de cuenta']);
+        document.getElementById('bankState').textContent = APP_STATE.bankConfigOk ? 'Completa' : 'Incompleta';
+      })
+      .withFailureHandler(function () {
+        setLoading('bank', false);
+        APP_STATE.bankConfigOk = false;
+        document.getElementById('bankState').textContent = 'Incompleta';
+      })
+      .getBankConfig();
+  }
+
+  function setLoading(key, value) {
+    APP_STATE.loading[key] = value;
+    if (key === 'sync') {
+      document.getElementById('syncButton').disabled = Boolean(value);
+    }
+  }
+
+  function showToast(message, type) {
+    var toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast' + (type ? ' ' + type : '');
+  }
+
+  function renderOrders(orders) {
+    var container = document.getElementById('ordersContainer');
+    if (!orders || !orders.length) {
+      container.textContent = 'Sin pedidos para mostrar.';
+      return;
+    }
+
+    var items = orders.map(function (order) {
+      var safeAlert = escapeHtml(order['Alerta'] || '');
+      var alertTag = safeAlert ? '<span class="badge-alert">' + safeAlert + '</span>' : '';
+      return '' +
+        '<li class="orders-item">' +
+          '<p><strong>' + escapeHtml(order['ID Pedido'] || '-') + '</strong>' + alertTag + '</p>' +
+          '<p><strong>Nombre:</strong> ' + escapeHtml(order['Nombre'] || '-') + '</p>' +
+          '<p><strong>Resumen:</strong> ' + escapeHtml(order['Resumen Pedido'] || '-') + '</p>' +
+          '<p><strong>Total:</strong> ' + escapeHtml(formatMoney(order['Total'])) + '</p>' +
+          '<p><strong>Estado Pedido:</strong> ' + escapeHtml(order['Estado Pedido'] || '-') + '</p>' +
+          '<p><strong>Estado Pago:</strong> ' + escapeHtml(order['Estado Pago'] || '-') + '</p>' +
+        '</li>';
+    }).join('');
+
+    container.innerHTML = '<ul class="orders-list">' + items + '</ul>';
+  }
+
+  function renderSummary(summary) {
+    var cards = document.getElementById('summaryCards');
+    cards.innerHTML = [
+      summaryCard('Total vendido', formatMoney(summary.totalVendido)),
+      summaryCard('Total pagado', formatMoney(summary.totalPagado)),
+      summaryCard('Total pendiente', formatMoney(summary.totalPendiente))
+    ].join('');
+
+    renderCountList('orderStatusCount', summary.conteoEstadoPedido || {});
+    renderCountList('paymentStatusCount', summary.conteoEstadoPago || {});
+  }
+
+  function renderError(error) {
+    var message = (error && error.message) ? error.message : 'Error no controlado.';
+    showToast(message, 'error');
+    if (APP_STATE.activeTab === 'Ajustes') {
+      document.getElementById('backendState').textContent = 'Con error';
+    }
+  }
+
+  function summaryCard(label, value) {
+    return '<div class="summary-card"><p class="label">' + escapeHtml(label) + '</p><p class="value">' + escapeHtml(value) + '</p></div>';
+  }
+
+  function renderCountList(targetId, counts) {
+    var list = document.getElementById(targetId);
+    var keys = Object.keys(counts);
+    if (!keys.length) {
+      list.innerHTML = '<li>Sin datos</li>';
+      return;
+    }
+
+    list.innerHTML = keys.map(function (key) {
+      var safeKey = escapeHtml(key);
+      var safeValue = escapeHtml(counts[key]);
+      return '<li>' + safeKey + ': ' + safeValue + '</li>';
+    }).join('');
+  }
+
+  function formatMoney(value) {
+    var amount = Number(value);
+    if (!isFinite(amount)) {
+      return '$0.00';
+    }
+    return '$' + amount.toFixed(2);
+  }
+
+  function escapeHtml(value) {
+    var text = String(value === null || value === undefined ? '' : value);
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function bindEvents() {
+    document.getElementById('syncButton').addEventListener('click', syncOrders);
+    Array.prototype.slice.call(document.querySelectorAll('.tab-btn')).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setActiveTab(btn.getAttribute('data-tab'));
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initApp);
+</script>

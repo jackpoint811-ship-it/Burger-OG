@@ -196,3 +196,64 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
   - sin bloqueo de pedido.
 - Se endureció `getBankConfig()` para validar estrictamente los 3 campos requeridos (`Banco`, `Nombre`, `Número de cuenta`) tanto en formato `Campo | Valor` como en formato por columnas.
 - Se mejoró la normalización de `Estado Pedido` mapeando alias de preparación (`En preparacion`, `En preparación`, `Preparacion`, `Preparación`) al catálogo final `Preparando`.
+
+---
+
+## 2026-04-27 — Implementación Fase 3 (Web App shell móvil) [SUPERSEDED]
+
+### Estado
+⚪ Entrada histórica reemplazada por la corrección final de Fase 3 en PR #40.
+
+### Nota de consistencia
+- El resultado vigente de Fase 3 **no** usa `webapp_*` ni tab `Cocina`.
+- La implementación aprobada usa `Index.html`, `styles.html`, `scripts.html` e `include(filename)`.
+- Tabs vigentes: `Inicio`, `Pedidos`, `Resumen`, `Ajustes`.
+- Sin ticket cliente, sin WhatsApp y sin cambios en `legacy/`.
+
+---
+
+## 2026-04-27 — Corrección final Fase 3 (PR #40)
+
+### Estado final
+✅ Fase 3 completada.
+
+### Correcciones aplicadas
+- Se estandarizaron archivos HTML a:
+  - `Index.html`
+  - `styles.html`
+  - `scripts.html`
+- Se eliminaron los archivos temporales de nomenclatura inicial de Fase 3 para evitar duplicidad de entrada HTML.
+- `doGet()` quedó configurado con `HtmlService.createTemplateFromFile('Index')`.
+- Se expuso helper público `include(filename)` para parciales HTML.
+- Tabs visibles finales en app shell:
+  - `Inicio`
+  - `Pedidos`
+  - `Resumen`
+  - `Ajustes`
+- `scripts.html` implementa funciones cliente requeridas e inicialización con:
+  - `healthCheck()`
+  - `getDailySummary()`
+  - `getAppOrders()`
+  - `getBankConfig()`
+- Botón `Sincronizar` ejecuta `syncOrdersFromMaster()` y refresca resumen/pedidos.
+- `Pedidos` quedó en solo lectura (sin edición operativa).
+- `Resumen` muestra montos y conteos por estado.
+- `Ajustes` muestra estado backend, estado de config bancaria, hoja activa `Chekeo Nuevo` y nota de no uso de `Chekeo` oficial.
+
+### Archivos modificados
+- `Code.gs`
+- `Index.html`
+- `styles.html`
+- `scripts.html`
+- `planning/06-phase-3-webapp-shell.md`
+- `planning/03-phase-log.md`
+
+### Confirmación de alcance
+- No se implementaron funcionalidades operativas de Fase 4.
+- No se implementó ticket cliente.
+- No se implementó WhatsApp.
+- No se tocó `legacy/`.
+- No se migró a `Chekeo` oficial.
+
+### Siguiente fase recomendada
+➡️ Fase 4 — Pedidos (operación).
