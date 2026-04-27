@@ -1,6 +1,6 @@
 # 03 — Phase Log
 
-## 2026-04-27 — Ajuste documental solicitado en PR #34
+## 2026-04-27 — Ajuste documental solicitado en PR #34 (Fase 0)
 
 ### Estado
 ✅ Completado.
@@ -22,3 +22,48 @@
 
 ### Nota
 Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge.
+
+---
+
+## 2026-04-27 — Cierre Fase 1 (Contrato de datos y hojas)
+
+### Estado final
+✅ Cerrada.
+
+### Qué se hizo
+- Se consolidó el resumen del contrato definitivo en `planning/02-data-contract.md`.
+- Se documentó en detalle `planning/04-phase-1-data-contract.md`:
+  - Propósito de cada hoja del sistema.
+  - Matriz campo a campo de `Chekeo Nuevo` con tipo, origen, edición, preservación y visibilidad en ticket/WhatsApp.
+  - Regla de ID con mínimo 3 dígitos y crecimiento variable.
+  - Definición de campos provenientes de `Pedidos Master`.
+  - Definición de campos editables por la futura app.
+  - Definición de campos preservados en sincronización.
+  - Definición de campos refrescables desde `Pedidos Master`.
+  - Regla para pedidos especiales (`(+1)`, `Chequeo Manual`, ambigüedad) marcando `Alerta ⚠️` sin bloqueo.
+  - Reglas de contenido para ticket cliente y WhatsApp.
+  - Validaciones esperadas.
+  - Criterios de cierre de Fase 1.
+
+### Qué no se hizo
+- No se implementó backend.
+- No se implementó UI.
+- No se modificó Google Sheets.
+- No se crearon archivos `.gs`.
+- No se crearon archivos `.html`.
+
+### Archivos modificados
+- `planning/02-data-contract.md`
+- `planning/03-phase-log.md`
+- `planning/04-phase-1-data-contract.md`
+
+### Restricciones respetadas
+- Sin cambios en `README.md`.
+- Sin cambios en `legacy/`.
+- Sin cambios en `planning/00-project-rules.md`.
+- Sin cambios en `planning/01-roadmap.md`.
+- Sin reutilizar rama vieja `codex/move-implementation-to-legacy-directory`.
+- Sin reabrir PR #35.
+
+### Siguiente fase recomendada
+➡️ Fase 2 — Backend Apps Script base.

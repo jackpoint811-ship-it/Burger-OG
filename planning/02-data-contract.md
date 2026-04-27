@@ -1,10 +1,12 @@
-# 02 — Data Contract (Base)
+# 02 — Data Contract (Definitivo Fase 1)
 
-## Hojas del sistema
+## Hojas usadas
 - `Pedidos Master`
 - `Chekeo Nuevo`
 - `Chekeo`
 - `Configuración`
+- `Resumen Pedidos`
+- `Historico`
 
 ## Columnas de `Chekeo Nuevo`
 1. ID Pedido
@@ -30,7 +32,13 @@
 21. Hora Listo
 22. Última Actualización
 
-## Catálogos de estado
-- Estados de pedido: `Nuevo`, `Confirmado`, `Preparando`, `Listo`.
-- Estado pago: `Pendiente`, `Pagado`.
-- Método pago: `Efectivo`, `Transferencia`, `Mixto`, `No definido`.
+## Catálogos permitidos
+- **Estado Pedido:** `Nuevo`, `Confirmado`, `Preparando`, `Listo`.
+- **Estado Pago:** `Pendiente`, `Pagado`.
+- **Método Pago:** `Efectivo`, `Transferencia`, `Mixto`, `No definido`.
+- **Ticket Enviado:** `Si`, `No`.
+- **Alerta:** vacío = sin alerta, `⚠️` = revisar (no bloquea).
+
+## Referencia de detalle
+El detalle normativo completo del contrato (tabla campo a campo, reglas de sync, ticket/WhatsApp, validaciones y cierre de fase) está en:
+- `planning/04-phase-1-data-contract.md`
