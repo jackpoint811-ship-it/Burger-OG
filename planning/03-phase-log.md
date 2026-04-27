@@ -73,7 +73,7 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 ## 2026-04-27 — Implementación base de Fase 2 (Backend Apps Script)
 
 ### Estado
-✅ Completado.
+🟡 Implementación inicial (posteriormente ajustada por revisión en PR #38).
 
 ### Qué se implementó
 - Base de proyecto Apps Script (`appsscript.json`) con runtime V8 y configuración de Web App.
@@ -95,3 +95,29 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 ### Notas
 - La sincronización valida encabezados contra el contrato y falla de forma explícita si no coincide.
 - Se marca `Alerta = ⚠️` cuando se detectan señales especiales (`(+1)` / `Chequeo Manual`) sin bloquear el flujo.
+
+---
+
+## 2026-04-27 — Ajustes de Fase 2 sobre PR #38 (backend)
+
+### Estado
+🟡 En ajuste de revisión (no marcado como cierre final de fase en esta entrada).
+
+### Correcciones aplicadas
+- Se implementaron wrappers públicos requeridos en `Code.gs`:
+  - `healthCheck`, `validateSheetsSetup`, `syncOrdersFromMaster`, `getAppOrders`, `getOrderDetail`, `updateOrderStatus`, `markOrderPaid`, `updateOrderNotes`, `markTicketSent`, `getDailySummary`, `getBankConfig`.
+- Se estandarizó envelope seguro en todas las funciones públicas (`ok/data/message` y `ok/error`).
+- Se agregó `LockService` para operaciones de escritura en wrappers públicos.
+- Se corrigió timezone de `appsscript.json` a `America/Mexico_City`.
+- Se completaron constantes de contrato de hojas (`Pedidos Master`, `Chekeo Nuevo`, `Chekeo`, `Configuración`, `Resumen Pedidos`, `Historico`).
+- Se migró lectura por encabezados normalizados con validación de columnas obligatorias y errores claros.
+- Se reforzó sincronización para omitir filas vacías en `Pedidos Master`, evitar pedidos fantasma, preservar `ID Pedido`/`Fila Master` existentes y mantener `Alerta` como vacío/`⚠️` sin bloqueo.
+- Se implementó normalización de dinero compatible con formatos MX/es.
+- Se implementaron servicios faltantes de configuración bancaria, resumen diario y operaciones de pedidos.
+
+### Restricciones respetadas
+- Sin UI.
+- Sin HTML.
+- Sin cambios en `legacy/`.
+- Sin tocar Google Sheets directamente fuera del código Apps Script.
+- Sin migración a Chekeo oficial.

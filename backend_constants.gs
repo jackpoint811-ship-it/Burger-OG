@@ -1,8 +1,11 @@
 var BurgerOGConstants = (function () {
   var SHEETS = {
-    PEDIDOS_MASTER: 'Pedidos Master',
-    CHEKEO_NUEVO: 'Chekeo Nuevo',
-    CONFIGURACION: 'Configuración'
+    MASTER_SHEET_NAME: 'Pedidos Master',
+    CHEKEO_ACTIVE_SHEET_NAME: 'Chekeo Nuevo',
+    CHEKEO_PRODUCTION_SHEET_NAME: 'Chekeo',
+    CONFIG_SHEET_NAME: 'Configuración',
+    SUMMARY_SHEET_NAME: 'Resumen Pedidos',
+    HISTORY_SHEET_NAME: 'Historico'
   };
 
   var CHEKEO_COLUMNS = [
@@ -30,6 +33,20 @@ var BurgerOGConstants = (function () {
     'Última Actualización'
   ];
 
+  var MASTER_REQUIRED_COLUMNS = [
+    'Fecha Pedido',
+    'Hora Pedido',
+    'Nombre',
+    'Teléfono',
+    'Resumen Pedido',
+    'Hamburguesas',
+    'Extras',
+    'Guarniciones',
+    'Total'
+  ];
+
+  var CHEKEO_REQUIRED_COLUMNS = CHEKEO_COLUMNS.slice();
+
   var ENUMS = {
     ESTADO_PEDIDO: ['Nuevo', 'Confirmado', 'Preparando', 'Listo'],
     ESTADO_PAGO: ['Pendiente', 'Pagado'],
@@ -47,6 +64,8 @@ var BurgerOGConstants = (function () {
   return {
     SHEETS: SHEETS,
     CHEKEO_COLUMNS: CHEKEO_COLUMNS,
+    MASTER_REQUIRED_COLUMNS: MASTER_REQUIRED_COLUMNS,
+    CHEKEO_REQUIRED_COLUMNS: CHEKEO_REQUIRED_COLUMNS,
     ENUMS: ENUMS,
     DEFAULTS: DEFAULTS,
     SPECIAL_FLAGS_REGEX: /(\(\+1\)|Chequeo Manual)/i
