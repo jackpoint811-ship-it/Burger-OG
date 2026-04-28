@@ -100,6 +100,18 @@ function bogEnsureSheetHeaders_(sheet, expectedHeaders) {
     return bogGetHeaderMap_(expectedHeaders);
   }
 
+  var headerMap = bogGetHeaderMap_(currentHeaders);
+  var missing = expectedHeaders.filter(function (expectedHeader) {
+    return headerMap[bogNormalizeHeaderKey_(expectedHeader)] === undefined;
+  });
+
+  if (missing.length) {
+    missing.forEach(function (header) {
+      sheet.getRange(1, sheet.getLastColumn() + 1).setValue(header);
+    });
+    currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  }
+
   return bogValidateRequiredHeaders_(currentHeaders, expectedHeaders, sheet.getName());
 }
 
