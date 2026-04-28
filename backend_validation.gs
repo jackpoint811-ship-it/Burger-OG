@@ -85,7 +85,7 @@ function bogValidateSheetSetup_() {
   }
 
   try {
-    var chekeo = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
+    var chekeo = bogGetRequiredSheet_(spreadsheet, bogGetActiveChekeoSheetName_());
     bogEnsureChekeoHeaders_(chekeo);
   } catch (errChekeo) {
     issues.push(errChekeo.message);

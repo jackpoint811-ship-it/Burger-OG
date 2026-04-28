@@ -20,9 +20,10 @@ function include(filename) {
 function healthCheck() {
   return bogPublicRead_(function () {
     return {
-      phase: 6,
-      service: 'Burger-OG Resumen Pedidos + Historico',
-      activeSheet: BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME,
+      phase: 7,
+      service: 'Burger-OG Migración a Producción (modo seguro)',
+      activeEnvironment: bogGetActiveEnvironment_(),
+      activeSheet: bogGetActiveChekeoSheetName_(),
       timestamp: bogNowIso_()
     };
   }, 'Health check listo.');
@@ -132,6 +133,24 @@ function getHistoryPreview() {
   return bogPublicRead_(function () {
     return bogGetHistoryPreview_();
   }, 'Preview de historico obtenido.');
+}
+
+function validateProductionReadiness() {
+  return bogPublicRead_(function () {
+    return bogGetProductionValidation_();
+  }, 'Validación de producción ejecutada.');
+}
+
+function getProductionMigrationPreview() {
+  return bogPublicRead_(function () {
+    return bogGetProductionMigrationPreview_();
+  }, 'Preview de migración obtenido.');
+}
+
+function prepareProductionSheets() {
+  return bogPublicWrite_(function () {
+    return bogPrepareProductionSheets_();
+  }, 'Preparación segura de hojas completada.');
 }
 
 function archiveReadyPaidOrders() {

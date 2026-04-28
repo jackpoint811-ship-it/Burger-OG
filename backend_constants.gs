@@ -89,6 +89,11 @@ var BurgerOGConstants = (function () {
     TICKET_ENVIADO: 'No'
   };
 
+  var ENVIRONMENTS = {
+    TEST: 'TEST',
+    PROD: 'PROD'
+  };
+
   return {
     SHEETS: SHEETS,
     CHEKEO_COLUMNS: CHEKEO_COLUMNS,
@@ -101,6 +106,7 @@ var BurgerOGConstants = (function () {
     SUMMARY_COLUMNS: SUMMARY_COLUMNS,
     ENUMS: ENUMS,
     DEFAULTS: DEFAULTS,
+    ENVIRONMENTS: ENVIRONMENTS,
     SPECIAL_FLAGS_REGEX: /(\(\+1\)|Chequeo Manual)/i
   };
 })();

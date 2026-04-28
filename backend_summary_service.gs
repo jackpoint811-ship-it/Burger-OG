@@ -176,7 +176,7 @@ function bogWriteDailySummary_(forcedCorteId, forcedPreview) {
 
 function bogArchiveCompletedOrders_(forcedCorteId) {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
+  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, bogGetActiveChekeoSheetName_());
   var historySheet = bogGetOrCreateSheet_(spreadsheet, BurgerOGConstants.SHEETS.HISTORY_SHEET_NAME);
 
   var chekeoData = bogReadSheetAsObjects_(chekeoSheet, BurgerOGConstants.CHEKEO_REQUIRED_COLUMNS);
