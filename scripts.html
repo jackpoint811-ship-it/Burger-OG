@@ -113,7 +113,7 @@
   }
 
   function syncOrders() {
-    if (APP_STATE.loading.sync) {
+    if (APP_STATE.loading.sync || APP_STATE.loading.write) {
       return;
     }
 
@@ -160,8 +160,24 @@
       .getBankConfig();
   }
 
+  function beginWrite_(message) {
+    if (APP_STATE.loading.write) {
+      showToast('Espera a que termine la operación actual.', 'info');
+      return false;
+    }
+    setLoading('write', true);
+    showToast(message || 'Guardando...', 'info');
+    return true;
+  }
+
+  function endWrite_() {
+    setLoading('write', false);
+  }
+
   function updateOrderStatus(orderId, nextStatus) {
-    showToast('Actualizando estado de pedido...', 'info');
+    if (!beginWrite_('Actualizando estado...')) {
+      return;
+    }
     google.script.run
       .withSuccessHandler(handleWriteSuccess_)
       .withFailureHandler(renderError)
@@ -169,7 +185,9 @@
   }
 
   function markOrderPaid(orderId) {
-    showToast('Marcando pedido como pagado...', 'info');
+    if (!beginWrite_('Actualizando pago...')) {
+      return;
+    }
     google.script.run
       .withSuccessHandler(handleWriteSuccess_)
       .withFailureHandler(renderError)
@@ -177,7 +195,9 @@
   }
 
   function updateOrderOperationalData(orderId, payload) {
-    showToast('Guardando pedido...', 'info');
+    if (!beginWrite_('Guardando...')) {
+      return;
+    }
     google.script.run
       .withSuccessHandler(handleWriteSuccess_)
       .withFailureHandler(renderError)
@@ -185,6 +205,7 @@
   }
 
   function handleWriteSuccess_(response) {
+    endWrite_();
     if (!response || !response.ok) {
       return renderError(response && response.error ? response.error : { message: 'Operación falló.' });
     }
@@ -199,9 +220,20 @@
 
   function setLoading(key, value) {
     APP_STATE.loading[key] = value;
-    if (key === 'sync') {
-      document.getElementById('syncButton').disabled = Boolean(value);
+    if (key === 'sync' || key === 'write') {
+      updateActionButtonsState_();
     }
+  }
+
+  function updateActionButtonsState_() {
+    var isSyncLocked = Boolean(APP_STATE.loading.sync || APP_STATE.loading.write);
+    document.getElementById('syncButton').disabled = isSyncLocked;
+
+    var disableWrite = Boolean(APP_STATE.loading.write);
+    Array.prototype.slice.call(document.querySelectorAll('[data-write-action]')).forEach(function (button) {
+      button.disabled = disableWrite;
+      button.classList.toggle('is-loading', disableWrite);
+    });
   }
 
   function showToast(message, type) {
@@ -257,7 +289,7 @@
       var safeAlert = escapeHtml(order['Alerta'] || '');
       var alertTag = safeAlert ? '<span class="badge-alert">' + safeAlert + '</span>' : '';
       var isPaid = String(order['Estado Pago'] || '') === 'Pagado';
-      var paidButton = isPaid ? '' : '<button type="button" class="btn btn-primary" data-action="mark-paid">Marcar pagado</button>';
+      var paidButton = isPaid ? '' : '<button type="button" class="btn btn-primary" data-action="mark-paid" data-write-action="1">Marcar pagado</button>';
 
       return '' +
         '<li class="orders-item" data-order-id="' + escapeHtml(orderId) + '">' +
@@ -297,9 +329,9 @@
           '<p><strong>Guarniciones:</strong> ' + escapeHtml(order['Guarniciones'] || '-') + '</p>' +
           '<p><strong>Inicio:</strong> ' + escapeHtml(order['Hora Inicio'] || '-') + ' · <strong>Listo:</strong> ' + escapeHtml(order['Hora Listo'] || '-') + '</p>' +
           '<div class="kitchen-actions">' +
-            '<button type="button" class="btn btn-secondary" data-action="k-confirm">Confirmar</button>' +
-            '<button type="button" class="btn btn-primary" data-action="k-prep">Preparando</button>' +
-            '<button type="button" class="btn btn-danger" data-action="k-ready">Listo</button>' +
+            '<button type="button" class="btn btn-secondary" data-action="k-confirm" data-write-action="1">Confirmar</button>' +
+            '<button type="button" class="btn btn-primary" data-action="k-prep" data-write-action="1">Preparando</button>' +
+            '<button type="button" class="btn btn-danger" data-action="k-ready" data-write-action="1">Listo</button>' +
           '</div>' +
         '</li>';
     }).join('');
@@ -317,7 +349,7 @@
     APP_STATE.detailOrderId = orderId;
 
     var isPaid = String(order['Estado Pago'] || '') === 'Pagado';
-    var markPaidButton = isPaid ? '' : '<button type="button" class="btn btn-primary" data-action="detail-mark-paid">Marcar pagado</button>';
+    var markPaidButton = isPaid ? '' : '<button type="button" class="btn btn-primary" data-action="detail-mark-paid" data-write-action="1">Marcar pagado</button>';
     var alertRow = String(order['Alerta'] || '').trim() ? '<p><strong>Alerta:</strong> ' + escapeHtml(order['Alerta']) + '</p>' : '';
 
     document.getElementById('orderDetailContent').innerHTML = '' +
@@ -338,7 +370,7 @@
       '<div class="field"><label>Nota Interna</label><textarea id="detailNoteInternal" placeholder="Operación interna">' + escapeHtml(order['Nota Interna'] || '') + '</textarea></div>' +
       '<div class="field"><label>Nota Cliente</label><textarea id="detailNoteClient" placeholder="Nota visible para cliente">' + escapeHtml(order['Nota Cliente'] || '') + '</textarea></div>' +
       '<div class="modal-actions">' +
-        '<button type="button" class="btn btn-secondary" data-action="detail-save">Guardar pedido</button>' +
+        '<button type="button" class="btn btn-secondary" data-action="detail-save" data-write-action="1">Guardar pedido</button>' +
         markPaidButton +
       '</div>';
 
@@ -420,6 +452,10 @@
   }
 
   function renderError(error) {
+    if (APP_STATE.loading.write) {
+      endWrite_();
+    }
+
     var raw = (error && error.message) ? String(error.message) : 'Error no controlado.';
     var safeMessage = raw.length > 180 ? 'No se pudo completar la acción. Intenta de nuevo.' : raw;
     showToast(safeMessage, 'error');

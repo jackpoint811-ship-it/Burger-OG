@@ -328,3 +328,30 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 - `Chekeo Nuevo` se mantiene como hoja activa.
 - Sin cambios en `legacy/`.
 - Sin librerías externas, CDN o frameworks.
+
+---
+
+## 2026-04-27 — Ajuste final PR #42: loading de escrituras
+
+### Estado
+✅ Corrección aplicada.
+
+### Ajuste realizado
+- Se implementó bloqueo `loading.write` en frontend para evitar doble ejecución de escrituras en:
+  - `Guardar pedido`
+  - `Marcar pagado`
+  - `Confirmar`
+  - `Preparando`
+  - `Listo`
+- Mientras hay escritura activa:
+  - no se inicia otra escritura,
+  - botones de acción de escritura quedan deshabilitados,
+  - se muestra feedback de estado (`Guardando...` / `Actualizando...`).
+- Al terminar la operación (éxito o error) se libera `loading.write`.
+- `sync` se mantiene compatible y no inicia durante `loading.write`.
+
+### Alcance mantenido
+- Sin ticket cliente.
+- Sin WhatsApp.
+- Sin migración a `Chekeo` oficial.
+- Sin cambios en `legacy/`.
