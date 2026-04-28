@@ -17,18 +17,17 @@
   };
 
   var PRODUCTION_CHECKLIST_ITEMS = [
-    'Mantener entorno activo en TEST durante validación y preparación.',
-    'Ejecutar Validar producción y corregir incidencias antes de cualquier migración manual.',
-    'Ejecutar Preview migración para revisar inserciones/actualizaciones esperadas.',
-    'Preparar hojas solo para crear/validar encabezados sin mover datos.',
-    'Respaldar manualmente Chekeo Nuevo, Chekeo, Resumen Pedidos e Historico antes de migrar.'
+    'Verificar disponibilidad del sistema antes de tareas técnicas.',
+    'Revisar diagnóstico de datos para detectar incidencias.',
+    'Confirmar estructura mínima sin mover ni borrar datos.',
+    'Respaldar información operativa antes de cambios manuales.'
   ];
 
   var PRODUCTION_FINAL_STEPS = [
-    'Con validación en verde, programar ventana operativa para migración manual controlada.',
-    'Ejecutar migración manual supervisada (fuera de este flujo automático).',
-    'Verificar conteos y totales en Chekeo y pruebas de lectura en app.',
-    'Si hay desviaciones, aplicar rollback manual usando backup y mantener entorno en TEST.'
+    'Planificar ventana operativa para mantenimiento técnico.',
+    'Ejecutar cambios manuales supervisados fuera del flujo diario.',
+    'Verificar conteos y totales luego del ajuste.',
+    'Si hay desviaciones, restaurar respaldo manualmente.'
   ];
 
   var ORDER_STATUS_OPTIONS = ['Nuevo', 'Confirmado', 'Preparando', 'Listo'];
@@ -79,11 +78,8 @@
           return renderError(response && response.error ? response.error : { message: 'healthCheck falló.' });
         }
         APP_STATE.health = response.data || {};
-        document.getElementById('healthStatus').textContent =
-          'Backend OK · Fase ' + APP_STATE.health.phase + ' · Hoja: ' + (APP_STATE.health.activeSheet || 'N/D');
+        document.getElementById('healthStatus').textContent = 'Operando';
         document.getElementById('backendState').textContent = 'Operativo';
-        document.getElementById('activeEnvironmentState').textContent = APP_STATE.health.activeEnvironment || 'TEST';
-        document.getElementById('activeSheetState').textContent = APP_STATE.health.activeSheet || 'Chekeo Nuevo';
       })
       .withFailureHandler(function (error) {
         setLoading('health', false);
@@ -154,7 +150,7 @@
       .withSuccessHandler(function (response) {
         setLoading('orders', false);
         if (!response || !response.ok) {
-          return renderError(response && response.error ? response.error : { message: 'getAppOrders falló.' });
+          return renderError(response && response.error ? response.error : { message: 'No se pudieron cargar los pedidos. Intenta sincronizar de nuevo.' });
         }
 
         APP_STATE.orders = (response.data || []).slice().sort(function (a, b) {
@@ -210,20 +206,20 @@
         if (!response || !response.ok) {
           APP_STATE.bankConfigOk = false;
           APP_STATE.bankConfig = null;
-          document.getElementById('bankState').textContent = 'Incompleta';
+          document.getElementById('bankState').textContent = 'Incompletos';
           return;
         }
 
         var data = response.data || {};
         APP_STATE.bankConfig = data;
         APP_STATE.bankConfigOk = Boolean(data.Banco && data.Nombre && data['Número de cuenta']);
-        document.getElementById('bankState').textContent = APP_STATE.bankConfigOk ? 'Completa' : 'Incompleta';
+        document.getElementById('bankState').textContent = APP_STATE.bankConfigOk ? 'Completos' : 'Incompletos';
       })
       .withFailureHandler(function () {
         setLoading('bank', false);
         APP_STATE.bankConfigOk = false;
         APP_STATE.bankConfig = null;
-        document.getElementById('bankState').textContent = 'Incompleta';
+        document.getElementById('bankState').textContent = 'Incompletos';
       })
       .getBankConfig();
   }
@@ -235,7 +231,7 @@
         setLoading('production-validation', false);
         if (!response || !response.ok) {
           APP_STATE.productionValidation = null;
-          return renderError(response && response.error ? response.error : { message: 'validateProductionReadiness falló.' });
+          return renderError(response && response.error ? response.error : { message: 'No se pudo revisar el sistema.' });
         }
         APP_STATE.productionValidation = response.data || null;
         renderProductionValidation_();
@@ -980,7 +976,7 @@
 
     container.innerHTML = '' +
       '<p><strong>Resultado:</strong> ' + escapeHtml(statusLabel) + '</p>' +
-      '<p><strong>Mode:</strong> ' + escapeHtml(validation.mode || 'TEST') + ' · <strong>Active Sheet:</strong> ' + escapeHtml(validation.activeSheet || '-') + '</p>' +
+      '<p><strong>Diagnóstico técnico:</strong> revisión completada.</p>' +
       checksHtml;
   }
 
@@ -1000,7 +996,7 @@
       '<p><strong>Filas:</strong> origen=' + escapeHtml(totals.sourceRows || 0) + ' · destino=' + escapeHtml(totals.targetRows || 0) + '</p>' +
       '<p><strong>Preview:</strong> insertar=' + escapeHtml(totals.wouldInsert || 0) + ' · actualizar=' + escapeHtml(totals.wouldUpdate || 0) + '</p>' +
       '<p><strong>Duplicados en destino:</strong> ' + escapeHtml(totals.duplicateIdsInProduction || 0) + '</p>' +
-      '<p><strong>Modo seguro:</strong> ' + escapeHtml(preview.safeMode && preview.safeMode.note ? preview.safeMode.note : 'Solo lectura') + '</p>' +
+      '<p><strong>Modo:</strong> Solo lectura</p>' +
       '<p><strong>Muestra inserciones:</strong> ' + escapeHtml((sample.insertions || []).join(', ') || 'N/A') + '</p>' +
       '<p><strong>Muestra actualizaciones:</strong> ' + escapeHtml((sample.updates || []).join(', ') || 'N/A') + '</p>';
   }
@@ -1010,7 +1006,14 @@
       endWrite_();
     }
 
-    var raw = (error && error.message) ? String(error.message) : 'Error no controlado.';
+    var raw = (error && error.message) ? String(error.message) : 'No se pudo completar la acción. Intenta de nuevo.';
+    if (raw.indexOf('getAppOrders falló') !== -1) {
+      raw = 'No se pudieron cargar los pedidos. Intenta sincronizar de nuevo.';
+    } else if (raw.indexOf('validateProductionReadiness falló') !== -1) {
+      raw = 'No se pudo revisar el sistema.';
+    } else if (raw.indexOf('BACKEND_ERROR') !== -1) {
+      raw = 'No se pudo completar la operación en este momento.';
+    }
     var safeMessage = raw.length > 180 ? 'No se pudo completar la acción. Intenta de nuevo.' : raw;
     showToast(safeMessage, 'error');
     if (APP_STATE.activeTab === 'Ajustes') {
