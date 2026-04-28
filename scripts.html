@@ -486,13 +486,16 @@
       var alertTag = safeAlert ? '<span class="badge-alert">' + safeAlert + '</span>' : '';
       var isPaid = String(order['Estado Pago'] || '') === 'Pagado';
       var paidButton = isPaid ? '' : '<button type="button" class="btn btn-primary" data-action="mark-paid" data-write-action="1">Marcar pagado</button>';
+      var paymentStatus = escapeHtml(order['Estado Pago'] || '-');
+      var paymentMethod = escapeHtml(order['Método Pago'] || '-');
+      var orderStatus = escapeHtml(order['Estado Pedido'] || '-');
 
       return '' +
         '<li class="orders-item" data-order-id="' + escapeHtml(orderId) + '">' +
-          '<p><strong>' + escapeHtml(orderId || '-') + '</strong>' + alertTag + '<span class="pill">' + escapeHtml(order['Estado Pedido'] || '-') + '</span></p>' +
-          '<p><strong>Nombre:</strong> ' + escapeHtml(order['Nombre'] || '-') + '</p>' +
-          '<p><strong>Resumen:</strong> ' + escapeHtml(order['Resumen Pedido'] || '-') + '</p>' +
-          '<p><strong>Total:</strong> ' + escapeHtml(formatMoney(order['Total'])) + '</p>' +
+          '<div class="orders-item-header"><strong>' + escapeHtml(orderId || '-') + '</strong>' + alertTag + '<span class="pill">' + orderStatus + '</span></div>' +
+          '<p class="orders-item-name">' + escapeHtml(order['Nombre'] || '-') + '</p>' +
+          '<p class="orders-item-summary">' + escapeHtml(order['Resumen Pedido'] || '-') + '</p>' +
+          '<div class="orders-item-meta"><span><strong>Total:</strong> ' + escapeHtml(formatMoney(order['Total'])) + '</span><span><strong>Pago:</strong> ' + paymentStatus + ' · ' + paymentMethod + '</span></div>' +
           '<div class="order-actions-inline">' +
             '<button type="button" class="btn btn-secondary" data-action="view-detail">Ver detalle</button>' +
             paidButton +
@@ -582,10 +585,6 @@
           '<button type="button" class="btn btn-secondary" data-action="detail-mark-ticket" data-write-action="1">Marcar ticket enviado</button>' +
           '<span></span>' +
         '</div>' +
-        '<div class="ticket-canvas-wrap">' +
-          '<canvas id="ticketCanvas" width="900" height="1200" aria-label="Vista previa de ticket"></canvas>' +
-          '<p class="ticket-fallback-hint">Si la descarga no funciona, mantén presionada la imagen para guardar o toma captura.</p>' +
-        '</div>' +
       '</div>';
 
     renderTicketCanvas_(order);
@@ -636,11 +635,17 @@
     };
   }
 
-  function renderTicketCanvas_(order) {
-    var canvas = document.getElementById('ticketCanvas');
-    if (!canvas) {
-      return;
+  function getTicketCanvas_() {
+    if (!APP_STATE.ticketCanvas) {
+      APP_STATE.ticketCanvas = document.createElement('canvas');
+      APP_STATE.ticketCanvas.width = 900;
+      APP_STATE.ticketCanvas.height = 1200;
     }
+    return APP_STATE.ticketCanvas;
+  }
+
+  function renderTicketCanvas_(order) {
+    var canvas = getTicketCanvas_();
 
     var ctx = canvas.getContext('2d');
     var fields = getClientTicketFields_(order);
@@ -726,7 +731,7 @@
     }
 
     renderTicketCanvas_(order);
-    var canvas = document.getElementById('ticketCanvas');
+    var canvas = getTicketCanvas_();
     if (!canvas) {
       showToast('No se pudo preparar ticket.', 'error');
       return;
@@ -736,7 +741,7 @@
     link.href = canvas.toDataURL('image/png');
     link.download = buildTicketFileName_(order['ID Pedido']);
     link.click();
-    showToast('Ticket PNG listo para compartir. Si falla la descarga, mantén presionada la imagen o toma captura.', 'success');
+    showToast('Ticket PNG listo para compartir.', 'success');
   }
 
   function buildTicketFileName_(orderId) {

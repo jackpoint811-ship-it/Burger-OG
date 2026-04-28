@@ -170,12 +170,37 @@
   .kitchen-item {
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 10px;
+    padding: 12px;
     background: #fff;
   }
 
   .orders-item p,
   .kitchen-item p { margin: 4px 0; }
+
+  .orders-item-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .orders-item-name {
+    font-weight: 700;
+  }
+
+  .orders-item-summary {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .orders-item-meta {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2px;
+    margin-top: 8px;
+    font-size: 13px;
+  }
 
   .badge-alert {
     display: inline-block;
@@ -194,7 +219,7 @@
   }
 
   .order-actions-inline {
-    margin-top: 8px;
+    margin-top: 10px;
     display: grid;
     grid-template-columns: 1fr;
     gap: 6px;
@@ -367,29 +392,6 @@
     border-top: 1px solid var(--border);
     margin-top: 10px;
     padding-top: 10px;
-  }
-
-  .ticket-canvas-wrap {
-    margin-top: 8px;
-    border: 1px dashed var(--border);
-    border-radius: 10px;
-    padding: 8px;
-    background: #fafbff;
-  }
-
-  #ticketCanvas {
-    width: 100%;
-    height: auto;
-    display: block;
-    border-radius: 8px;
-    background: #fff;
-    border: 1px solid var(--border);
-  }
-
-  .ticket-fallback-hint {
-    margin-top: 8px;
-    font-size: 12px;
-    color: var(--muted);
   }
 
   .history-list {
