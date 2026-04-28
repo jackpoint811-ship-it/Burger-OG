@@ -6,6 +6,14 @@ function bogGetRequiredSheet_(spreadsheet, sheetName) {
   return sheet;
 }
 
+function bogGetOrCreateSheet_(spreadsheet, sheetName) {
+  var sheet = spreadsheet.getSheetByName(sheetName);
+  if (sheet) {
+    return sheet;
+  }
+  return spreadsheet.insertSheet(sheetName);
+}
+
 function bogGetHeaderMap_(headers) {
   var map = {};
   headers.forEach(function (header, index) {

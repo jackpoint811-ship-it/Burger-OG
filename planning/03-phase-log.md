@@ -449,3 +449,57 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 - Sin librerías externas/CDN/frameworks.
 - Sin uso de `alert()`.
 
+
+---
+
+## 2026-04-28 — Corrección Fase 6 según issue #45 (PR #46 en ajuste)
+
+### Estado
+🟡 En ajuste (no cerrar fase hasta validación completa del issue #45).
+
+### Correcciones aplicadas
+- Documento de fase renombrado al nombre exacto solicitado:
+  - `planning/09-phase-6-summary-history.md`
+- Wrappers públicos ajustados a nombres exactos:
+  - `getCloseDayPreview()`
+  - `writeDailySummary()`
+  - `archiveCompletedOrders()`
+  - `closeDay()`
+  - `getHistoryPreview()`
+- Se conservan aliases de compatibilidad:
+  - `archiveReadyPaidOrders()`
+  - `getHistoryOrders(limit)`
+- Contrato `Historico` actualizado:
+  - todas las columnas de `Chekeo Nuevo`
+  - `Fecha Archivado`
+  - `Hora Archivado`
+  - `Corte ID`
+  - `Motivo Archivo` solo como extra opcional
+- Contrato `Resumen Pedidos` actualizado con columnas requeridas del issue #45.
+- Se agregó helper seguro `bogGetOrCreateSheet_()` y se usa para crear/asegurar:
+  - `Historico`
+  - `Resumen Pedidos`
+- `getCloseDayPreview()` ahora devuelve métricas completas, archivables y no archivables con razón.
+- `writeDailySummary()` escribe corte sin forzar archivado.
+- `archiveCompletedOrders()` evita duplicados por `ID Pedido`, copia primero y elimina después (de abajo hacia arriba).
+- `closeDay()` ejecuta flujo:
+  1) preview inicial
+  2) resumen
+  3) archivo de completados
+  4) preview final
+  y no bloquea por no archivables.
+- UI corregida con:
+  - preview detallado,
+  - listas de archivables/no archivables,
+  - advertencias (`Con alerta`, `Sin ticket enviado`),
+  - histórico básico y últimos cortes,
+  - botones requeridos,
+  - confirmación por modal simple propio (sin `alert()`).
+
+### Restricciones respetadas
+- Sin tocar `legacy/`.
+- Sin migración a `Chekeo` oficial.
+- `Chekeo Nuevo` se mantiene como hoja activa.
+- Sin librerías externas/CDN/frameworks.
+- Escrituras protegidas por `LockService` mediante wrappers públicos.
+

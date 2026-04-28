@@ -40,24 +40,40 @@ var BurgerOGConstants = (function () {
 
   var CHEKEO_REQUIRED_COLUMNS = CHEKEO_COLUMNS.slice();
 
+  var HISTORY_REQUIRED_META_COLUMNS = [
+    'Fecha Archivado',
+    'Hora Archivado',
+    'Corte ID'
+  ];
 
-  var HISTORY_EXTRA_COLUMNS = [
-    'Fecha Archivo',
+  var HISTORY_OPTIONAL_META_COLUMNS = [
     'Motivo Archivo'
   ];
 
-  var HISTORY_COLUMNS = CHEKEO_COLUMNS.concat(HISTORY_EXTRA_COLUMNS);
+  var HISTORY_COLUMNS = CHEKEO_COLUMNS
+    .concat(HISTORY_REQUIRED_META_COLUMNS)
+    .concat(HISTORY_OPTIONAL_META_COLUMNS);
 
-  var SUMMARY_COLUMNS = [
-    'Fecha',
-    'Pedidos Archivados',
-    'Total Archivado',
-    'Total Pagado Archivado',
-    'Total Pendiente Archivado',
-    'Conteo Estado Pedido',
-    'Conteo Estado Pago',
-    'Generado En'
+  var SUMMARY_REQUIRED_COLUMNS = [
+    'Corte ID',
+    'Fecha Corte',
+    'Hora Corte',
+    'Total Pedidos',
+    'Pedidos Archivables',
+    'Pedidos No Archivables',
+    'Total Vendido',
+    'Total Pagado',
+    'Total Pendiente',
+    'Con Alerta',
+    'Sin Ticket Enviado',
+    'Notas'
   ];
+
+  var SUMMARY_COLUMNS = SUMMARY_REQUIRED_COLUMNS.concat([
+    'IDs Archivables',
+    'IDs No Archivables',
+    'Generado En'
+  ]);
 
   var ENUMS = {
     ESTADO_PEDIDO: ['Nuevo', 'Confirmado', 'Preparando', 'Listo'],
@@ -78,8 +94,10 @@ var BurgerOGConstants = (function () {
     CHEKEO_COLUMNS: CHEKEO_COLUMNS,
     MASTER_REQUIRED_COLUMNS: MASTER_REQUIRED_COLUMNS,
     CHEKEO_REQUIRED_COLUMNS: CHEKEO_REQUIRED_COLUMNS,
-    HISTORY_EXTRA_COLUMNS: HISTORY_EXTRA_COLUMNS,
+    HISTORY_REQUIRED_META_COLUMNS: HISTORY_REQUIRED_META_COLUMNS,
+    HISTORY_OPTIONAL_META_COLUMNS: HISTORY_OPTIONAL_META_COLUMNS,
     HISTORY_COLUMNS: HISTORY_COLUMNS,
+    SUMMARY_REQUIRED_COLUMNS: SUMMARY_REQUIRED_COLUMNS,
     SUMMARY_COLUMNS: SUMMARY_COLUMNS,
     ENUMS: ENUMS,
     DEFAULTS: DEFAULTS,

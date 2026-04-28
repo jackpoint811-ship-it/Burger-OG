@@ -62,8 +62,6 @@ function updateOrderStatus(orderId, nextStatus) {
   }, 'Estado de pedido actualizado.');
 }
 
-
-
 function updateOrderOperationalData(orderId, payload) {
   return bogPublicWrite_(function () {
     return bogUpdateOrderOperationalData_(orderId, payload);
@@ -106,23 +104,38 @@ function getBankConfig() {
   }, 'Configuración bancaria obtenida.');
 }
 
-
 function getCloseDayPreview() {
   return bogPublicRead_(function () {
     return bogGetCloseDayPreview_();
   }, 'Preview de cierre obtenido.');
 }
 
-function archiveReadyPaidOrders() {
+function writeDailySummary() {
   return bogPublicWrite_(function () {
-    return bogArchiveReadyPaidOrders_();
-  }, 'Archivo a Historico completado.');
+    return bogWriteDailySummary_();
+  }, 'Resumen de corte guardado.');
+}
+
+function archiveCompletedOrders() {
+  return bogPublicWrite_(function () {
+    return bogArchiveCompletedOrders_();
+  }, 'Archivo de pedidos completados ejecutado.');
 }
 
 function closeDay() {
   return bogPublicWrite_(function () {
     return bogCloseDay_();
   }, 'Cierre del día completado.');
+}
+
+function getHistoryPreview() {
+  return bogPublicRead_(function () {
+    return bogGetHistoryPreview_();
+  }, 'Preview de historico obtenido.');
+}
+
+function archiveReadyPaidOrders() {
+  return archiveCompletedOrders();
 }
 
 function getHistoryOrders(limit) {

@@ -39,16 +39,29 @@
         </section>
 
         <section id="tab-Resumen" class="card tab-panel is-hidden">
-          <h2>Resumen</h2>
-          <div class="action-row">
-            <button id="previewCloseDayButton" class="btn btn-secondary" type="button">Preview cierre</button>
-            <button id="archiveReadyButton" class="btn btn-primary" type="button">Archivar Listo+Pagado</button>
+          <h2>Cierre y Resumen</h2>
+          <div class="action-row action-row-single-mobile">
+            <button id="refreshClosePreviewButton" class="btn btn-secondary" type="button">Actualizar preview</button>
+            <button id="saveSummaryButton" class="btn btn-secondary" type="button">Guardar resumen</button>
           </div>
-          <div class="action-row">
+          <div class="action-row action-row-single-mobile">
+            <button id="archiveCompletedButton" class="btn btn-primary" type="button">Archivar completados</button>
             <button id="closeDayButton" class="btn btn-danger" type="button">Cerrar día</button>
-            <span></span>
           </div>
-          <div id="closeDayPreview" class="muted"></div>
+          <div id="closePreviewMeta" class="muted">Cargando preview...</div>
+          <div id="closePreviewWarnings" class="summary-grid"></div>
+          <div class="summary-lists">
+            <div>
+              <h3>Archivables</h3>
+              <div id="archivablesList"></div>
+            </div>
+            <div>
+              <h3>No archivables</h3>
+              <div id="nonArchivableList"></div>
+            </div>
+          </div>
+          <div class="summary-divider"></div>
+          <h3>Resumen diario operativo</h3>
           <div id="summaryCards" class="summary-grid"></div>
           <div class="summary-lists">
             <div>
@@ -62,11 +75,19 @@
           </div>
         </section>
 
-
         <section id="tab-Historico" class="card tab-panel is-hidden">
           <h2>Historico</h2>
-          <p class="muted">Últimos pedidos archivados.</p>
-          <div id="historyContainer">Cargando histórico...</div>
+          <div id="historyMeta" class="muted">Cargando histórico...</div>
+          <div class="summary-lists">
+            <div>
+              <h3>Últimos pedidos archivados</h3>
+              <div id="historyContainer"></div>
+            </div>
+            <div>
+              <h3>Últimos cortes</h3>
+              <div id="historyCutsContainer"></div>
+            </div>
+          </div>
         </section>
 
         <section id="tab-Ajustes" class="card tab-panel is-hidden">
@@ -76,7 +97,7 @@
             <li><strong>Configuración bancaria:</strong> <span id="bankState">Pendiente</span></li>
             <li><strong>Hoja activa:</strong> Chekeo Nuevo</li>
             <li><strong>Nota:</strong> Fase de prueba: no usa Chekeo oficial</li>
-            <li><strong>Alcance actual:</strong> resumen operativo, cierre diario y archivo a Historico.</li>
+            <li><strong>Confirmaciones:</strong> Modal propio simple para acciones destructivas (sin alert()).</li>
           </ul>
         </section>
       </main>
@@ -99,6 +120,22 @@
           <button id="closeDetailButton" type="button" class="btn btn-secondary">Cerrar</button>
         </header>
         <div id="orderDetailContent" class="modal-content"></div>
+      </section>
+    </div>
+
+    <div id="confirmModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="modal-backdrop" data-action="close-confirm"></div>
+      <section class="modal-panel modal-panel-small" aria-live="polite">
+        <header class="modal-header">
+          <h3 id="confirmTitle">Confirmar acción</h3>
+        </header>
+        <div class="modal-content">
+          <p id="confirmMessage">¿Deseas continuar?</p>
+          <div class="action-row">
+            <button id="confirmCancelButton" type="button" class="btn btn-secondary">Cancelar</button>
+            <button id="confirmOkButton" type="button" class="btn btn-danger">Confirmar</button>
+          </div>
+        </div>
       </section>
     </div>
 

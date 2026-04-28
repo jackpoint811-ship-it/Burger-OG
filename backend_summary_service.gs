@@ -30,177 +30,332 @@ function bogGetDailySummary_() {
 
 function bogGetCloseDayPreview_() {
   var orders = bogGetAppOrders_();
-  var eligible = [];
-  var blocked = [];
+
+  var preview = {
+    totalPedidos: 0,
+    pedidosArchivables: 0,
+    pedidosNoArchivables: 0,
+    listosPendientesPago: 0,
+    pagadosNoListos: 0,
+    conAlerta: 0,
+    sinTicketEnviado: 0,
+    totalVendido: 0,
+    totalPagado: 0,
+    totalPendiente: 0,
+    archivables: [],
+    noArchivables: []
+  };
 
   orders.forEach(function (order) {
-    if (bogIsArchivableOrder_(order)) {
-      eligible.push(order);
+    var total = bogNormalizeMoney_(order['Total']);
+    var estadoPedido = bogTrim_(order['Estado Pedido']);
+    var estadoPago = bogTrim_(order['Estado Pago']);
+    var ticketEnviado = bogTrim_(order['Ticket Enviado']);
+    var alerta = bogNormalizeAlertValue_(order['Alerta']);
+    var isArchivable = bogIsArchivableOrder_(order);
+
+    preview.totalPedidos += 1;
+    preview.totalVendido += total;
+
+    if (estadoPago === 'Pagado') {
+      preview.totalPagado += total;
+    } else {
+      preview.totalPendiente += total;
+    }
+
+    if (alerta === '⚠️') {
+      preview.conAlerta += 1;
+    }
+
+    if (ticketEnviado !== 'Si') {
+      preview.sinTicketEnviado += 1;
+    }
+
+    if (estadoPedido === 'Listo' && estadoPago !== 'Pagado') {
+      preview.listosPendientesPago += 1;
+    }
+
+    if (estadoPago === 'Pagado' && estadoPedido !== 'Listo') {
+      preview.pagadosNoListos += 1;
+    }
+
+    if (isArchivable) {
+      preview.pedidosArchivables += 1;
+      preview.archivables.push({
+        'ID Pedido': bogTrim_(order['ID Pedido']),
+        'Nombre': bogTrim_(order['Nombre']),
+        'Total': total,
+        'Estado Pedido': estadoPedido,
+        'Estado Pago': estadoPago,
+        'Ticket Enviado': ticketEnviado || 'No',
+        'Alerta': alerta
+      });
       return;
     }
 
-    blocked.push({
-      orderId: bogTrim_(order['ID Pedido']),
-      estadoPedido: bogTrim_(order['Estado Pedido']),
-      estadoPago: bogTrim_(order['Estado Pago']),
-      reason: 'Solo se puede archivar si Estado Pedido=Listo y Estado Pago=Pagado.'
+    preview.pedidosNoArchivables += 1;
+    preview.noArchivables.push({
+      'ID Pedido': bogTrim_(order['ID Pedido']),
+      'Nombre': bogTrim_(order['Nombre']),
+      razon: bogBuildNoArchivableReason_(estadoPedido, estadoPago)
     });
   });
 
-  var summary = bogBuildSummaryForOrders_(eligible);
+  return preview;
+}
+
+function bogWriteDailySummary_(forcedCorteId, forcedPreview) {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var summarySheet = bogGetOrCreateSheet_(spreadsheet, BurgerOGConstants.SHEETS.SUMMARY_SHEET_NAME);
+  var summaryHeaderMap = bogEnsureSheetHeaders_(summarySheet, BurgerOGConstants.SUMMARY_COLUMNS);
+  var summaryHeaders = summarySheet.getRange(1, 1, 1, summarySheet.getLastColumn()).getValues()[0];
+
+  var preview = forcedPreview || bogGetCloseDayPreview_();
+  var nowParts = bogNowDateParts_();
+  var corteId = forcedCorteId || bogBuildCorteId_();
+  var notas = [];
+
+  if (preview.pedidosNoArchivables > 0) {
+    notas.push('Quedan ' + preview.pedidosNoArchivables + ' pedidos no archivables en Chekeo Nuevo.');
+  }
+  if (preview.conAlerta > 0) {
+    notas.push('Pedidos con alerta: ' + preview.conAlerta + '.');
+  }
+  if (preview.sinTicketEnviado > 0) {
+    notas.push('Pedidos sin ticket enviado: ' + preview.sinTicketEnviado + '.');
+  }
+  if (!notas.length) {
+    notas.push('Corte sin advertencias.');
+  }
+
+  var existing = [];
+  if (summarySheet.getLastRow() > 1) {
+    existing = bogReadSheetAsObjects_(summarySheet, BurgerOGConstants.SUMMARY_REQUIRED_COLUMNS).rows;
+  }
+
+  var alreadyExists = existing.some(function (row) {
+    return bogTrim_(row.data['Corte ID']) === corteId;
+  });
+
+  if (alreadyExists) {
+    return {
+      corteId: corteId,
+      created: false,
+      reason: 'Corte ya registrado en esta ejecución.',
+      preview: preview
+    };
+  }
+
+  var record = {
+    'Corte ID': corteId,
+    'Fecha Corte': nowParts.fecha,
+    'Hora Corte': nowParts.hora,
+    'Total Pedidos': preview.totalPedidos,
+    'Pedidos Archivables': preview.pedidosArchivables,
+    'Pedidos No Archivables': preview.pedidosNoArchivables,
+    'Total Vendido': preview.totalVendido,
+    'Total Pagado': preview.totalPagado,
+    'Total Pendiente': preview.totalPendiente,
+    'Con Alerta': preview.conAlerta,
+    'Sin Ticket Enviado': preview.sinTicketEnviado,
+    'Notas': notas.join(' '),
+    'IDs Archivables': preview.archivables.map(function (item) { return item['ID Pedido']; }).join(', '),
+    'IDs No Archivables': preview.noArchivables.map(function (item) { return item['ID Pedido']; }).join(', '),
+    'Generado En': bogNowIso_()
+  };
+
+  var row = bogBuildRowByHeaderMap_(summaryHeaders, summaryHeaderMap, record);
+  summarySheet.getRange(summarySheet.getLastRow() + 1, 1, 1, summaryHeaders.length).setValues([row]);
 
   return {
-    totalOrders: orders.length,
-    eligibleCount: eligible.length,
-    blockedCount: blocked.length,
-    eligibleOrderIds: eligible.map(function (order) { return bogTrim_(order['ID Pedido']); }),
-    blockedOrders: blocked,
-    archiveSummary: summary
+    corteId: corteId,
+    created: true,
+    preview: preview
   };
 }
 
-function bogArchiveReadyPaidOrders_() {
+function bogArchiveCompletedOrders_(forcedCorteId) {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var chekeoSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
-  var historySheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.HISTORY_SHEET_NAME);
+  var historySheet = bogGetOrCreateSheet_(spreadsheet, BurgerOGConstants.SHEETS.HISTORY_SHEET_NAME);
 
   var chekeoData = bogReadSheetAsObjects_(chekeoSheet, BurgerOGConstants.CHEKEO_REQUIRED_COLUMNS);
   var historyHeaderMap = bogEnsureSheetHeaders_(historySheet, BurgerOGConstants.HISTORY_COLUMNS);
   var historyHeaders = historySheet.getRange(1, 1, 1, historySheet.getLastColumn()).getValues()[0];
 
-  var toArchive = [];
-  var toDeleteRows = [];
-
-  chekeoData.rows.forEach(function (row) {
-    if (!bogTrim_(row.data['ID Pedido'])) {
-      return;
-    }
-
-    if (!bogIsArchivableOrder_(row.data)) {
-      return;
-    }
-
-    toArchive.push(row.data);
-    toDeleteRows.push(row.rowNumber);
-  });
-
-  if (!toArchive.length) {
-    return {
-      archivedCount: 0,
-      deletedCount: 0,
-      orderIds: [],
-      message: 'No hay pedidos Listo + Pagado para archivar.'
-    };
+  var existingHistoryIds = {};
+  if (historySheet.getLastRow() > 1) {
+    var historyData = bogReadSheetAsObjects_(historySheet, BurgerOGConstants.HISTORY_COLUMNS);
+    historyData.rows.forEach(function (row) {
+      var orderId = bogTrim_(row.data['ID Pedido']);
+      if (orderId) {
+        existingHistoryIds[orderId] = true;
+      }
+    });
   }
 
-  var archiveDate = bogNowDateMx_();
-  var archiveRows = toArchive.map(function (order) {
+  var nowParts = bogNowDateParts_();
+  var corteId = forcedCorteId || bogBuildCorteId_();
+  var rowsToDelete = [];
+  var rowsToInsert = [];
+
+  var result = {
+    corteId: corteId,
+    archivados: 0,
+    omitidosDuplicado: 0,
+    eliminados: 0,
+    idsArchivados: [],
+    idsDuplicados: []
+  };
+
+  chekeoData.rows.forEach(function (row) {
+    var order = row.data;
+    var orderId = bogTrim_(order['ID Pedido']);
+
+    if (!orderId || !bogIsArchivableOrder_(order)) {
+      return;
+    }
+
+    if (existingHistoryIds[orderId]) {
+      result.omitidosDuplicado += 1;
+      result.idsDuplicados.push(orderId);
+      rowsToDelete.push(row.rowNumber);
+      return;
+    }
+
     var historyRecord = {};
     BurgerOGConstants.CHEKEO_COLUMNS.forEach(function (column) {
       historyRecord[column] = order[column];
     });
-    historyRecord['Fecha Archivo'] = archiveDate;
+    historyRecord['Fecha Archivado'] = nowParts.fecha;
+    historyRecord['Hora Archivado'] = nowParts.hora;
+    historyRecord['Corte ID'] = corteId;
     historyRecord['Motivo Archivo'] = 'Cierre operativo';
-    return bogBuildRowByHeaderMap_(historyHeaders, historyHeaderMap, historyRecord);
+
+    rowsToInsert.push(bogBuildRowByHeaderMap_(historyHeaders, historyHeaderMap, historyRecord));
+    existingHistoryIds[orderId] = true;
+    result.archivados += 1;
+    result.idsArchivados.push(orderId);
+    rowsToDelete.push(row.rowNumber);
   });
 
-  historySheet
-    .getRange(historySheet.getLastRow() + 1, 1, archiveRows.length, historyHeaders.length)
-    .setValues(archiveRows);
+  if (rowsToInsert.length) {
+    historySheet
+      .getRange(historySheet.getLastRow() + 1, 1, rowsToInsert.length, historyHeaders.length)
+      .setValues(rowsToInsert);
+  }
 
-  bogDeleteRowsDescending_(chekeoSheet, toDeleteRows);
+  if (rowsToDelete.length) {
+    bogDeleteRowsDescending_(chekeoSheet, rowsToDelete);
+    result.eliminados = rowsToDelete.length;
+  }
 
-  return {
-    archivedCount: toArchive.length,
-    deletedCount: toDeleteRows.length,
-    orderIds: toArchive.map(function (order) { return bogTrim_(order['ID Pedido']); }),
-    message: 'Pedidos archivados en Historico.'
-  };
+  return result;
 }
 
 function bogCloseDay_() {
-  var preview = bogGetCloseDayPreview_();
-  if (preview.blockedCount > 0) {
-    throw new Error('No se puede cerrar el día: hay pedidos que no están Listo + Pagado.');
+  var initialPreview = bogGetCloseDayPreview_();
+  var corteId = bogBuildCorteId_();
+  var summaryResult = bogWriteDailySummary_(corteId, initialPreview);
+  var archiveResult = bogArchiveCompletedOrders_(corteId);
+  var finalPreview = bogGetCloseDayPreview_();
+
+  var message = archiveResult.archivados > 0
+    ? 'Cierre completado con archivo parcial/total de pedidos Listo + Pagado.'
+    : 'Cierre completado sin archivados: no había pedidos Listo + Pagado.';
+
+  return {
+    message: message,
+    corteId: corteId,
+    previewInicial: initialPreview,
+    resumen: summaryResult,
+    archivo: archiveResult,
+    previewFinal: finalPreview
+  };
+}
+
+function bogGetHistoryPreview_() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var historySheet = bogGetOrCreateSheet_(spreadsheet, BurgerOGConstants.SHEETS.HISTORY_SHEET_NAME);
+  bogEnsureSheetHeaders_(historySheet, BurgerOGConstants.HISTORY_COLUMNS);
+
+  if (historySheet.getLastRow() <= 1) {
+    return {
+      totalHistorico: 0,
+      ultimosPedidosArchivados: [],
+      totalVendidoHistorico: 0,
+      ultimosCortes: []
+    };
   }
 
-  var archiveResult = bogArchiveReadyPaidOrders_();
-  var closeSummary = {
-    fecha: bogNowDateMx_(),
-    archivedCount: archiveResult.archivedCount,
-    archivedOrderIds: archiveResult.orderIds,
-    summary: preview.archiveSummary
+  var historyData = bogReadSheetAsObjects_(historySheet, BurgerOGConstants.HISTORY_COLUMNS);
+  var rows = historyData.rows
+    .map(function (row) { return row.data; })
+    .filter(function (row) { return bogTrim_(row['ID Pedido']) !== ''; });
+
+  var totalVendidoHistorico = 0;
+  var cortes = {};
+
+  rows.forEach(function (order) {
+    totalVendidoHistorico += bogNormalizeMoney_(order['Total']);
+    var corteId = bogTrim_(order['Corte ID']);
+    if (corteId) {
+      if (!cortes[corteId]) {
+        cortes[corteId] = {
+          corteId: corteId,
+          fechaArchivado: bogTrim_(order['Fecha Archivado']),
+          horaArchivado: bogTrim_(order['Hora Archivado']),
+          pedidos: 0,
+          total: 0
+        };
+      }
+      cortes[corteId].pedidos += 1;
+      cortes[corteId].total += bogNormalizeMoney_(order['Total']);
+    }
+  });
+
+  var ultimosPedidos = rows.slice(-20).reverse().map(function (order) {
+    return {
+      'ID Pedido': bogTrim_(order['ID Pedido']),
+      'Nombre': bogTrim_(order['Nombre']),
+      'Total': bogNormalizeMoney_(order['Total']),
+      'Fecha Archivado': bogTrim_(order['Fecha Archivado']),
+      'Hora Archivado': bogTrim_(order['Hora Archivado']),
+      'Corte ID': bogTrim_(order['Corte ID'])
+    };
+  });
+
+  var ultimosCortes = Object.keys(cortes)
+    .map(function (key) { return cortes[key]; })
+    .sort(function (a, b) { return String(b.corteId).localeCompare(String(a.corteId)); })
+    .slice(0, 20);
+
+  return {
+    totalHistorico: rows.length,
+    ultimosPedidosArchivados: ultimosPedidos,
+    totalVendidoHistorico: totalVendidoHistorico,
+    ultimosCortes: ultimosCortes
   };
-
-  bogAppendDailySummaryRow_(closeSummary);
-
-  return closeSummary;
 }
 
 function bogGetHistoryOrders_(limit) {
+  var preview = bogGetHistoryPreview_();
   var safeLimit = Number(limit);
   if (!safeLimit || safeLimit < 1) {
     safeLimit = 30;
   }
 
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var historySheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.HISTORY_SHEET_NAME);
-  var historyData = bogReadSheetAsObjects_(historySheet, BurgerOGConstants.HISTORY_COLUMNS);
-
-  return historyData.rows
-    .map(function (row) { return row.data; })
-    .filter(function (record) { return bogTrim_(record['ID Pedido']) !== ''; })
-    .slice(-safeLimit)
-    .reverse();
+  return preview.ultimosPedidosArchivados.slice(0, safeLimit);
 }
 
-function bogAppendDailySummaryRow_(closeSummary) {
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var summarySheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.SUMMARY_SHEET_NAME);
-  var headerMap = bogEnsureSheetHeaders_(summarySheet, BurgerOGConstants.SUMMARY_COLUMNS);
-  var headers = summarySheet.getRange(1, 1, 1, summarySheet.getLastColumn()).getValues()[0];
-
-  var record = {
-    'Fecha': closeSummary.fecha,
-    'Pedidos Archivados': closeSummary.archivedCount,
-    'Total Archivado': closeSummary.summary.totalVendido,
-    'Total Pagado Archivado': closeSummary.summary.totalPagado,
-    'Total Pendiente Archivado': closeSummary.summary.totalPendiente,
-    'Conteo Estado Pedido': JSON.stringify(closeSummary.summary.conteoEstadoPedido || {}),
-    'Conteo Estado Pago': JSON.stringify(closeSummary.summary.conteoEstadoPago || {}),
-    'Generado En': bogNowIso_()
-  };
-
-  var row = bogBuildRowByHeaderMap_(headers, headerMap, record);
-  summarySheet.getRange(summarySheet.getLastRow() + 1, 1, 1, headers.length).setValues([row]);
-}
-
-function bogBuildSummaryForOrders_(orders) {
-  var summary = {
-    totalVendido: 0,
-    totalPagado: 0,
-    totalPendiente: 0,
-    conteoEstadoPedido: {},
-    conteoEstadoPago: {}
-  };
-
-  (orders || []).forEach(function (order) {
-    var total = bogNormalizeMoney_(order['Total']);
-    var estadoPago = bogTrim_(order['Estado Pago']) || BurgerOGConstants.DEFAULTS.ESTADO_PAGO;
-    var estadoPedido = bogTrim_(order['Estado Pedido']) || BurgerOGConstants.DEFAULTS.ESTADO_PEDIDO;
-
-    summary.totalVendido += total;
-    if (estadoPago === 'Pagado') {
-      summary.totalPagado += total;
-    } else {
-      summary.totalPendiente += total;
-    }
-
-    summary.conteoEstadoPedido[estadoPedido] = (summary.conteoEstadoPedido[estadoPedido] || 0) + 1;
-    summary.conteoEstadoPago[estadoPago] = (summary.conteoEstadoPago[estadoPago] || 0) + 1;
-  });
-
-  return summary;
+function bogBuildNoArchivableReason_(estadoPedido, estadoPago) {
+  if (estadoPedido !== 'Listo' && estadoPago !== 'Pagado') {
+    return 'Estado Pedido debe ser Listo y Estado Pago debe ser Pagado.';
+  }
+  if (estadoPedido !== 'Listo') {
+    return 'Estado Pedido pendiente de Listo.';
+  }
+  return 'Estado Pago pendiente de Pagado.';
 }
 
 function bogIsArchivableOrder_(order) {
