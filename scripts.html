@@ -11,8 +11,25 @@
     detailOrderId: '',
     closePreview: null,
     history: [],
-    confirmAction: null
+    confirmAction: null,
+    productionValidation: null,
+    migrationPreview: null
   };
+
+  var PRODUCTION_CHECKLIST_ITEMS = [
+    'Mantener entorno activo en TEST durante validación y preparación.',
+    'Ejecutar Validar producción y corregir incidencias antes de cualquier migración manual.',
+    'Ejecutar Preview migración para revisar inserciones/actualizaciones esperadas.',
+    'Preparar hojas solo para crear/validar encabezados sin mover datos.',
+    'Respaldar manualmente Chekeo Nuevo, Chekeo, Resumen Pedidos e Historico antes de migrar.'
+  ];
+
+  var PRODUCTION_FINAL_STEPS = [
+    'Con validación en verde, programar ventana operativa para migración manual controlada.',
+    'Ejecutar migración manual supervisada (fuera de este flujo automático).',
+    'Verificar conteos y totales en Chekeo y pruebas de lectura en app.',
+    'Si hay desviaciones, aplicar rollback manual usando backup y mantener entorno en TEST.'
+  ];
 
   var ORDER_STATUS_OPTIONS = ['Nuevo', 'Confirmado', 'Preparando', 'Listo'];
   var PAYMENT_STATUS_OPTIONS = ['Pendiente', 'Pagado'];
@@ -37,6 +54,9 @@
     loadBankConfig();
     loadHistoryPreview();
     loadCloseDayPreview();
+    renderProductionChecklist_();
+    loadProductionValidation();
+    loadProductionMigrationPreview();
   }
 
   function setActiveTab(tabName) {
@@ -62,6 +82,8 @@
         document.getElementById('healthStatus').textContent =
           'Backend OK · Fase ' + APP_STATE.health.phase + ' · Hoja: ' + (APP_STATE.health.activeSheet || 'N/D');
         document.getElementById('backendState').textContent = 'Operativo';
+        document.getElementById('activeEnvironmentState').textContent = APP_STATE.health.activeEnvironment || 'TEST';
+        document.getElementById('activeSheetState').textContent = APP_STATE.health.activeSheet || 'Chekeo Nuevo';
       })
       .withFailureHandler(function (error) {
         setLoading('health', false);
@@ -206,6 +228,67 @@
       .getBankConfig();
   }
 
+  function loadProductionValidation() {
+    setLoading('production-validation', true);
+    google.script.run
+      .withSuccessHandler(function (response) {
+        setLoading('production-validation', false);
+        if (!response || !response.ok) {
+          APP_STATE.productionValidation = null;
+          return renderError(response && response.error ? response.error : { message: 'validateProductionReadiness falló.' });
+        }
+        APP_STATE.productionValidation = response.data || null;
+        renderProductionValidation_();
+      })
+      .withFailureHandler(function (error) {
+        setLoading('production-validation', false);
+        APP_STATE.productionValidation = null;
+        renderError(error);
+      })
+      .validateProductionReadiness();
+  }
+
+  function loadProductionMigrationPreview() {
+    setLoading('migration-preview', true);
+    google.script.run
+      .withSuccessHandler(function (response) {
+        setLoading('migration-preview', false);
+        if (!response || !response.ok) {
+          APP_STATE.migrationPreview = null;
+          return renderError(response && response.error ? response.error : { message: 'getProductionMigrationPreview falló.' });
+        }
+        APP_STATE.migrationPreview = response.data || null;
+        renderMigrationPreview_();
+      })
+      .withFailureHandler(function (error) {
+        setLoading('migration-preview', false);
+        APP_STATE.migrationPreview = null;
+        renderError(error);
+      })
+      .getProductionMigrationPreview();
+  }
+
+  function prepareProductionSheets() {
+    openConfirmModal_(
+      'Se validarán/crearán encabezados en Chekeo sin mover ni borrar datos. ¿Continuar?',
+      function () {
+        if (!beginWrite_('Preparando hojas de producción...')) {
+          return;
+        }
+        google.script.run
+          .withSuccessHandler(function (response) {
+            handleWriteSuccess_(response);
+            if (response && response.ok) {
+              loadProductionValidation();
+              loadProductionMigrationPreview();
+            }
+          })
+          .withFailureHandler(renderError)
+          .prepareProductionSheets();
+      }
+    );
+  }
+
 
   function archiveCompletedOrders() {
     var preview = APP_STATE.closePreview;
@@ -335,10 +418,16 @@
     var closeBtn = document.getElementById('closeDayButton');
     var previewBtn = document.getElementById('refreshClosePreviewButton');
     var summaryBtn = document.getElementById('saveSummaryButton');
+    var validateProdBtn = document.getElementById('validateProductionButton');
+    var previewMigrationBtn = document.getElementById('previewMigrationButton');
+    var prepareProdBtn = document.getElementById('prepareProductionButton');
     if (archiveBtn) { archiveBtn.disabled = isSyncLocked; }
     if (closeBtn) { closeBtn.disabled = isSyncLocked; }
     if (previewBtn) { previewBtn.disabled = isSyncLocked; }
     if (summaryBtn) { summaryBtn.disabled = isSyncLocked; }
+    if (validateProdBtn) { validateProdBtn.disabled = isSyncLocked; }
+    if (previewMigrationBtn) { previewMigrationBtn.disabled = isSyncLocked; }
+    if (prepareProdBtn) { prepareProdBtn.disabled = isSyncLocked; }
 
     var disableWrite = Boolean(APP_STATE.loading.write);
     Array.prototype.slice.call(document.querySelectorAll('[data-write-action]')).forEach(function (button) {
@@ -857,6 +946,58 @@
     renderCountList('paymentStatusCount', safeSummary.conteoEstadoPago || {});
   }
 
+  function renderProductionChecklist_() {
+    document.getElementById('productionChecklist').innerHTML = PRODUCTION_CHECKLIST_ITEMS.map(function (item) {
+      return '<li>' + escapeHtml(item) + '</li>';
+    }).join('');
+
+    document.getElementById('productionFinalSteps').innerHTML = PRODUCTION_FINAL_STEPS.map(function (item) {
+      return '<li>' + escapeHtml(item) + '</li>';
+    }).join('');
+  }
+
+  function renderProductionValidation_() {
+    var container = document.getElementById('productionValidationContainer');
+    var validation = APP_STATE.productionValidation;
+    if (!validation) {
+      container.innerHTML = 'Sin validación.';
+      return;
+    }
+
+    var checks = validation.checks || {};
+    var issues = validation.issues || [];
+
+    container.innerHTML = '' +
+      '<p><strong>Resultado:</strong> ' + escapeHtml(validation.valid ? 'Listo para migración manual' : 'Con incidencias') + '</p>' +
+      '<p><strong>Entorno activo:</strong> ' + escapeHtml(checks.activeEnvironment || 'TEST') + ' · <strong>Hoja activa:</strong> ' + escapeHtml(checks.activeSheet || '-') + '</p>' +
+      '<p><strong>Pedidos:</strong> Test=' + escapeHtml(checks.ordersInTest || 0) + ' · Producción=' + escapeHtml(checks.ordersInProduction || 0) + '</p>' +
+      '<p><strong>Recomendación:</strong> ' + escapeHtml(validation.recommendation || '-') + '</p>' +
+      (issues.length
+        ? '<ul>' + issues.map(function (issue) { return '<li>' + escapeHtml(issue) + '</li>'; }).join('') + '</ul>'
+        : '<p>Sin incidencias detectadas.</p>');
+  }
+
+  function renderMigrationPreview_() {
+    var container = document.getElementById('migrationPreviewContainer');
+    var preview = APP_STATE.migrationPreview;
+    if (!preview) {
+      container.innerHTML = 'Sin preview.';
+      return;
+    }
+
+    var totals = preview.totals || {};
+    var sample = preview.sample || {};
+
+    container.innerHTML = '' +
+      '<p><strong>Origen:</strong> ' + escapeHtml(preview.sourceSheet || '-') + ' → <strong>Destino:</strong> ' + escapeHtml(preview.targetSheet || '-') + '</p>' +
+      '<p><strong>Filas:</strong> origen=' + escapeHtml(totals.sourceRows || 0) + ' · destino=' + escapeHtml(totals.targetRows || 0) + '</p>' +
+      '<p><strong>Preview:</strong> insertar=' + escapeHtml(totals.wouldInsert || 0) + ' · actualizar=' + escapeHtml(totals.wouldUpdate || 0) + '</p>' +
+      '<p><strong>Duplicados en destino:</strong> ' + escapeHtml(totals.duplicateIdsInProduction || 0) + '</p>' +
+      '<p><strong>Modo seguro:</strong> ' + escapeHtml(preview.safeMode && preview.safeMode.note ? preview.safeMode.note : 'Solo lectura') + '</p>' +
+      '<p><strong>Muestra inserciones:</strong> ' + escapeHtml((sample.insertions || []).join(', ') || 'N/A') + '</p>' +
+      '<p><strong>Muestra actualizaciones:</strong> ' + escapeHtml((sample.updates || []).join(', ') || 'N/A') + '</p>';
+  }
+
   function renderError(error) {
     if (APP_STATE.loading.write) {
       endWrite_();
@@ -961,6 +1102,9 @@
     document.getElementById('saveSummaryButton').addEventListener('click', writeDailySummary);
     document.getElementById('archiveCompletedButton').addEventListener('click', archiveCompletedOrders);
     document.getElementById('closeDayButton').addEventListener('click', closeDay);
+    document.getElementById('validateProductionButton').addEventListener('click', loadProductionValidation);
+    document.getElementById('previewMigrationButton').addEventListener('click', loadProductionMigrationPreview);
+    document.getElementById('prepareProductionButton').addEventListener('click', prepareProductionSheets);
 
     Array.prototype.slice.call(document.querySelectorAll('.tab-btn')).forEach(function (btn) {
       btn.addEventListener('click', function () {

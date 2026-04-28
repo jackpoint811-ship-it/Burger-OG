@@ -12,7 +12,7 @@
       <header class="app-header card">
         <div>
           <p class="eyebrow">Burger-OG</p>
-          <h1>Fase 6 — Resumen Pedidos + Historico</h1>
+          <h1>Fase 7 — Migración a producción (segura)</h1>
         </div>
         <button id="syncButton" class="btn btn-primary" type="button">Sincronizar</button>
       </header>
@@ -95,10 +95,28 @@
           <ul class="settings-list">
             <li><strong>Estado backend:</strong> <span id="backendState">Pendiente</span></li>
             <li><strong>Configuración bancaria:</strong> <span id="bankState">Pendiente</span></li>
-            <li><strong>Hoja activa:</strong> Chekeo Nuevo</li>
-            <li><strong>Nota:</strong> Fase de prueba: no usa Chekeo oficial</li>
+            <li><strong>Entorno activo:</strong> <span id="activeEnvironmentState">TEST</span></li>
+            <li><strong>Hoja activa:</strong> <span id="activeSheetState">Chekeo Nuevo</span></li>
+            <li><strong>Nota:</strong> Default seguro en modo prueba (sin activación automática de producción).</li>
             <li><strong>Confirmaciones:</strong> Modal propio simple para acciones destructivas (sin alert()).</li>
           </ul>
+          <div class="summary-divider"></div>
+          <h3>Migración a producción</h3>
+          <div class="action-row action-row-single-mobile">
+            <button id="validateProductionButton" class="btn btn-secondary" type="button">Validar producción</button>
+            <button id="previewMigrationButton" class="btn btn-secondary" type="button">Preview migración</button>
+          </div>
+          <div class="action-row action-row-single-mobile">
+            <button id="prepareProductionButton" class="btn btn-primary" type="button">Preparar hojas</button>
+            <span></span>
+          </div>
+          <div id="productionValidationContainer" class="muted">Sin validación de producción.</div>
+          <div id="migrationPreviewContainer" class="muted">Sin preview de migración.</div>
+          <div class="summary-divider"></div>
+          <h3>Checklist y rollback</h3>
+          <ul id="productionChecklist" class="settings-list"></ul>
+          <h3>Pasos finales</h3>
+          <ol id="productionFinalSteps" class="settings-list"></ol>
         </section>
       </main>
 

@@ -1,7 +1,7 @@
 function bogSyncOrdersFromMaster_() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var masterSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.MASTER_SHEET_NAME);
-  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
+  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, bogGetActiveChekeoSheetName_());
 
   bogEnsureChekeoHeaders_(chekeoSheet);
 
@@ -298,7 +298,7 @@ function bogBuildChekeoRowFromMaster_(transformed, masterRowNumber, existingReco
 
 function bogGetAppOrders_() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
+  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, bogGetActiveChekeoSheetName_());
   var chekeoData = bogReadSheetAsObjects_(chekeoSheet, BurgerOGConstants.CHEKEO_REQUIRED_COLUMNS);
 
   return chekeoData.rows
@@ -308,7 +308,7 @@ function bogGetAppOrders_() {
 
 function bogGetOrderDetail_(orderId) {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
+  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, bogGetActiveChekeoSheetName_());
   var found = bogFindChekeoOrderRowById_(chekeoSheet, orderId);
   return found ? found.rowData : null;
 }
@@ -319,7 +319,7 @@ function bogUpdateOrderStatus_(orderId, nextStatus) {
   }
 
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
+  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, bogGetActiveChekeoSheetName_());
   var found = bogFindChekeoOrderRowById_(chekeoSheet, orderId);
 
   if (!found) {
@@ -361,7 +361,7 @@ function bogUpdateOrderOperationalData_(orderId, payload) {
   }
 
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
+  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, bogGetActiveChekeoSheetName_());
   var found = bogFindChekeoOrderRowById_(chekeoSheet, orderId);
 
   if (!found) {
@@ -399,7 +399,7 @@ function bogUpdateOrderPayment_(orderId, paymentStatus, paymentMethod) {
   }
 
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
+  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, bogGetActiveChekeoSheetName_());
   var found = bogFindChekeoOrderRowById_(chekeoSheet, orderId);
 
   if (!found) {
@@ -418,7 +418,7 @@ function bogUpdateOrderPayment_(orderId, paymentStatus, paymentMethod) {
 
 function bogMarkOrderPaid_(orderId) {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
+  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, bogGetActiveChekeoSheetName_());
   var found = bogFindChekeoOrderRowById_(chekeoSheet, orderId);
 
   if (!found) {
@@ -436,7 +436,7 @@ function bogMarkOrderPaid_(orderId) {
 
 function bogUpdateOrderNotes_(orderId, noteInternal, noteClient) {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
+  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, bogGetActiveChekeoSheetName_());
   var found = bogFindChekeoOrderRowById_(chekeoSheet, orderId);
 
   if (!found) {
@@ -455,7 +455,7 @@ function bogUpdateOrderNotes_(orderId, noteInternal, noteClient) {
 
 function bogMarkTicketSent_(orderId) {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
+  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, bogGetActiveChekeoSheetName_());
   var found = bogFindChekeoOrderRowById_(chekeoSheet, orderId);
 
   if (!found) {

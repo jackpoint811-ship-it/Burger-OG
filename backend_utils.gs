@@ -231,3 +231,20 @@ function bogNowDateParts_() {
 function bogBuildCorteId_() {
   return 'CORTE-' + bogNowDateParts_().compact;
 }
+
+function bogGetActiveEnvironment_() {
+  var properties = PropertiesService.getScriptProperties();
+  var configuredMode = bogTrim_(properties.getProperty('BOG_ACTIVE_ENV'));
+  if (configuredMode === BurgerOGConstants.ENVIRONMENTS.PROD) {
+    return BurgerOGConstants.ENVIRONMENTS.PROD;
+  }
+  return BurgerOGConstants.ENVIRONMENTS.TEST;
+}
+
+function bogGetActiveChekeoSheetName_() {
+  var activeEnvironment = bogGetActiveEnvironment_();
+  if (activeEnvironment === BurgerOGConstants.ENVIRONMENTS.PROD) {
+    return BurgerOGConstants.SHEETS.CHEKEO_PRODUCTION_SHEET_NAME;
+  }
+  return BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME;
+}
