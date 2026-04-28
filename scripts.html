@@ -1021,7 +1021,7 @@
     }
     var safeMessage = raw.length > 180 ? 'No se pudo completar la acción. Intenta de nuevo.' : raw;
     showToast(safeMessage, 'error');
-    if (APP_STATE.activeTab === 'Ajustes') {
+    if (APP_STATE.activeTab === 'Otros') {
       document.getElementById('backendState').textContent = 'Con error';
     }
   }

@@ -38,8 +38,9 @@
           <div id="kitchenContainer">Cargando cocina...</div>
         </section>
 
-        <section id="tab-Resumen" class="card tab-panel is-hidden">
-          <h2>Cierre y Resumen</h2>
+        <section id="tab-Otros" class="card tab-panel is-hidden">
+          <h2>Otros</h2>
+          <h3>Cierre y Resumen</h3>
           <div class="action-row action-row-single-mobile">
             <button id="refreshClosePreviewButton" class="btn btn-secondary" type="button">Actualizar preview</button>
             <button id="saveSummaryButton" class="btn btn-secondary" type="button">Guardar resumen</button>
@@ -73,10 +74,8 @@
               <ul id="paymentStatusCount"></ul>
             </div>
           </div>
-        </section>
-
-        <section id="tab-Historico" class="card tab-panel is-hidden">
-          <h2>Historico</h2>
+          <div class="summary-divider"></div>
+          <h3>Histórico</h3>
           <div id="historyMeta" class="muted">Cargando histórico...</div>
           <div class="summary-lists">
             <div>
@@ -88,10 +87,8 @@
               <div id="historyCutsContainer"></div>
             </div>
           </div>
-        </section>
-
-        <section id="tab-Ajustes" class="card tab-panel is-hidden">
-          <h2>Ajustes</h2>
+          <div class="summary-divider"></div>
+          <h3>Sistema / Ajustes</h3>
           <ul class="settings-list">
             <li><strong>Sistema:</strong> Burger-OG</li>
             <li><strong>Estado:</strong> <span id="backendState">Pendiente</span></li>
@@ -121,9 +118,7 @@
         <button class="tab-btn is-active" data-tab="Inicio" type="button">Inicio</button>
         <button class="tab-btn" data-tab="Pedidos" type="button">Pedidos</button>
         <button class="tab-btn" data-tab="Cocina" type="button">Cocina</button>
-        <button class="tab-btn" data-tab="Resumen" type="button">Resumen</button>
-        <button class="tab-btn" data-tab="Historico" type="button">Historico</button>
-        <button class="tab-btn" data-tab="Ajustes" type="button">Ajustes</button>
+        <button class="tab-btn" data-tab="Otros" type="button">Otros</button>
       </nav>
     </div>
 
