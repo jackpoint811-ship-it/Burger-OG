@@ -618,6 +618,7 @@
       .withSuccessHandler(handleWriteSuccess_)
       .withFailureHandler(renderError)
       .markTicketSent(APP_STATE.detailOrderId);
+    closeOrderDetail();
   }
 
   function renderHomeQuickSummary(orders, summary) {
