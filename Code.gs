@@ -20,8 +20,8 @@ function include(filename) {
 function healthCheck() {
   return bogPublicRead_(function () {
     return {
-      phase: 4,
-      service: 'Burger-OG Pedidos + Cocina',
+      phase: 5,
+      service: 'Burger-OG Ticket cliente + WhatsApp',
       activeSheet: BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME,
       timestamp: bogNowIso_()
     };
