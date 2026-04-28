@@ -6,6 +6,7 @@
     summary: null,
     orders: [],
     bankConfigOk: false,
+    bankConfig: null,
     activeOrdersFilter: 'all',
     detailOrderId: ''
   };
@@ -144,17 +145,20 @@
         setLoading('bank', false);
         if (!response || !response.ok) {
           APP_STATE.bankConfigOk = false;
+          APP_STATE.bankConfig = null;
           document.getElementById('bankState').textContent = 'Incompleta';
           return;
         }
 
         var data = response.data || {};
+        APP_STATE.bankConfig = data;
         APP_STATE.bankConfigOk = Boolean(data.Banco && data.Nombre && data['Número de cuenta']);
         document.getElementById('bankState').textContent = APP_STATE.bankConfigOk ? 'Completa' : 'Incompleta';
       })
       .withFailureHandler(function () {
         setLoading('bank', false);
         APP_STATE.bankConfigOk = false;
+        APP_STATE.bankConfig = null;
         document.getElementById('bankState').textContent = 'Incompleta';
       })
       .getBankConfig();
@@ -372,8 +376,24 @@
       '<div class="modal-actions">' +
         '<button type="button" class="btn btn-secondary" data-action="detail-save" data-write-action="1">Guardar pedido</button>' +
         markPaidButton +
+      '</div>' +
+      '<div class="ticket-block">' +
+        '<p><strong>Ticket cliente</strong></p>' +
+        '<p class="muted">Incluye solo datos permitidos para cliente.</p>' +
+        '<div class="action-row">' +
+          '<button type="button" class="btn btn-secondary" data-action="detail-download-ticket">Descargar ticket PNG</button>' +
+          '<button type="button" class="btn btn-primary" data-action="detail-open-whatsapp">Abrir WhatsApp</button>' +
+        '</div>' +
+        '<div class="action-row">' +
+          '<button type="button" class="btn btn-secondary" data-action="detail-mark-ticket">Marcar ticket enviado</button>' +
+          '<span></span>' +
+        '</div>' +
+        '<div class="ticket-canvas-wrap">' +
+          '<canvas id="ticketCanvas" width="900" height="1200" aria-label="Vista previa de ticket"></canvas>' +
+        '</div>' +
       '</div>';
 
+    renderTicketCanvas_(order);
     document.getElementById('orderDetailModal').classList.remove('is-hidden');
   }
 
@@ -406,6 +426,177 @@
     }
     markOrderPaid(APP_STATE.detailOrderId);
     closeOrderDetail();
+  }
+
+  function getClientTicketFields_(order) {
+    return {
+      orderId: String(order['ID Pedido'] || ''),
+      name: String(order['Nombre'] || ''),
+      summary: String(order['Resumen Pedido'] || ''),
+      burgers: String(order['Hamburguesas'] || ''),
+      extras: String(order['Extras'] || ''),
+      sides: String(order['Guarniciones'] || ''),
+      noteClient: String(order['Nota Cliente'] || ''),
+      total: formatMoney(order['Total'])
+    };
+  }
+
+  function renderTicketCanvas_(order) {
+    var canvas = document.getElementById('ticketCanvas');
+    if (!canvas) {
+      return;
+    }
+
+    var ctx = canvas.getContext('2d');
+    var fields = getClientTicketFields_(order);
+    var w = canvas.width;
+    var h = canvas.height;
+    var y = 70;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#111111';
+    ctx.font = 'bold 46px Arial';
+    ctx.fillText('Burger-OG', 44, y);
+    y += 56;
+    ctx.font = '28px Arial';
+    ctx.fillText('Ticket cliente', 44, y);
+    y += 46;
+
+    var nowText = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#666666';
+    ctx.fillText('Generado: ' + nowText, 44, y);
+    y += 26;
+    ctx.fillStyle = '#d9deea';
+    ctx.fillRect(44, y, w - 88, 2);
+    y += 38;
+    ctx.fillStyle = '#111111';
+
+    y = drawTicketLine_(ctx, 'ID Pedido', fields.orderId, y, w);
+    y = drawTicketLine_(ctx, 'Nombre', fields.name, y, w);
+    y = drawTicketLine_(ctx, 'Resumen', fields.summary, y, w);
+    y = drawTicketLine_(ctx, 'Hamburguesas', fields.burgers, y, w);
+    y = drawTicketLine_(ctx, 'Extras', fields.extras, y, w);
+    y = drawTicketLine_(ctx, 'Guarniciones', fields.sides, y, w);
+
+    if (fields.noteClient) {
+      y = drawTicketLine_(ctx, 'Nota cliente', fields.noteClient, y, w);
+    }
+
+    y += 10;
+    ctx.fillStyle = '#d9deea';
+    ctx.fillRect(44, y, w - 88, 2);
+    y += 52;
+    ctx.fillStyle = '#111111';
+    ctx.font = 'bold 40px Arial';
+    ctx.fillText('Total: ' + fields.total, 44, y);
+  }
+
+  function drawTicketLine_(ctx, label, value, y, width) {
+    var safeValue = String(value || '-');
+    var content = label + ': ' + safeValue;
+    ctx.font = '27px Arial';
+    var lines = wrapCanvasText_(ctx, content, width - 88);
+    ctx.fillStyle = '#111111';
+    lines.forEach(function (line) {
+      ctx.fillText(line, 44, y);
+      y += 36;
+    });
+    return y + 4;
+  }
+
+  function wrapCanvasText_(ctx, text, maxWidth) {
+    var words = String(text || '').split(/\s+/);
+    var lines = [];
+    var line = '';
+    words.forEach(function (word) {
+      var candidate = line ? (line + ' ' + word) : word;
+      if (ctx.measureText(candidate).width <= maxWidth || !line) {
+        line = candidate;
+      } else {
+        lines.push(line);
+        line = word;
+      }
+    });
+    if (line) {
+      lines.push(line);
+    }
+    return lines.length ? lines : ['-'];
+  }
+
+  function downloadCurrentTicketPng_() {
+    var order = findOrderById_(APP_STATE.detailOrderId);
+    if (!order) {
+      showToast('No se encontró pedido para ticket.', 'error');
+      return;
+    }
+
+    renderTicketCanvas_(order);
+    var canvas = document.getElementById('ticketCanvas');
+    if (!canvas) {
+      showToast('No se pudo preparar ticket.', 'error');
+      return;
+    }
+
+    var link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = (order['ID Pedido'] || 'ticket') + '.png';
+    link.click();
+    showToast('Ticket PNG listo para compartir.', 'success');
+  }
+
+  function buildWhatsappMessage_(order, bankConfig) {
+    var clientName = String(order['Nombre'] || 'cliente');
+    var total = formatMoney(order['Total']);
+    var banco = bankConfig && bankConfig.Banco ? String(bankConfig.Banco) : '';
+    var nombreCuenta = bankConfig && bankConfig.Nombre ? String(bankConfig.Nombre) : '';
+    var numeroCuenta = bankConfig && bankConfig['Número de cuenta'] ? String(bankConfig['Número de cuenta']) : '';
+
+    return [
+      'Hola ' + clientName + ', gracias por tu pedido en Burger-OG.',
+      'Tu total es: ' + total + '.',
+      'Datos para transferencia:',
+      'Banco: ' + banco,
+      'Nombre: ' + nombreCuenta,
+      'Número de cuenta: ' + numeroCuenta,
+      'Te compartimos tu ticket en imagen por este medio.'
+    ].join('\n');
+  }
+
+  function openWhatsAppForCurrentOrder_() {
+    var order = findOrderById_(APP_STATE.detailOrderId);
+    if (!order) {
+      showToast('No se encontró pedido.', 'error');
+      return;
+    }
+    if (!APP_STATE.bankConfigOk || !APP_STATE.bankConfig) {
+      showToast('Completa Configuración bancaria antes de abrir WhatsApp.', 'error');
+      return;
+    }
+
+    var phoneRaw = String(order['Teléfono'] || '').replace(/[^\d]/g, '');
+    if (!phoneRaw) {
+      showToast('El pedido no tiene teléfono válido para WhatsApp.', 'error');
+      return;
+    }
+    var message = buildWhatsappMessage_(order, APP_STATE.bankConfig);
+    var url = 'https://wa.me/' + phoneRaw + '?text=' + encodeURIComponent(message);
+    window.open(url, '_blank');
+    showToast('Se abrió WhatsApp con mensaje precargado.', 'success');
+  }
+
+  function markCurrentOrderTicketSent_() {
+    if (!APP_STATE.detailOrderId) {
+      return;
+    }
+    if (!beginWrite_('Marcando ticket enviado...')) {
+      return;
+    }
+    google.script.run
+      .withSuccessHandler(handleWriteSuccess_)
+      .withFailureHandler(renderError)
+      .markTicketSent(APP_STATE.detailOrderId);
   }
 
   function renderHomeQuickSummary(orders, summary) {
@@ -611,6 +802,15 @@
       }
       if (action === 'detail-mark-paid') {
         markCurrentDetailOrderPaid();
+      }
+      if (action === 'detail-download-ticket') {
+        downloadCurrentTicketPng_();
+      }
+      if (action === 'detail-open-whatsapp') {
+        openWhatsAppForCurrentOrder_();
+      }
+      if (action === 'detail-mark-ticket') {
+        markCurrentOrderTicketSent_();
       }
     });
 

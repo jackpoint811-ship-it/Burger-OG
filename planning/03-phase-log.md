@@ -355,3 +355,30 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 - Sin WhatsApp.
 - Sin migración a `Chekeo` oficial.
 - Sin cambios en `legacy/`.
+
+---
+
+## 2026-04-28 — Implementación Fase 5 (Ticket cliente + WhatsApp)
+
+### Estado
+✅ Fase 5 completada.
+
+### Cambios aplicados
+- Se actualizó `healthCheck()` para reportar Fase 5 y servicio de ticket/WhatsApp.
+- En UI se actualizó el encabezado y alcance visible a Fase 5.
+- En detalle de pedido se añadió bloque de Ticket cliente con:
+  - Render de ticket en `canvas` propio.
+  - Descarga de ticket en PNG (sin librerías externas).
+  - Campos incluidos restringidos al contrato de Fase 1 (`ID Pedido`, `Nombre`, `Resumen Pedido`, `Hamburguesas`, `Extras`, `Guarniciones`, `Nota Cliente` opcional y `Total`).
+- Se añadió flujo de WhatsApp por enlace `wa.me` con mensaje precargado:
+  - Incluye saludo, total y datos bancarios (`Banco`, `Nombre`, `Número de cuenta`).
+  - No incluye resumen completo del pedido.
+  - No intenta enviar mensaje automáticamente ni adjuntar imagen automáticamente.
+- Se añadió acción manual para `markTicketSent()` desde detalle de pedido.
+
+### Restricciones respetadas
+- Sin `html2canvas`.
+- Sin CDN/frameworks/librerías externas.
+- Sin cambios en `legacy/`.
+- Sin migración a hoja `Chekeo` oficial.
+- Hoja activa mantenida en `Chekeo Nuevo`.
