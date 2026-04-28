@@ -964,17 +964,24 @@
       return;
     }
 
-    var checks = validation.checks || {};
-    var issues = validation.issues || [];
+    var checks = validation.checks || [];
+    var statusLabel = validation.ready ? 'OK para migración manual' : 'Bloqueado por errores';
+    var checksHtml = checks.length
+      ? '<ul class=\"compact-list\">' + checks.map(function (check) {
+        var severity = String(check.severity || 'info');
+        var pillClass = severity === 'error' ? 'check-pill is-error' : (severity === 'warning' ? 'check-pill is-warning' : 'check-pill is-ok');
+        var text = check.ok ? 'OK' : (severity === 'warning' ? 'warning' : 'error');
+        return '<li class=\"compact-item\">' +
+          '<p><strong>' + escapeHtml(check.label || '-') + '</strong> <span class=\"' + pillClass + '\">' + escapeHtml(text) + '</span></p>' +
+          '<p>' + escapeHtml(check.message || '-') + '</p>' +
+        '</li>';
+      }).join('') + '</ul>'
+      : '<p>Sin checks.</p>';
 
     container.innerHTML = '' +
-      '<p><strong>Resultado:</strong> ' + escapeHtml(validation.valid ? 'Listo para migración manual' : 'Con incidencias') + '</p>' +
-      '<p><strong>Entorno activo:</strong> ' + escapeHtml(checks.activeEnvironment || 'TEST') + ' · <strong>Hoja activa:</strong> ' + escapeHtml(checks.activeSheet || '-') + '</p>' +
-      '<p><strong>Pedidos:</strong> Test=' + escapeHtml(checks.ordersInTest || 0) + ' · Producción=' + escapeHtml(checks.ordersInProduction || 0) + '</p>' +
-      '<p><strong>Recomendación:</strong> ' + escapeHtml(validation.recommendation || '-') + '</p>' +
-      (issues.length
-        ? '<ul>' + issues.map(function (issue) { return '<li>' + escapeHtml(issue) + '</li>'; }).join('') + '</ul>'
-        : '<p>Sin incidencias detectadas.</p>');
+      '<p><strong>Resultado:</strong> ' + escapeHtml(statusLabel) + '</p>' +
+      '<p><strong>Mode:</strong> ' + escapeHtml(validation.mode || 'TEST') + ' · <strong>Active Sheet:</strong> ' + escapeHtml(validation.activeSheet || '-') + '</p>' +
+      checksHtml;
   }
 
   function renderMigrationPreview_() {

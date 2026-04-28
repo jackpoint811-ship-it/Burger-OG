@@ -1,27 +1,45 @@
 # Burger-OG
 
-## Estado actual
-Repositorio en **reconstrucción desde cero** (Fase 0 completada de reorganización documental y resguardo de legado).
+## Estado final del proyecto
+Proyecto operativo por fases completadas de **Fase 0 a Fase 7** para correr en Google Apps Script Web App con Google Sheets como backend.
 
-## Stack permitido
-- Google Sheets
-- Google Apps Script (Web App)
-- HTML/CSS/JS embebido en Apps Script
-
-## Regla de `legacy/`
-Todo el código anterior quedó archivado en `legacy/` como referencia histórica.
-No se debe reactivar ni mezclar directamente en la nueva base; cualquier reutilización debe ser explícita y controlada por fase.
-
-## Flujo por fases
+## Fases completadas
 - Fase 0: Reset legacy.
 - Fase 1: Contrato de datos y hojas.
 - Fase 2: Backend Apps Script base.
 - Fase 3: Web App shell móvil.
 - Fase 4: Pedidos + Cocina.
 - Fase 5: Ticket cliente + WhatsApp.
-- Fase 6: Resumen operativo.
-- Fase 7: Migración a producción.
+- Fase 6: Resumen operativo + histórico.
+- Fase 7: Migración a producción (validación, preview y preparación segura).
 
-## Restricción clave
-No usar servicios externos, librerías externas, APIs externas ni bases de datos externas.
-La operación se limita al stack permitido del proyecto.
+## Stack permitido
+- Google Sheets
+- Google Apps Script Web App
+- HTML/CSS/JS embebido (sin librerías externas, CDN ni frameworks)
+
+## Despliegue de Apps Script Web App
+1. Abrir el proyecto en Apps Script.
+2. Verificar `appsscript.json` (`runtimeVersion: V8`).
+3. Ir a **Deploy > New deployment**.
+4. Elegir tipo **Web app**.
+5. Configurar acceso según operación interna.
+6. Publicar deployment y usar la URL generada.
+
+## Modo prueba / producción
+La app usa `ScriptProperties` con la clave `BOG_ACTIVE_ENV`:
+- `TEST` → opera sobre `Chekeo Nuevo`.
+- `PROD` → opera sobre `Chekeo`.
+
+### Regla de seguridad
+- Si `BOG_ACTIVE_ENV` falta o tiene valor inválido, el sistema usa **TEST** por defecto.
+- **Producción no se activa automáticamente**.
+- Cambiar a `PROD` requiere aprobación manual del usuario y checklist validado.
+- Rollback operativo: regresar `BOG_ACTIVE_ENV` a `TEST`.
+
+## Restricciones críticas
+- No borrar `legacy/`.
+- No borrar hojas ni datos.
+- No borrar: `Chekeo Nuevo`, `Chekeo`, `Historico`, `Resumen Pedidos`.
+- No activar producción automáticamente.
+- No migrar datos automáticamente.

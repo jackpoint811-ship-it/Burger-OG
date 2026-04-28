@@ -7,27 +7,25 @@
 
 ### Cambios aplicados
 - Backend:
-  - Nuevos wrappers públicos:
-    - `validateProductionReadiness()`
-    - `getProductionMigrationPreview()`
-    - `prepareProductionSheets()`
-  - Nuevo servicio `backend_production_service.gs` con:
-    - validación de preparación de producción,
-    - preview de migración sin escritura,
-    - preparación segura de hoja `Chekeo` sin borrar datos.
-  - `healthCheck()` actualizado a fase 7 y reporte de entorno activo (`TEST`/`PROD`) + hoja activa.
-  - Se agregó soporte de entorno activo con default seguro `TEST` mediante `ScriptProperties` (`BOG_ACTIVE_ENV`).
-  - Lectura operativa de hoja activa movida a `bogGetActiveChekeoSheetName_()` para preservar modo prueba por defecto.
+  - `validateProductionReadiness()` ajustado al contrato final:
+    - `ready`, `mode`, `activeSheet`, `checks[]` (`label`, `ok`, `severity`, `message`).
+  - Validación de producción completa para existencia de hojas y headers requeridos:
+    - activa, `Chekeo`, `Resumen Pedidos`, `Historico`, `Configuración`, `Pedidos Master`.
+  - `prepareProductionSheets()` ampliado para cubrir:
+    - `Chekeo`,
+    - `Resumen Pedidos`,
+    - `Historico`,
+    con creación segura/headers/validación sin borrado ni migración automática.
+  - Se mantiene estrategia de entorno seguro con `BOG_ACTIVE_ENV`:
+    - valores válidos `TEST|PROD`,
+    - fallback a `TEST` si falta o es inválido.
 - Frontend:
-  - `Ajustes` ahora muestra entorno activo y hoja activa real.
-  - Se añadieron acciones:
-    - `Validar producción`
-    - `Preview migración`
-    - `Preparar hojas`
-  - Se añadió render de resultados para validación y preview.
-  - Se añadieron checklist, rollback y pasos finales visibles en UI.
+  - `Ajustes` renderiza el nuevo contrato de validación (`ready`, `mode`, `activeSheet`, `checks[]`).
+  - Se muestran checks con estado visual `OK`, `warning`, `error`.
 - Documentación:
-  - Nuevo documento de fase `planning/10-phase-7-migracion-produccion.md`.
+  - Documento de fase corregido a `planning/10-phase-7-production-migration.md`.
+  - Nuevo checklist obligatorio `planning/11-production-checklist.md`.
+  - `README.md` actualizado con estado final, despliegue y estrategia TEST/PROD.
 
 ### Reglas respetadas
 - No activación automática de producción.
@@ -36,6 +34,9 @@
 - No eliminación de `Chekeo Nuevo`, `Chekeo`, `Historico`, `Resumen Pedidos`.
 - Sin cambios en `legacy/`.
 - Sin `alert()`.
+
+### Siguiente paso recomendado
+➡️ Revisión manual del usuario en Google Sheets y validación final de deploy de Apps Script Web App.
 
 ---
 
