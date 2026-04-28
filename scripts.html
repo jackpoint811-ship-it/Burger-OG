@@ -8,6 +8,8 @@
     bankConfigOk: false,
     bankConfig: null,
     activeOrdersFilter: 'all',
+    kitchenBurgerFilter: 'Todos',
+    kitchenMode: 'Pedidos',
     detailOrderId: '',
     closePreview: null,
     history: [],
@@ -373,6 +375,16 @@
       .markOrderPaid(orderId);
   }
 
+  function markOrderSideReady(orderId) {
+    if (!beginWrite_('Marcando guarnición lista...')) {
+      return;
+    }
+    google.script.run
+      .withSuccessHandler(handleWriteSuccess_)
+      .withFailureHandler(renderError)
+      .markOrderSideReady(orderId);
+  }
+
   function updateOrderOperationalData(orderId, payload) {
     if (!beginWrite_('Guardando...')) {
       return;
@@ -508,34 +520,78 @@
 
   function renderKitchen(orders) {
     var container = document.getElementById('kitchenContainer');
-    var kitchenOrders = (orders || []).filter(function (order) {
+    var activeOrders = (orders || []).filter(function (order) {
       return String(order['Estado Pedido'] || '') !== 'Listo';
     });
+    var burgerTypes = getKitchenBurgerTypes_(activeOrders);
+    var mode = APP_STATE.kitchenMode || 'Pedidos';
+    var burgerFilter = APP_STATE.kitchenBurgerFilter || 'Todos';
+    var filteredOrders = activeOrders.filter(function (order) {
+      return matchesKitchenBurgerFilter_(order, burgerFilter);
+    });
 
-    if (!kitchenOrders.length) {
-      container.innerHTML = '<div class="empty-state">Sin pedidos activos en cocina.</div>';
-      return;
+    if (mode === 'Guarniciones') {
+      filteredOrders = filteredOrders.filter(function (order) {
+        return hasKitchenSides_(order);
+      });
     }
 
-    var items = kitchenOrders.map(function (order) {
-      var orderId = String(order['ID Pedido'] || '');
-      return '' +
-        '<li class="kitchen-item" data-order-id="' + escapeHtml(orderId) + '">' +
-          '<p><strong>' + escapeHtml(orderId || '-') + '</strong><span class="pill">' + escapeHtml(order['Estado Pedido'] || '-') + '</span></p>' +
-          '<p><strong>Nombre:</strong> ' + escapeHtml(order['Nombre'] || '-') + '</p>' +
-          '<p><strong>Hamburguesas:</strong> ' + escapeHtml(order['Hamburguesas'] || '-') + '</p>' +
-          '<p><strong>Extras:</strong> ' + escapeHtml(order['Extras'] || '-') + '</p>' +
-          '<p><strong>Guarniciones:</strong> ' + escapeHtml(order['Guarniciones'] || '-') + '</p>' +
-          '<p><strong>Inicio:</strong> ' + escapeHtml(order['Hora Inicio'] || '-') + ' · <strong>Listo:</strong> ' + escapeHtml(order['Hora Listo'] || '-') + '</p>' +
-          '<div class="kitchen-actions">' +
-            '<button type="button" class="btn btn-secondary" data-action="k-confirm" data-write-action="1">Confirmar</button>' +
-            '<button type="button" class="btn btn-primary" data-action="k-prep" data-write-action="1">Preparando</button>' +
-            '<button type="button" class="btn btn-danger" data-action="k-ready" data-write-action="1">Listo</button>' +
-          '</div>' +
-        '</li>';
-    }).join('');
+    var header = '' +
+      '<div class="kitchen-controls">' +
+        '<div class="kitchen-chips">' +
+          '<button type="button" class="chip' + (mode === 'Pedidos' ? ' is-active' : '') + '" data-kitchen-mode="Pedidos">Pedidos</button>' +
+          '<button type="button" class="chip' + (mode === 'Guarniciones' ? ' is-active' : '') + '" data-kitchen-mode="Guarniciones">Guarniciones</button>' +
+        '</div>' +
+        '<div class="kitchen-chips">' + burgerTypes.map(function (type) {
+          return '<button type="button" class="chip' + (type === burgerFilter ? ' is-active' : '') + '" data-kitchen-burger-filter="' + escapeHtml(type) + '">' + escapeHtml(type) + '</button>';
+        }).join('') + '</div>' +
+      '</div>';
 
-    container.innerHTML = '<ul class="kitchen-list">' + items + '</ul>';
+    if (!filteredOrders.length) {
+      container.innerHTML = header + '<div class="empty-state">Sin pedidos activos en cocina.</div><div class="kitchen-next-preview-empty">Sin siguiente pedido</div>';
+      return;
+    }
+    var main = filteredOrders[0];
+    var next = filteredOrders[1] || null;
+    var guarnicionLista = String(main['Guarnición Lista'] || 'No') === 'Si';
+    var sideReadyChip = guarnicionLista ? '<span class="chip-side-ready">Guarnición</span>' : '';
+    var showSideButton = hasKitchenSides_(main) && !guarnicionLista;
+    var noteBlock = String(main['Nota Interna'] || '').trim() ? '<p><strong>Nota Interna:</strong> ' + escapeHtml(main['Nota Interna']) + '</p>' : '';
+    container.innerHTML = header + '' +
+      '<article class="kitchen-ticket" data-order-id="' + escapeHtml(main['ID Pedido'] || '') + '">' +
+        '<p><strong>ID Pedido:</strong> ' + escapeHtml(main['ID Pedido'] || '-') + ' ' + sideReadyChip + '</p>' +
+        '<p><strong>Nombre:</strong> ' + escapeHtml(main['Nombre'] || '-') + '</p>' +
+        '<p><strong>Estado Pedido:</strong> ' + escapeHtml(main['Estado Pedido'] || '-') + '</p>' +
+        '<p><strong>Hamburguesas:</strong> ' + escapeHtml(main['Hamburguesas'] || '-') + '</p>' +
+        '<p><strong>Extras:</strong> ' + escapeHtml(main['Extras'] || '-') + '</p>' +
+        '<p><strong>Guarniciones:</strong> ' + escapeHtml(main['Guarniciones'] || '-') + '</p>' +
+        noteBlock +
+        '<p><strong>Total:</strong> ' + escapeHtml(formatMoney(main['Total'])) + ' · <strong>Pago:</strong> ' + escapeHtml(main['Estado Pago'] || '-') + '</p>' +
+        '<div class="kitchen-actions">' +
+          '<button type="button" class="btn btn-primary" data-action="k-prep" data-write-action="1">Preparando</button>' +
+          '<button type="button" class="btn btn-danger" data-action="k-ready" data-write-action="1">Listo</button>' +
+          (showSideButton ? '<button type="button" class="btn btn-secondary" data-action="k-side-ready" data-write-action="1">Marcar guarnición lista</button>' : '') +
+        '</div>' +
+      '</article>' +
+      (next ? '<div class="kitchen-next-preview"><strong>Siguiente:</strong> ' + escapeHtml(next['ID Pedido'] || '-') + ' · ' + escapeHtml(next['Nombre'] || '-') + '<br><span class="muted">' + escapeHtml(next['Resumen Pedido'] || '-') + '</span></div>' : '<div class="kitchen-next-preview-empty">Sin siguiente pedido</div>');
+  }
+
+  function getKitchenBurgerTypes_(orders) {
+    var set = { Todos: true };
+    (orders || []).forEach(function (order) {
+      String(order['Hamburguesas'] || '').split('+').forEach(function (item) {
+        var clean = item.replace(/^\s*\d+x\s*/i, '').trim();
+        if (clean) { set[clean] = true; }
+      });
+    });
+    return Object.keys(set);
+  }
+  function matchesKitchenBurgerFilter_(order, filter) {
+    if (filter === 'Todos') { return true; }
+    return String(order['Hamburguesas'] || '').toLowerCase().indexOf(filter.toLowerCase()) !== -1;
+  }
+  function hasKitchenSides_(order) {
+    return String(order['Guarniciones'] || '').trim() !== '';
   }
 
   function openOrderDetail(orderId) {
@@ -1175,14 +1231,27 @@
       var orderId = card.getAttribute('data-order-id');
       var action = button.getAttribute('data-action');
 
-      if (action === 'k-confirm') {
-        updateOrderStatus(orderId, 'Confirmado');
-      }
       if (action === 'k-prep') {
         updateOrderStatus(orderId, 'Preparando');
       }
       if (action === 'k-ready') {
         updateOrderStatus(orderId, 'Listo');
+      }
+      if (action === 'k-side-ready') {
+        markOrderSideReady(orderId);
+      }
+    });
+
+    document.getElementById('kitchenContainer').addEventListener('click', function (event) {
+      var modeChip = event.target.closest('[data-kitchen-mode]');
+      if (modeChip) {
+        APP_STATE.kitchenMode = modeChip.getAttribute('data-kitchen-mode');
+        renderKitchen(APP_STATE.orders);
+      }
+      var filterChip = event.target.closest('[data-kitchen-burger-filter]');
+      if (filterChip) {
+        APP_STATE.kitchenBurgerFilter = filterChip.getAttribute('data-kitchen-burger-filter');
+        renderKitchen(APP_STATE.orders);
       }
     });
 

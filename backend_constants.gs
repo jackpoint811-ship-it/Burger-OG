@@ -30,7 +30,8 @@ var BurgerOGConstants = (function () {
     'Fecha Ticket Enviado',
     'Hora Inicio',
     'Hora Listo',
-    'Última Actualización'
+    'Última Actualización',
+    'Guarnición Lista'
   ];
 
   var MASTER_REQUIRED_COLUMNS = [
@@ -86,7 +87,8 @@ var BurgerOGConstants = (function () {
     ESTADO_PEDIDO: 'Nuevo',
     ESTADO_PAGO: 'Pendiente',
     METODO_PAGO: 'No definido',
-    TICKET_ENVIADO: 'No'
+    TICKET_ENVIADO: 'No',
+    GUARNICION_LISTA: 'No'
   };
 
   var ENVIRONMENTS = {
