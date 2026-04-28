@@ -17,11 +17,16 @@
     font-family: Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
+    overflow-x: hidden;
   }
 
   .app-shell {
-    max-width: 480px;
+    width: min(100%, 1080px);
+    max-width: 1080px;
+    max-height: 1920px;
+    height: min(100vh, 1920px);
     margin: 0 auto;
+    overflow-y: auto;
     min-height: 100vh;
     padding: 12px 12px 88px;
   }
@@ -292,7 +297,8 @@
     right: 0;
     bottom: 0;
     margin: 0 auto;
-    max-width: 480px;
+    width: min(100%, 1080px);
+    max-width: 1080px;
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 6px;
@@ -334,7 +340,8 @@
     left: 0;
     right: 0;
     bottom: 0;
-    max-width: 480px;
+    width: min(100%, 1080px);
+    max-width: 1080px;
     margin: 0 auto;
     background: #fff;
     border-radius: 16px 16px 0 0;
