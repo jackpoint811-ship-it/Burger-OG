@@ -34,9 +34,35 @@ function bogBuildOrderId_(masterRow) {
 function bogToObjectByHeaderMap_(headers, headerMap, row) {
   var obj = {};
   headers.forEach(function (header) {
-    obj[header] = row[headerMap[bogNormalizeHeaderKey_(header)]];
+    obj[header] = bogSerializeSheetValue_(row[headerMap[bogNormalizeHeaderKey_(header)]]);
   });
   return obj;
+}
+
+function bogSerializeSheetValue_(value) {
+  if (value instanceof Date) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(function (item) {
+      return bogSerializeSheetValue_(item);
+    });
+  }
+
+  if (value && typeof value === 'object') {
+    var out = {};
+    Object.keys(value).forEach(function (key) {
+      out[key] = bogSerializeSheetValue_(value[key]);
+    });
+    return out;
+  }
+
+  if (value === undefined) {
+    return '';
+  }
+
+  return value;
 }
 
 function bogTrim_(value) {
