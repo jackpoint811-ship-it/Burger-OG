@@ -241,12 +241,12 @@
     margin-top: 8px;
   }
 
-  .kitchen-actions { grid-template-columns: repeat(3, 1fr); }
+  .kitchen-actions { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
 
   .kitchen-controls { display: grid; gap: 8px; margin-bottom: 10px; }
   .kitchen-chips { display: flex; gap: 8px; flex-wrap: wrap; }
-  .chip { border: 1px solid #ddd; background: #fff; border-radius: 999px; padding: 6px 10px; font-size: 12px; }
-  .chip.is-active { background: #111; color: #fff; border-color: #111; }
+  .kitchen-chips .chip { border: 1px solid #ddd; background: #fff; border-radius: 999px; padding: 6px 10px; font-size: 12px; }
+  .kitchen-chips .chip.is-active { background: #111; color: #fff; border-color: #111; }
   .kitchen-ticket {
     border: 1px dashed #c7c7c7;
     background: #fffdf7;

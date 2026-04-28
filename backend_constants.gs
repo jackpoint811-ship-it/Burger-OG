@@ -19,7 +19,6 @@ var BurgerOGConstants = (function () {
     'Hamburguesas',
     'Extras',
     'Guarniciones',
-    'Guarnición Lista',
     'Total',
     'Estado Pedido',
     'Estado Pago',
@@ -31,7 +30,8 @@ var BurgerOGConstants = (function () {
     'Fecha Ticket Enviado',
     'Hora Inicio',
     'Hora Listo',
-    'Última Actualización'
+    'Última Actualización',
+    'Guarnición Lista'
   ];
 
   var MASTER_REQUIRED_COLUMNS = [
