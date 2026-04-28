@@ -382,3 +382,31 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 - Sin cambios en `legacy/`.
 - Sin migración a hoja `Chekeo` oficial.
 - Hoja activa mantenida en `Chekeo Nuevo`.
+
+---
+
+## 2026-04-28 — Correcciones obligatorias de Fase 5 sobre PR #44 (issue #43)
+
+### Estado
+✅ Correcciones aplicadas. Fase 5 queda lista con documento obligatorio y criterios completos.
+
+### Ajustes realizados
+- Se creó `planning/08-phase-5-ticket-whatsapp.md` con objetivo, alcance, componentes UI, backend consumido, contratos de ticket/WhatsApp, decisiones técnicas, exclusiones, criterios de aceptación y riesgos.
+- Se corrigió canvas del ticket para retirar cualquier fecha/hora (`Generado`) y mantener solo campos permitidos del contrato de cliente.
+- Se añadió texto fijo de ticket: `Gracias por tu pedido`.
+- Se corrigió nombre de descarga a formato `ticket-<ID>.png` con sanitización segura del `ID Pedido`.
+- Se añadió fallback visible de descarga debajo del canvas y también en toast de confirmación.
+- Se implementó normalización de teléfono México para WhatsApp:
+  - 10 dígitos => `52` + 10,
+  - 12 dígitos iniciando en `52` => válido,
+  - cualquier otro caso => error amigable y sin abrir WhatsApp.
+- Se añadió estado visual en detalle de pedido para `Ticket enviado: Si/No` y `Fecha ticket enviado` cuando existe.
+- Se ajustó botón `Marcar ticket enviado` con `data-write-action="1"` para respetar bloqueo visual `loading.write`.
+
+### Restricciones confirmadas
+- Sin envío automático de WhatsApp.
+- Sin adjunto automático de imagen en WhatsApp.
+- Sin `html2canvas`, CDN, frameworks ni librerías externas.
+- Sin cambios en `legacy/`.
+- Sin migración a `Chekeo` oficial.
+- Hoja activa mantenida: `Chekeo Nuevo`.

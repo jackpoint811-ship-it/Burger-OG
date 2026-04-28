@@ -364,6 +364,8 @@
       '<p><strong>Extras:</strong> ' + escapeHtml(order['Extras'] || '-') + '</p>' +
       '<p><strong>Guarniciones:</strong> ' + escapeHtml(order['Guarniciones'] || '-') + '</p>' +
       '<p><strong>Total:</strong> ' + escapeHtml(formatMoney(order['Total'])) + '</p>' +
+      '<p><strong>Ticket enviado:</strong> ' + escapeHtml(order['Ticket Enviado'] || 'No') + '</p>' +
+      (order['Fecha Ticket Enviado'] ? '<p><strong>Fecha ticket enviado:</strong> ' + escapeHtml(order['Fecha Ticket Enviado']) + '</p>' : '') +
       '<p><strong>Estado Pedido:</strong> ' + escapeHtml(order['Estado Pedido'] || '-') + '</p>' +
       '<p><strong>Estado Pago:</strong> ' + escapeHtml(order['Estado Pago'] || '-') + '</p>' +
       '<p><strong>Método Pago:</strong> ' + escapeHtml(order['Método Pago'] || '-') + '</p>' +
@@ -385,11 +387,12 @@
           '<button type="button" class="btn btn-primary" data-action="detail-open-whatsapp">Abrir WhatsApp</button>' +
         '</div>' +
         '<div class="action-row">' +
-          '<button type="button" class="btn btn-secondary" data-action="detail-mark-ticket">Marcar ticket enviado</button>' +
+          '<button type="button" class="btn btn-secondary" data-action="detail-mark-ticket" data-write-action="1">Marcar ticket enviado</button>' +
           '<span></span>' +
         '</div>' +
         '<div class="ticket-canvas-wrap">' +
           '<canvas id="ticketCanvas" width="900" height="1200" aria-label="Vista previa de ticket"></canvas>' +
+          '<p class="ticket-fallback-hint">Si la descarga no funciona, mantén presionada la imagen para guardar o toma captura.</p>' +
         '</div>' +
       '</div>';
 
@@ -462,11 +465,9 @@
     ctx.font = '28px Arial';
     ctx.fillText('Ticket cliente', 44, y);
     y += 46;
-
-    var nowText = new Date().toISOString().slice(0, 16).replace('T', ' ');
     ctx.font = '24px Arial';
     ctx.fillStyle = '#666666';
-    ctx.fillText('Generado: ' + nowText, 44, y);
+    ctx.fillText('Gracias por tu pedido', 44, y);
     y += 26;
     ctx.fillStyle = '#d9deea';
     ctx.fillRect(44, y, w - 88, 2);
@@ -541,9 +542,18 @@
 
     var link = document.createElement('a');
     link.href = canvas.toDataURL('image/png');
-    link.download = (order['ID Pedido'] || 'ticket') + '.png';
+    link.download = buildTicketFileName_(order['ID Pedido']);
     link.click();
-    showToast('Ticket PNG listo para compartir.', 'success');
+    showToast('Ticket PNG listo para compartir. Si falla la descarga, mantén presionada la imagen o toma captura.', 'success');
+  }
+
+  function buildTicketFileName_(orderId) {
+    var safeId = String(orderId || 'SIN-ID')
+      .toUpperCase()
+      .replace(/[^A-Z0-9-_]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    return 'ticket-' + (safeId || 'SIN-ID') + '.png';
   }
 
   function buildWhatsappMessage_(order, bankConfig) {
@@ -575,15 +585,26 @@
       return;
     }
 
-    var phoneRaw = String(order['Teléfono'] || '').replace(/[^\d]/g, '');
-    if (!phoneRaw) {
-      showToast('El pedido no tiene teléfono válido para WhatsApp.', 'error');
+    var normalizedPhone = normalizeWhatsappPhone_(order['Teléfono']);
+    if (!normalizedPhone) {
+      showToast('Teléfono inválido. Usa 10 dígitos MX o 52 + 10 dígitos.', 'error');
       return;
     }
     var message = buildWhatsappMessage_(order, APP_STATE.bankConfig);
-    var url = 'https://wa.me/' + phoneRaw + '?text=' + encodeURIComponent(message);
+    var url = 'https://wa.me/' + normalizedPhone + '?text=' + encodeURIComponent(message);
     window.open(url, '_blank');
     showToast('Se abrió WhatsApp con mensaje precargado.', 'success');
+  }
+
+  function normalizeWhatsappPhone_(phone) {
+    var digits = String(phone || '').replace(/[^\d]/g, '');
+    if (digits.length === 10) {
+      return '52' + digits;
+    }
+    if (digits.length === 12 && digits.indexOf('52') === 0) {
+      return digits;
+    }
+    return '';
   }
 
   function markCurrentOrderTicketSent_() {
