@@ -73,11 +73,19 @@ function bogEnsureChekeoHeaders_(sheet) {
     return bogGetHeaderMap_(BurgerOGConstants.CHEKEO_COLUMNS);
   }
 
-  return bogValidateRequiredHeaders_(
-    currentHeaders,
-    BurgerOGConstants.CHEKEO_REQUIRED_COLUMNS,
-    sheet.getName()
-  );
+  var headerMap = bogGetHeaderMap_(currentHeaders);
+  var missing = BurgerOGConstants.CHEKEO_REQUIRED_COLUMNS.filter(function (requiredHeader) {
+    return headerMap[bogNormalizeHeaderKey_(requiredHeader)] === undefined;
+  });
+
+  if (missing.length) {
+    missing.forEach(function (header) {
+      sheet.getRange(1, sheet.getLastColumn() + 1).setValue(header);
+    });
+    currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  }
+
+  return bogValidateRequiredHeaders_(currentHeaders, BurgerOGConstants.CHEKEO_REQUIRED_COLUMNS, sheet.getName());
 }
 
 function bogEnsureSheetHeaders_(sheet, expectedHeaders) {
@@ -96,6 +104,7 @@ function bogEnsureSheetHeaders_(sheet, expectedHeaders) {
 }
 
 function bogFindChekeoOrderRowById_(sheet, orderId) {
+  bogEnsureChekeoHeaders_(sheet);
   var data = bogReadSheetAsObjects_(sheet, BurgerOGConstants.CHEKEO_REQUIRED_COLUMNS);
   var targetId = bogTrim_(orderId);
 

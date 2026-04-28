@@ -81,6 +81,12 @@ function markOrderPaid(orderId) {
   }, 'Pedido marcado como pagado.');
 }
 
+function markOrderSideReady(orderId) {
+  return bogPublicWrite_(function () {
+    return bogMarkOrderSideReady_(orderId);
+  }, 'Guarnición marcada como lista.');
+}
+
 function updateOrderNotes(orderId, noteInternal, noteClient) {
   return bogPublicWrite_(function () {
     return bogUpdateOrderNotes_(orderId, noteInternal, noteClient);

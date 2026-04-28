@@ -276,6 +276,7 @@ function bogBuildChekeoRowFromMaster_(transformed, masterRowNumber, existingReco
   row['Hamburguesas'] = transformed['Hamburguesas'] || '';
   row['Extras'] = transformed['Extras'] || '';
   row['Guarniciones'] = transformed['Guarniciones'] || '';
+  row['Guarnición Lista'] = (existingRecord && existingRecord['Guarnición Lista']) || BurgerOGConstants.DEFAULTS.GUARNICION_LISTA;
   row['Total'] = transformed['Total'] || 0;
 
   row['Estado Pedido'] = (existingRecord && existingRecord['Estado Pedido']) || transformed['Estado Pedido'] || BurgerOGConstants.DEFAULTS.ESTADO_PEDIDO;
@@ -299,6 +300,7 @@ function bogBuildChekeoRowFromMaster_(transformed, masterRowNumber, existingReco
 function bogGetAppOrders_() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var chekeoSheet = bogGetRequiredSheet_(spreadsheet, bogGetActiveChekeoSheetName_());
+  bogEnsureChekeoHeaders_(chekeoSheet);
   var chekeoData = bogReadSheetAsObjects_(chekeoSheet, BurgerOGConstants.CHEKEO_REQUIRED_COLUMNS);
 
   return chekeoData.rows
@@ -309,8 +311,29 @@ function bogGetAppOrders_() {
 function bogGetOrderDetail_(orderId) {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var chekeoSheet = bogGetRequiredSheet_(spreadsheet, bogGetActiveChekeoSheetName_());
+  bogEnsureChekeoHeaders_(chekeoSheet);
   var found = bogFindChekeoOrderRowById_(chekeoSheet, orderId);
   return found ? found.rowData : null;
+}
+
+function bogMarkOrderSideReady_(orderId) {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, bogGetActiveChekeoSheetName_());
+  bogEnsureChekeoHeaders_(chekeoSheet);
+  var found = bogFindChekeoOrderRowById_(chekeoSheet, orderId);
+  if (!found) {
+    throw new Error('Pedido no encontrado: ' + orderId);
+  }
+
+  bogPatchRowByHeaders_(chekeoSheet, found.rowNumber, found.headerMap, {
+    'Guarnición Lista': 'Si',
+    'Última Actualización': bogNowIso_()
+  });
+
+  return {
+    orderId: orderId,
+    guarnicionLista: 'Si'
+  };
 }
 
 function bogUpdateOrderStatus_(orderId, nextStatus) {

@@ -19,6 +19,7 @@ var BurgerOGConstants = (function () {
     'Hamburguesas',
     'Extras',
     'Guarniciones',
+    'Guarnición Lista',
     'Total',
     'Estado Pedido',
     'Estado Pago',
@@ -86,7 +87,8 @@ var BurgerOGConstants = (function () {
     ESTADO_PEDIDO: 'Nuevo',
     ESTADO_PAGO: 'Pendiente',
     METODO_PAGO: 'No definido',
-    TICKET_ENVIADO: 'No'
+    TICKET_ENVIADO: 'No',
+    GUARNICION_LISTA: 'No'
   };
 
   var ENVIRONMENTS = {
