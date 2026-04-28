@@ -257,3 +257,101 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 
 ### Siguiente fase recomendada
 ➡️ Fase 4 — Pedidos (operación).
+
+---
+
+## 2026-04-27 — Implementación Fase 4 (Pedidos + Cocina)
+
+### Estado
+🟡 Parcial (ajuste requerido en PR #42).
+
+### Cambios backend
+- `healthCheck()` actualizado para reportar `phase: 4` y servicio `Burger-OG Pedidos + Cocina`.
+- Nuevo endpoint público `updateOrderOperationalData(orderId, payload)` para guardar en una sola operación:
+  - estado pedido
+  - estado/método de pago
+  - notas interna/cliente
+  - `Última Actualización`
+  - `Hora Inicio` al pasar a `Preparando` (si estaba vacía)
+  - `Hora Listo` al pasar a `Listo` (si estaba vacía)
+- Se mantiene compatibilidad con endpoints previos (`updateOrderStatus`, `updateOrderPayment`, `markOrderPaid`, `updateOrderNotes`).
+
+### Cambios frontend (mobile-first)
+- Header actualizado a `Fase 4 — Pedidos + Cocina`.
+- Tabs finales de fase:
+  - `Inicio`
+  - `Pedidos`
+  - `Cocina`
+  - `Resumen`
+  - `Ajustes`
+- `Pedidos` ahora permite edición operativa por tarjeta:
+  - `Estado Pedido`, `Estado Pago`, `Método Pago`, `Nota Interna`, `Nota Cliente`.
+  - Acciones: `Guardar pedido` y `Marcar pagado`.
+- `Cocina` ahora muestra pedidos no `Listo` con acciones rápidas:
+  - `Confirmar`
+  - `Preparando`
+  - `Listo`
+- Cada operación refresca automáticamente pedidos + resumen.
+
+### Restricciones respetadas
+- Sin ticket cliente.
+- Sin WhatsApp.
+- Sin migración a `Chekeo` oficial.
+- `Chekeo Nuevo` se mantiene como hoja activa.
+- Sin cambios en `legacy/`.
+- Sin librerías externas ni CDN/frameworks.
+
+
+---
+
+## 2026-04-27 — Correcciones Fase 4 solicitadas en issue #41 (PR #42)
+
+### Estado final
+✅ Fase 4 completada tras correcciones obligatorias.
+
+### Correcciones aplicadas
+- Se implementaron filtros/chips mobile-first en `Pedidos` usando `APP_STATE.orders` en memoria (sin llamada backend por filtro): `Todos`, `Nuevo`, `Confirmado`, `Preparando`, `Listo`, `Pendiente pago`, `Con alerta`.
+- Se implementó modal/drawer de detalle de pedido con cierre explícito y campos completos de lectura:
+  - `ID Pedido`, `Nombre`, `Resumen Pedido`, `Hamburguesas`, `Extras`, `Guarniciones`, `Total`, `Estado Pedido`, `Estado Pago`, `Método Pago`, `Nota Interna`, `Nota Cliente`, `Alerta`.
+- La edición operativa se movió al detalle/modal para mantener tarjetas compactas:
+  - `Estado Pedido`, `Estado Pago`, `Método Pago`, `Nota Interna`, `Nota Cliente`.
+  - Acciones: `Guardar pedido` y `Marcar pagado`.
+- Se corrigió visibilidad de botón `Marcar pagado` para mostrarlo solo cuando `Estado Pago != Pagado`.
+- `Inicio` ahora muestra resumen rápido: pedidos activos, pedidos listos, pedidos pendientes de pago y total pendiente.
+- `Resumen` ahora incluye conteo `Con alerta` calculado desde pedidos cargados.
+- `Ajustes` incluye la nota exacta requerida: `Fase de prueba: no usa Chekeo oficial`.
+
+### Confirmaciones de alcance
+- Sin ticket cliente.
+- Sin WhatsApp.
+- Sin migración a `Chekeo` oficial.
+- `Chekeo Nuevo` se mantiene como hoja activa.
+- Sin cambios en `legacy/`.
+- Sin librerías externas, CDN o frameworks.
+
+---
+
+## 2026-04-27 — Ajuste final PR #42: loading de escrituras
+
+### Estado
+✅ Corrección aplicada.
+
+### Ajuste realizado
+- Se implementó bloqueo `loading.write` en frontend para evitar doble ejecución de escrituras en:
+  - `Guardar pedido`
+  - `Marcar pagado`
+  - `Confirmar`
+  - `Preparando`
+  - `Listo`
+- Mientras hay escritura activa:
+  - no se inicia otra escritura,
+  - botones de acción de escritura quedan deshabilitados,
+  - se muestra feedback de estado (`Guardando...` / `Actualizando...`).
+- Al terminar la operación (éxito o error) se libera `loading.write`.
+- `sync` se mantiene compatible y no inicia durante `loading.write`.
+
+### Alcance mantenido
+- Sin ticket cliente.
+- Sin WhatsApp.
+- Sin migración a `Chekeo` oficial.
+- Sin cambios en `legacy/`.

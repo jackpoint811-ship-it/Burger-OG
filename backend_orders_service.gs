@@ -343,6 +343,79 @@ function bogUpdateOrderStatus_(orderId, nextStatus) {
   return { orderId: orderId, updatedFields: patch };
 }
 
+
+
+function bogUpdateOrderOperationalData_(orderId, payload) {
+  var nextStatus = payload && payload.status;
+  var paymentStatus = payload && payload.paymentStatus;
+  var paymentMethod = payload && payload.paymentMethod;
+
+  if (BurgerOGConstants.ENUMS.ESTADO_PEDIDO.indexOf(nextStatus) === -1) {
+    throw new Error('Estado Pedido inválido: ' + nextStatus);
+  }
+  if (BurgerOGConstants.ENUMS.ESTADO_PAGO.indexOf(paymentStatus) === -1) {
+    throw new Error('Estado Pago inválido: ' + paymentStatus);
+  }
+  if (BurgerOGConstants.ENUMS.METODO_PAGO.indexOf(paymentMethod) === -1) {
+    throw new Error('Método Pago inválido: ' + paymentMethod);
+  }
+
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
+  var found = bogFindChekeoOrderRowById_(chekeoSheet, orderId);
+
+  if (!found) {
+    throw new Error('Pedido no encontrado: ' + orderId);
+  }
+
+  var patch = {
+    'Estado Pedido': nextStatus,
+    'Estado Pago': paymentStatus,
+    'Método Pago': paymentMethod,
+    'Nota Interna': bogTrim_(payload && payload.noteInternal),
+    'Nota Cliente': bogTrim_(payload && payload.noteClient),
+    'Última Actualización': bogNowIso_()
+  };
+
+  if (nextStatus === 'Preparando' && bogTrim_(found.rowData['Hora Inicio']) === '') {
+    patch['Hora Inicio'] = bogNowTimeMx_();
+  }
+
+  if (nextStatus === 'Listo' && bogTrim_(found.rowData['Hora Listo']) === '') {
+    patch['Hora Listo'] = bogNowTimeMx_();
+  }
+
+  bogPatchRowByHeaders_(chekeoSheet, found.rowNumber, found.headerMap, patch);
+  return { orderId: orderId, updatedFields: patch };
+}
+
+function bogUpdateOrderPayment_(orderId, paymentStatus, paymentMethod) {
+  if (BurgerOGConstants.ENUMS.ESTADO_PAGO.indexOf(paymentStatus) === -1) {
+    throw new Error('Estado Pago inválido: ' + paymentStatus);
+  }
+
+  if (BurgerOGConstants.ENUMS.METODO_PAGO.indexOf(paymentMethod) === -1) {
+    throw new Error('Método Pago inválido: ' + paymentMethod);
+  }
+
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var chekeoSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
+  var found = bogFindChekeoOrderRowById_(chekeoSheet, orderId);
+
+  if (!found) {
+    throw new Error('Pedido no encontrado: ' + orderId);
+  }
+
+  var patch = {
+    'Estado Pago': paymentStatus,
+    'Método Pago': paymentMethod,
+    'Última Actualización': bogNowIso_()
+  };
+
+  bogPatchRowByHeaders_(chekeoSheet, found.rowNumber, found.headerMap, patch);
+  return { orderId: orderId, updatedFields: patch };
+}
+
 function bogMarkOrderPaid_(orderId) {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var chekeoSheet = bogGetRequiredSheet_(spreadsheet, BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME);
