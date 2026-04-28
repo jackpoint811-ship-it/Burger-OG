@@ -20,8 +20,8 @@ function include(filename) {
 function healthCheck() {
   return bogPublicRead_(function () {
     return {
-      phase: 5,
-      service: 'Burger-OG Ticket cliente + WhatsApp',
+      phase: 6,
+      service: 'Burger-OG Resumen Pedidos + Historico',
       activeSheet: BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME,
       timestamp: bogNowIso_()
     };
@@ -104,6 +104,31 @@ function getBankConfig() {
   return bogPublicRead_(function () {
     return bogGetBankConfig_();
   }, 'Configuración bancaria obtenida.');
+}
+
+
+function getCloseDayPreview() {
+  return bogPublicRead_(function () {
+    return bogGetCloseDayPreview_();
+  }, 'Preview de cierre obtenido.');
+}
+
+function archiveReadyPaidOrders() {
+  return bogPublicWrite_(function () {
+    return bogArchiveReadyPaidOrders_();
+  }, 'Archivo a Historico completado.');
+}
+
+function closeDay() {
+  return bogPublicWrite_(function () {
+    return bogCloseDay_();
+  }, 'Cierre del día completado.');
+}
+
+function getHistoryOrders(limit) {
+  return bogPublicRead_(function () {
+    return bogGetHistoryOrders_(limit);
+  }, 'Historico obtenido.');
 }
 
 function apiHealth() {

@@ -40,6 +40,25 @@ var BurgerOGConstants = (function () {
 
   var CHEKEO_REQUIRED_COLUMNS = CHEKEO_COLUMNS.slice();
 
+
+  var HISTORY_EXTRA_COLUMNS = [
+    'Fecha Archivo',
+    'Motivo Archivo'
+  ];
+
+  var HISTORY_COLUMNS = CHEKEO_COLUMNS.concat(HISTORY_EXTRA_COLUMNS);
+
+  var SUMMARY_COLUMNS = [
+    'Fecha',
+    'Pedidos Archivados',
+    'Total Archivado',
+    'Total Pagado Archivado',
+    'Total Pendiente Archivado',
+    'Conteo Estado Pedido',
+    'Conteo Estado Pago',
+    'Generado En'
+  ];
+
   var ENUMS = {
     ESTADO_PEDIDO: ['Nuevo', 'Confirmado', 'Preparando', 'Listo'],
     ESTADO_PAGO: ['Pendiente', 'Pagado'],
@@ -59,6 +78,9 @@ var BurgerOGConstants = (function () {
     CHEKEO_COLUMNS: CHEKEO_COLUMNS,
     MASTER_REQUIRED_COLUMNS: MASTER_REQUIRED_COLUMNS,
     CHEKEO_REQUIRED_COLUMNS: CHEKEO_REQUIRED_COLUMNS,
+    HISTORY_EXTRA_COLUMNS: HISTORY_EXTRA_COLUMNS,
+    HISTORY_COLUMNS: HISTORY_COLUMNS,
+    SUMMARY_COLUMNS: SUMMARY_COLUMNS,
     ENUMS: ENUMS,
     DEFAULTS: DEFAULTS,
     SPECIAL_FLAGS_REGEX: /(\(\+1\)|Chequeo Manual)/i

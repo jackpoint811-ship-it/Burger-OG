@@ -12,7 +12,7 @@
       <header class="app-header card">
         <div>
           <p class="eyebrow">Burger-OG</p>
-          <h1>Fase 5 — Ticket cliente + WhatsApp</h1>
+          <h1>Fase 6 — Resumen Pedidos + Historico</h1>
         </div>
         <button id="syncButton" class="btn btn-primary" type="button">Sincronizar</button>
       </header>
@@ -40,6 +40,15 @@
 
         <section id="tab-Resumen" class="card tab-panel is-hidden">
           <h2>Resumen</h2>
+          <div class="action-row">
+            <button id="previewCloseDayButton" class="btn btn-secondary" type="button">Preview cierre</button>
+            <button id="archiveReadyButton" class="btn btn-primary" type="button">Archivar Listo+Pagado</button>
+          </div>
+          <div class="action-row">
+            <button id="closeDayButton" class="btn btn-danger" type="button">Cerrar día</button>
+            <span></span>
+          </div>
+          <div id="closeDayPreview" class="muted"></div>
           <div id="summaryCards" class="summary-grid"></div>
           <div class="summary-lists">
             <div>
@@ -53,6 +62,13 @@
           </div>
         </section>
 
+
+        <section id="tab-Historico" class="card tab-panel is-hidden">
+          <h2>Historico</h2>
+          <p class="muted">Últimos pedidos archivados.</p>
+          <div id="historyContainer">Cargando histórico...</div>
+        </section>
+
         <section id="tab-Ajustes" class="card tab-panel is-hidden">
           <h2>Ajustes</h2>
           <ul class="settings-list">
@@ -60,7 +76,7 @@
             <li><strong>Configuración bancaria:</strong> <span id="bankState">Pendiente</span></li>
             <li><strong>Hoja activa:</strong> Chekeo Nuevo</li>
             <li><strong>Nota:</strong> Fase de prueba: no usa Chekeo oficial</li>
-            <li><strong>Alcance actual:</strong> ticket cliente + enlace a WhatsApp (sin envío automático).</li>
+            <li><strong>Alcance actual:</strong> resumen operativo, cierre diario y archivo a Historico.</li>
           </ul>
         </section>
       </main>
@@ -70,6 +86,7 @@
         <button class="tab-btn" data-tab="Pedidos" type="button">Pedidos</button>
         <button class="tab-btn" data-tab="Cocina" type="button">Cocina</button>
         <button class="tab-btn" data-tab="Resumen" type="button">Resumen</button>
+        <button class="tab-btn" data-tab="Historico" type="button">Historico</button>
         <button class="tab-btn" data-tab="Ajustes" type="button">Ajustes</button>
       </nav>
     </div>

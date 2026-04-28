@@ -410,3 +410,42 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 - Sin cambios en `legacy/`.
 - Sin migración a `Chekeo` oficial.
 - Hoja activa mantenida: `Chekeo Nuevo`.
+
+---
+
+## 2026-04-28 — Implementación Fase 6 (Resumen Pedidos + Historico)
+
+### Estado
+✅ Fase 6 implementada.
+
+### Cambios backend
+- `healthCheck()` actualizado a fase 6 (`Burger-OG Resumen Pedidos + Historico`).
+- Nuevos endpoints públicos:
+  - `getCloseDayPreview()`
+  - `archiveReadyPaidOrders()`
+  - `closeDay()`
+  - `getHistoryOrders(limit)`
+- Archivo a `Historico` con columnas extendidas:
+  - `Fecha Archivo`
+  - `Motivo Archivo`
+- Registro de resumen de cierre en `Resumen Pedidos`.
+- Reglas de archivo/cierre:
+  - Solo archivar `Listo + Pagado`.
+  - Bloquear cierre de día si hay pedidos no elegibles.
+  - Copiar a `Historico` antes de borrar de `Chekeo Nuevo`.
+
+### Cambios frontend
+- Header actualizado a `Fase 6 — Resumen Pedidos + Historico`.
+- Tab `Resumen` con acciones:
+  - Preview de cierre
+  - Archivar `Listo + Pagado`
+  - Cerrar día
+- Confirmación previa para archivar y cerrar día.
+- Tab nuevo `Historico` con lista básica de pedidos archivados.
+
+### Restricciones respetadas
+- Sin migración a `Chekeo` oficial (`Chekeo Nuevo` se mantiene activo).
+- Sin cambios en `legacy/`.
+- Sin librerías externas/CDN/frameworks.
+- Sin uso de `alert()`.
+

@@ -8,7 +8,9 @@
     bankConfigOk: false,
     bankConfig: null,
     activeOrdersFilter: 'all',
-    detailOrderId: ''
+    detailOrderId: '',
+    closePreview: null,
+    history: []
   };
 
   var ORDER_STATUS_OPTIONS = ['Nuevo', 'Confirmado', 'Preparando', 'Listo'];
@@ -32,6 +34,8 @@
     loadSummary();
     loadOrders();
     loadBankConfig();
+    loadHistory();
+    loadCloseDayPreview();
   }
 
   function setActiveTab(tabName) {
@@ -82,6 +86,43 @@
         renderError(error);
       })
       .getDailySummary();
+  }
+
+
+  function loadCloseDayPreview() {
+    setLoading('close-preview', true);
+    google.script.run
+      .withSuccessHandler(function (response) {
+        setLoading('close-preview', false);
+        if (!response || !response.ok) {
+          return renderError(response && response.error ? response.error : { message: 'getCloseDayPreview falló.' });
+        }
+        APP_STATE.closePreview = response.data || null;
+        renderCloseDayPreview();
+      })
+      .withFailureHandler(function (error) {
+        setLoading('close-preview', false);
+        renderError(error);
+      })
+      .getCloseDayPreview();
+  }
+
+  function loadHistory() {
+    setLoading('history', true);
+    google.script.run
+      .withSuccessHandler(function (response) {
+        setLoading('history', false);
+        if (!response || !response.ok) {
+          return renderError(response && response.error ? response.error : { message: 'getHistoryOrders falló.' });
+        }
+        APP_STATE.history = response.data || [];
+        renderHistory(APP_STATE.history);
+      })
+      .withFailureHandler(function (error) {
+        setLoading('history', false);
+        renderError(error);
+      })
+      .getHistoryOrders(30);
   }
 
   function loadOrders() {
@@ -164,6 +205,52 @@
       .getBankConfig();
   }
 
+
+  function archiveReadyPaidOrders() {
+    var preview = APP_STATE.closePreview;
+    var eligibleCount = preview ? Number(preview.eligibleCount || 0) : 0;
+    if (!eligibleCount) {
+      showToast('No hay pedidos Listo + Pagado para archivar.', 'info');
+      return;
+    }
+
+    if (!window.confirm('Se archivarán ' + eligibleCount + ' pedidos Listo + Pagado en Historico. ¿Continuar?')) {
+      return;
+    }
+
+    if (!beginWrite_('Archivando pedidos...')) {
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(handleWriteSuccess_)
+      .withFailureHandler(renderError)
+      .archiveReadyPaidOrders();
+  }
+
+  function closeDay() {
+    var preview = APP_STATE.closePreview;
+    var blockedCount = preview ? Number(preview.blockedCount || 0) : 0;
+
+    if (blockedCount > 0) {
+      showToast('No se puede cerrar día: hay pedidos no Listo + Pagado.', 'error');
+      return;
+    }
+
+    if (!window.confirm('Esto archivará pedidos Listo+Pagado y guardará resumen diario. ¿Cerrar día?')) {
+      return;
+    }
+
+    if (!beginWrite_('Cerrando día...')) {
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(handleWriteSuccess_)
+      .withFailureHandler(renderError)
+      .closeDay();
+  }
+
   function beginWrite_(message) {
     if (APP_STATE.loading.write) {
       showToast('Espera a que termine la operación actual.', 'info');
@@ -220,6 +307,8 @@
   function reloadOperationalData() {
     loadOrders();
     loadSummary();
+    loadCloseDayPreview();
+    loadHistory();
   }
 
   function setLoading(key, value) {
@@ -232,6 +321,13 @@
   function updateActionButtonsState_() {
     var isSyncLocked = Boolean(APP_STATE.loading.sync || APP_STATE.loading.write);
     document.getElementById('syncButton').disabled = isSyncLocked;
+
+    var archiveBtn = document.getElementById('archiveReadyButton');
+    var closeBtn = document.getElementById('closeDayButton');
+    var previewBtn = document.getElementById('previewCloseDayButton');
+    if (archiveBtn) { archiveBtn.disabled = isSyncLocked; }
+    if (closeBtn) { closeBtn.disabled = isSyncLocked; }
+    if (previewBtn) { previewBtn.disabled = isSyncLocked; }
 
     var disableWrite = Boolean(APP_STATE.loading.write);
     Array.prototype.slice.call(document.querySelectorAll('[data-write-action]')).forEach(function (button) {
@@ -621,6 +717,45 @@
     closeOrderDetail();
   }
 
+
+  function renderCloseDayPreview() {
+    var container = document.getElementById('closeDayPreview');
+    var preview = APP_STATE.closePreview;
+    if (!preview) {
+      container.textContent = 'Sin preview de cierre.';
+      return;
+    }
+
+    var blockedText = Number(preview.blockedCount || 0) > 0
+      ? ' · Bloqueados: ' + Number(preview.blockedCount || 0)
+      : '';
+
+    container.textContent =
+      'Elegibles para archivo: ' + Number(preview.eligibleCount || 0) +
+      blockedText +
+      ' · Total archivo: ' + formatMoney(preview.archiveSummary && preview.archiveSummary.totalVendido || 0);
+  }
+
+  function renderHistory(historyOrders) {
+    var container = document.getElementById('historyContainer');
+    var items = historyOrders || [];
+    if (!items.length) {
+      container.innerHTML = '<div class="empty-state">No hay pedidos archivados todavía.</div>';
+      return;
+    }
+
+    container.innerHTML = '<ul class="history-list">' + items.map(function (order) {
+      return '' +
+        '<li class="history-item">' +
+          '<p><strong>' + escapeHtml(order['ID Pedido'] || '-') + '</strong> <span class="pill">Archivado: ' + escapeHtml(order['Fecha Archivo'] || '-') + '</span></p>' +
+          '<p><strong>Nombre:</strong> ' + escapeHtml(order['Nombre'] || '-') + '</p>' +
+          '<p><strong>Resumen:</strong> ' + escapeHtml(order['Resumen Pedido'] || '-') + '</p>' +
+          '<p><strong>Total:</strong> ' + escapeHtml(formatMoney(order['Total'])) + '</p>' +
+          '<p><strong>Estado final:</strong> ' + escapeHtml(order['Estado Pedido'] || '-') + ' · ' + escapeHtml(order['Estado Pago'] || '-') + '</p>' +
+        '</li>';
+    }).join('') + '</ul>';
+  }
+
   function renderHomeQuickSummary(orders, summary) {
     var totalOrders = orders || [];
     var activeOrders = totalOrders.filter(function (order) {
@@ -744,6 +879,9 @@
 
   function bindEvents() {
     document.getElementById('syncButton').addEventListener('click', syncOrders);
+    document.getElementById('previewCloseDayButton').addEventListener('click', loadCloseDayPreview);
+    document.getElementById('archiveReadyButton').addEventListener('click', archiveReadyPaidOrders);
+    document.getElementById('closeDayButton').addEventListener('click', closeDay);
 
     Array.prototype.slice.call(document.querySelectorAll('.tab-btn')).forEach(function (btn) {
       btn.addEventListener('click', function () {
