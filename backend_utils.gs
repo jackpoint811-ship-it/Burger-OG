@@ -218,3 +218,16 @@ function bogUniqueNonEmpty_(items) {
   });
   return out;
 }
+
+function bogNowDateParts_() {
+  var now = new Date();
+  return {
+    fecha: Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd'),
+    hora: Utilities.formatDate(now, Session.getScriptTimeZone(), 'HH:mm:ss'),
+    compact: Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyyMMdd-HHmmss')
+  };
+}
+
+function bogBuildCorteId_() {
+  return 'CORTE-' + bogNowDateParts_().compact;
+}

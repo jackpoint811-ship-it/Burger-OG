@@ -6,6 +6,14 @@ function bogGetRequiredSheet_(spreadsheet, sheetName) {
   return sheet;
 }
 
+function bogGetOrCreateSheet_(spreadsheet, sheetName) {
+  var sheet = spreadsheet.getSheetByName(sheetName);
+  if (sheet) {
+    return sheet;
+  }
+  return spreadsheet.insertSheet(sheetName);
+}
+
 function bogGetHeaderMap_(headers) {
   var map = {};
   headers.forEach(function (header, index) {
@@ -72,6 +80,21 @@ function bogEnsureChekeoHeaders_(sheet) {
   );
 }
 
+function bogEnsureSheetHeaders_(sheet, expectedHeaders) {
+  var lastColumn = Math.max(sheet.getLastColumn(), expectedHeaders.length);
+  var currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  var hasAnyHeader = currentHeaders.some(function (value) {
+    return bogTrim_(value) !== '';
+  });
+
+  if (!hasAnyHeader) {
+    sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
+    return bogGetHeaderMap_(expectedHeaders);
+  }
+
+  return bogValidateRequiredHeaders_(currentHeaders, expectedHeaders, sheet.getName());
+}
+
 function bogFindChekeoOrderRowById_(sheet, orderId) {
   var data = bogReadSheetAsObjects_(sheet, BurgerOGConstants.CHEKEO_REQUIRED_COLUMNS);
   var targetId = bogTrim_(orderId);
@@ -111,4 +134,15 @@ function bogBuildRowByHeaderMap_(headers, headerMap, record) {
     }
   });
   return row;
+}
+
+function bogDeleteRowsDescending_(sheet, rowNumbers) {
+  var sorted = rowNumbers
+    .filter(function (num) { return Number(num) > 1; })
+    .slice()
+    .sort(function (a, b) { return b - a; });
+
+  sorted.forEach(function (rowNumber) {
+    sheet.deleteRow(rowNumber);
+  });
 }

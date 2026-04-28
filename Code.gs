@@ -20,8 +20,8 @@ function include(filename) {
 function healthCheck() {
   return bogPublicRead_(function () {
     return {
-      phase: 5,
-      service: 'Burger-OG Ticket cliente + WhatsApp',
+      phase: 6,
+      service: 'Burger-OG Resumen Pedidos + Historico',
       activeSheet: BurgerOGConstants.SHEETS.CHEKEO_ACTIVE_SHEET_NAME,
       timestamp: bogNowIso_()
     };
@@ -61,8 +61,6 @@ function updateOrderStatus(orderId, nextStatus) {
     return bogUpdateOrderStatus_(orderId, nextStatus);
   }, 'Estado de pedido actualizado.');
 }
-
-
 
 function updateOrderOperationalData(orderId, payload) {
   return bogPublicWrite_(function () {
@@ -104,6 +102,46 @@ function getBankConfig() {
   return bogPublicRead_(function () {
     return bogGetBankConfig_();
   }, 'Configuración bancaria obtenida.');
+}
+
+function getCloseDayPreview() {
+  return bogPublicRead_(function () {
+    return bogGetCloseDayPreview_();
+  }, 'Preview de cierre obtenido.');
+}
+
+function writeDailySummary() {
+  return bogPublicWrite_(function () {
+    return bogWriteDailySummary_();
+  }, 'Resumen de corte guardado.');
+}
+
+function archiveCompletedOrders() {
+  return bogPublicWrite_(function () {
+    return bogArchiveCompletedOrders_();
+  }, 'Archivo de pedidos completados ejecutado.');
+}
+
+function closeDay() {
+  return bogPublicWrite_(function () {
+    return bogCloseDay_();
+  }, 'Cierre del día completado.');
+}
+
+function getHistoryPreview() {
+  return bogPublicRead_(function () {
+    return bogGetHistoryPreview_();
+  }, 'Preview de historico obtenido.');
+}
+
+function archiveReadyPaidOrders() {
+  return archiveCompletedOrders();
+}
+
+function getHistoryOrders(limit) {
+  return bogPublicRead_(function () {
+    return bogGetHistoryOrders_(limit);
+  }, 'Historico obtenido.');
 }
 
 function apiHealth() {

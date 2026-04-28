@@ -8,7 +8,10 @@
     bankConfigOk: false,
     bankConfig: null,
     activeOrdersFilter: 'all',
-    detailOrderId: ''
+    detailOrderId: '',
+    closePreview: null,
+    history: [],
+    confirmAction: null
   };
 
   var ORDER_STATUS_OPTIONS = ['Nuevo', 'Confirmado', 'Preparando', 'Listo'];
@@ -32,6 +35,8 @@
     loadSummary();
     loadOrders();
     loadBankConfig();
+    loadHistoryPreview();
+    loadCloseDayPreview();
   }
 
   function setActiveTab(tabName) {
@@ -82,6 +87,43 @@
         renderError(error);
       })
       .getDailySummary();
+  }
+
+
+  function loadCloseDayPreview() {
+    setLoading('close-preview', true);
+    google.script.run
+      .withSuccessHandler(function (response) {
+        setLoading('close-preview', false);
+        if (!response || !response.ok) {
+          return renderError(response && response.error ? response.error : { message: 'getCloseDayPreview falló.' });
+        }
+        APP_STATE.closePreview = response.data || null;
+        renderCloseDayPreview();
+      })
+      .withFailureHandler(function (error) {
+        setLoading('close-preview', false);
+        renderError(error);
+      })
+      .getCloseDayPreview();
+  }
+
+  function loadHistoryPreview() {
+    setLoading('history', true);
+    google.script.run
+      .withSuccessHandler(function (response) {
+        setLoading('history', false);
+        if (!response || !response.ok) {
+          return renderError(response && response.error ? response.error : { message: 'getHistoryPreview falló.' });
+        }
+        APP_STATE.history = response.data || {};
+        renderHistoryPreview(APP_STATE.history);
+      })
+      .withFailureHandler(function (error) {
+        setLoading('history', false);
+        renderError(error);
+      })
+      .getHistoryPreview();
   }
 
   function loadOrders() {
@@ -164,6 +206,60 @@
       .getBankConfig();
   }
 
+
+  function archiveCompletedOrders() {
+    var preview = APP_STATE.closePreview;
+    var eligibleCount = preview ? Number(preview.pedidosArchivables || 0) : 0;
+    if (!eligibleCount) {
+      showToast('No hay pedidos Listo + Pagado para archivar.', 'info');
+      return;
+    }
+
+    openConfirmModal_(
+      'Se archivarán ' + eligibleCount + ' pedidos Listo + Pagado en Historico. ¿Continuar?',
+      function () {
+        if (!beginWrite_('Archivando pedidos...')) {
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(handleWriteSuccess_)
+          .withFailureHandler(renderError)
+          .archiveCompletedOrders();
+      }
+    );
+  }
+
+  function closeDay() {
+    var preview = APP_STATE.closePreview;
+    openConfirmModal_(
+      'Esto guardará resumen y archivará pedidos Listo + Pagado. ¿Cerrar día?',
+      function () {
+        if (!beginWrite_('Cerrando día...')) {
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(handleWriteSuccess_)
+          .withFailureHandler(renderError)
+          .closeDay();
+      }
+    );
+  }
+
+
+
+  function writeDailySummary() {
+    if (!beginWrite_('Guardando resumen de corte...')) {
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(handleWriteSuccess_)
+      .withFailureHandler(renderError)
+      .writeDailySummary();
+  }
+
   function beginWrite_(message) {
     if (APP_STATE.loading.write) {
       showToast('Espera a que termine la operación actual.', 'info');
@@ -220,6 +316,8 @@
   function reloadOperationalData() {
     loadOrders();
     loadSummary();
+    loadCloseDayPreview();
+    loadHistoryPreview();
   }
 
   function setLoading(key, value) {
@@ -232,6 +330,15 @@
   function updateActionButtonsState_() {
     var isSyncLocked = Boolean(APP_STATE.loading.sync || APP_STATE.loading.write);
     document.getElementById('syncButton').disabled = isSyncLocked;
+
+    var archiveBtn = document.getElementById('archiveCompletedButton');
+    var closeBtn = document.getElementById('closeDayButton');
+    var previewBtn = document.getElementById('refreshClosePreviewButton');
+    var summaryBtn = document.getElementById('saveSummaryButton');
+    if (archiveBtn) { archiveBtn.disabled = isSyncLocked; }
+    if (closeBtn) { closeBtn.disabled = isSyncLocked; }
+    if (previewBtn) { previewBtn.disabled = isSyncLocked; }
+    if (summaryBtn) { summaryBtn.disabled = isSyncLocked; }
 
     var disableWrite = Boolean(APP_STATE.loading.write);
     Array.prototype.slice.call(document.querySelectorAll('[data-write-action]')).forEach(function (button) {
@@ -621,6 +728,92 @@
     closeOrderDetail();
   }
 
+
+  function renderCloseDayPreview() {
+    var meta = document.getElementById('closePreviewMeta');
+    var warn = document.getElementById('closePreviewWarnings');
+    var preview = APP_STATE.closePreview;
+
+    if (!preview) {
+      meta.textContent = 'Sin preview de cierre.';
+      warn.innerHTML = '';
+      document.getElementById('archivablesList').innerHTML = '<div class="empty-state">Sin datos.</div>';
+      document.getElementById('nonArchivableList').innerHTML = '<div class="empty-state">Sin datos.</div>';
+      return;
+    }
+
+    meta.textContent =
+      'Total pedidos: ' + Number(preview.totalPedidos || 0) +
+      ' · Archivables: ' + Number(preview.pedidosArchivables || 0) +
+      ' · No archivables: ' + Number(preview.pedidosNoArchivables || 0);
+
+    warn.innerHTML = [
+      summaryCard('Con alerta', Number(preview.conAlerta || 0)),
+      summaryCard('Sin ticket enviado', Number(preview.sinTicketEnviado || 0)),
+      summaryCard('Listo + pendiente pago', Number(preview.listosPendientesPago || 0)),
+      summaryCard('Pagado + no listo', Number(preview.pagadosNoListos || 0))
+    ].join('');
+
+    var archivables = preview.archivables || [];
+    if (!archivables.length) {
+      document.getElementById('archivablesList').innerHTML = '<div class="empty-state">No hay pedidos archivables.</div>';
+    } else {
+      document.getElementById('archivablesList').innerHTML = '<ul class="compact-list">' + archivables.map(function (order) {
+        return '<li class="compact-item">' +
+          '<strong>' + escapeHtml(order['ID Pedido'] || '-') + '</strong> · ' + escapeHtml(order['Nombre'] || '-') + '<br>' +
+          'Total: ' + escapeHtml(formatMoney(order['Total'])) + ' · Estado: ' + escapeHtml(order['Estado Pedido'] || '-') + ' / ' + escapeHtml(order['Estado Pago'] || '-') + '<br>' +
+          'Ticket: ' + escapeHtml(order['Ticket Enviado'] || 'No') + ' · Alerta: ' + escapeHtml(order['Alerta'] || '-') +
+        '</li>';
+      }).join('') + '</ul>';
+    }
+
+    var noArchivables = preview.noArchivables || [];
+    if (!noArchivables.length) {
+      document.getElementById('nonArchivableList').innerHTML = '<div class="empty-state">No hay pendientes.</div>';
+    } else {
+      document.getElementById('nonArchivableList').innerHTML = '<ul class="compact-list">' + noArchivables.map(function (order) {
+        return '<li class="compact-item warning-card">' +
+          '<strong>' + escapeHtml(order['ID Pedido'] || '-') + '</strong> · ' + escapeHtml(order['Nombre'] || '-') + '<br>' +
+          escapeHtml(order.razon || 'Pendiente de completar') +
+        '</li>';
+      }).join('') + '</ul>';
+    }
+  }
+
+  function renderHistoryPreview(historyPreview) {
+    var data = historyPreview || {};
+    document.getElementById('historyMeta').textContent =
+      'Total historico: ' + Number(data.totalHistorico || 0) +
+      ' · Total vendido histórico: ' + formatMoney(data.totalVendidoHistorico || 0);
+
+    var orders = data.ultimosPedidosArchivados || [];
+    if (!orders.length) {
+      document.getElementById('historyContainer').innerHTML = '<div class="empty-state">Sin pedidos archivados.</div>';
+    } else {
+      document.getElementById('historyContainer').innerHTML = '<ul class="history-list">' + orders.map(function (order) {
+        return '<li class="history-item">' +
+          '<p><strong>' + escapeHtml(order['ID Pedido'] || '-') + '</strong> <span class="pill">' + escapeHtml(order['Corte ID'] || '-') + '</span></p>' +
+          '<p><strong>Nombre:</strong> ' + escapeHtml(order['Nombre'] || '-') + '</p>' +
+          '<p><strong>Total:</strong> ' + escapeHtml(formatMoney(order['Total'])) + '</p>' +
+          '<p><strong>Archivado:</strong> ' + escapeHtml(order['Fecha Archivado'] || '-') + ' ' + escapeHtml(order['Hora Archivado'] || '-') + '</p>' +
+        '</li>';
+      }).join('') + '</ul>';
+    }
+
+    var cuts = data.ultimosCortes || [];
+    if (!cuts.length) {
+      document.getElementById('historyCutsContainer').innerHTML = '<div class="empty-state">Sin cortes registrados.</div>';
+    } else {
+      document.getElementById('historyCutsContainer').innerHTML = '<ul class="compact-list">' + cuts.map(function (cut) {
+        return '<li class="compact-item">' +
+          '<strong>' + escapeHtml(cut.corteId || '-') + '</strong><br>' +
+          'Pedidos: ' + escapeHtml(cut.pedidos || 0) + ' · Total: ' + escapeHtml(formatMoney(cut.total || 0)) + '<br>' +
+          'Referencia: ' + escapeHtml(cut.fechaArchivado || '-') + ' ' + escapeHtml(cut.horaArchivado || '-') +
+        '</li>';
+      }).join('') + '</ul>';
+    }
+  }
+
   function renderHomeQuickSummary(orders, summary) {
     var totalOrders = orders || [];
     var activeOrders = totalOrders.filter(function (order) {
@@ -742,8 +935,32 @@
       .replace(/'/g, '&#39;');
   }
 
+
+  function openConfirmModal_(message, onConfirm) {
+    APP_STATE.confirmAction = onConfirm;
+    document.getElementById('confirmMessage').textContent = message || '¿Deseas continuar?';
+    document.getElementById('confirmModal').classList.remove('is-hidden');
+  }
+
+  function closeConfirmModal_() {
+    APP_STATE.confirmAction = null;
+    document.getElementById('confirmModal').classList.add('is-hidden');
+  }
+
+  function confirmModalAccept_() {
+    var action = APP_STATE.confirmAction;
+    closeConfirmModal_();
+    if (typeof action === 'function') {
+      action();
+    }
+  }
+
   function bindEvents() {
     document.getElementById('syncButton').addEventListener('click', syncOrders);
+    document.getElementById('refreshClosePreviewButton').addEventListener('click', loadCloseDayPreview);
+    document.getElementById('saveSummaryButton').addEventListener('click', writeDailySummary);
+    document.getElementById('archiveCompletedButton').addEventListener('click', archiveCompletedOrders);
+    document.getElementById('closeDayButton').addEventListener('click', closeDay);
 
     Array.prototype.slice.call(document.querySelectorAll('.tab-btn')).forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -837,6 +1054,13 @@
     });
 
     document.getElementById('closeDetailButton').addEventListener('click', closeOrderDetail);
+    document.getElementById('confirmCancelButton').addEventListener('click', closeConfirmModal_);
+    document.getElementById('confirmOkButton').addEventListener('click', confirmModalAccept_);
+    document.getElementById('confirmModal').addEventListener('click', function (event) {
+      if (event.target.closest('[data-action="close-confirm"]')) {
+        closeConfirmModal_();
+      }
+    });
   }
 
   document.addEventListener('DOMContentLoaded', initApp);

@@ -410,3 +410,96 @@ Este ajuste corresponde exclusivamente a documentación de Fase 0 previa a merge
 - Sin cambios en `legacy/`.
 - Sin migración a `Chekeo` oficial.
 - Hoja activa mantenida: `Chekeo Nuevo`.
+
+---
+
+## 2026-04-28 — Implementación Fase 6 (Resumen Pedidos + Historico)
+
+### Estado
+✅ Fase 6 implementada.
+
+### Cambios backend
+- `healthCheck()` actualizado a fase 6 (`Burger-OG Resumen Pedidos + Historico`).
+- Nuevos endpoints públicos:
+  - `getCloseDayPreview()`
+  - `archiveReadyPaidOrders()`
+  - `closeDay()`
+  - `getHistoryOrders(limit)`
+- Archivo a `Historico` con columnas extendidas:
+  - `Fecha Archivo`
+  - `Motivo Archivo`
+- Registro de resumen de cierre en `Resumen Pedidos`.
+- Reglas de archivo/cierre:
+  - Solo archivar `Listo + Pagado`.
+  - Bloquear cierre de día si hay pedidos no elegibles.
+  - Copiar a `Historico` antes de borrar de `Chekeo Nuevo`.
+
+### Cambios frontend
+- Header actualizado a `Fase 6 — Resumen Pedidos + Historico`.
+- Tab `Resumen` con acciones:
+  - Preview de cierre
+  - Archivar `Listo + Pagado`
+  - Cerrar día
+- Confirmación previa para archivar y cerrar día.
+- Tab nuevo `Historico` con lista básica de pedidos archivados.
+
+### Restricciones respetadas
+- Sin migración a `Chekeo` oficial (`Chekeo Nuevo` se mantiene activo).
+- Sin cambios en `legacy/`.
+- Sin librerías externas/CDN/frameworks.
+- Sin uso de `alert()`.
+
+
+---
+
+## 2026-04-28 — Corrección Fase 6 según issue #45 (PR #46 en ajuste)
+
+### Estado
+🟡 En ajuste (no cerrar fase hasta validación completa del issue #45).
+
+### Correcciones aplicadas
+- Documento de fase renombrado al nombre exacto solicitado:
+  - `planning/09-phase-6-summary-history.md`
+- Wrappers públicos ajustados a nombres exactos:
+  - `getCloseDayPreview()`
+  - `writeDailySummary()`
+  - `archiveCompletedOrders()`
+  - `closeDay()`
+  - `getHistoryPreview()`
+- Se conservan aliases de compatibilidad:
+  - `archiveReadyPaidOrders()`
+  - `getHistoryOrders(limit)`
+- Contrato `Historico` actualizado:
+  - todas las columnas de `Chekeo Nuevo`
+  - `Fecha Archivado`
+  - `Hora Archivado`
+  - `Corte ID`
+  - `Motivo Archivo` solo como extra opcional
+- Contrato `Resumen Pedidos` actualizado con columnas requeridas del issue #45.
+- Se agregó helper seguro `bogGetOrCreateSheet_()` y se usa para crear/asegurar:
+  - `Historico`
+  - `Resumen Pedidos`
+- `getCloseDayPreview()` ahora devuelve métricas completas, archivables y no archivables con razón.
+- `writeDailySummary()` escribe corte sin forzar archivado.
+- `archiveCompletedOrders()` evita duplicados por `ID Pedido`, copia primero y elimina después (de abajo hacia arriba).
+- `closeDay()` ejecuta flujo:
+  1) preview inicial
+  2) resumen
+  3) archivo de completados
+  4) preview final
+  y no bloquea por no archivables.
+- UI corregida con:
+  - preview detallado,
+  - listas de archivables/no archivables,
+  - advertencias (`Con alerta`, `Sin ticket enviado`),
+  - histórico básico y últimos cortes,
+  - botones requeridos,
+  - confirmación por modal simple propio (sin `alert()`).
+
+### Restricciones respetadas
+- Sin tocar `legacy/`.
+- Sin migración a `Chekeo` oficial.
+- `Chekeo Nuevo` se mantiene como hoja activa.
+- Sin librerías externas/CDN/frameworks.
+- Escrituras protegidas por `LockService` mediante wrappers públicos.
+
