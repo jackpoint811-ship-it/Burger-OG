@@ -12,7 +12,7 @@
       <header class="app-header card">
         <div>
           <p class="eyebrow">Burger-OG</p>
-          <h1>Fase 7 — Migración a producción (segura)</h1>
+          <h1 id="appHeaderTitle">Panel de pedidos</h1>
         </div>
         <button id="syncButton" class="btn btn-primary" type="button">Sincronizar</button>
       </header>
@@ -23,7 +23,7 @@
         <section id="tab-Inicio" class="card tab-panel">
           <h2>Inicio</h2>
           <p id="healthStatus">Cargando estado backend...</p>
-          <p class="muted">Hoja activa esperada: <strong>Chekeo Nuevo</strong></p>
+          <p class="muted">Operación diaria Burger-OG</p>
           <div id="homeQuickSummary" class="quick-summary"></div>
         </section>
 
@@ -39,7 +39,7 @@
         </section>
 
         <section id="tab-Resumen" class="card tab-panel is-hidden">
-          <h2>Cierre y Resumen</h2>
+          <h2>Cierre</h2>
           <div class="action-row action-row-single-mobile">
             <button id="refreshClosePreviewButton" class="btn btn-secondary" type="button">Actualizar preview</button>
             <button id="saveSummaryButton" class="btn btn-secondary" type="button">Guardar resumen</button>
@@ -73,10 +73,8 @@
               <ul id="paymentStatusCount"></ul>
             </div>
           </div>
-        </section>
-
-        <section id="tab-Historico" class="card tab-panel is-hidden">
-          <h2>Historico</h2>
+          <div class="summary-divider"></div>
+          <h3>Historico básico</h3>
           <div id="historyMeta" class="muted">Cargando histórico...</div>
           <div class="summary-lists">
             <div>
@@ -90,14 +88,14 @@
           </div>
         </section>
 
-        <section id="tab-Ajustes" class="card tab-panel is-hidden">
-          <h2>Ajustes</h2>
+        <section id="tab-Ajustes" class="card tab-panel is-hidden" data-view="admin">
+          <h2>Admin</h2>
           <ul class="settings-list">
             <li><strong>Estado backend:</strong> <span id="backendState">Pendiente</span></li>
             <li><strong>Configuración bancaria:</strong> <span id="bankState">Pendiente</span></li>
             <li><strong>Entorno activo:</strong> <span id="activeEnvironmentState">TEST</span></li>
             <li><strong>Hoja activa:</strong> <span id="activeSheetState">Chekeo Nuevo</span></li>
-            <li><strong>Nota:</strong> Default seguro en modo prueba (sin activación automática de producción).</li>
+            <li><strong>Diagnóstico:</strong> Vista técnica para mantenimiento y migración segura.</li>
             <li><strong>Confirmaciones:</strong> Modal propio simple para acciones destructivas (sin alert()).</li>
           </ul>
           <div class="summary-divider"></div>
@@ -124,9 +122,8 @@
         <button class="tab-btn is-active" data-tab="Inicio" type="button">Inicio</button>
         <button class="tab-btn" data-tab="Pedidos" type="button">Pedidos</button>
         <button class="tab-btn" data-tab="Cocina" type="button">Cocina</button>
-        <button class="tab-btn" data-tab="Resumen" type="button">Resumen</button>
-        <button class="tab-btn" data-tab="Historico" type="button">Historico</button>
-        <button class="tab-btn" data-tab="Ajustes" type="button">Ajustes</button>
+        <button class="tab-btn" data-tab="Resumen" type="button">Cierre</button>
+        <button class="tab-btn" data-tab="Ajustes" data-view="admin" type="button">Admin</button>
       </nav>
     </div>
 

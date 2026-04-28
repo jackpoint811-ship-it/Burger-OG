@@ -13,7 +13,8 @@
     history: [],
     confirmAction: null,
     productionValidation: null,
-    migrationPreview: null
+    migrationPreview: null,
+    viewMode: 'operativo'
   };
 
   var PRODUCTION_CHECKLIST_ITEMS = [
@@ -45,6 +46,8 @@
   ];
 
   function initApp() {
+    APP_STATE.viewMode = resolveViewMode_();
+    applyViewMode_();
     bindEvents();
     setActiveTab('Inicio');
     renderOrderFilters();
@@ -54,12 +57,38 @@
     loadBankConfig();
     loadHistoryPreview();
     loadCloseDayPreview();
-    renderProductionChecklist_();
-    loadProductionValidation();
-    loadProductionMigrationPreview();
+    if (APP_STATE.viewMode === 'admin') {
+      renderProductionChecklist_();
+      loadProductionValidation();
+      loadProductionMigrationPreview();
+    }
+  }
+
+  function resolveViewMode_() {
+    var params = new URLSearchParams(window.location.search || '');
+    var view = String(params.get('view') || '').toLowerCase();
+    return view === 'admin' ? 'admin' : 'operativo';
+  }
+
+  function applyViewMode_() {
+    var isAdmin = APP_STATE.viewMode === 'admin';
+    var title = document.getElementById('appHeaderTitle');
+    title.textContent = isAdmin ? 'Panel admin técnico' : 'Panel de pedidos';
+
+    Array.prototype.slice.call(document.querySelectorAll('[data-view="admin"]')).forEach(function (el) {
+      el.classList.toggle('is-hidden', !isAdmin);
+    });
+
+    if (!isAdmin && APP_STATE.activeTab === 'Ajustes') {
+      APP_STATE.activeTab = 'Inicio';
+    }
   }
 
   function setActiveTab(tabName) {
+    var isAdmin = APP_STATE.viewMode === 'admin';
+    if (!isAdmin && tabName === 'Ajustes') {
+      tabName = 'Inicio';
+    }
     APP_STATE.activeTab = tabName;
     Array.prototype.slice.call(document.querySelectorAll('.tab-btn')).forEach(function (btn) {
       btn.classList.toggle('is-active', btn.getAttribute('data-tab') === tabName);
@@ -80,7 +109,7 @@
         }
         APP_STATE.health = response.data || {};
         document.getElementById('healthStatus').textContent =
-          'Backend OK · Fase ' + APP_STATE.health.phase + ' · Hoja: ' + (APP_STATE.health.activeSheet || 'N/D');
+          'Backend OK · Hoja activa: ' + (APP_STATE.health.activeSheet || 'N/D');
         document.getElementById('backendState').textContent = 'Operativo';
         document.getElementById('activeEnvironmentState').textContent = APP_STATE.health.activeEnvironment || 'TEST';
         document.getElementById('activeSheetState').textContent = APP_STATE.health.activeSheet || 'Chekeo Nuevo';
@@ -229,6 +258,9 @@
   }
 
   function loadProductionValidation() {
+    if (APP_STATE.viewMode !== 'admin') {
+      return;
+    }
     setLoading('production-validation', true);
     google.script.run
       .withSuccessHandler(function (response) {
@@ -249,6 +281,9 @@
   }
 
   function loadProductionMigrationPreview() {
+    if (APP_STATE.viewMode !== 'admin') {
+      return;
+    }
     setLoading('migration-preview', true);
     google.script.run
       .withSuccessHandler(function (response) {
@@ -269,6 +304,9 @@
   }
 
   function prepareProductionSheets() {
+    if (APP_STATE.viewMode !== 'admin') {
+      return;
+    }
     openConfirmModal_(
       'Se validarán/crearán encabezados en Chekeo sin mover ni borrar datos. ¿Continuar?',
       function () {

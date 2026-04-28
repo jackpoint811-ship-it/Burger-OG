@@ -1,5 +1,36 @@
 # 03 — Phase Log
 
+## 2026-04-28 — Refinamiento post-producción UI final (Operativo/Admin)
+
+### Estado
+✅ Refinamiento visual aplicado sin cambios de lógica de negocio.
+
+### Cambios aplicados
+- UI separada por vista:
+  - URL normal/sin parámetro => **Operativo**.
+  - `?view=admin` => **Admin**.
+- Vista Operativo (default) limpia:
+  - Header: `Burger-OG` / `Panel de pedidos`.
+  - Tabs operativas: `Inicio`, `Pedidos`, `Cocina`, `Cierre`.
+  - Sin exposición de Fase 7 ni bloque técnico de migración/checklist.
+- Vista Admin:
+  - Concentración de estado backend, entorno activo, hoja activa, configuración bancaria, validación de producción, preview, preparación de hojas y checklist/rollback.
+- Optimización de llamadas:
+  - En Operativo no se ejecutan automáticamente `validateProductionReadiness()` ni `getProductionMigrationPreview()`.
+  - Solo se ejecutan en vista Admin o por acciones de botones Admin.
+- Documentación:
+  - Nuevo documento `planning/12-final-ui-admin-operativo.md`.
+  - `README.md` actualizado con estrategia de vistas por URL.
+
+### Restricciones respetadas
+- Sin cambios en lógica de negocio.
+- Sin cambios en `BOG_ACTIVE_ENV`.
+- Sin tocar `legacy/`.
+- Sin librerías externas/CDN/frameworks.
+- Sin `alert()`.
+
+---
+
 ## 2026-04-28 — Implementación Fase 7 (Migración a producción segura)
 
 ### Estado final

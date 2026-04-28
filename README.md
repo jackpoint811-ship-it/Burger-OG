@@ -43,3 +43,8 @@ La app usa `ScriptProperties` con la clave `BOG_ACTIVE_ENV`:
 - No borrar: `Chekeo Nuevo`, `Chekeo`, `Historico`, `Resumen Pedidos`.
 - No activar producción automáticamente.
 - No migrar datos automáticamente.
+
+## Vistas de la Web App final
+- URL normal (sin parámetros): **Vista Operativo**.
+- URL con `?view=admin`: **Vista Admin**.
+- La vista Admin es únicamente visual/técnica para mantenimiento; **no es autenticación real ni control de acceso**.
