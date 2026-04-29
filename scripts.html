@@ -774,7 +774,7 @@
   function getTicketCanvas_() {
     if (!APP_STATE.ticketCanvas) {
       APP_STATE.ticketCanvas = document.createElement('canvas');
-      APP_STATE.ticketCanvas.width = 520;
+      APP_STATE.ticketCanvas.width = 720;
       APP_STATE.ticketCanvas.height = 1200;
     }
     return APP_STATE.ticketCanvas;
@@ -792,17 +792,20 @@
   }
 
   function buildTicketCanvasLayout_(fields, ctx, canvasWidth) {
-    var padX = 34;
+    var padX = 46;
     var width = canvasWidth - (padX * 2);
-    var y = 42;
+    var y = 62;
     var blocks = [];
     var fonts = {
-      title: 'bold 36px "Courier New", monospace',
-      subtitle: 'bold 21px "Courier New", monospace',
-      body: '20px "Courier New", monospace',
-      section: 'bold 19px "Courier New", monospace',
-      total: 'bold 30px "Courier New", monospace',
-      footer: 'bold 18px "Courier New", monospace'
+      brand: '700 48px Arial, "Helvetica Neue", sans-serif',
+      subtitle: '600 24px Arial, "Helvetica Neue", sans-serif',
+      meta: '500 18px Arial, "Helvetica Neue", sans-serif',
+      label: '700 18px Arial, "Helvetica Neue", sans-serif',
+      body: '400 22px Arial, "Helvetica Neue", sans-serif',
+      section: '700 17px Arial, "Helvetica Neue", sans-serif',
+      totalLabel: '700 21px Arial, "Helvetica Neue", sans-serif',
+      totalValue: '700 40px Arial, "Helvetica Neue", sans-serif',
+      footer: '600 20px Arial, "Helvetica Neue", sans-serif'
     };
 
     function pushCentered(text, font, color, gapAfter) {
@@ -814,38 +817,64 @@
       blocks.push({ type: 'divider', x: padX, y: y, width: width });
       y += (gapBottom || 0);
     }
-    function pushField(label, value) {
-      var lines = splitTicketFieldLines_(ctx, label, value, width, fonts.body);
-      blocks.push({ type: 'field', lines: lines, x: padX, y: y, width: width, font: fonts.body });
-      y += (lines.length * 27) + 5;
+    function pushField(label, value, options) {
+      var opts = options || {};
+      var lines = splitTicketFieldLines_(ctx, label, value, width, opts.valueFont || fonts.body, opts.listStyle);
+      blocks.push({
+        type: 'field',
+        lines: lines,
+        x: padX,
+        y: y,
+        width: width,
+        labelFont: opts.labelFont || fonts.label,
+        valueFont: opts.valueFont || fonts.body,
+        rowGap: opts.rowGap || 30
+      });
+      y += (lines.length * (opts.rowGap || 30)) + 8;
     }
     function pushSection(title) {
       blocks.push({ type: 'section', text: title, x: padX, y: y, width: width, font: fonts.section });
-      y += 28;
+      y += 30;
+    }
+    function hasTicketContent(value) {
+      var normalized = String(value || '').replace(/\s+/g, ' ').trim();
+      return normalized && normalized !== '-' && normalized !== '—' && normalized.toLowerCase() !== 'n/a';
     }
 
-    pushCentered('BURGER-OG', fonts.title, '#111111', 4);
-    pushCentered('TICKET CLIENTE', fonts.subtitle, '#111111', 0);
-    pushCentered('ID ' + (fields.orderId || '-'), fonts.body, '#4b5563', 6);
-    pushDivider(10, 16);
-    pushField('CLIENTE', fields.name);
-    pushField('PAGO', fields.payment || 'Pendiente');
-    pushDivider(6, 14);
-    pushSection('RESUMEN PEDIDO');
-    pushField('PRODUCTOS', fields.summary);
-    pushField('HAMBURGUESAS', fields.burgers);
-    pushField('EXTRAS', fields.extras);
-    pushField('GUARNICIONES', fields.sides);
-    if (fields.noteClient) {
+    blocks.push({ type: 'header', x: padX, y: y, width: width, height: 154, orderId: fields.orderId });
+    y += 154 + 24;
+    pushField('Cliente', fields.name, { rowGap: 32 });
+    pushField('Pago', fields.payment || 'Pendiente', { rowGap: 32 });
+    pushDivider(8, 16);
+    pushSection('RESUMEN DEL PEDIDO');
+    pushField('Productos', fields.summary, { listStyle: true });
+    pushField('Hamburguesas', fields.burgers, { listStyle: true });
+    if (hasTicketContent(fields.extras)) {
+      pushField('Extras', fields.extras, { listStyle: true });
+    }
+    if (hasTicketContent(fields.sides)) {
+      pushField('Guarniciones', fields.sides, { listStyle: true });
+    }
+    if (hasTicketContent(fields.noteClient)) {
       pushSection('NOTA CLIENTE');
-      pushField('NOTA', fields.noteClient);
+      pushField('Nota', fields.noteClient);
     }
     pushDivider(8, 18);
-    blocks.push({ type: 'total', label: 'TOTAL', value: fields.total, x: padX, y: y, width: width, font: fonts.total });
-    y += 46;
+    blocks.push({
+      type: 'total',
+      label: 'Total',
+      value: fields.total,
+      x: padX,
+      y: y,
+      width: width,
+      labelFont: fonts.totalLabel,
+      valueFont: fonts.totalValue
+    });
+    y += 110;
     pushDivider(8, 16);
-    pushCentered('GRACIAS POR TU COMPRA', fonts.footer, '#1f2937', 0);
-    pushCentered('Conserva este ticket', '17px "Courier New", monospace', '#4b5563', 2);
+    pushCentered('Gracias por tu compra', fonts.footer, '#111111', 6);
+    pushCentered('Burger OG', fonts.meta, '#374151', 2);
+    pushCentered('Conserva este ticket', '500 16px Arial, "Helvetica Neue", sans-serif', '#6b7280', 2);
 
     return { width: canvasWidth, height: Math.max(420, y + 34), blocks: blocks };
   }
@@ -854,6 +883,8 @@
     layout.blocks.forEach(function (block) {
       if (block.type === 'center') {
         drawTicketCenteredText_(ctx, block.text, block.y, block.font, block.color, block.x, block.width);
+      } else if (block.type === 'header') {
+        drawTicketBrandHeader_(ctx, block);
       } else if (block.type === 'divider') {
         drawTicketDashedDivider_(ctx, block.x, block.y, block.width);
       } else if (block.type === 'field') {
@@ -869,11 +900,25 @@
   }
 
   function drawTicketFieldBlock_(ctx, block) {
-    ctx.font = block.font;
-    ctx.fillStyle = '#111111';
+    var rowGap = block.rowGap || 30;
     block.lines.forEach(function (line, index) {
-      ctx.fillText((index === 0 ? '- ' : '  ') + line, block.x, block.y + (index * 27));
+      ctx.font = index === 0 ? block.labelFont : block.valueFont;
+      ctx.fillStyle = index === 0 ? '#111111' : '#1f2937';
+      ctx.fillText(line, block.x, block.y + (index * rowGap));
     });
+  }
+
+  function drawTicketBrandHeader_(ctx, block) {
+    var x = block.x;
+    var y = block.y;
+    var w = block.width;
+    var h = block.height;
+    roundRectCanvasPath_(ctx, x, y, w, h, 18);
+    ctx.fillStyle = '#111111';
+    ctx.fill();
+    drawTicketCenteredText_(ctx, 'BURGER OG', y + 58, '700 48px Arial, "Helvetica Neue", sans-serif', '#ffffff', x, w);
+    drawTicketCenteredText_(ctx, 'Ticket de pedido', y + 92, '600 24px Arial, "Helvetica Neue", sans-serif', '#f3f4f6', x, w);
+    drawTicketCenteredText_(ctx, 'ID ' + (block.orderId || '-'), y + 124, '500 18px Arial, "Helvetica Neue", sans-serif', '#d1d5db', x, w);
   }
 
   function drawTicketCenteredText_(ctx, text, y, font, color, x, width) {
@@ -888,9 +933,9 @@
 
   function drawTicketDashedDivider_(ctx, x, y, width) {
     ctx.save();
-    ctx.strokeStyle = '#6b7280';
-    ctx.lineWidth = 1.6;
-    ctx.setLineDash([4, 6]);
+    ctx.strokeStyle = '#d1d5db';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([3, 5]);
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x + width, y);
@@ -900,24 +945,29 @@
   }
 
   function drawTicketTotal_(ctx, block) {
-    ctx.font = block.font;
+    roundRectCanvasPath_(ctx, block.x, block.y - 42, block.width, 94, 14);
     ctx.fillStyle = '#111111';
-    ctx.fillText(block.label, block.x, block.y);
+    ctx.fill();
+    ctx.font = block.labelFont;
+    ctx.fillStyle = '#f3f4f6';
+    ctx.fillText(String(block.label || 'Total').toUpperCase(), block.x + 18, block.y - 8);
     var totalText = String(block.value || '-');
+    ctx.font = block.valueFont;
     var textWidth = ctx.measureText(totalText).width;
-    ctx.fillText(totalText, block.x + block.width - textWidth, block.y);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(totalText, block.x + block.width - textWidth - 18, block.y + 26);
   }
 
-  function splitTicketFieldLines_(ctx, label, value, maxWidth, font) {
-    ctx.font = font;
+  function splitTicketFieldLines_(ctx, label, value, maxWidth, font, listStyle) {
+    ctx.font = font || '400 22px Arial, "Helvetica Neue", sans-serif';
     var safeValue = String(value || '-').trim() || '-';
-    var prefix = String(label || '').trim() + ': ';
-    var bulletPrefix = '- ';
-    var continuationPrefix = '  ';
-    var firstLineAvailable = Math.max(80, maxWidth - ctx.measureText(bulletPrefix + prefix).width);
-    var continuationAvailable = Math.max(80, maxWidth - ctx.measureText(continuationPrefix).width);
+    var prefix = String(label || '').trim() + ':';
+    var lines = [prefix];
+    var bulletPrefix = listStyle ? '• ' : '';
+    var continuationPrefix = listStyle ? '  ' : '';
+    var firstLineAvailable = Math.max(110, maxWidth - ctx.measureText(bulletPrefix).width);
+    var continuationAvailable = Math.max(110, maxWidth - ctx.measureText(continuationPrefix).width);
     var words = safeValue.split(/\s+/);
-    var lines = [];
     var currentLine = '';
     var currentMax = firstLineAvailable;
 
@@ -936,9 +986,13 @@
       lines.push(currentLine);
     }
     if (!lines.length) {
-      lines = ['-'];
+      lines = [prefix, '-'];
+      return lines;
     }
-    lines[0] = prefix + lines[0];
+    lines = lines.map(function (lineText, index) {
+      return (index === 0 ? bulletPrefix : continuationPrefix) + lineText;
+    });
+    lines.unshift(prefix);
     return lines;
   }
 
@@ -950,21 +1004,34 @@
   }
 
   function drawTicketPaperBackground_(ctx, w, h) {
-    ctx.fillStyle = '#fffef8';
+    ctx.fillStyle = '#f3f4f6';
     ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = 'rgba(40,40,40,0.025)';
-    for (var i = 0; i < 1200; i += 1) {
-      var rx = (i * 37) % w;
-      var ry = (i * 53) % h;
-      ctx.fillRect(rx, ry, 1, 1);
-    }
-    ctx.strokeStyle = 'rgba(17, 24, 39, 0.22)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(1, 1, w - 2, h - 2);
-    ctx.fillStyle = 'rgba(17,24,39,0.14)';
-    for (var x = 0; x < w; x += 16) {
-      ctx.fillRect(x, h - 3, 8, 2);
-    }
+    var margin = 18;
+    var cardX = margin;
+    var cardY = margin;
+    var cardW = w - (margin * 2);
+    var cardH = h - (margin * 2);
+    roundRectCanvasPath_(ctx, cardX, cardY, cardW, cardH, 20);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#d1d5db';
+    ctx.stroke();
+  }
+
+  function roundRectCanvasPath_(ctx, x, y, width, height, radius) {
+    var r = Math.min(radius || 0, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + width - r, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+    ctx.lineTo(x + width, y + height - r);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    ctx.lineTo(x + r, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
   }
 
   function wrapCanvasText_(ctx, text, maxWidth) {
