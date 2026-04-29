@@ -37,9 +37,14 @@ function bogReadPublishedPricesMap_(spreadsheet) {
       return;
     }
 
+    var rawPrice = row.data['Precio'];
+    if (rawPrice === null || rawPrice === undefined || bogTrim_(rawPrice) === '') {
+      return;
+    }
+
     var amount;
     try {
-      amount = bogNormalizeMoney_(row.data['Precio']);
+      amount = bogNormalizeMoney_(rawPrice);
     } catch (err) {
       return;
     }
