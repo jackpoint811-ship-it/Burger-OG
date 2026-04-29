@@ -582,23 +582,47 @@
     var main = filteredOrders[0];
     var next = filteredOrders[1] || null;
     var guarnicionLista = String(main['Guarnición Lista'] || 'No') === 'Si';
-    var sideReadyChip = guarnicionLista ? '<span class="chip-side-ready">Guarnición</span>' : '';
-    var noteBlock = String(main['Nota Interna'] || '').trim() ? '<p><strong>Nota Interna:</strong> ' + escapeHtml(main['Nota Interna']) + '</p>' : '';
+    var sideReadyChip = guarnicionLista ? '<span class="chip-side-ready">Guarnición lista</span>' : '';
+    var burgersBlock = buildKitchenSectionBlock_('Hamburguesas', main['Hamburguesas'], true);
+    var extrasBlock = buildKitchenSectionBlock_('Extras', main['Extras'], false);
+    var sidesBlock = buildKitchenSectionBlock_('Guarniciones', main['Guarniciones'], false);
+    var noteBlock = String(main['Nota Interna'] || '').trim() ? '<div class="kitchen-note"><strong>Nota interna</strong><p>' + escapeHtml(main['Nota Interna']) + '</p></div>' : '';
     container.innerHTML = header + '' +
       '<article class="kitchen-ticket" data-order-id="' + escapeHtml(main['ID Pedido'] || '') + '">' +
-        '<p><strong>ID Pedido:</strong> ' + escapeHtml(main['ID Pedido'] || '-') + ' ' + sideReadyChip + '</p>' +
-        '<p><strong>Nombre:</strong> ' + escapeHtml(main['Nombre'] || '-') + '</p>' +
-        '<p><strong>Estado Pedido:</strong> ' + escapeHtml(main['Estado Pedido'] || '-') + '</p>' +
-        '<p><strong>Hamburguesas:</strong> ' + escapeHtml(main['Hamburguesas'] || '-') + '</p>' +
-        '<p><strong>Extras:</strong> ' + escapeHtml(main['Extras'] || '-') + '</p>' +
-        '<p><strong>Guarniciones:</strong> ' + escapeHtml(main['Guarniciones'] || '-') + '</p>' +
+        '<div class="kitchen-ticket-header">' +
+          '<p class="kitchen-customer">' + escapeHtml(main['Nombre'] || 'Sin nombre') + '</p>' +
+          '<div class="kitchen-subhead"><span>' + escapeHtml(main['Estado Pedido'] || '-') + '</span>' + sideReadyChip + '</div>' +
+        '</div>' +
+        burgersBlock +
+        extrasBlock +
+        sidesBlock +
         noteBlock +
-        '<p><strong>Total:</strong> ' + escapeHtml(formatMoney(main['Total'])) + ' · <strong>Pago:</strong> ' + escapeHtml(main['Estado Pago'] || '-') + '</p>' +
         '<div class="kitchen-actions">' +
-          '<button type="button" class="btn btn-danger" data-action="k-ready" data-write-action="1">Listo</button>' +
+          '<button type="button" class="btn btn-primary" data-action="k-ready" data-write-action="1">Listo</button>' +
         '</div>' +
       '</article>' +
-      (next ? '<div class="kitchen-next-preview"><strong>Siguiente:</strong> ' + escapeHtml(next['ID Pedido'] || '-') + ' · ' + escapeHtml(next['Nombre'] || '-') + '<br><span class="muted">' + escapeHtml(next['Resumen Pedido'] || '-') + '</span></div>' : '<div class="kitchen-next-preview-empty">Sin siguiente pedido</div>');
+      (next ? '<div class="kitchen-next-preview"><strong>Siguiente</strong><p class="kitchen-next-name">' + escapeHtml(next['Nombre'] || 'Sin nombre') + '</p><span class="muted">' + escapeHtml(next['Resumen Pedido'] || '-') + '</span></div>' : '<div class="kitchen-next-preview-empty">Sin siguiente pedido</div>');
+  }
+
+  function buildKitchenSectionBlock_(label, value, alwaysShow) {
+    var items = splitKitchenItems_(value);
+    if (!items.length && !alwaysShow) { return ''; }
+    var content = items.length
+      ? '<ul class="kitchen-section-list">' + items.map(function (item) {
+          return '<li>' + escapeHtml(item) + '</li>';
+        }).join('') + '</ul>'
+      : '<p class="muted">Sin items</p>';
+    return '<section class="kitchen-section"><h4>' + escapeHtml(label) + '</h4>' + content + '</section>';
+  }
+
+  function splitKitchenItems_(value) {
+    var raw = String(value || '').trim();
+    if (!raw || raw === '-') { return []; }
+    return raw.split('+').map(function (item) {
+      return String(item || '').trim();
+    }).filter(function (item) {
+      return item && item !== '-';
+    });
   }
 
   function getKitchenBurgerTypes_(orders) {
