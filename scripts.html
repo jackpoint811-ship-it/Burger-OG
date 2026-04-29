@@ -750,93 +750,172 @@
   function getTicketCanvas_() {
     if (!APP_STATE.ticketCanvas) {
       APP_STATE.ticketCanvas = document.createElement('canvas');
-      APP_STATE.ticketCanvas.width = 760;
-      APP_STATE.ticketCanvas.height = 1500;
+      APP_STATE.ticketCanvas.width = 520;
+      APP_STATE.ticketCanvas.height = 1200;
     }
     return APP_STATE.ticketCanvas;
   }
 
   function renderTicketCanvas_(order) {
     var canvas = getTicketCanvas_();
-
     var ctx = canvas.getContext('2d');
     var fields = getClientTicketFields_(order);
-    var w = canvas.width;
-    var h = canvas.height;
-    var padX = 58;
-    var bodyWidth = w - (padX * 2);
-    var y = 74;
+    var layout = buildTicketCanvasLayout_(fields, ctx, canvas.width);
+    canvas.height = layout.height;
+    ctx = canvas.getContext('2d');
+    drawTicketPaperBackground_(ctx, canvas.width, canvas.height);
+    drawTicketLayout_(ctx, layout);
+  }
 
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#111111';
+  function buildTicketCanvasLayout_(fields, ctx, canvasWidth) {
+    var padX = 34;
+    var width = canvasWidth - (padX * 2);
+    var y = 42;
+    var blocks = [];
+    var fonts = {
+      title: 'bold 36px "Courier New", monospace',
+      subtitle: 'bold 21px "Courier New", monospace',
+      body: '20px "Courier New", monospace',
+      section: 'bold 19px "Courier New", monospace',
+      total: 'bold 30px "Courier New", monospace',
+      footer: 'bold 18px "Courier New", monospace'
+    };
 
-    y = drawTicketCenteredText_(ctx, 'BURGER-OG', y, 'bold 43px "Courier New", monospace');
-    y = drawTicketCenteredText_(ctx, 'TICKET CLIENTE', y + 6, 'bold 28px "Courier New", monospace');
-    y = drawTicketCenteredText_(ctx, 'Gracias por tu pedido', y + 10, '22px "Courier New", monospace', '#4b5563');
-
-    y += 20;
-    y = drawTicketDashedDivider_(ctx, padX, y, bodyWidth);
-    y += 18;
-
-    y = drawTicketLine_(ctx, 'ID Pedido', fields.orderId, y, padX, bodyWidth);
-    y = drawTicketLine_(ctx, 'Cliente', fields.name, y, padX, bodyWidth);
-    y = drawTicketLine_(ctx, 'Productos', fields.summary, y, padX, bodyWidth);
-    y = drawTicketLine_(ctx, 'Hamburguesas', fields.burgers, y, padX, bodyWidth);
-    y = drawTicketLine_(ctx, 'Extras', fields.extras, y, padX, bodyWidth);
-    y = drawTicketLine_(ctx, 'Guarniciones', fields.sides, y, padX, bodyWidth);
-    y = drawTicketLine_(ctx, 'Pago', fields.payment || 'Pendiente', y, padX, bodyWidth);
-
-    if (fields.noteClient) {
-      y = drawTicketLine_(ctx, 'Notas', fields.noteClient, y, padX, bodyWidth);
+    function pushCentered(text, font, color, gapAfter) {
+      blocks.push({ type: 'center', text: text, x: padX, y: y, width: width, font: font, color: color });
+      y += getLineHeightForFont_(font) + (gapAfter || 0);
+    }
+    function pushDivider(gapTop, gapBottom) {
+      y += gapTop || 0;
+      blocks.push({ type: 'divider', x: padX, y: y, width: width });
+      y += (gapBottom || 0);
+    }
+    function pushField(label, value) {
+      var lines = splitTicketFieldLines_(ctx, label, value, width, fonts.body);
+      blocks.push({ type: 'field', lines: lines, x: padX, y: y, width: width, font: fonts.body });
+      y += (lines.length * 27) + 5;
+    }
+    function pushSection(title) {
+      blocks.push({ type: 'section', text: title, x: padX, y: y, width: width, font: fonts.section });
+      y += 28;
     }
 
-    y += 8;
-    y = drawTicketDashedDivider_(ctx, padX, y, bodyWidth);
-    y += 38;
+    pushCentered('BURGER-OG', fonts.title, '#111111', 4);
+    pushCentered('TICKET CLIENTE', fonts.subtitle, '#111111', 0);
+    pushCentered('ID ' + (fields.orderId || '-'), fonts.body, '#4b5563', 6);
+    pushDivider(10, 16);
+    pushField('CLIENTE', fields.name);
+    pushField('PAGO', fields.payment || 'Pendiente');
+    pushDivider(6, 14);
+    pushSection('RESUMEN PEDIDO');
+    pushField('PRODUCTOS', fields.summary);
+    pushField('HAMBURGUESAS', fields.burgers);
+    pushField('EXTRAS', fields.extras);
+    pushField('GUARNICIONES', fields.sides);
+    if (fields.noteClient) {
+      pushSection('NOTA CLIENTE');
+      pushField('NOTA', fields.noteClient);
+    }
+    pushDivider(8, 18);
+    blocks.push({ type: 'total', label: 'TOTAL', value: fields.total, x: padX, y: y, width: width, font: fonts.total });
+    y += 46;
+    pushDivider(8, 16);
+    pushCentered('GRACIAS POR TU COMPRA', fonts.footer, '#1f2937', 0);
+    pushCentered('Conserva este ticket', '17px "Courier New", monospace', '#4b5563', 2);
 
-    ctx.fillStyle = '#111111';
-    ctx.font = 'bold 42px "Courier New", monospace';
-    ctx.fillText('TOTAL: ' + fields.total, padX, y);
-
-    y += 42;
-    y = drawTicketDashedDivider_(ctx, padX, y, bodyWidth);
-    y = drawTicketCenteredText_(ctx, 'Conserva este ticket', y + 26, '20px "Courier New", monospace', '#374151');
+    return { width: canvasWidth, height: Math.max(420, y + 34), blocks: blocks };
   }
 
-  function drawTicketLine_(ctx, label, value, y, x, width) {
-    var safeValue = String(value || '-');
-    var content = label + ': ' + safeValue;
-    ctx.font = '24px "Courier New", monospace';
-    var lines = wrapCanvasText_(ctx, content, width);
-    ctx.fillStyle = '#111111';
-    lines.forEach(function (line) {
-      ctx.fillText(line, x, y);
-      y += 32;
+  function drawTicketLayout_(ctx, layout) {
+    layout.blocks.forEach(function (block) {
+      if (block.type === 'center') {
+        drawTicketCenteredText_(ctx, block.text, block.y, block.font, block.color, block.x, block.width);
+      } else if (block.type === 'divider') {
+        drawTicketDashedDivider_(ctx, block.x, block.y, block.width);
+      } else if (block.type === 'field') {
+        drawTicketFieldBlock_(ctx, block);
+      } else if (block.type === 'section') {
+        ctx.fillStyle = '#111111';
+        ctx.font = block.font;
+        ctx.fillText(block.text, block.x, block.y);
+      } else if (block.type === 'total') {
+        drawTicketTotal_(ctx, block);
+      }
     });
-    return y + 2;
   }
 
-  function drawTicketCenteredText_(ctx, text, y, font, color) {
+  function drawTicketFieldBlock_(ctx, block) {
+    ctx.font = block.font;
+    ctx.fillStyle = '#111111';
+    block.lines.forEach(function (line, index) {
+      ctx.fillText((index === 0 ? '- ' : '  ') + line, block.x, block.y + (index * 27));
+    });
+  }
+
+  function drawTicketCenteredText_(ctx, text, y, font, color, x, width) {
     ctx.font = font;
     ctx.fillStyle = color || '#111111';
     var textWidth = ctx.measureText(text).width;
-    var x = (ctx.canvas.width - textWidth) / 2;
-    ctx.fillText(text, x, y);
+    var left = typeof x === 'number' ? x : 0;
+    var areaWidth = width || ctx.canvas.width;
+    ctx.fillText(text, left + ((areaWidth - textWidth) / 2), y);
     return y + 30;
   }
 
   function drawTicketDashedDivider_(ctx, x, y, width) {
     ctx.save();
     ctx.strokeStyle = '#6b7280';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([10, 8]);
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([4, 6]);
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x + width, y);
     ctx.stroke();
     ctx.restore();
     return y;
+  }
+
+  function drawTicketTotal_(ctx, block) {
+    ctx.font = block.font;
+    ctx.fillStyle = '#111111';
+    ctx.fillText(block.label, block.x, block.y);
+    var totalText = String(block.value || '-');
+    var textWidth = ctx.measureText(totalText).width;
+    ctx.fillText(totalText, block.x + block.width - textWidth, block.y);
+  }
+
+  function splitTicketFieldLines_(ctx, label, value, maxWidth, font) {
+    ctx.font = font;
+    var safeValue = String(value || '-').trim() || '-';
+    var prefix = String(label || '').trim() + ': ';
+    var valueLines = wrapCanvasText_(ctx, safeValue, maxWidth - 32);
+    valueLines[0] = prefix + valueLines[0];
+    return valueLines;
+  }
+
+  function getLineHeightForFont_(font) {
+    if (String(font).indexOf('36px') >= 0) return 42;
+    if (String(font).indexOf('30px') >= 0) return 36;
+    if (String(font).indexOf('21px') >= 0) return 28;
+    return 26;
+  }
+
+  function drawTicketPaperBackground_(ctx, w, h) {
+    ctx.fillStyle = '#fffef8';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = 'rgba(40,40,40,0.025)';
+    for (var i = 0; i < 1200; i += 1) {
+      var rx = (i * 37) % w;
+      var ry = (i * 53) % h;
+      ctx.fillRect(rx, ry, 1, 1);
+    }
+    ctx.strokeStyle = 'rgba(17, 24, 39, 0.22)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(1, 1, w - 2, h - 2);
+    ctx.fillStyle = 'rgba(17,24,39,0.14)';
+    for (var x = 0; x < w; x += 16) {
+      ctx.fillRect(x, h - 3, 8, 2);
+    }
   }
 
   function wrapCanvasText_(ctx, text, maxWidth) {
