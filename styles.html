@@ -35,9 +35,13 @@
     margin: 0 auto;
     overflow-y: visible;
     padding: 6px 6px calc(64px + env(safe-area-inset-bottom));
-    display: grid;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     gap: 8px;
   }
+
+  .content { display: grid; gap: 8px; }
 
   .card,
   .orders-item,
@@ -55,6 +59,7 @@
   }
 
   .app-header {
+    flex: 0 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
