@@ -888,9 +888,34 @@
     ctx.font = font;
     var safeValue = String(value || '-').trim() || '-';
     var prefix = String(label || '').trim() + ': ';
-    var valueLines = wrapCanvasText_(ctx, safeValue, maxWidth - 32);
-    valueLines[0] = prefix + valueLines[0];
-    return valueLines;
+    var bulletPrefix = '- ';
+    var continuationPrefix = '  ';
+    var firstLineAvailable = Math.max(80, maxWidth - ctx.measureText(bulletPrefix + prefix).width);
+    var continuationAvailable = Math.max(80, maxWidth - ctx.measureText(continuationPrefix).width);
+    var words = safeValue.split(/\s+/);
+    var lines = [];
+    var currentLine = '';
+    var currentMax = firstLineAvailable;
+
+    words.forEach(function (word) {
+      var candidate = currentLine ? (currentLine + ' ' + word) : word;
+      if (ctx.measureText(candidate).width <= currentMax || !currentLine) {
+        currentLine = candidate;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+        currentMax = continuationAvailable;
+      }
+    });
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    if (!lines.length) {
+      lines = ['-'];
+    }
+    lines[0] = prefix + lines[0];
+    return lines;
   }
 
   function getLineHeightForFont_(font) {
