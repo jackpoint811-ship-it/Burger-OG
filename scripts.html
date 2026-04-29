@@ -557,14 +557,14 @@
       }
 
       container.innerHTML = header + '<ul class="kitchen-list">' + sideItems.map(function (order) {
-        var sideType = getMainKitchenSideType_(order);
+        var sideType = getKitchenSideDisplay_(order, sideFilter);
         return '' +
           '<li class="kitchen-item" data-order-id="' + escapeHtml(order['ID Pedido'] || '') + '">' +
             '<p><strong>ID Pedido:</strong> ' + escapeHtml(order['ID Pedido'] || '-') + '</p>' +
             '<p><strong>Nombre:</strong> ' + escapeHtml(order['Nombre'] || '-') + '</p>' +
             '<p><strong>Guarnición:</strong> ' + escapeHtml(sideType || '-') + '</p>' +
             '<div class="kitchen-actions">' +
-              '<button type="button" class="btn btn-danger" data-action="k-side-ready" data-write-action="1">Listo</button>' +
+              '<button type="button" class="btn btn-primary" data-action="k-side-ready" data-write-action="1">Listo</button>' +
             '</div>' +
           '</li>';
       }).join('') + '</ul>';
@@ -635,9 +635,13 @@
     }).filter(Boolean);
   }
 
-  function getMainKitchenSideType_(order) {
+  function getKitchenSideDisplay_(order, filter) {
     var sideParts = getKitchenSideParts_(order);
-    return sideParts.length ? sideParts[0] : '';
+    if (!sideParts.length) { return ''; }
+    if (filter === 'Todas') {
+      return sideParts.join(', ');
+    }
+    return sideParts.indexOf(filter) !== -1 ? filter : '';
   }
 
   function matchesKitchenSideFilter_(order, filter) {
