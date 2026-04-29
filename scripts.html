@@ -741,6 +741,7 @@
       burgers: String(order['Hamburguesas'] || ''),
       extras: String(order['Extras'] || ''),
       sides: String(order['Guarniciones'] || ''),
+      payment: String(order['Estado Pago'] || ''),
       noteClient: String(order['Nota Cliente'] || ''),
       total: formatMoney(order['Total'])
     };
@@ -749,8 +750,8 @@
   function getTicketCanvas_() {
     if (!APP_STATE.ticketCanvas) {
       APP_STATE.ticketCanvas = document.createElement('canvas');
-      APP_STATE.ticketCanvas.width = 900;
-      APP_STATE.ticketCanvas.height = 1200;
+      APP_STATE.ticketCanvas.width = 760;
+      APP_STATE.ticketCanvas.height = 1500;
     }
     return APP_STATE.ticketCanvas;
   }
@@ -762,57 +763,80 @@
     var fields = getClientTicketFields_(order);
     var w = canvas.width;
     var h = canvas.height;
-    var y = 70;
+    var padX = 58;
+    var bodyWidth = w - (padX * 2);
+    var y = 74;
 
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = '#111111';
-    ctx.font = 'bold 46px Arial';
-    ctx.fillText('Burger-OG', 44, y);
-    y += 56;
-    ctx.font = '28px Arial';
-    ctx.fillText('Ticket cliente', 44, y);
-    y += 46;
-    ctx.font = '24px Arial';
-    ctx.fillStyle = '#666666';
-    ctx.fillText('Gracias por tu pedido', 44, y);
-    y += 26;
-    ctx.fillStyle = '#d9deea';
-    ctx.fillRect(44, y, w - 88, 2);
-    y += 38;
-    ctx.fillStyle = '#111111';
 
-    y = drawTicketLine_(ctx, 'ID Pedido', fields.orderId, y, w);
-    y = drawTicketLine_(ctx, 'Nombre', fields.name, y, w);
-    y = drawTicketLine_(ctx, 'Resumen', fields.summary, y, w);
-    y = drawTicketLine_(ctx, 'Hamburguesas', fields.burgers, y, w);
-    y = drawTicketLine_(ctx, 'Extras', fields.extras, y, w);
-    y = drawTicketLine_(ctx, 'Guarniciones', fields.sides, y, w);
+    y = drawTicketCenteredText_(ctx, 'BURGER-OG', y, 'bold 43px "Courier New", monospace');
+    y = drawTicketCenteredText_(ctx, 'TICKET CLIENTE', y + 6, 'bold 28px "Courier New", monospace');
+    y = drawTicketCenteredText_(ctx, 'Gracias por tu pedido', y + 10, '22px "Courier New", monospace', '#4b5563');
+
+    y += 20;
+    y = drawTicketDashedDivider_(ctx, padX, y, bodyWidth);
+    y += 18;
+
+    y = drawTicketLine_(ctx, 'ID Pedido', fields.orderId, y, padX, bodyWidth);
+    y = drawTicketLine_(ctx, 'Cliente', fields.name, y, padX, bodyWidth);
+    y = drawTicketLine_(ctx, 'Productos', fields.summary, y, padX, bodyWidth);
+    y = drawTicketLine_(ctx, 'Hamburguesas', fields.burgers, y, padX, bodyWidth);
+    y = drawTicketLine_(ctx, 'Extras', fields.extras, y, padX, bodyWidth);
+    y = drawTicketLine_(ctx, 'Guarniciones', fields.sides, y, padX, bodyWidth);
+    y = drawTicketLine_(ctx, 'Pago', fields.payment || 'Pendiente', y, padX, bodyWidth);
 
     if (fields.noteClient) {
-      y = drawTicketLine_(ctx, 'Nota cliente', fields.noteClient, y, w);
+      y = drawTicketLine_(ctx, 'Notas', fields.noteClient, y, padX, bodyWidth);
     }
 
-    y += 10;
-    ctx.fillStyle = '#d9deea';
-    ctx.fillRect(44, y, w - 88, 2);
-    y += 52;
+    y += 8;
+    y = drawTicketDashedDivider_(ctx, padX, y, bodyWidth);
+    y += 38;
+
     ctx.fillStyle = '#111111';
-    ctx.font = 'bold 40px Arial';
-    ctx.fillText('Total: ' + fields.total, 44, y);
+    ctx.font = 'bold 42px "Courier New", monospace';
+    ctx.fillText('TOTAL: ' + fields.total, padX, y);
+
+    y += 42;
+    y = drawTicketDashedDivider_(ctx, padX, y, bodyWidth);
+    y = drawTicketCenteredText_(ctx, 'Conserva este ticket', y + 26, '20px "Courier New", monospace', '#374151');
   }
 
-  function drawTicketLine_(ctx, label, value, y, width) {
+  function drawTicketLine_(ctx, label, value, y, x, width) {
     var safeValue = String(value || '-');
     var content = label + ': ' + safeValue;
-    ctx.font = '27px Arial';
-    var lines = wrapCanvasText_(ctx, content, width - 88);
+    ctx.font = '24px "Courier New", monospace';
+    var lines = wrapCanvasText_(ctx, content, width);
     ctx.fillStyle = '#111111';
     lines.forEach(function (line) {
-      ctx.fillText(line, 44, y);
-      y += 36;
+      ctx.fillText(line, x, y);
+      y += 32;
     });
-    return y + 4;
+    return y + 2;
+  }
+
+  function drawTicketCenteredText_(ctx, text, y, font, color) {
+    ctx.font = font;
+    ctx.fillStyle = color || '#111111';
+    var textWidth = ctx.measureText(text).width;
+    var x = (ctx.canvas.width - textWidth) / 2;
+    ctx.fillText(text, x, y);
+    return y + 30;
+  }
+
+  function drawTicketDashedDivider_(ctx, x, y, width) {
+    ctx.save();
+    ctx.strokeStyle = '#6b7280';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 8]);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + width, y);
+    ctx.stroke();
+    ctx.restore();
+    return y;
   }
 
   function wrapCanvasText_(ctx, text, maxWidth) {
