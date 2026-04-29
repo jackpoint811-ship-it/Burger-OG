@@ -757,17 +757,16 @@
     closeOrderDetail();
   }
 
-  function getClientTicketFields_(order) {
+  function getClientTicketFields_(order, ticketData) {
+    var breakdown = ticketData && Array.isArray(ticketData.priceBreakdown) ? ticketData.priceBreakdown : buildBasicTicketBreakdown_(order);
+    var paymentValue = ticketData && ticketData.payment ? ticketData.payment : (order['Método Pago'] || order['Estado Pago'] || '');
     return {
       orderId: String(order['ID Pedido'] || ''),
       name: String(order['Nombre'] || ''),
-      summary: String(order['Resumen Pedido'] || ''),
-      burgers: String(order['Hamburguesas'] || ''),
-      extras: String(order['Extras'] || ''),
-      sides: String(order['Guarniciones'] || ''),
-      payment: String(order['Estado Pago'] || ''),
+      payment: String(paymentValue || ''),
       noteClient: String(order['Nota Cliente'] || ''),
-      total: formatMoney(order['Total'])
+      total: formatMoney(order['Total']),
+      breakdown: breakdown
     };
   }
 
@@ -780,10 +779,10 @@
     return APP_STATE.ticketCanvas;
   }
 
-  function renderTicketCanvas_(order) {
+  function renderTicketCanvas_(order, ticketData) {
     var canvas = getTicketCanvas_();
     var ctx = canvas.getContext('2d');
-    var fields = getClientTicketFields_(order);
+    var fields = getClientTicketFields_(order, ticketData);
     var layout = buildTicketCanvasLayout_(fields, ctx, canvas.width);
     canvas.height = layout.height;
     ctx = canvas.getContext('2d');
@@ -797,12 +796,12 @@
     var y = 42;
     var blocks = [];
     var fonts = {
-      title: 'bold 36px "Courier New", monospace',
-      subtitle: 'bold 21px "Courier New", monospace',
-      body: '20px "Courier New", monospace',
-      section: 'bold 19px "Courier New", monospace',
-      total: 'bold 30px "Courier New", monospace',
-      footer: 'bold 18px "Courier New", monospace'
+      title: 'bold 34px Arial, sans-serif',
+      subtitle: 'bold 20px Arial, sans-serif',
+      body: '19px Arial, sans-serif',
+      section: 'bold 18px Arial, sans-serif',
+      total: 'bold 32px Arial, sans-serif',
+      footer: 'bold 17px Arial, sans-serif'
     };
 
     function pushCentered(text, font, color, gapAfter) {
@@ -824,18 +823,17 @@
       y += 28;
     }
 
-    pushCentered('BURGER-OG', fonts.title, '#111111', 4);
-    pushCentered('TICKET CLIENTE', fonts.subtitle, '#111111', 0);
-    pushCentered('ID ' + (fields.orderId || '-'), fonts.body, '#4b5563', 6);
-    pushDivider(10, 16);
+    pushCentered('Ticket de pedido', fonts.title, '#111111', 4);
+    pushCentered('ID ' + (fields.orderId || '-'), fonts.subtitle, '#4b5563', 6);
+    pushDivider(10, 14);
     pushField('CLIENTE', fields.name);
     pushField('PAGO', fields.payment || 'Pendiente');
-    pushDivider(6, 14);
-    pushSection('RESUMEN PEDIDO');
-    pushField('PRODUCTOS', fields.summary);
-    pushField('HAMBURGUESAS', fields.burgers);
-    pushField('EXTRAS', fields.extras);
-    pushField('GUARNICIONES', fields.sides);
+    pushDivider(8, 14);
+    pushSection('DESGLOSE');
+    (fields.breakdown || []).forEach(function (line) {
+      blocks.push({ type: 'breakdown', line: line, x: padX, y: y, width: width, font: fonts.body });
+      y += 28;
+    });
     if (fields.noteClient) {
       pushSection('NOTA CLIENTE');
       pushField('NOTA', fields.noteClient);
@@ -844,8 +842,8 @@
     blocks.push({ type: 'total', label: 'TOTAL', value: fields.total, x: padX, y: y, width: width, font: fonts.total });
     y += 46;
     pushDivider(8, 16);
-    pushCentered('GRACIAS POR TU COMPRA', fonts.footer, '#1f2937', 0);
-    pushCentered('Conserva este ticket', '17px "Courier New", monospace', '#4b5563', 2);
+    pushCentered('Gracias por tu compra', fonts.footer, '#1f2937', 0);
+    pushCentered('Conserva este ticket', '16px Arial, sans-serif', '#4b5563', 2);
 
     return { width: canvasWidth, height: Math.max(420, y + 34), blocks: blocks };
   }
@@ -862,6 +860,8 @@
         ctx.fillStyle = '#111111';
         ctx.font = block.font;
         ctx.fillText(block.text, block.x, block.y);
+      } else if (block.type === 'breakdown') {
+        drawTicketBreakdownLine_(ctx, block);
       } else if (block.type === 'total') {
         drawTicketTotal_(ctx, block);
       }
@@ -900,12 +900,27 @@
   }
 
   function drawTicketTotal_(ctx, block) {
+    ctx.fillStyle = '#f3f4f6';
+    ctx.fillRect(block.x - 12, block.y - 30, block.width + 24, 42);
     ctx.font = block.font;
     ctx.fillStyle = '#111111';
     ctx.fillText(block.label, block.x, block.y);
     var totalText = String(block.value || '-');
     var textWidth = ctx.measureText(totalText).width;
     ctx.fillText(totalText, block.x + block.width - textWidth, block.y);
+  }
+
+  function drawTicketBreakdownLine_(ctx, block) {
+    ctx.font = block.font;
+    ctx.fillStyle = '#111111';
+    ctx.fillText(block.line.concept, block.x, block.y);
+    var priceText = block.line.amount === null || block.line.amount === undefined
+      ? (block.line.review ? 'Revisar' : '')
+      : formatMoney(block.line.amount);
+    if (priceText) {
+      var textWidth = ctx.measureText(priceText).width;
+      ctx.fillText(priceText, block.x + block.width - textWidth, block.y);
+    }
   }
 
   function splitTicketFieldLines_(ctx, label, value, maxWidth, font) {
@@ -950,21 +965,11 @@
   }
 
   function drawTicketPaperBackground_(ctx, w, h) {
-    ctx.fillStyle = '#fffef8';
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = 'rgba(40,40,40,0.025)';
-    for (var i = 0; i < 1200; i += 1) {
-      var rx = (i * 37) % w;
-      var ry = (i * 53) % h;
-      ctx.fillRect(rx, ry, 1, 1);
-    }
-    ctx.strokeStyle = 'rgba(17, 24, 39, 0.22)';
+    ctx.strokeStyle = 'rgba(17, 24, 39, 0.18)';
     ctx.lineWidth = 1;
     ctx.strokeRect(1, 1, w - 2, h - 2);
-    ctx.fillStyle = 'rgba(17,24,39,0.14)';
-    for (var x = 0; x < w; x += 16) {
-      ctx.fillRect(x, h - 3, 8, 2);
-    }
   }
 
   function wrapCanvasText_(ctx, text, maxWidth) {
@@ -993,18 +998,48 @@
       return;
     }
 
-    renderTicketCanvas_(order);
+    google.script.run
+      .withSuccessHandler(function (response) {
+        var ticketData = response && response.ok ? response.data : null;
+        renderTicketCanvas_(order, ticketData);
+        downloadTicketCanvas_(order);
+      })
+      .withFailureHandler(function () {
+        renderTicketCanvas_(order, null);
+        downloadTicketCanvas_(order);
+      })
+      .getClientTicketData(order['ID Pedido']);
+  }
+
+  function downloadTicketCanvas_(order) {
     var canvas = getTicketCanvas_();
     if (!canvas) {
       showToast('No se pudo preparar ticket.', 'error');
       return;
     }
-
     var link = document.createElement('a');
     link.href = canvas.toDataURL('image/png');
     link.download = buildTicketFileName_(order['ID Pedido']);
     link.click();
     showToast('Ticket PNG listo para compartir.', 'success');
+  }
+
+  function buildBasicTicketBreakdown_(order) {
+    var lines = [];
+    lines = lines.concat(parseTicketLineConcepts_(order['Hamburguesas'], false));
+    lines = lines.concat(parseTicketLineConcepts_(order['Extras'], true));
+    lines = lines.concat(parseTicketLineConcepts_(order['Guarniciones'], false));
+    return lines;
+  }
+
+  function parseTicketLineConcepts_(value, isExtra) {
+    var text = String(value || '').trim();
+    if (!text || text === '-' || text.toLowerCase() === 'n/a') return [];
+    return text.split(/\s*\+\s*/).map(function (item) {
+      var concept = String(item || '').trim();
+      if (!concept || concept === '-') return null;
+      return { concept: isExtra ? ('+ ' + concept.replace(/^\+\s*/, '')) : concept, amount: null, review: false };
+    }).filter(Boolean);
   }
 
   function buildTicketFileName_(orderId) {

@@ -57,6 +57,12 @@ function getOrderDetail(orderId) {
   }, 'Detalle de pedido obtenido.');
 }
 
+function getClientTicketData(orderId) {
+  return bogPublicRead_(function () {
+    return bogGetClientTicketData_(orderId);
+  }, 'Datos de ticket cliente obtenidos.');
+}
+
 function updateOrderStatus(orderId, nextStatus) {
   return bogPublicWrite_(function () {
     return bogUpdateOrderStatus_(orderId, nextStatus);
