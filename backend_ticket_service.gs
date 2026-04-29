@@ -24,38 +24,39 @@ function bogGetClientTicketData_(orderId) {
 
 function bogReadPublishedPricesMap_(spreadsheet) {
   var pricesSheet = bogGetRequiredSheet_(spreadsheet, 'Precios Publicados');
-  var data = bogReadSheetAsObjects_(pricesSheet, []);
+  var data = bogReadSheetAsObjects_(pricesSheet, ['Nombre', 'Precio']);
   var map = {};
 
   data.rows.forEach(function (row) {
-    var rowValues = row.values || [];
-    if (!rowValues.length) {
+    if (!row || !row.data) {
       return;
     }
 
-    var concept = '';
-    var amount = null;
-
-    for (var i = 0; i < rowValues.length; i += 1) {
-      var value = rowValues[i];
-      if (!concept && typeof value === 'string' && bogTrim_(value)) {
-        concept = bogTrim_(value);
-        continue;
-      }
-      if (amount === null) {
-        try {
-          amount = bogNormalizeMoney_(value);
-        } catch (err) {
-          amount = null;
-        }
-      }
+    var concept = bogTrim_(row.data['Nombre']);
+    if (!concept || concept === '-' || bogNormalizeHeaderKey_(concept) === 'n/a') {
+      return;
     }
 
-    if (!concept || amount === null || isNaN(amount)) {
+    var amount;
+    try {
+      amount = bogNormalizeMoney_(row.data['Precio']);
+    } catch (err) {
+      return;
+    }
+
+    if (typeof amount !== 'number' || isNaN(amount)) {
       return;
     }
 
     map[bogNormalizeTicketConceptKey_(concept)] = amount;
+
+    var idAlias = bogTrim_(row.data['ID']);
+    if (idAlias) {
+      var normalizedId = bogNormalizeTicketConceptKey_(idAlias);
+      if (normalizedId && map[normalizedId] === undefined) {
+        map[normalizedId] = amount;
+      }
+    }
   });
 
   return map;
@@ -92,7 +93,9 @@ function bogBuildTicketLinesFromText_(text, kind, priceMap) {
     var amount = bogFindTicketConceptPrice_(conceptText, priceMap);
     return {
       kind: kind,
-      concept: kind === 'extra' ? '+ ' + conceptText : (quantity + 'x ' + conceptText),
+      concept: kind === 'extra'
+        ? ('+ ' + (quantity > 1 ? (quantity + 'x ') : '') + conceptText)
+        : (quantity + 'x ' + conceptText),
       amount: amount === null ? null : amount * quantity,
       review: amount === null
     };
