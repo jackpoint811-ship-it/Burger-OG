@@ -1204,9 +1204,10 @@
 
   function renderHomeQuickSummary(orders, summary) {
     var totalOrders = orders || [];
-    var activeOrders = totalOrders.filter(function (order) {
+    var activeOrderRows = totalOrders.filter(function (order) {
       return String(order['Estado Pedido'] || '') !== 'Listo';
-    }).length;
+    });
+    var activeOrders = activeOrderRows.length;
     var readyOrders = totalOrders.filter(function (order) {
       return String(order['Estado Pedido'] || '') === 'Listo';
     }).length;
@@ -1219,12 +1220,88 @@
         return acc + toMoneyNumber_(order['Estado Pago'] === 'Pagado' ? 0 : order['Total']);
       }, 0);
 
+    var hamburguesasPendientes = countPendingItemsByType_(activeOrderRows, 'Hamburguesas');
+    var guarnicionesPendientes = countPendingSidesByType_(activeOrderRows);
+    var pedidosPorUbicacion = countActiveOrdersByLocation_(activeOrderRows);
+
     document.getElementById('homeQuickSummary').innerHTML = [
       quickItem_('Pedidos activos', activeOrders),
       quickItem_('Pedidos listos', readyOrders),
       quickItem_('Pendientes pago', pendingPayment),
-      quickItem_('Total pendiente', formatMoney(pendingTotal))
+      quickItem_('Total pendiente', formatMoney(pendingTotal)),
+      '<div class="quick-summary-divider"></div>',
+      renderPendingCountBlock_('Hamburguesas pendientes', hamburguesasPendientes, 'Sin hamburguesas pendientes'),
+      renderPendingCountBlock_('Guarniciones pendientes', guarnicionesPendientes, 'Sin guarniciones pendientes'),
+      renderPendingCountBlock_('Pedidos por ubicación', pedidosPorUbicacion, 'Sin pedidos activos por ubicación')
     ].join('');
+  }
+
+  function countPendingItemsByType_(orders, key) {
+    return (orders || []).reduce(function (acc, order) {
+      parseOrderItemsWithCount_(order[key]).forEach(function (item) {
+        acc[item.name] = (acc[item.name] || 0) + item.qty;
+      });
+      return acc;
+    }, {});
+  }
+
+  function countPendingSidesByType_(activeOrders) {
+    var pendingSideOrders = (activeOrders || []).filter(function (order) {
+      return String(order['Guarnición Lista'] || 'No') !== 'Si';
+    });
+    return countPendingItemsByType_(pendingSideOrders, 'Guarniciones');
+  }
+
+  function countActiveOrdersByLocation_(activeOrders) {
+    return (activeOrders || []).reduce(function (acc, order) {
+      var normalizedLocation = normalizeOrderLocation_(order['Ubicación']);
+      acc[normalizedLocation] = (acc[normalizedLocation] || 0) + 1;
+      return acc;
+    }, {});
+  }
+
+  function parseOrderItemsWithCount_(rawValue) {
+    var clean = String(rawValue || '').trim();
+    if (!clean) return [];
+    var lowered = clean.toLowerCase();
+    if (lowered === '-' || lowered === 'n/a' || lowered === 'na' || lowered === 'no' || lowered === 'ninguno') return [];
+
+    return clean.split('+').map(function (chunk) {
+      var piece = String(chunk || '').trim().replace(/\s+/g, ' ');
+      if (!piece) return null;
+      var match = piece.match(/^(\d+)\s*x\s*(.+)$/i);
+      var qty = match ? Number(match[1]) : 1;
+      var name = (match ? match[2] : piece).trim();
+      if (!name) return null;
+      return { name: name, qty: qty > 0 ? qty : 1 };
+    }).filter(function (item) { return !!item; });
+  }
+
+  function normalizeOrderLocation_(locationRaw) {
+    var clean = String(locationRaw || '').trim().replace(/\s+/g, ' ');
+    if (!clean) return 'Sin ubicación';
+    var normalized = clean.toLowerCase();
+    if (normalized.indexOf('gga') !== -1) return 'Torre GGA';
+    if (normalized.indexOf('valcob') !== -1) return 'Torre Valcob';
+    return clean;
+  }
+
+  function renderPendingCountBlock_(title, counts, emptyMessage) {
+    var entries = Object.keys(counts || {}).map(function (name) {
+      return { name: name, qty: Number(counts[name] || 0) };
+    }).filter(function (entry) {
+      return entry.qty > 0;
+    }).sort(function (a, b) {
+      return b.qty - a.qty || a.name.localeCompare(b.name);
+    });
+
+    if (!entries.length) {
+      return '<div class="quick-pending-block"><h3>' + escapeHtml(title) + '</h3><p class="muted">' + escapeHtml(emptyMessage) + '</p></div>';
+    }
+
+    return '<div class="quick-pending-block"><h3>' + escapeHtml(title) + '</h3><ul class="quick-pending-list">' + entries.map(function (entry) {
+      return '<li class="quick-pending-item"><span>' + escapeHtml(entry.name) + '</span><strong>' + escapeHtml(entry.qty) + '</strong></li>';
+    }).join('') + '</ul></div>';
   }
 
   function renderSummary(summary, orders) {

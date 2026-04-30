@@ -82,6 +82,7 @@ function bogTransformMasterToChekeo_(masterRecord) {
   var estadoPedidoRaw = bogSafeGetByAliases_(masterRecord, ['Estado?']);
   var estadoPagoRaw = bogSafeGetByAliases_(masterRecord, ['Pagado?']);
   var metodoPagoRaw = bogSafeGetByAliases_(masterRecord, ['Tipo', 'Forma de pago']);
+  var ubicacionRaw = bogSafeGetByAliases_(masterRecord, ['Ubicación', 'Ubicacion', 'Lugar', 'Torre']);
 
   var transformed = {
     'Fecha Pedido': timestamp.fecha,
@@ -96,6 +97,7 @@ function bogTransformMasterToChekeo_(masterRecord) {
     'Estado Pedido': bogNormalizeOrderStatus_(estadoPedidoRaw),
     'Estado Pago': bogNormalizePaymentStatus_(estadoPagoRaw),
     'Método Pago': bogNormalizePaymentMethod_(metodoPagoRaw),
+    'Ubicación': bogTrim_(ubicacionRaw),
     'Master Notes': dynamic.notes.join(' | '),
     'Detected Alerts': dynamic.alertReasons
   };
@@ -277,6 +279,7 @@ function bogBuildChekeoRowFromMaster_(transformed, masterRowNumber, existingReco
   row['Extras'] = transformed['Extras'] || '';
   row['Guarniciones'] = transformed['Guarniciones'] || '';
   row['Guarnición Lista'] = (existingRecord && existingRecord['Guarnición Lista']) || BurgerOGConstants.DEFAULTS.GUARNICION_LISTA;
+  row['Ubicación'] = transformed['Ubicación'] || '';
   row['Total'] = transformed['Total'] || 0;
 
   row['Estado Pedido'] = (existingRecord && existingRecord['Estado Pedido']) || transformed['Estado Pedido'] || BurgerOGConstants.DEFAULTS.ESTADO_PEDIDO;

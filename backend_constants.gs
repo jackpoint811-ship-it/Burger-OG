@@ -31,7 +31,8 @@ var BurgerOGConstants = (function () {
     'Hora Inicio',
     'Hora Listo',
     'Última Actualización',
-    'Guarnición Lista'
+    'Guarnición Lista',
+    'Ubicación'
   ];
 
   var MASTER_REQUIRED_COLUMNS = [
