@@ -130,36 +130,63 @@
 }
 
 .tickets-count-card {
+  position: relative;
+  border: 1px dashed var(--color-accent-line-strong);
+  border-radius: 20px;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, var(--color-accent-soft) 0%, rgba(245, 158, 11, 0.08) 100%);
+  box-shadow: 0 0 32px var(--color-accent-soft), inset 0 0 16px rgba(0, 255, 102, 0.04);
+  overflow: hidden;
+}
+
+.tickets-stub-notch {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-surface);
   border: 1px solid var(--color-accent-line);
-  border-radius: 22px;
-  padding: 18px;
-  display: grid;
-  gap: 2px;
-  place-items: center;
-  background: var(--color-accent-soft);
-  box-shadow: var(--shadow-card);
+}
+
+.tickets-stub-notch.left {
+  left: -11px;
+}
+
+.tickets-stub-notch.right {
+  right: -11px;
 }
 
 .tickets-count-card strong {
   max-width: 100%;
-  color: var(--neon);
-  font-size: clamp(3rem, 18vw, 6rem);
-  line-height: 0.92;
+  color: var(--color-accent);
+  font-size: clamp(3.2rem, 18vw, 5.5rem);
+  font-weight: 900;
+  line-height: 0.95;
   overflow-wrap: anywhere;
   text-align: center;
+  text-shadow: 0 0 24px var(--color-accent-soft);
+  letter-spacing: -0.04em;
 }
 
 .tickets-count-card span {
-  color: var(--amber);
-  font-size: 0.8rem;
-  font-weight: 950;
-  letter-spacing: 0.12em;
+  color: var(--color-warning);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .tickets-count-card.compact strong {
-  color: var(--amber);
+  color: var(--color-warning);
   font-size: clamp(1.65rem, 12vw, 3rem);
+  text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
 }
 
 .tickets-code-owner,
@@ -208,21 +235,91 @@
   font-size: 1.05rem;
 }
 
+.tickets-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 50px;
+  border: none;
+  border-radius: var(--radius-pill, 999px);
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-success) 100%);
+  color: var(--color-surface);
+  font-size: 1rem;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 0 20px var(--color-accent-soft), 0 4px 12px rgba(0,0,0,0.3);
+  transition: transform var(--motion-fast) var(--motion-ease),
+              box-shadow var(--motion-fast) var(--motion-ease);
+}
+
+.tickets-submit-btn:hover:not(:disabled),
+.tickets-submit-btn:focus-visible:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 0 32px var(--color-accent-line-strong), 0 6px 20px rgba(0,0,0,0.4);
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.tickets-submit-btn:disabled {
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  box-shadow: none;
+  cursor: not-allowed;
+  border: 1px solid var(--color-line);
+}
+
 .tickets-actions-grid {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .tickets-actions-grid button,
 .tickets-whatsapp-button {
   width: 100%;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 0.9rem;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform var(--motion-fast) var(--motion-ease),
+              box-shadow var(--motion-fast) var(--motion-ease);
 }
 
-.tickets-actions-grid button:first-child,
+.tickets-actions-grid button {
+  border: 1px solid var(--color-accent-line);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.tickets-actions-grid button:hover,
+.tickets-actions-grid button:focus-visible {
+  border-color: var(--color-accent);
+  background: var(--color-accent-line);
+  outline: none;
+}
+
 .tickets-whatsapp-button {
-  background: var(--color-accent);
-  color: var(--color-text-on-accent);
-  border-color: transparent;
+  border: none;
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 0 20px rgba(37, 211, 102, 0.25);
+}
+
+.tickets-whatsapp-button:hover,
+.tickets-whatsapp-button:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(37, 211, 102, 0.4);
+  outline: 2px solid #25D366;
+  outline-offset: 2px;
 }
 
 @media (min-width: 720px) {
