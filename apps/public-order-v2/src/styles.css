@@ -6262,41 +6262,110 @@ html {
   padding: 0.88rem;
 }
 
+/* ═══════════════════════════════════════════════════════
+   PR3 — Sticky Category Navigation & Cyberpunk Neon Glow
+   ═══════════════════════════════════════════════════════ */
+
 .catalog-category-nav {
+  position: sticky;
+  top: 56px; /* Offset right below fixed top bar (56px) */
+  z-index: 15;
   display: flex;
   gap: 0.55rem;
   max-width: 1120px;
-  margin: 0 auto 1rem;
+  margin: 0 auto 1.25rem;
   overflow-x: auto;
-  padding: 0.2rem 0 0.5rem;
-  scrollbar-width: thin;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.6rem 0.5rem;
+  background: var(--color-bg-base);
+  border-bottom: 1px solid var(--color-line-soft);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  scrollbar-width: none;
 }
 
-.catalog-category-nav button {
+.catalog-category-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.catalog-category-nav button,
+.catalog-category-nav__btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   min-height: 44px;
+  padding: 0.65rem 1.1rem;
   border: 1px solid var(--color-line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--color-surface);
   color: var(--color-text-secondary);
-  font-weight: 700;
   font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: border-color var(--motion-fast) var(--motion-ease),
+              background var(--motion-fast) var(--motion-ease),
+              color var(--motion-fast) var(--motion-ease),
+              box-shadow var(--motion-fast) var(--motion-ease),
+              transform var(--motion-fast) var(--motion-ease);
 }
 
-.catalog-category-nav button {
-  flex: 0 0 auto;
-  cursor: pointer;
-  padding: 0.72rem 1rem;
-  transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+.catalog-category-nav__emoji {
+  font-size: 1.1rem;
+  line-height: 1;
+  display: inline-block;
 }
 
 .catalog-category-nav button:hover,
-.catalog-category-nav button:focus-visible,
-.catalog-category-nav button.active {
+.catalog-category-nav__btn:hover {
   border-color: var(--color-accent-line-strong);
   background: var(--color-accent-soft);
+  color: var(--color-text-primary);
+  transform: translateY(-1px);
+}
+
+.catalog-category-nav button:focus-visible,
+.catalog-category-nav__btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--color-accent-soft);
+}
+
+/* ── Cyberpunk Neon Green Glow Active Indicator ───────── */
+.catalog-category-nav button.active,
+.catalog-category-nav button[aria-selected="true"],
+.catalog-category-nav__btn.active,
+.catalog-category-nav__btn[aria-selected="true"] {
+  border-color: #00ff66;
+  background: linear-gradient(135deg, rgba(0, 255, 102, 0.15), rgba(0, 255, 102, 0.05));
   color: var(--color-accent);
-  outline: none;
   font-weight: 800;
+  box-shadow: 0 0 14px rgba(0, 255, 102, 0.35), inset 0 0 8px rgba(0, 255, 102, 0.12);
+}
+
+/* Cyberpunk theme override for dark mode */
+.theme-dark .catalog-category-nav button.active,
+.theme-dark .catalog-category-nav button[aria-selected="true"],
+.theme-dark .catalog-category-nav__btn.active,
+.theme-dark .catalog-category-nav__btn[aria-selected="true"] {
+  color: #00ff66;
+  border-color: #00ff66;
+  text-shadow: 0 0 8px rgba(0, 255, 102, 0.5);
+  box-shadow: 0 0 16px rgba(0, 255, 102, 0.45), inset 0 0 10px rgba(0, 255, 102, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalog-category-nav,
+  .catalog-category-nav button,
+  .catalog-category-nav__btn {
+    transition: none !important;
+    transform: none !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 .catalog-grid {
@@ -7308,6 +7377,7 @@ html {
   padding: 0 0 0.75rem;
   margin: 0 auto;
   max-width: 1120px;
+  position: relative;
 }
 
 .catalog-banner-rail__list {
@@ -7319,12 +7389,79 @@ html {
   overscroll-behavior-x: contain;
   padding: 0.35rem 0 0.75rem;
   scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 
 .catalog-banner-rail__list::-webkit-scrollbar {
   display: none;
+}
+
+/* Pagination container */
+.catalog-banner-rail__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+/* Dot touch target: min 44px x 44px for touch accessibility */
+.catalog-banner-rail__dot {
+  background: transparent;
+  border: none;
+  padding: 0;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: var(--radius-pill);
+}
+
+.catalog-banner-rail__dot:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Visual dot indicator */
+.catalog-banner-rail__dot-indicator {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-line-strong);
+  transition: width var(--motion-base) var(--motion-ease),
+              background-color var(--motion-base) var(--motion-ease),
+              border-radius var(--motion-base) var(--motion-ease),
+              box-shadow var(--motion-base) var(--motion-ease);
+}
+
+.catalog-banner-rail__dot:hover .catalog-banner-rail__dot-indicator {
+  background-color: var(--color-text-secondary);
+}
+
+.catalog-banner-rail__dot--active .catalog-banner-rail__dot-indicator {
+  width: 20px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-accent);
+  box-shadow: 0 0 8px var(--color-accent-soft);
+}
+
+/* Reduced motion override */
+@media (prefers-reduced-motion: reduce) {
+  .catalog-banner-rail__list {
+    scroll-behavior: auto !important;
+  }
+
+  .catalog-banner-card,
+  .catalog-banner-card__image img,
+  .catalog-banner-rail__dot-indicator {
+    transition: none !important;
+  }
 }
 
 .catalog-banner-card {

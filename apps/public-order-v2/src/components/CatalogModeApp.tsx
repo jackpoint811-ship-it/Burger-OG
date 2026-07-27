@@ -12,6 +12,7 @@ import {
   PRODUCT_TYPE_LABELS,
   mapMenuItemsToCatalogProducts,
   resolveCatalogAssetUrl,
+  getCategoryEmoji,
 } from "../lib/catalog-mode";
 import { formatCurrency } from "../lib/order";
 
@@ -109,6 +110,60 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
     setIsCheckoutOpen(true);
   }, []);
   const closeCheckout = useCallback(() => setIsCheckoutOpen(false), []);
+
+  const categoryNavRef = useRef<HTMLElement>(null);
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  const categoryTabs = useMemo(
+    () => [
+      { key: "all" as const, name: "Todos", emoji: getCategoryEmoji("all", "Todos") },
+      ...visibleCategories.map((c) => ({
+        key: c.key,
+        name: c.name,
+        emoji: getCategoryEmoji(c.key, c.name),
+      })),
+    ],
+    [visibleCategories]
+  );
+
+  const handleSelectCategory = useCallback((key: MenuCategory["key"] | "all") => {
+    setActiveCategory(key);
+    const btn = tabRefs.current[key];
+    if (btn) {
+      btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
+  }, []);
+
+  const handleCategoryKeyDown = useCallback(
+    (e: React.KeyboardEvent, currentIndex: number) => {
+      let targetIndex = currentIndex;
+      const total = categoryTabs.length;
+
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        targetIndex = (currentIndex + 1) % total;
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        targetIndex = (currentIndex - 1 + total) % total;
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        targetIndex = 0;
+      } else if (e.key === "End") {
+        e.preventDefault();
+        targetIndex = total - 1;
+      } else {
+        return;
+      }
+
+      const targetTab = categoryTabs[targetIndex];
+      if (targetTab) {
+        handleSelectCategory(targetTab.key);
+        const btn = tabRefs.current[targetTab.key];
+        btn?.focus();
+      }
+    },
+    [categoryTabs, handleSelectCategory]
+  );
 
   const filteredProducts = activeCategory === "all"
     ? products
@@ -308,24 +363,42 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
 
         <CatalogBannerRail banners={catalogBanners} />
 
-        <nav className="catalog-category-nav" aria-label="Categorías de catálogo">
-          <button type="button" className={activeCategory === "all" ? "active" : ""} onClick={() => setActiveCategory("all")}>
-            Todos
-          </button>
-          {visibleCategories.map((category) => (
-            <button
-              type="button"
-              className={activeCategory === category.key ? "active" : ""}
-              key={category.key}
-              onClick={() => setActiveCategory(category.key)}
-            >
-              {category.name}
-            </button>
-          ))}
+        <nav
+          ref={categoryNavRef}
+          id="catalog-category-nav"
+          className="catalog-category-nav"
+          role="tablist"
+          aria-label="Categorías de catálogo"
+        >
+          {categoryTabs.map((tab, idx) => {
+            const isActive = activeCategory === tab.key;
+            return (
+              <button
+                key={tab.key}
+                id={`category-tab-${tab.key}`}
+                ref={(el) => {
+                  tabRefs.current[tab.key] = el;
+                }}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-controls="catalog-products-grid"
+                tabIndex={isActive ? 0 : -1}
+                className={`catalog-category-nav__btn ${isActive ? "active" : ""}`}
+                onClick={() => handleSelectCategory(tab.key)}
+                onKeyDown={(e) => handleCategoryKeyDown(e, idx)}
+              >
+                <span className="catalog-category-nav__emoji" aria-hidden="true">
+                  {tab.emoji}
+                </span>
+                <span className="catalog-category-nav__label">{tab.name}</span>
+              </button>
+            );
+          })}
         </nav>
 
         {filteredProducts.length ? (
-          <section className="catalog-grid" aria-label="Productos del catálogo">
+          <section className="catalog-grid" id="catalog-products-grid" aria-label="Productos del catálogo">
             {filteredProducts.map((product) => <CatalogProductCard product={product} onOpen={setSelectedProduct} key={product.id} />)}
           </section>
         ) : (
