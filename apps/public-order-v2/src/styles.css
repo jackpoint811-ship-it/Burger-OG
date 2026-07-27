@@ -7693,7 +7693,7 @@ html {
 .catalog-checkout-drawer {
   display: flex;
   flex-direction: column;
-  max-height: min(88dvh, 760px);
+  max-height: min(92dvh, 800px);
 }
 
 .catalog-checkout-form {
@@ -7799,27 +7799,41 @@ html {
 }
 
 .catalog-checkout__submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
   width: 100%;
   min-height: 52px;
   border: none;
-  border-radius: var(--radius-md);
-  background: var(--color-accent);
-  color: var(--color-text-on-accent);
+  border-radius: var(--radius-pill, 999px);
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-success) 100%);
+  color: var(--color-surface);
   cursor: pointer;
   font-size: 1rem;
   font-weight: 800;
   font-family: inherit;
   padding: 0.72rem 1rem;
-  box-shadow: var(--shadow-cta);
-  transition: background var(--motion-fast) var(--motion-ease),
+  box-shadow: 0 0 24px var(--color-accent-soft), 0 4px 16px rgba(0,0,0,0.3);
+  transition: transform var(--motion-fast) var(--motion-ease),
               box-shadow var(--motion-fast) var(--motion-ease);
+}
+
+.catalog-checkout__submit-icon {
+  font-size: 1.15rem;
+  line-height: 1;
 }
 
 .catalog-checkout__submit:hover:not(:disabled),
 .catalog-checkout__submit:focus-visible:not(:disabled) {
-  background: var(--color-accent-hover);
-  box-shadow: 0 6px 24px rgba(45,106,79,0.4);
-  outline: none;
+  transform: translateY(-2px);
+  box-shadow: 0 0 36px var(--color-accent-line-strong), 0 8px 24px rgba(0,0,0,0.4);
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.catalog-checkout__submit:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .catalog-checkout__submit:disabled {
@@ -7827,20 +7841,74 @@ html {
   color: var(--color-text-muted);
   box-shadow: none;
   cursor: not-allowed;
+  border: 1px solid var(--color-line);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalog-checkout__submit {
+    transition: none;
+    transform: none !important;
+  }
+}
+
+/* ── WA opt-in checkbox ────────────────────────────── */
+.catalog-checkout-wa-optin {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--color-accent-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-soft);
+  cursor: pointer;
+  transition: border-color var(--motion-fast) var(--motion-ease);
+}
+
+.catalog-checkout-wa-optin:hover {
+  border-color: var(--color-accent);
+}
+
+.catalog-checkout-wa-optin input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-accent);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.catalog-checkout-wa-optin span {
+  color: var(--color-accent);
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .catalog-checkout-success {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem 1.5rem 1.5rem;
+  padding: 1.5rem 1.5rem;
   text-align: center;
+  gap: 0.75rem;
+}
+
+.catalog-checkout-success__icon {
+  width: 80px;
+  height: 80px;
+  filter: drop-shadow(0 0 16px var(--color-accent-soft));
+}
+
+.catalog-checkout-success__headline {
+  margin: 0;
+  color: var(--color-accent);
+  font-size: 1.35rem;
+  font-weight: 900;
+  text-shadow: 0 0 20px var(--color-accent-soft);
 }
 
 .catalog-checkout-success__subcopy {
   color: var(--color-text-secondary);
-  font-size: 1.05rem;
-  margin: 0 0 1.5rem;
+  font-size: 1rem;
+  margin: 0;
 }
 
 .catalog-checkout-success__folio-card {
@@ -7851,29 +7919,53 @@ html {
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
-  padding: 1.5rem 2rem;
-  margin-bottom: 2rem;
+  padding: 1.25rem 2rem;
+  margin: 0.5rem 0;
   width: 100%;
 }
 
 .catalog-checkout-success__folio-card span {
   color: var(--color-text-muted);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  font-weight: 700;
 }
 
 .catalog-checkout-success__folio-card strong {
   color: var(--color-accent);
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 24px var(--color-accent-soft);
+}
+
+.catalog-checkout-success__wa-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.6rem 1.2rem;
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-pill, 999px);
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--color-success);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background var(--motion-fast) var(--motion-ease),
+              border-color var(--motion-fast) var(--motion-ease);
+}
+
+.catalog-checkout-success__wa-link:hover {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: var(--color-success);
 }
 
 .catalog-checkout-success__whatsapp-note {
   color: var(--color-text-muted);
-  font-size: 0.9rem;
-  margin: 0 0 2rem;
+  font-size: 0.84rem;
+  margin: 0;
 }
 
 /* ── Catalog: Banner Rail ───────────────────────────────── */
