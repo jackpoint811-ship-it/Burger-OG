@@ -19,6 +19,7 @@ import { EmptyState } from "@ui/index";
 import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CatalogModeApp } from "./CatalogModeApp";
+import { CatalogBannerRail } from "./CatalogBannerRail";
 import { loadMenuV2, toFallbackMenuResponse } from "../lib/menu-v2";
 import { loadActiveRaffleV2 } from "../lib/raffles-v2";
 import {
@@ -510,6 +511,32 @@ const ProductCard = ({ item, mode, onClick, reduce, descriptionMode = "paragraph
   const kind = inferItemKind(item);
   const ingredientBullets = descriptionMode === "ingredients" ? getProductIngredientBullets(item) : [];
   const visualClassName = showImage ? "kiosk-visual" : `kiosk-visual no-image no-image-${kind}`;
+
+  const renderFallbackSvg = () => {
+    if (kind === "burger") {
+      return (
+        <svg viewBox="0 0 64 64" fill="none" className="kiosk-fallback-svg" aria-hidden="true" style={{ width: 44, height: 44 }}>
+          <path d="M12 28C12 18 20 12 32 12C44 12 52 18 52 28H12Z" fill="var(--color-accent, #4ADE80)" fillOpacity="0.25" stroke="var(--color-accent, #4ADE80)" strokeWidth="2.5" />
+          <path d="M10 34C10 32 12 30 14 30H50C52 30 54 32 54 34V36H10V34Z" fill="#FACC15" fillOpacity="0.3" stroke="#FACC15" strokeWidth="2" />
+          <path d="M12 42C12 40 14 38 16 38H48C50 38 52 40 52 42V48C52 50 50 52 48 52H16C14 52 12 50 12 48V42Z" fill="var(--color-accent, #4ADE80)" fillOpacity="0.15" stroke="var(--color-accent, #4ADE80)" strokeWidth="2.5" />
+        </svg>
+      );
+    }
+    if (kind === "combo") {
+      return (
+        <svg viewBox="0 0 64 64" fill="none" className="kiosk-fallback-svg" aria-hidden="true" style={{ width: 44, height: 44 }}>
+          <rect x="12" y="24" width="24" height="28" rx="4" fill="var(--color-accent, #4ADE80)" fillOpacity="0.2" stroke="var(--color-accent, #4ADE80)" strokeWidth="2" />
+          <path d="M40 16L48 52H56L48 16H40Z" fill="#FACC15" fillOpacity="0.3" stroke="#FACC15" strokeWidth="2" />
+        </svg>
+      );
+    }
+    return (
+      <svg viewBox="0 0 64 64" fill="none" className="kiosk-fallback-svg" aria-hidden="true" style={{ width: 44, height: 44 }}>
+        <circle cx="32" cy="32" r="20" fill="var(--color-accent, #4ADE80)" fillOpacity="0.2" stroke="var(--color-accent, #4ADE80)" strokeWidth="2.5" />
+      </svg>
+    );
+  };
+
   return (
     <motion.button
       type="button"
@@ -520,10 +547,17 @@ const ProductCard = ({ item, mode, onClick, reduce, descriptionMode = "paragraph
       disabled={mode === "select" && !item.isAvailable}
     >
       <div className={visualClassName}>
-        {showImage && src ? <img src={src} alt="" loading="lazy" decoding="async" onError={() => setImageFailed(true)} /> : <span>{item.name}</span>}
+        {showImage && src ? (
+          <img src={src} alt="" loading="lazy" decoding="async" onError={() => setImageFailed(true)} />
+        ) : (
+          <div className="kiosk-visual-fallback-wrapper" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+            {renderFallbackSvg()}
+            <span className="kiosk-visual-fallback-name">{item.name}</span>
+          </div>
+        )}
       </div>
       <div className="kiosk-body">
-        <span>{kind === "combo" ? "Combo" : item.category}</span>
+        <span className="kiosk-category-tag">{kind === "combo" ? "Combo" : item.category}</span>
         <h3>{item.name}</h3>
         {ingredientBullets.length ? (
           <ul className="kiosk-ingredients-list">
@@ -531,8 +565,10 @@ const ProductCard = ({ item, mode, onClick, reduce, descriptionMode = "paragraph
           </ul>
         ) : <p>{item.description}</p>}
         <footer>
-          <strong>{formatCurrency(item.price)}</strong>
-          <em>{item.isAvailable ? "Disponible" : "Agotado"}</em>
+          <strong className="kiosk-price">{formatCurrency(item.price)}</strong>
+          <em className={item.isAvailable ? "kiosk-status-badge available" : "kiosk-status-badge unavailable"}>
+            {item.isAvailable ? "Disponible" : "Agotado"}
+          </em>
         </footer>
       </div>
     </motion.button>
@@ -610,6 +646,7 @@ const MenuSection = ({ menuData, raffleCampaign, onExplore, onStart, reduce }: {
           <button type="button" className="quest-button ghost" onClick={() => window.location.reload()}>Reintentar carga</button>
         </section>
       ) : null}
+      <CatalogBannerRail banners={menuData.catalogBanners || []} />
       {featuredPromo.length ? <PromoRail promos={featuredPromo} items={menuData.items} onViewCombo={onExplore} label="Promo destacada" variant="featured" /> : null}
       {MENU_GROUPS.map(({ key, label }) => {
         const list = byGroup(key).sort((a, b) => a.sortOrder - b.sortOrder);
