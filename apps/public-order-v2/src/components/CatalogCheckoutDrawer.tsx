@@ -62,6 +62,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<OrderV2PaymentMethod>("unknown");
+  const [wantsWhatsapp, setWantsWhatsapp] = useState(true);
   const [checkoutState, setCheckoutState] = useState<CheckoutState>({ status: "idle" });
 
   const shouldReduceMotion = useReducedMotion();
@@ -84,6 +85,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
       setName("");
       setPhone("");
       setPaymentMethod("unknown");
+      setWantsWhatsapp(true);
       return;
     }
 
@@ -203,10 +205,18 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
         exit={shouldReduceMotion ? { opacity: 0 } : { y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
       >
+        {/* ── Handle bar ── */}
+        <div className="catalog-drawer__handle" aria-hidden="true" />
+
         <header className="catalog-drawer__header catalog-cart-drawer__header">
-          <h2 id={titleId} className="catalog-cart-drawer__title">
-            {checkoutState.status === "success" ? "Pedido recibido" : "Checkout"}
-          </h2>
+          <div className="catalog-cart-drawer__title-row">
+            <h2 id={titleId} className="catalog-cart-drawer__title">
+              <span className="catalog-cart-drawer__title-icon" aria-hidden="true">
+                {checkoutState.status === "success" ? "✅" : "📝"}
+              </span>
+              {checkoutState.status === "success" ? "Pedido recibido" : "Checkout"}
+            </h2>
+          </div>
           <button
             ref={closeRef}
             type="button"
@@ -220,13 +230,29 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
 
         {checkoutState.status === "success" ? (
           <div className="catalog-checkout-success">
+            <svg viewBox="0 0 120 120" fill="none" className="catalog-checkout-success__icon" aria-hidden="true">
+              <circle cx="60" cy="60" r="56" fill="var(--color-accent)" fillOpacity="0.08" stroke="var(--color-accent)" strokeWidth="2" />
+              <path d="M36 62L52 78L84 46" stroke="var(--color-accent)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <p className="catalog-checkout-success__headline">¡Pedido confirmado!</p>
             <p className="catalog-checkout-success__subcopy">Tu orden ha entrado a preparación.</p>
             <div className="catalog-checkout-success__folio-card">
               <span>Folio</span>
               <strong>{checkoutState.folio}</strong>
             </div>
+            {wantsWhatsapp && (
+              <a
+                href="https://chat.whatsapp.com/GycE5zALOypGPvJVaMfbPp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="catalog-checkout-success__wa-link"
+              >
+                <span aria-hidden="true">📲</span>
+                Únete al grupo de WhatsApp
+              </a>
+            )}
             <p className="catalog-checkout-success__whatsapp-note">
-              Te contactaremos por WhatsApp cualquier cosa.
+              Te contactaremos por WhatsApp para cualquier novedad.
             </p>
             <button type="button" className="catalog-checkout__submit" onClick={onClose}>
               Cerrar y explorar menú
@@ -270,7 +296,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                     onClick={() => setPaymentMethod("cash")}
                     disabled={checkoutState.status === "submitting"}
                   >
-                    Efectivo
+                    <span aria-hidden="true">💵</span> Efectivo
                   </button>
                   <button
                     type="button"
@@ -280,7 +306,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                     onClick={() => setPaymentMethod("transfer")}
                     disabled={checkoutState.status === "submitting"}
                   >
-                    Transferencia
+                    <span aria-hidden="true">🏦</span> Transferencia
                   </button>
                   <button
                     type="button"
@@ -290,10 +316,20 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                     onClick={() => setPaymentMethod("unknown")}
                     disabled={checkoutState.status === "submitting"}
                   >
-                    Confirmar por WA
+                    <span aria-hidden="true">📲</span> Confirmar por WA
                   </button>
                 </div>
               </div>
+
+              <label className="catalog-checkout-wa-optin">
+                <input
+                  type="checkbox"
+                  checked={wantsWhatsapp}
+                  onChange={(e) => setWantsWhatsapp(e.target.checked)}
+                  disabled={checkoutState.status === "submitting"}
+                />
+                <span>✉️ Quiero unirme al grupo oficial de WhatsApp</span>
+              </label>
 
               {checkoutState.status === "error" && (
                 <div className="catalog-checkout-error" role="alert">
@@ -304,7 +340,10 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
 
             <div className="catalog-cart-drawer__footer">
               <div className="catalog-cart-drawer__total">
-                <span>Total a pagar</span>
+                <div className="catalog-cart-drawer__total-label">
+                  <span>Total a pagar</span>
+                  <span className="catalog-cart-drawer__iva-note">IVA incluido</span>
+                </div>
                 <strong>{formatCurrency(total)}</strong>
               </div>
               <button 
@@ -312,7 +351,10 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                 className="catalog-checkout__submit" 
                 disabled={checkoutState.status === "submitting" || items.length === 0}
               >
-                {checkoutState.status === "submitting" ? "Procesando..." : "Enviar pedido"}
+                <span className="catalog-checkout__submit-icon" aria-hidden="true">
+                  {checkoutState.status === "submitting" ? "⏳" : "→"}
+                </span>
+                <span>{checkoutState.status === "submitting" ? "Procesando..." : "Enviar pedido"}</span>
               </button>
             </div>
           </form>
