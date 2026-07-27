@@ -6842,21 +6842,30 @@ html {
 
 .catalog-drawer {
   width: min(100%, 620px);
-  max-height: min(88dvh, 760px);
+  max-height: min(92dvh, 800px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--color-accent-line);
   border-radius: 28px 28px 20px 20px;
   background: var(--color-surface);
-  box-shadow: var(--shadow-floating);
+  box-shadow: var(--shadow-floating), 0 0 48px rgba(0, 255, 102, 0.06);
+}
+
+/* ── Handle bar ───────────────────────────────────────────── */
+.catalog-drawer__handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-line-strong);
+  margin: 10px auto 0;
+  flex-shrink: 0;
 }
 
 .catalog-drawer__media {
-  display: grid;
-  min-height: clamp(160px, 46vw, 260px);
-  place-items: center;
+  position: relative;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
-  background: var(--color-bg-deep);
+  background: var(--color-surface-alt);
 }
 
 .catalog-drawer__media img {
@@ -6865,9 +6874,48 @@ html {
   object-fit: cover;
 }
 
-.catalog-drawer__media span {
+/* gradient overlay */
+.catalog-drawer__media-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 45%, var(--color-surface) 100%);
+  pointer-events: none;
+}
+
+/* floating badges */
+.catalog-drawer__media-badges {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  z-index: 2;
+}
+
+/* SVG fallback media */
+.catalog-drawer__media-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  gap: 0.75rem;
+  background: var(--color-surface-alt);
+}
+
+.catalog-drawer__fallback-icon {
+  width: min(40%, 120px);
+  height: min(40%, 120px);
+  opacity: 0.9;
+  filter: drop-shadow(0 0 12px var(--color-accent-soft));
+}
+
+.catalog-drawer__fallback-label {
+  margin: 0;
   color: var(--color-text-muted);
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -6960,12 +7008,35 @@ html {
   align-items: center;
   justify-content: space-between;
   gap: 0.7rem;
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--color-line-soft);
+  border-bottom: 1px solid var(--color-line-soft);
 }
 
-.catalog-drawer__details strong {
+.catalog-drawer__price-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.catalog-drawer__price {
   color: var(--color-accent);
-  font-size: 1.22rem;
-  font-weight: 800;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 20px var(--color-accent-soft);
+}
+
+.catalog-drawer__qty-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.55rem;
+  border: 1px solid var(--color-accent-line);
+  border-radius: 999px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .catalog-drawer__availability {
@@ -7000,17 +7071,65 @@ html {
   padding-top: 0.15rem;
 }
 
-.catalog-drawer__footer button {
+.catalog-drawer__add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
   width: 100%;
-  min-height: 48px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-sm);
+  min-height: 52px;
+  border: none;
+  border-radius: var(--radius-pill, 999px);
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-success) 100%);
+  color: var(--color-surface);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 800;
+  font-family: inherit;
+  padding: 0.88rem 1.25rem;
+  box-shadow: 0 0 24px var(--color-accent-soft), 0 4px 16px rgba(0,0,0,0.3);
+  transition: transform var(--motion-fast) var(--motion-ease),
+              box-shadow var(--motion-fast) var(--motion-ease),
+              background var(--motion-fast) var(--motion-ease);
+}
+
+.catalog-drawer__add-btn:hover:not(:disabled),
+.catalog-drawer__add-btn:focus-visible:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 0 36px var(--color-accent-line-strong), 0 8px 24px rgba(0,0,0,0.4);
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.catalog-drawer__add-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.catalog-drawer__add-btn-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.catalog-drawer__add-btn--added {
+  background: linear-gradient(135deg, var(--color-success) 0%, #059669 100%);
+  box-shadow: 0 0 24px var(--color-success-soft), 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.catalog-drawer__add-btn--max,
+.catalog-drawer__add-btn--unavailable {
   background: var(--color-surface-alt);
   color: var(--color-text-muted);
+  box-shadow: none;
   cursor: not-allowed;
-  font-weight: 700;
-  font-family: inherit;
-  padding: 0.72rem 1rem;
+  border: 1px solid var(--color-line);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalog-drawer__add-btn {
+    transition: none;
+    transform: none !important;
+  }
 }
 
 @media (min-width: 560px) {
@@ -7022,6 +7141,7 @@ html {
     border-radius: 28px;
   }
 }
+
 
 @media (min-width: 760px) {
   .catalog-hero {
@@ -7116,50 +7236,7 @@ html {
   }
 }
 
-/* ── Catalog: Add to cart button ─────────────────────────── */
 
-.catalog-drawer__add-btn {
-  width: 100%;
-  min-height: 52px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: var(--color-accent);
-  color: var(--color-text-on-accent);
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 800;
-  font-family: inherit;
-  letter-spacing: 0.01em;
-  padding: 0.72rem 1rem;
-  transition: background var(--motion-base) var(--motion-ease),
-              box-shadow var(--motion-base) var(--motion-ease);
-  box-shadow: var(--shadow-cta);
-}
-
-.catalog-drawer__add-btn:hover,
-.catalog-drawer__add-btn:focus-visible {
-  background: var(--color-accent-hover);
-  box-shadow: 0 6px 24px rgba(45,106,79,0.35);
-  outline: none;
-}
-
-.catalog-drawer__add-btn--added {
-  background: var(--color-success);
-  box-shadow: 0 4px 16px rgba(5,150,105,0.3);
-}
-
-.catalog-drawer__add-btn--unavailable {
-  background: var(--color-surface-alt);
-  color: var(--color-text-muted);
-  box-shadow: none;
-  cursor: not-allowed;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .catalog-drawer__add-btn {
-    transition: none;
-  }
-}
 
 /* ── Catalog: Sticky cart bar ────────────────────────────── */
 
