@@ -43,6 +43,7 @@ type CustomerDraft = {
   location: "" | "Torre GGA" | "Torre Valcob";
   paymentMethod: OrderV2PaymentMethod;
   paymentTiming: PaymentTiming;
+  wantsWhatsappGroup?: boolean;
 };
 type BuilderDraft = {
   item: MenuItem;
@@ -113,6 +114,7 @@ const createEmptyCustomer = (): CustomerDraft => ({
   location: "",
   paymentMethod: "unknown",
   paymentTiming: "",
+  wantsWhatsappGroup: false,
 });
 const normalizePhoneDigits = (phone: string) => {
   const digits = phone.replace(/\D/g, "");
@@ -1677,12 +1679,23 @@ const Checkout = ({ cart, items, total, customer, setCustomer, checkoutStep, set
         <div className="builder-block payment-block" id="checkoutPaymentMethod" tabIndex={-1}>
           <h4>Método de pago</h4>
           <div className="chip-grid payment-chip-grid">
-            <button type="button" className={customer.paymentMethod === "unknown" ? "chip active" : "chip"} onClick={() => updatePaymentMethod("unknown")}>Confirmar por WhatsApp</button>
-            <button type="button" className={customer.paymentMethod === "cash" ? "chip active" : "chip"} onClick={() => updatePaymentMethod("cash")}>Efectivo</button>
-            <button type="button" className={customer.paymentMethod === "transfer" ? "chip active" : "chip"} onClick={() => updatePaymentMethod("transfer")}>Transferencia</button>
+            <button type="button" className={customer.paymentMethod === "unknown" ? "chip active" : "chip"} onClick={() => updatePaymentMethod("unknown")}>📲 Confirmar por WA</button>
+            <button type="button" className={customer.paymentMethod === "cash" ? "chip active" : "chip"} onClick={() => updatePaymentMethod("cash")}>💵 Efectivo</button>
+            <button type="button" className={customer.paymentMethod === "transfer" ? "chip active" : "chip"} onClick={() => updatePaymentMethod("transfer")}>🏦 Transferencia</button>
           </div>
           {customer.paymentMethod === "unknown" ? <p className="field-helper">No es un error: te confirmamos el método de pago por WhatsApp al recibir tu pedido.</p> : null}
           {fieldErrors.paymentMethod ? <p className="inline-error" id="checkoutPaymentMethodError" role="alert">{fieldErrors.paymentMethod}</p> : null}
+          <label className="catalog-checkout-wa-optin" style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "16px", padding: "12px 14px", borderRadius: "12px", background: "var(--color-surface-alt, #1A2119)", border: "1px solid var(--color-line, rgba(255,255,255,0.12))", cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={Boolean(customer.wantsWhatsappGroup)}
+              onChange={(event) => setCustomer({ ...customer, wantsWhatsappGroup: event.target.checked })}
+              style={{ width: "20px", height: "20px", accentColor: "var(--color-accent, #4ADE80)", cursor: "pointer" }}
+            />
+            <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--color-text-primary, #F0FFF4)" }}>
+              ✉️ Quiero unirme al grupo oficial de WhatsApp
+            </span>
+          </label>
           {customer.paymentMethod === "transfer" ? (
             <div className="payment-timing-panel" id="checkoutPaymentTiming" tabIndex={-1}>
               <h5>Momento de pago</h5>
@@ -1831,6 +1844,31 @@ const Success = ({ order, campaign, onCreateAnother }: { order: OrderConfirmatio
         <p className="success-whatsapp">
           {isPreviewMode ? "Modo preview: este folio es solo para validar cambios." : "Te avisaremos por WhatsApp cuando tu pedido esté listo."}
         </p>
+        <div className="success-wa-group-wrapper" style={{ marginTop: "14px" }}>
+          <a
+            href="https://chat.whatsapp.com/GycE5zALOypGPvJVaMfbPp"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="catalog-checkout-wa-group-btn"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              width: "100%",
+              padding: "12px 18px",
+              borderRadius: "12px",
+              background: "linear-gradient(135deg, #25D366 0%, #128C7E 100%)",
+              color: "#FFFFFF",
+              fontWeight: 800,
+              fontSize: "14px",
+              textDecoration: "none",
+              boxShadow: "0 4px 14px rgba(37, 211, 102, 0.35)",
+            }}
+          >
+            💬 Únete al grupo oficial de WhatsApp
+          </a>
+        </div>
       </section>
       <section className="success-bonus-block" aria-labelledby="successBonusTitle">
         <span className="eyebrow">Bonus secundario</span>
