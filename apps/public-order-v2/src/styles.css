@@ -6370,13 +6370,21 @@ html {
 
 .catalog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-  gap: 0.9rem;
+  grid-template-columns: 1fr;
+  gap: 1rem;
   max-width: 1120px;
   margin: 0 auto;
 }
 
+@media (min-width: 640px) {
+  .catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
 .catalog-card {
+  position: relative;
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--color-line);
@@ -6384,68 +6392,354 @@ html {
   background: var(--color-surface);
   box-shadow: var(--shadow-card);
   transition: box-shadow var(--motion-base) var(--motion-ease),
-              transform var(--motion-base) var(--motion-ease);
+              transform var(--motion-base) var(--motion-ease),
+              border-color var(--motion-base) var(--motion-ease);
 }
 
-.catalog-card__detail-trigger {
-  display: grid;
-  grid-template-rows: 160px 1fr;
-  width: 100%;
-  min-width: 0;
-  min-height: 100%;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  padding: 0;
-  text-align: left;
+.catalog-card:hover {
+  border-color: var(--color-accent-line-strong);
+  box-shadow: var(--shadow-panel), 0 0 16px rgba(0, 255, 102, 0.08);
 }
 
 .catalog-card--disabled {
-  opacity: 0.68;
+  opacity: 0.65;
 }
 
-.catalog-card__detail-trigger:hover,
-.catalog-card__detail-trigger:focus-visible {
-  background: var(--color-accent-soft);
+/* ── Badges ─────────────────────────────────────────────── */
+.catalog-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
-.catalog-card__detail-trigger:hover .catalog-card__meta,
-.catalog-card__detail-trigger:focus-visible .catalog-card__meta {
-  /* lift on hover handled via card-level transform */
+.catalog-badge--best-seller {
+  background-color: rgba(201, 32, 39, 0.88);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 10px rgba(201, 32, 39, 0.35);
 }
 
-.catalog-card__detail-trigger:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: -3px;
+.catalog-badge--featured {
+  background-color: rgba(245, 158, 11, 0.88);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.35);
 }
 
-.catalog-card__image {
-  display: grid;
-  place-items: center;
-  min-height: 160px;
-  background: var(--color-bg-deep);
+.catalog-badge--custom {
+  background-color: rgba(16, 185, 129, 0.88);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);
+}
+
+.catalog-card__badge-inline {
+  border: 1px solid var(--color-warning-soft);
+  border-radius: 999px;
+  color: var(--color-warning);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 700;
+  padding: 0.18rem 0.45rem;
+  background: var(--color-warning-soft);
+}
+
+/* ── Quick Add CTA Button ──────────────────────────────── */
+.catalog-card__title,
+.catalog-card__hero-title,
+.catalog-card__standard-title {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.catalog-card__btn-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-pill, 999px);
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-success) 100%);
+  color: var(--color-surface);
+  font-weight: 800;
+  font-size: 0.875rem;
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 14px var(--color-accent-soft), 0 2px 6px var(--color-line-strong);
+  transition: transform var(--motion-fast) var(--motion-ease),
+              box-shadow var(--motion-fast) var(--motion-ease);
+}
+
+.catalog-card__btn-add:hover,
+.catalog-card__btn-add:focus-visible {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 0 22px var(--color-accent-line-strong), 0 4px 12px var(--color-line-strong);
+  outline: 2px solid var(--focus-ring, var(--color-accent));
+  outline-offset: 2px;
+}
+
+.catalog-card__btn-add:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.catalog-card__btn-add--hero {
+  position: absolute;
+  bottom: 1.1rem;
+  right: 1.1rem;
+  z-index: 2;
+}
+
+.catalog-card__btn-add--standard {
+  position: absolute;
+  bottom: 12px;
+  right: 112px;
+  z-index: 2;
+}
+
+/* ── SVG Fallback Thumbnails ───────────────────────────── */
+.catalog-fallback-thumbnail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--color-surface-alt) 40%, var(--color-bg-deep) 100%);
+}
+
+.catalog-fallback-thumbnail--burger {
+  background: radial-gradient(circle at center, var(--color-accent-soft) 0%, var(--color-surface) 75%), var(--color-surface);
+}
+
+.catalog-fallback-thumbnail--combo {
+  background: radial-gradient(circle at center, var(--color-warning-soft) 0%, var(--color-surface) 75%), var(--color-surface);
+}
+
+.catalog-fallback-thumbnail--side {
+  background: radial-gradient(circle at center, var(--color-danger-soft) 0%, var(--color-surface) 75%), var(--color-surface);
+}
+
+.catalog-fallback-thumbnail--drink {
+  background: radial-gradient(circle at center, var(--color-success-soft) 0%, var(--color-surface) 75%), var(--color-surface);
+}
+
+.catalog-fallback-thumbnail--topping {
+  background: radial-gradient(circle at center, var(--color-accent-soft) 0%, var(--color-surface) 75%), var(--color-surface);
+}
+
+.catalog-fallback-icon {
+  width: 50%;
+  height: 50%;
+  max-width: 64px;
+  max-height: 64px;
+  filter: drop-shadow(0 0 8px var(--color-accent-soft));
+}
+
+/* ── Hero Card Layout ──────────────────────────────────── */
+.catalog-card--hero {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border-color: var(--color-accent-line);
+}
+
+@media (min-width: 640px) {
+  .catalog-card--hero {
+    grid-column: 1 / -1;
+  }
+}
+
+.catalog-card__hero-body {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+
+  &:focus-visible {
+    outline: 3px solid var(--focus-ring, var(--color-accent));
+    outline-offset: -3px;
+  }
+}
+
+.catalog-card__hero-media-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
+  background: var(--color-surface-alt);
 }
 
-.catalog-card__image img {
+.catalog-card__hero-media {
+  width: 100%;
+  height: 100%;
+}
+
+.catalog-card__hero-media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.catalog-card__image span {
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.catalog-card__hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 35%, rgba(0, 0, 0, 0.4) 70%, var(--color-surface) 100%);
+  pointer-events: none;
 }
 
-.catalog-card__meta {
+.catalog-card__badges {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  z-index: 2;
+}
+
+.catalog-card__hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.1rem;
+  background: var(--color-surface);
+}
+
+.catalog-card__hero-title {
+  margin: 0;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.catalog-card__hero-desc {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.catalog-card__hero-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+}
+
+.catalog-card__price {
+  color: var(--color-accent);
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+/* ── Standard Card Layout ──────────────────────────────── */
+.catalog-card--standard {
+  display: flex;
+  position: relative;
+  min-height: 112px;
+  background: var(--color-surface);
+}
+
+.catalog-card__standard-body {
   display: grid;
-  gap: 0.64rem;
-  padding: 1rem;
+  grid-template-columns: 1fr 88px;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  cursor: pointer;
+  text-align: left;
+  min-height: 112px;
+  align-items: center;
+
+  &:focus-visible {
+    outline: 3px solid var(--focus-ring, var(--color-accent));
+    outline-offset: -3px;
+  }
+}
+
+.catalog-card__standard-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  min-height: 88px;
+}
+
+.catalog-card__standard-title {
+  margin: 0;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  line-height: 1.25;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.catalog-card__standard-desc {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.catalog-card__standard-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.catalog-card__standard-thumb {
+  width: 88px;
+  height: 88px;
+  flex: 0 0 88px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  align-self: center;
+  background: var(--color-bg-deep);
+}
+
+.catalog-card__standard-thumb-inner {
+  width: 100%;
+  height: 100%;
+}
+
+.catalog-card__standard-thumb-inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .catalog-card__eyebrow,
