@@ -15,6 +15,7 @@ export type CatalogProduct = {
   imageKey?: string;
   badge?: string;
   isAvailable: boolean;
+  isFeatured?: boolean;
   sortOrder: number;
 };
 
@@ -90,6 +91,7 @@ export function mapMenuItemsToCatalogProducts(items: MenuItem[], categories: Men
         imageKey: item.imageKey,
         badge: item.badge ?? item.promoLabel,
         isAvailable: item.isAvailable,
+        isFeatured: Boolean((item as MenuItem & { isFeatured?: boolean }).isFeatured),
         sortOrder: item.sortOrder
       };
     })
