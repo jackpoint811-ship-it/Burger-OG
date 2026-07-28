@@ -15,6 +15,7 @@ export type CatalogProduct = {
   imageKey?: string;
   badge?: string;
   isAvailable: boolean;
+  isFeatured?: boolean;
   sortOrder: number;
 };
 
@@ -90,8 +91,50 @@ export function mapMenuItemsToCatalogProducts(items: MenuItem[], categories: Men
         imageKey: item.imageKey,
         badge: item.badge ?? item.promoLabel,
         isAvailable: item.isAvailable,
+        isFeatured: Boolean((item as MenuItem & { isFeatured?: boolean }).isFeatured),
         sortOrder: item.sortOrder
       };
     })
     .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+}
+
+export function getCategoryEmoji(categoryKey?: string, categoryName?: string): string {
+  const key = (categoryKey || "").toLowerCase();
+  const name = (categoryName || "").toLowerCase();
+
+  if (key === "all" || name.includes("todo")) return "🏷️";
+  if (key.includes("burger") || name.includes("burger") || name.includes("hamburguesa")) return "🍔";
+  if (
+    key.includes("guarnicion") ||
+    key.includes("papas") ||
+    key.includes("side") ||
+    name.includes("papa") ||
+    name.includes("guarnici") ||
+    name.includes("side")
+  )
+    return "🍟";
+  if (
+    key.includes("drink") ||
+    key.includes("bebida") ||
+    name.includes("bebida") ||
+    name.includes("refresco") ||
+    name.includes("drink")
+  )
+    return "🥤";
+  if (
+    key.includes("postre") ||
+    key.includes("dessert") ||
+    name.includes("postre") ||
+    name.includes("dulce") ||
+    name.includes("dessert")
+  )
+    return "🍰";
+  if (
+    key.includes("promo") ||
+    key.includes("combo") ||
+    name.includes("promo") ||
+    name.includes("combo")
+  )
+    return "🏷️";
+  return "🍔";
 }
