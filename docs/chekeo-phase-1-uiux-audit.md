@@ -1,8 +1,8 @@
 # Fase 1 - Auditoria UX/UI real de Chekeo Burgers.exe
 
-Fecha de revision: 2026-06-21  
-Preview usado: https://burgers-exe-internal-v2-preview.pages.dev/  
-PIN usado: `0485`  
+Fecha de revision: 2026-06-21
+Preview usado: https://burgers-exe-internal-v2-preview.pages.dev/
+PIN usado: `BOG_INTERNAL_PIN`
 Carpeta de evidencia: `docs/assets/chekeo-phase-1-audit/`
 
 ## 1. Resumen ejecutivo brutal
@@ -20,7 +20,7 @@ La mayor oportunidad para Fase 2 es dejar de maquillar la interfaz actual y reco
 | Evidencia | Detalle |
 | --- | --- |
 | URL | `https://burgers-exe-internal-v2-preview.pages.dev/` |
-| Login | PIN real `0485`, captura `login-preview-mobile.png` |
+| Login | PIN configurado en `BOG_INTERNAL_PIN`, captura `login-preview-mobile.png` |
 | Fecha/hora | 2026-06-21, revision Playwright headless |
 | Viewports | 320x844, 390x844, 430x844, 1440x1000 |
 | Screenshots | 21 PNG reales en `docs/assets/chekeo-phase-1-audit/` |
@@ -708,7 +708,7 @@ Flujo Git:
 ## 14. Checklist QA de la auditoria
 
 - [x] Preview real usado.
-- [x] Login real con `0485`.
+- [x] Login real con `BOG_INTERNAL_PIN`.
 - [x] Graphify ejecutado primero.
 - [x] Playwright usado.
 - [x] UI UX Pro Max usado.

@@ -2,3 +2,15 @@ node_modules/
 dist/
 test-results/
 playwright-report/
+.wrangler/
+.wrangler/tmp/
+.dev.vars
+
+# Local Cloudflare config overrides
+/wrangler.toml
+/wrangler.local.toml
+
+*.local
+*.log
+.DS_Store
+Thumbs.db

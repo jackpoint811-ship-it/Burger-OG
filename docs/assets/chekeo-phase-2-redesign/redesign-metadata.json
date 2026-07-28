@@ -2,7 +2,7 @@
   "generatedAt": "2026-06-21T18:22:40.563Z",
   "localUrl": "http://127.0.0.1:5174/",
   "remoteApiBase": "https://burgers-exe-internal-v2-preview.pages.dev",
-  "pinUsed": "0485",
+  "pinUsed": "BOG_INTERNAL_PIN",
   "loginModes": [
     {
       "file": "operacion-mobile-390.png",

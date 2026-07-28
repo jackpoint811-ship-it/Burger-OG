@@ -25,7 +25,7 @@ Guardadas en `docs/assets/chekeo-phase-2-2b-polish/`.
 | Pagos desktop | `pagos-desktop.png` |
 | Sorteos mobile | `sorteos-mobile.png` |
 
-Nota: se inspeccionó la URL pública `https://burgers-exe-internal-v2-preview.pages.dev/` con PIN `0485`. Como ese deploy todavía no contiene este branch, las capturas finales se tomaron contra `vite preview` local del build interno con mocks ligeros de auth.
+Nota: se inspeccionó la URL pública `https://burgers-exe-internal-v2-preview.pages.dev/` con PIN `BOG_INTERNAL_PIN`. Como ese deploy todavía no contiene este branch, las capturas finales se tomaron contra `vite preview` local del build interno con mocks ligeros de auth.
 
 ## Validación
 
@@ -33,4 +33,4 @@ Nota: se inspeccionó la URL pública `https://burgers-exe-internal-v2-preview.p
 - `npm run typecheck`
 - `APP_TARGET=internal npm run build:internal`
 - `npx playwright test --config=playwright.internal-kitchen.config.ts`
-- Revisión visual Playwright: preview público con PIN `0485` y preview local del branch.
+- Revisión visual Playwright: preview público con PIN `BOG_INTERNAL_PIN` y preview local del branch.

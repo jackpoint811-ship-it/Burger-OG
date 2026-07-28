@@ -5,15 +5,29 @@ Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más especí
 ## Forma de trabajo
 - Trabajar por PRs pequeños, controlados y fáciles de revisar.
 - No hacer merges automáticos ni resolver conflictos sin instrucción explícita.
+- No hacer merge directo a producción ni deploy directo sin instrucción explícita.
+- No hacer push, commit, PR o publicación si el prompt pide diagnóstico, pausa o revisión previa.
+- No usar `git add .`, `git add -A` ni `git reset --hard` salvo autorización explícita del prompt.
 - No introducir frameworks, CDNs ni librerías externas salvo autorización explícita del prompt.
 - No modificar `package.json`, lockfiles ni dependencias salvo autorización explícita.
 - No tocar carpetas legacy, especialmente `legacy/`, salvo que el prompt lo autorice.
 - Reportar siempre archivos modificados, riesgos, testing ejecutado y checklist manual de QA sugerido.
 
+## Workflow automático para agentes
+- Antes de cambios reales, leer `docs/codex-memory/00-indice.md`.
+- Seguir `docs/codex-memory/08-agent-workflow.md` para rama, cambios, checks, memoria, commit, push y PR.
+- Usar `docs/codex-memory/09-checklists.md` para validar el área tocada y preparar la descripción del PR.
+- Usar Graphify antes de cambios grandes, arquitectura, varios archivos o flujos conectados.
+- Actualizar `docs/codex-memory/05-backlog.md`, `06-prompts-buenos.md` o `07-decisiones.md` cuando el cambio altere backlog, prompts reutilizables o decisiones.
+- No dejar cambios locales sin PR salvo instrucción explícita.
+- El asistente puede preparar rama, commit, push y PR solo cuando el usuario apruebe el cierre; el usuario revisa y mergea.
+
 ## Contratos de producto y datos
 - No cambiar backend, payloads, contratos de datos, nombres de campos, precios, tickets, promociones ni reglas comerciales salvo autorización explícita.
 - No modificar migraciones, esquemas, seeds ni servicios backend si el PR es de UI o documentación.
+- No promover seeds destructivos, datos de preview/testing ni migraciones de limpieza a producción sin aprobación explícita.
 - Preservar compatibilidad con flujos existentes de pedidos, tickets, menú, ubicación y WhatsApp.
+- No tocar secretos, `.dev.vars`, `.wrangler/`, variables locales, credenciales ni tokens.
 
 ## UX/UI permanente
 - Mantener enfoque mobile-first en layout, copy, interacción y validación.
@@ -23,6 +37,7 @@ Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más especí
 - Evitar cambios visuales amplios si el prompt pide una mejora puntual.
 
 ## Reglas específicas para `apps/public-order-v2`
+- Excepción de estilo visual: Esta app utilizará un diseño claro, profesional y tradicional (estilo Uber Eats), con fondo claro, tipografía sans-serif limpia y tarjetas compactas/mixtas, abandonando la estética Cyberpunk del resto del proyecto.
 - No romper el public order flow mobile-first ni los aprendizajes de PRs 237–240.
 - Mantener CTA claro para iniciar pedido, personalización comprensible, checkout con labels/helper text/errores inline y acciones táctiles cómodas.
 - No cambiar payloads enviados desde `orders-v2`, lectura de menú, tickets, promociones, precios ni ubicación sin autorización explícita.
@@ -63,10 +78,23 @@ Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más especí
 - **Gemini Flash (Ejecución)**: Usar para codificación rápida, ejecutar comandos de testing/typecheck en background y correr validaciones visuales con `browser_subagent`.
 - **Delegación**: Usar `invoke_subagent` para paralelizar tareas del roadmap de PRs (ej. un subagente para el PR de contratos, otro para la UI) manteniendo las responsabilidades aisladas.
 
+## Optimización de Tokens y Uso de Obsidian
+- **Chats Cortos por Tarea/PR**: Para evitar el consumo exponencial de tokens por historial largo, cerrar el chat actual e iniciar uno nuevo al cambiar de tarea.
+- **Persistencia de Contexto**: Antes de cerrar un chat largo, actualizar el estado del trabajo en `docs/codex-memory/01-estado-actual.md` o la nota correspondiente de Obsidian.
+- **Reinicio con Memoria**: Al iniciar un nuevo chat, el agente debe leer la memoria de Obsidian (`docs/codex-memory/`) para retomar el contexto en lugar de pedir explicaciones repetitivas.
+- **Lectura/Escritura Quirúrgica**: Evitar leer o escribir archivos completos a menos que sea estrictamente necesario. Usar rangos precisos en `view_file` y `replace_file_content`.
+
 ## Memoria del proyecto
 
 Antes de cambios grandes, lee:
 
-- docs/codex-memory/00-indice.md
+- `docs/codex-memory/00-indice.md`
+- `docs/codex-memory/08-agent-workflow.md`
+- `docs/codex-memory/09-checklists.md`
 
 Estas notas son la memoria viva del proyecto para Codex/Obsidian. Si contradicen el código actual, verifica el código y reporta la diferencia.
+
+## Rigor en UI y CSS (Lecciones Aprendidas)
+- **No asumir estilos mágicos:** Si creas nuevas estructuras de layout en React (ej. sidebars, drawers, paneles estáticos), es OBLIGATORIO escribir las reglas CSS correspondientes (Flex/Grid, Media Queries, Position) en el archivo de estilos. El layout no se arreglará solo.
+- **Erradicación de temas residuales:** Al migrar a un nuevo diseño, auditar exhaustivamente los componentes en busca de colores, fondos o clases (ej. colores neón, fondos oscuros) que pertenezcan a la estética antigua y destruyan el contraste del nuevo diseño.
+- **Prohibición de "Ceguera de Compilación":** Que `npm run build` o `typecheck` pasen con éxito NO significa que la UI esté correcta. El agente no debe calificar un rediseño visual como exitoso sin haber validado meticulosamente que las clases CSS aplicadas existen y tienen coherencia visual.

@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type MouseEvent, type FormEvent } from "react";
 import type { OrderV2PaymentMethod, OrderV2ItemKind } from "@config/index";
-import { getPublicOrderEnvironment } from "@config/index";
+import { getPublicOrderEnvironment, DEFAULT_CATALOG_SETTINGS } from "@config/index";
 import { formatCurrency } from "../lib/order";
 import { useCatalogCart } from "./CatalogCartContext";
 import { createOrderV2 } from "../lib/orders-v2";
@@ -19,6 +19,19 @@ const catalogTypeToItemKind: Record<CatalogProductType, OrderV2ItemKind> = {
 type CatalogCheckoutDrawerProps = {
   isOpen: boolean;
   onClose: () => void;
+};
+
+const getMexicoCityTime = () => {
+  const options = { timeZone: "America/Mexico_City", hour: "2-digit", minute: "2-digit", hour12: false } as const;
+  const timeString = new Intl.DateTimeFormat("es-MX", options).format(new Date());
+  return timeString; // e.g. "10:30"
+};
+
+const isSameDayOrderingOpen = () => {
+  const current = getMexicoCityTime();
+  const start = DEFAULT_CATALOG_SETTINGS.orderWindow.startTime;
+  const end = DEFAULT_CATALOG_SETTINGS.orderWindow.endTime;
+  return current >= start && current <= end;
 };
 
 const focusableSelector = [
@@ -62,8 +75,33 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<OrderV2PaymentMethod>("unknown");
-  const [wantsWhatsapp, setWantsWhatsapp] = useState(true);
+  const [location, setLocation] = useState<"" | "Torre GGA" | "Torre Valcob">("");
+  const [wantsWhatsappGroup, setWantsWhatsappGroup] = useState(true);
+  const [notes, setNotes] = useState("");
   const [checkoutState, setCheckoutState] = useState<CheckoutState>({ status: "idle" });
+
+  const isSameDayOpen = isSameDayOrderingOpen();
+  const futureDates = useMemo(() => {
+    const dates = [];
+    const now = new Date();
+    for (let i = 1; i <= 3; i++) {
+      const future = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
+      const yyyy = future.getFullYear();
+      const mm = String(future.getMonth() + 1).padStart(2, "0");
+      const dd = String(future.getDate()).padStart(2, "0");
+
+      const labelOptions = { timeZone: "America/Mexico_City", weekday: "long", day: "numeric", month: "long" } as const;
+      const label = new Intl.DateTimeFormat("es-MX", labelOptions).format(future);
+
+      dates.push({
+        value: `${yyyy}-${mm}-${dd}`,
+        label: label.charAt(0).toUpperCase() + label.slice(1),
+      });
+    }
+    return dates;
+  }, []);
+
+  const [deliveryDate, setDeliveryDate] = useState<string>(isSameDayOpen ? "Hoy" : (futureDates[0]?.value || ""));
 
   const shouldReduceMotion = useReducedMotion();
 
@@ -72,7 +110,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
   const prevSnapshotRef = useRef("");
 
   // Regenerate key when cart contents or customer info changes.
-  const currentSnapshot = JSON.stringify({ items: items.map(i => `${i.productId}:${i.qty}`), name, phone, paymentMethod });
+  const currentSnapshot = JSON.stringify({ items: items.map(i => `${i.productId}:${i.qty}`), name, phone, paymentMethod, location, wantsWhatsappGroup, notes, deliveryDate });
   if (currentSnapshot !== prevSnapshotRef.current) {
     prevSnapshotRef.current = currentSnapshot;
     idempotencyKeyRef.current = generateIdempotencyKey();
@@ -85,7 +123,10 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
       setName("");
       setPhone("");
       setPaymentMethod("unknown");
-      setWantsWhatsapp(true);
+      setLocation("");
+      setWantsWhatsappGroup(true);
+      setNotes("");
+      setDeliveryDate(isSameDayOpen ? "Hoy" : (futureDates[0]?.value || ""));
       return;
     }
 
@@ -149,6 +190,16 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
       return;
     }
 
+    if (!location) {
+      setCheckoutState({ status: "error", error: "Por favor, elige tu ubicación de entrega." });
+      return;
+    }
+
+    if (!deliveryDate) {
+      setCheckoutState({ status: "error", error: "Por favor, elige una fecha de entrega." });
+      return;
+    }
+
     setCheckoutState({ status: "submitting" });
 
     try {
@@ -159,10 +210,13 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
         name: item.name,
       }));
 
+      const formattedNotes = `Ubicación: ${location} | Fecha: ${deliveryDate}${notes.trim() ? ` | Notas: ${notes.trim()}` : ""}`;
+
       const response = await createOrderV2({
         customer: { name: name.trim(), phone: normalizedPhone },
         orderMode: "pickup",
         paymentMethod,
+        notes: formattedNotes,
         items: payloadItems,
         ...(isPreviewMode ? { environment: orderEnvironment } : {}),
       }, idempotencyKeyRef.current);
@@ -205,18 +259,10 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
         exit={shouldReduceMotion ? { opacity: 0 } : { y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
       >
-        {/* ── Handle bar ── */}
-        <div className="catalog-drawer__handle" aria-hidden="true" />
-
         <header className="catalog-drawer__header catalog-cart-drawer__header">
-          <div className="catalog-cart-drawer__title-row">
-            <h2 id={titleId} className="catalog-cart-drawer__title">
-              <span className="catalog-cart-drawer__title-icon" aria-hidden="true">
-                {checkoutState.status === "success" ? "✅" : "📝"}
-              </span>
-              {checkoutState.status === "success" ? "Pedido recibido" : "Checkout"}
-            </h2>
-          </div>
+          <h2 id={titleId} className="catalog-cart-drawer__title">
+            {checkoutState.status === "success" ? "Pedido recibido" : "Checkout"}
+          </h2>
           <button
             ref={closeRef}
             type="button"
@@ -230,30 +276,27 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
 
         {checkoutState.status === "success" ? (
           <div className="catalog-checkout-success">
-            <svg viewBox="0 0 120 120" fill="none" className="catalog-checkout-success__icon" aria-hidden="true">
-              <circle cx="60" cy="60" r="56" fill="var(--color-accent)" fillOpacity="0.08" stroke="var(--color-accent)" strokeWidth="2" />
-              <path d="M36 62L52 78L84 46" stroke="var(--color-accent)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <p className="catalog-checkout-success__headline">¡Pedido confirmado!</p>
             <p className="catalog-checkout-success__subcopy">Tu orden ha entrado a preparación.</p>
             <div className="catalog-checkout-success__folio-card">
               <span>Folio</span>
               <strong>{checkoutState.folio}</strong>
             </div>
-            {wantsWhatsapp && (
-              <a
-                href="https://chat.whatsapp.com/GycE5zALOypGPvJVaMfbPp"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="catalog-checkout-success__wa-link"
-              >
-                <span aria-hidden="true">📲</span>
-                Únete al grupo de WhatsApp
-              </a>
-            )}
             <p className="catalog-checkout-success__whatsapp-note">
-              Te contactaremos por WhatsApp para cualquier novedad.
+               Te contactaremos por WhatsApp cualquier cosa.
             </p>
+            {wantsWhatsappGroup && (
+              <div className="catalog-checkout-success__whatsapp-group">
+                <p className="catalog-checkout-success__group-desc">Únete a nuestro grupo oficial de WhatsApp para enterarte de dinámicas y novedades:</p>
+                <a
+                  href="https://chat.whatsapp.com/GycE5zALOypGPvJVaMfbPp"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="catalog-checkout-success__whatsapp-btn"
+                >
+                  Unirme al Grupo de WhatsApp
+                </a>
+              </div>
+            )}
             <button type="button" className="catalog-checkout__submit" onClick={onClose}>
               Cerrar y explorar menú
             </button>
@@ -276,13 +319,96 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
               <label className="catalog-checkout-field">
                 <span>Teléfono (WhatsApp)</span>
                 <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="10 dígitos"
-                  required
+                   type="tel"
+                   value={phone}
+                   onChange={(e) => setPhone(e.target.value)}
+                   placeholder="10 dígitos"
+                   required
+                   disabled={checkoutState.status === "submitting"}
+                />
+              </label>
+
+              <div className="catalog-checkout-field">
+                <span id="date-label">Fecha de entrega</span>
+                <div className="catalog-checkout-chips catalog-checkout-chips--dates" role="radiogroup" aria-labelledby="date-label">
+                  {isSameDayOpen ? (
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={deliveryDate === "Hoy"}
+                      className={deliveryDate === "Hoy" ? "catalog-checkout-chip active" : "catalog-checkout-chip"}
+                      onClick={() => setDeliveryDate("Hoy")}
+                      disabled={checkoutState.status === "submitting"}
+                    >
+                      Hoy (Llega: 1:30 PM a 2:00 PM)
+                    </button>
+                  ) : (
+                    <div className="catalog-checkout-closed-notice">
+                      <span>Pedidos para el mismo día cerrados (Cierre: 11:33 AM). ¡Ordena para mañana!</span>
+                    </div>
+                  )}
+                  {futureDates.map((date) => (
+                    <button
+                      type="button"
+                      key={date.value}
+                      role="radio"
+                      aria-checked={deliveryDate === date.value}
+                      className={deliveryDate === date.value ? "catalog-checkout-chip active" : "catalog-checkout-chip"}
+                      onClick={() => setDeliveryDate(date.value)}
+                      disabled={checkoutState.status === "submitting"}
+                    >
+                      {date.label} (1:30 PM)
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="catalog-checkout-field">
+                <span id="location-label">Ubicación (Entrega)</span>
+                <div className="catalog-checkout-chips" role="radiogroup" aria-labelledby="location-label">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={location === "Torre GGA"}
+                    className={location === "Torre GGA" ? "catalog-checkout-chip active" : "catalog-checkout-chip"}
+                    onClick={() => setLocation("Torre GGA")}
+                    disabled={checkoutState.status === "submitting"}
+                  >
+                    Torre GGA
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={location === "Torre Valcob"}
+                    className={location === "Torre Valcob" ? "catalog-checkout-chip active" : "catalog-checkout-chip"}
+                    onClick={() => setLocation("Torre Valcob")}
+                    disabled={checkoutState.status === "submitting"}
+                  >
+                    Torre Valcob
+                  </button>
+                </div>
+              </div>
+
+              <label className="catalog-checkout-field">
+                <span>Nota adicional (Opcional)</span>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Ej. Sin cebolla en la burger..."
+                  maxLength={300}
+                  disabled={checkoutState.status === "submitting"}
+                  rows={2}
+                />
+              </label>
+
+              <label className="catalog-checkout-whatsapp-optin">
+                <input
+                  type="checkbox"
+                  checked={wantsWhatsappGroup}
+                  onChange={(e) => setWantsWhatsappGroup(e.target.checked)}
                   disabled={checkoutState.status === "submitting"}
                 />
+                <span>Quiero unirme al grupo oficial de WhatsApp</span>
               </label>
 
               <div className="catalog-checkout-field">
@@ -296,7 +422,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                     onClick={() => setPaymentMethod("cash")}
                     disabled={checkoutState.status === "submitting"}
                   >
-                    <span aria-hidden="true">💵</span> Efectivo
+                    Efectivo
                   </button>
                   <button
                     type="button"
@@ -306,7 +432,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                     onClick={() => setPaymentMethod("transfer")}
                     disabled={checkoutState.status === "submitting"}
                   >
-                    <span aria-hidden="true">🏦</span> Transferencia
+                    Transferencia
                   </button>
                   <button
                     type="button"
@@ -316,20 +442,10 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                     onClick={() => setPaymentMethod("unknown")}
                     disabled={checkoutState.status === "submitting"}
                   >
-                    <span aria-hidden="true">📲</span> Confirmar por WA
+                    Confirmar por WA
                   </button>
                 </div>
               </div>
-
-              <label className="catalog-checkout-wa-optin">
-                <input
-                  type="checkbox"
-                  checked={wantsWhatsapp}
-                  onChange={(e) => setWantsWhatsapp(e.target.checked)}
-                  disabled={checkoutState.status === "submitting"}
-                />
-                <span>✉️ Quiero unirme al grupo oficial de WhatsApp</span>
-              </label>
 
               {checkoutState.status === "error" && (
                 <div className="catalog-checkout-error" role="alert">
@@ -339,22 +455,35 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
             </div>
 
             <div className="catalog-cart-drawer__footer">
-              <div className="catalog-cart-drawer__total">
-                <div className="catalog-cart-drawer__total-label">
-                  <span>Total a pagar</span>
-                  <span className="catalog-cart-drawer__iva-note">IVA incluido</span>
+              <div className="catalog-checkout-payment-summary">
+                <div className="catalog-checkout-payment-row">
+                  <span>Total del pedido</span>
+                  <span>{formatCurrency(total)}</span>
                 </div>
-                <strong>{formatCurrency(total)}</strong>
+                {deliveryDate !== "Hoy" && deliveryDate !== "" ? (
+                  <>
+                    <div className="catalog-checkout-payment-row catalog-checkout-payment-row--highlight">
+                      <span>Anticipo requerido (50%)</span>
+                      <strong>{formatCurrency(total / 2)}</strong>
+                    </div>
+                    <div className="catalog-checkout-payment-row">
+                      <span>Restante a la entrega</span>
+                      <span>{formatCurrency(total / 2)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="catalog-checkout-payment-row catalog-checkout-payment-row--highlight">
+                    <span>Pago requerido (100%)</span>
+                    <strong>{formatCurrency(total)}</strong>
+                  </div>
+                )}
               </div>
               <button 
                 type="submit" 
                 className="catalog-checkout__submit" 
                 disabled={checkoutState.status === "submitting" || items.length === 0}
               >
-                <span className="catalog-checkout__submit-icon" aria-hidden="true">
-                  {checkoutState.status === "submitting" ? "⏳" : "→"}
-                </span>
-                <span>{checkoutState.status === "submitting" ? "Procesando..." : "Enviar pedido"}</span>
+                {checkoutState.status === "submitting" ? "Procesando..." : "Enviar pedido"}
               </button>
             </div>
           </form>

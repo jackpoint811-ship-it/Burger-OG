@@ -19,7 +19,6 @@ import { EmptyState } from "@ui/index";
 import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CatalogModeApp } from "./CatalogModeApp";
-import { CatalogBannerRail } from "./CatalogBannerRail";
 import { loadMenuV2, toFallbackMenuResponse } from "../lib/menu-v2";
 import { loadActiveRaffleV2 } from "../lib/raffles-v2";
 import {
@@ -43,7 +42,7 @@ type CustomerDraft = {
   location: "" | "Torre GGA" | "Torre Valcob";
   paymentMethod: OrderV2PaymentMethod;
   paymentTiming: PaymentTiming;
-  wantsWhatsappGroup?: boolean;
+  wantsWhatsappGroup: boolean;
 };
 type BuilderDraft = {
   item: MenuItem;
@@ -86,6 +85,11 @@ const MENU_GROUPS: Array<{ key: MenuCategory["key"] | "combos"; label: string }>
   { key: "combos", label: "Combos" },
   { key: "guarniciones", label: "Guarniciones" },
 ];
+const MENU_GROUP_COPY: Partial<Record<MenuCategory["key"] | "combos", string>> = {
+  burgers: "La base del build: elige tu burger y revisa ingredientes rapido.",
+  combos: "Loadouts completos para resolver comida, side quest y bebida en una pasada.",
+  guarniciones: "Side quests para sumar crunch, papas o bebidas sin complicarte.",
+};
 const paymentMethodLabels: Record<OrderV2PaymentMethod, string> = {
   cash: "Efectivo",
   transfer: "Transferencia",
@@ -97,14 +101,6 @@ const paymentTimingLabels: Record<Exclude<PaymentTiming, "">, string> = {
   after: "Pagar después",
 };
 const CHECKOUT_NOTES_MAX_LENGTH = 500;
-const statusLabels: Record<string, string> = {
-  received: "Recibido por cocina",
-  new: "Nuevo",
-  preparing: "En preparación",
-  ready: "Listo",
-  delivered: "Entregado",
-  cancelled: "Cancelado",
-};
 
 const createEmptyCustomer = (): CustomerDraft => ({
   name: "",
@@ -114,7 +110,7 @@ const createEmptyCustomer = (): CustomerDraft => ({
   location: "",
   paymentMethod: "unknown",
   paymentTiming: "",
-  wantsWhatsappGroup: false,
+  wantsWhatsappGroup: true,
 });
 const normalizePhoneDigits = (phone: string) => {
   const digits = phone.replace(/\D/g, "");
@@ -266,7 +262,7 @@ const getKnownProductIngredients = (item: MenuItem): readonly string[] | null =>
 };
 const getProductSalesCopy = (item: MenuItem): string => {
   const description = item.description.trim();
-  if (!description) return "Drop especial del sistema, listo para entrar a tu ticket.";
+  if (!description) return "Drop especial de la casa, listo para entrar a tu ticket.";
   return description.length > 118 ? `${description.slice(0, 115).trim()}…` : description;
 };
 
@@ -327,6 +323,7 @@ const createDraftFingerprint = (snapshot: DraftSnapshot) =>
       location: snapshot.customer.location,
       paymentMethod: snapshot.customer.paymentMethod,
       paymentTiming: snapshot.customer.paymentTiming,
+      wantsWhatsappGroup: snapshot.customer.wantsWhatsappGroup,
     },
     items: snapshot.items.map(({ lineKey, sku, itemDisplayIndex, itemKind, removedIngredients, extras, burgerNote, garnish, includedDrink, sideQuestExtras, comboBurgers }) => ({
       lineKey,
@@ -361,7 +358,8 @@ const buildCheckoutNotes = (customer: CustomerDraft): string => {
     `Pago: ${paymentMethodLabels[customer.paymentMethod]}`,
     customer.paymentMethod === "transfer" && customer.paymentTiming ? `Momento de pago: ${paymentTimingLabels[customer.paymentTiming]}` : "",
   ].filter(Boolean);
-  return [`Ubicación: ${customer.location}`, ...paymentNotes, customer.notes.trim()].filter(Boolean).join("\n");
+  const whatsappNote = `Grupo WhatsApp: ${customer.wantsWhatsappGroup ? "Sí" : "No"}`;
+  return [`Ubicación: ${customer.location}`, ...paymentNotes, whatsappNote, customer.notes.trim()].filter(Boolean).join("\n");
 };
 const validateCheckout = (customer: CustomerDraft, cart: CartEntry[], items: MenuItem[]): { global: string | null; fields: CheckoutErrors } => {
   const fields: CheckoutErrors = {};
@@ -513,53 +511,21 @@ const ProductCard = ({ item, mode, onClick, reduce, descriptionMode = "paragraph
   const kind = inferItemKind(item);
   const ingredientBullets = descriptionMode === "ingredients" ? getProductIngredientBullets(item) : [];
   const visualClassName = showImage ? "kiosk-visual" : `kiosk-visual no-image no-image-${kind}`;
-
-  const renderFallbackSvg = () => {
-    if (kind === "burger") {
-      return (
-        <svg viewBox="0 0 64 64" fill="none" className="kiosk-fallback-svg" aria-hidden="true" style={{ width: 44, height: 44 }}>
-          <path d="M12 28C12 18 20 12 32 12C44 12 52 18 52 28H12Z" fill="var(--color-accent, #4ADE80)" fillOpacity="0.25" stroke="var(--color-accent, #4ADE80)" strokeWidth="2.5" />
-          <path d="M10 34C10 32 12 30 14 30H50C52 30 54 32 54 34V36H10V34Z" fill="#FACC15" fillOpacity="0.3" stroke="#FACC15" strokeWidth="2" />
-          <path d="M12 42C12 40 14 38 16 38H48C50 38 52 40 52 42V48C52 50 50 52 48 52H16C14 52 12 50 12 48V42Z" fill="var(--color-accent, #4ADE80)" fillOpacity="0.15" stroke="var(--color-accent, #4ADE80)" strokeWidth="2.5" />
-        </svg>
-      );
-    }
-    if (kind === "combo") {
-      return (
-        <svg viewBox="0 0 64 64" fill="none" className="kiosk-fallback-svg" aria-hidden="true" style={{ width: 44, height: 44 }}>
-          <rect x="12" y="24" width="24" height="28" rx="4" fill="var(--color-accent, #4ADE80)" fillOpacity="0.2" stroke="var(--color-accent, #4ADE80)" strokeWidth="2" />
-          <path d="M40 16L48 52H56L48 16H40Z" fill="#FACC15" fillOpacity="0.3" stroke="#FACC15" strokeWidth="2" />
-        </svg>
-      );
-    }
-    return (
-      <svg viewBox="0 0 64 64" fill="none" className="kiosk-fallback-svg" aria-hidden="true" style={{ width: 44, height: 44 }}>
-        <circle cx="32" cy="32" r="20" fill="var(--color-accent, #4ADE80)" fillOpacity="0.2" stroke="var(--color-accent, #4ADE80)" strokeWidth="2.5" />
-      </svg>
-    );
-  };
-
+  const cardCtaLabel = !item.isAvailable ? "Agotado" : kind === "combo" ? "Ver combo" : kind === "burger" ? "Ver burger" : "Ver item";
   return (
     <motion.button
       type="button"
       whileTap={reduce ? undefined : { scale: 0.98 }}
-      className="kiosk-card"
+      className={`kiosk-card kiosk-card-${kind}`}
       onClick={() => onClick(item)}
       aria-label={`${mode === "info" ? "Ver información de" : "Elegir"} ${item.name}`}
       disabled={mode === "select" && !item.isAvailable}
     >
       <div className={visualClassName}>
-        {showImage && src ? (
-          <img src={src} alt="" loading="lazy" decoding="async" onError={() => setImageFailed(true)} />
-        ) : (
-          <div className="kiosk-visual-fallback-wrapper" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
-            {renderFallbackSvg()}
-            <span className="kiosk-visual-fallback-name">{item.name}</span>
-          </div>
-        )}
+        {showImage && src ? <img src={src} alt="" loading="lazy" decoding="async" onError={() => setImageFailed(true)} /> : <span>{item.name}</span>}
       </div>
       <div className="kiosk-body">
-        <span className="kiosk-category-tag">{kind === "combo" ? "Combo" : item.category}</span>
+        <span>{kind === "combo" ? "Combo" : item.category}</span>
         <h3>{item.name}</h3>
         {ingredientBullets.length ? (
           <ul className="kiosk-ingredients-list">
@@ -567,10 +533,11 @@ const ProductCard = ({ item, mode, onClick, reduce, descriptionMode = "paragraph
           </ul>
         ) : <p>{item.description}</p>}
         <footer>
-          <strong className="kiosk-price">{formatCurrency(item.price)}</strong>
-          <em className={item.isAvailable ? "kiosk-status-badge available" : "kiosk-status-badge unavailable"}>
-            {item.isAvailable ? "Disponible" : "Agotado"}
-          </em>
+          <div className="kiosk-price-stack">
+            <strong>{formatCurrency(item.price)}</strong>
+            <em>{item.isAvailable ? "Disponible" : "Agotado"}</em>
+          </div>
+          <span className={`kiosk-card-cta ${item.isAvailable ? "" : "is-disabled"}`}>{cardCtaLabel}</span>
         </footer>
       </div>
     </motion.button>
@@ -602,18 +569,25 @@ const RouteVisual = ({ title, src }: { title: string; src?: string }) => {
 
 const MenuSection = ({ menuData, raffleCampaign, onExplore, onStart, reduce }: { menuData: MenuV2Response; raffleCampaign: RaffleCampaignPublicV2 | null; onExplore: (item: MenuItem) => void; onStart: () => void; reduce: boolean }) => {
   const bonusZoneRef = useRef<HTMLElement | null>(null);
-  const activePromos = menuData.promos.filter((promo) => promo.isAvailable);
+  const activePromos = useMemo(() => menuData.promos.filter((promo) => promo.isAvailable), [menuData.promos]);
   const usingFallbackMenu = menuData.source === "fallback";
-  const featuredPromo = activePromos.filter((promo) => promo.isFeatured).sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 1);
-  const inlinePromos = activePromos.filter((promo) => !promo.isFeatured);
+  const featuredPromo = useMemo(() => activePromos.filter((promo) => promo.isFeatured).sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 1), [activePromos]);
+  const inlinePromos = useMemo(() => activePromos.filter((promo) => !promo.isFeatured), [activePromos]);
   const hasBonusContent = Boolean(raffleCampaign);
-  const visibleItems = menuData.items.filter((item) => item.category !== "extras" && !isDrinkItem(item));
-  const comboItems = menuData.items.filter((item) => inferItemKind(item) === "combo");
-  const byGroup = (key: MenuCategory["key"] | "combos") => key === "combos" ? comboItems : visibleItems.filter((item) => item.category === key);
-  const promosForItems = (items: MenuItem[]) => {
-    const skus = new Set(items.map((item) => normalizeMenuLink(item.sku)));
-    return inlinePromos.filter((promo) => promo.comboLinks.some((link) => skus.has(normalizeMenuLink(link))));
-  };
+  const groups = useMemo(() => {
+    const visibleItems = menuData.items.filter((item) => item.category !== "extras" && !isDrinkItem(item));
+    const comboItems = menuData.items.filter((item) => inferItemKind(item) === "combo");
+    return MENU_GROUPS.reduce<Record<MenuCategory["key"] | "combos", MenuItem[]>>((acc, { key }) => {
+      const groupItems = key === "combos" ? comboItems : visibleItems.filter((item) => item.category === key);
+      acc[key] = [...groupItems].sort((a, b) => a.sortOrder - b.sortOrder);
+      return acc;
+    }, {} as Record<MenuCategory["key"] | "combos", MenuItem[]>);
+  }, [menuData.items]);
+  const promosByGroup = useMemo(() => MENU_GROUPS.reduce<Record<MenuCategory["key"] | "combos", PromoCard[]>>((acc, { key }) => {
+    const skus = new Set((groups[key] ?? []).map((item) => normalizeMenuLink(item.sku)));
+    acc[key] = inlinePromos.filter((promo) => promo.comboLinks.some((link) => skus.has(normalizeMenuLink(link))));
+    return acc;
+  }, {} as Record<MenuCategory["key"] | "combos", PromoCard[]>), [groups, inlinePromos]);
   const scrollToBonusZone = () => {
     const bonusZone = bonusZoneRef.current;
     if (!bonusZone) return;
@@ -636,10 +610,25 @@ const MenuSection = ({ menuData, raffleCampaign, onExplore, onStart, reduce }: {
             <span className="hero-brand-exe" aria-hidden="true">.exe</span>
             <span className="hero-brand-cursor" aria-hidden="true" />
           </h1>
-          <p className="hero-brand-status">&gt; order system online</p>
+          <p className="hero-brand-status">&gt; pedidos listos</p>
         </div>
-        <p>Carga tu burger, desbloquea upgrades y manda tu orden al sistema.</p>
-        <QuestButton onClick={onStart}>ARMAR MI PEDIDO</QuestButton>
+        <p>Carga tu burger, revisa el ticket sin ruido y manda tu orden en pocos pasos.</p>
+        <div className="hero-action-row">
+          <QuestButton onClick={onStart}>ARMAR MI PEDIDO</QuestButton>
+          {hasBonusContent ? <button type="button" className="hero-link-button" onClick={scrollToBonusZone}>Ver sorteo activo</button> : null}
+        </div>
+        <ul className="hero-proof-list" aria-label="Por qué elegir Burgers.exe">
+          <li><strong>Arma tu orden</strong><span>Elige tu burger, personaliza y confirma en minutos.</span></li>
+          <li><strong>{hasBonusContent ? "Gana con cada pedido" : "Ticket siempre a mano"}</strong><span>{hasBonusContent ? "Participa en el sorteo con tu próxima orden." : "Tu resumen completo antes de enviar, sin sorpresas."}</span></li>
+          <li><strong>Retiro rápido</strong><span>Indícanos torre y método de pago, nosotros hacemos el resto.</span></li>
+        </ul>
+        {raffleCampaign ? (
+          <aside className="hero-raffle-signal" aria-label="Promoción activa">
+            <span>🎁 Promo activa</span>
+            <strong>{raffleCampaign.title}</strong>
+            <p>Ordena y participa automáticamente en el sorteo.</p>
+          </aside>
+        ) : null}
       </div>
       {usingFallbackMenu ? (
         <section className="menu-sync-notice" role="status" aria-live="polite">
@@ -648,15 +637,21 @@ const MenuSection = ({ menuData, raffleCampaign, onExplore, onStart, reduce }: {
           <button type="button" className="quest-button ghost" onClick={() => window.location.reload()}>Reintentar carga</button>
         </section>
       ) : null}
-      <CatalogBannerRail banners={menuData.catalogBanners || []} />
       {featuredPromo.length ? <PromoRail promos={featuredPromo} items={menuData.items} onViewCombo={onExplore} label="Promo destacada" variant="featured" /> : null}
       {MENU_GROUPS.map(({ key, label }) => {
-        const list = byGroup(key).sort((a, b) => a.sortOrder - b.sortOrder);
+        const list = groups[key] ?? [];
         return (
           <section className="menu-cluster" key={key}>
-            <h2>{label}</h2>
-            {list.length ? <div className="kiosk-grid">{list.map((item) => <ProductCard key={item.sku} item={item} mode="info" onClick={onExplore} reduce={reduce} />)}</div> : <EmptyState title={key === "combos" ? "Combos en carga… el sistema está preparando el siguiente drop." : key === "guarniciones" ? "Side quests disponibles pronto." : `${label} en carga…`} description="Vuelve a revisar el menú para desbloquear el siguiente drop." />}
-            <PromoRail promos={promosForItems(list)} items={menuData.items} onViewCombo={onExplore} label={`Promos de ${label}`} />
+            <header className="menu-cluster-header">
+              <div>
+                <span className="menu-cluster-kicker">Loadout</span>
+                <h2>{label}</h2>
+                <p>{MENU_GROUP_COPY[key] ?? "Elige una opcion para ver detalles antes de ordenar."}</p>
+              </div>
+              <span className="menu-cluster-count">{list.length} opcion{list.length === 1 ? "" : "es"}</span>
+            </header>
+            {list.length ? <div className="kiosk-grid">{list.map((item) => <ProductCard key={item.sku} item={item} mode="info" onClick={onExplore} reduce={reduce} />)}</div> : <EmptyState title={key === "combos" ? "Combos en carga… estamos preparando el siguiente drop." : key === "guarniciones" ? "Side quests disponibles pronto." : `${label} en carga…`} description="Vuelve a revisar el menú para desbloquear el siguiente drop." />}
+            <PromoRail promos={promosByGroup[key] ?? []} items={menuData.items} onViewCombo={onExplore} label={`Promos de ${label}`} />
           </section>
         );
       })}
@@ -856,7 +851,7 @@ const UnitEditor = ({ unit, index, item, extras, garnishes, onChange }: { unit: 
   const removedSummary = changeSummary.removed.length ? `Quitado: ${changeSummary.removed.join(", ")}` : "Burger original";
   const extrasSummaryText = changeSummary.extras.length ? changeSummary.extras.map((entry) => `${entry.name} x${entry.quantity}`).join(", ") : "Sin upgrades";
   const upgradeTotal = unit.extras.reduce((sum, extra) => sum + (extra.price ?? 0), 0);
-  const upgradeTotalLabel = `Upgrade actual: ${upgradeTotal ? `+${formatCurrency(upgradeTotal)}` : formatCurrency(0)}`;
+  const upgradeTotalLabel = upgradeTotal ? `Total en extras: +${formatCurrency(upgradeTotal)}` : "Sin extras agregados";
   const togglePanel = (panel: keyof typeof openPanels) => setOpenPanels((current) => ({ ...current, [panel]: !current[panel] }));
 
   return (
@@ -884,7 +879,7 @@ const UnitEditor = ({ unit, index, item, extras, garnishes, onChange }: { unit: 
                 <div className="chip-grid mod-chip-grid">
                   {ingredients.map((ingredient) => {
                     const active = unit.removedIngredients.includes(ingredient);
-                    return <button type="button" key={ingredient} className={active ? "chip mod-chip active" : "chip mod-chip"} aria-pressed={active} aria-label={active ? `${ingredient} quitado. Toca para regresarlo.` : `Quitar ${ingredient}`} onClick={() => onChange({ ...unit, removedIngredients: active ? unit.removedIngredients.filter((entry) => entry !== ingredient) : [...unit.removedIngredients, ingredient] })}><span>{ingredient}</span>{active ? <strong>✓ Quitado</strong> : <em>Quitar</em>}</button>;
+                    return <button type="button" key={ingredient} className={active ? "chip mod-chip active" : "chip mod-chip"} aria-pressed={active} aria-label={active ? `${ingredient} quitado. Toca para regresarlo.` : `Quitar ${ingredient}`} onClick={() => onChange({ ...unit, removedIngredients: active ? unit.removedIngredients.filter((entry) => entry !== ingredient) : [...unit.removedIngredients, ingredient] })}><span>{ingredient}</span>{active ? <strong>Quitado</strong> : <em>Incluido</em>}</button>;
                   })}
                 </div>
               ) : <p className="muted unavailable-mod-copy">Esta burger no tiene MOD disponible por ahora.</p>}
@@ -1654,6 +1649,15 @@ const Checkout = ({ cart, items, total, customer, setCustomer, checkoutStep, set
             <small id="checkoutPhoneHelp">Escribe 10 dígitos. Ej. 2221234567.</small>
             {fieldErrors.phone ? <span className="inline-error" id="checkoutPhoneError" role="alert">{fieldErrors.phone}</span> : null}
           </label>
+          <label className="whatsapp-opt-in" htmlFor="checkoutWhatsappGroup">
+            <input
+              id="checkoutWhatsappGroup"
+              type="checkbox"
+              checked={customer.wantsWhatsappGroup}
+              onChange={(event) => setCustomer({ ...customer, wantsWhatsappGroup: event.target.checked })}
+            />
+            <span>Quiero entrar al Grupo de WhatsApp</span>
+          </label>
           <label className="field-label wide field-label-optional" htmlFor="checkoutNotes">
             <span>Nota general <em>opcional</em></span>
             <textarea id="checkoutNotes" maxLength={500} value={customer.notes} onChange={(event) => { clearFieldError("notes"); clearCheckoutError(); setCustomer({ ...customer, notes: event.target.value }); }} placeholder="Ej. Sin servilletas extra" aria-invalid={fieldErrors.notes ? "true" : "false"} aria-describedby={`checkoutNotesHelp${fieldErrors.notes ? " checkoutNotesError" : ""}`} />
@@ -1679,23 +1683,12 @@ const Checkout = ({ cart, items, total, customer, setCustomer, checkoutStep, set
         <div className="builder-block payment-block" id="checkoutPaymentMethod" tabIndex={-1}>
           <h4>Método de pago</h4>
           <div className="chip-grid payment-chip-grid">
-            <button type="button" className={customer.paymentMethod === "unknown" ? "chip active" : "chip"} onClick={() => updatePaymentMethod("unknown")}>📲 Confirmar por WA</button>
-            <button type="button" className={customer.paymentMethod === "cash" ? "chip active" : "chip"} onClick={() => updatePaymentMethod("cash")}>💵 Efectivo</button>
-            <button type="button" className={customer.paymentMethod === "transfer" ? "chip active" : "chip"} onClick={() => updatePaymentMethod("transfer")}>🏦 Transferencia</button>
+            <button type="button" className={customer.paymentMethod === "unknown" ? "chip active" : "chip"} onClick={() => updatePaymentMethod("unknown")}>Confirmar por WhatsApp</button>
+            <button type="button" className={customer.paymentMethod === "cash" ? "chip active" : "chip"} onClick={() => updatePaymentMethod("cash")}>Efectivo</button>
+            <button type="button" className={customer.paymentMethod === "transfer" ? "chip active" : "chip"} onClick={() => updatePaymentMethod("transfer")}>Transferencia</button>
           </div>
           {customer.paymentMethod === "unknown" ? <p className="field-helper">No es un error: te confirmamos el método de pago por WhatsApp al recibir tu pedido.</p> : null}
           {fieldErrors.paymentMethod ? <p className="inline-error" id="checkoutPaymentMethodError" role="alert">{fieldErrors.paymentMethod}</p> : null}
-          <label className="catalog-checkout-wa-optin" style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "16px", padding: "12px 14px", borderRadius: "12px", background: "var(--color-surface-alt, #1A2119)", border: "1px solid var(--color-line, rgba(255,255,255,0.12))", cursor: "pointer" }}>
-            <input
-              type="checkbox"
-              checked={Boolean(customer.wantsWhatsappGroup)}
-              onChange={(event) => setCustomer({ ...customer, wantsWhatsappGroup: event.target.checked })}
-              style={{ width: "20px", height: "20px", accentColor: "var(--color-accent, #4ADE80)", cursor: "pointer" }}
-            />
-            <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--color-text-primary, #F0FFF4)" }}>
-              ✉️ Quiero unirme al grupo oficial de WhatsApp
-            </span>
-          </label>
           {customer.paymentMethod === "transfer" ? (
             <div className="payment-timing-panel" id="checkoutPaymentTiming" tabIndex={-1}>
               <h5>Momento de pago</h5>
@@ -1709,7 +1702,7 @@ const Checkout = ({ cart, items, total, customer, setCustomer, checkoutStep, set
           ) : null}
         </div>
         <div className="checkout-total checkout-payment-total"><span>Total a pagar</span><strong>{formatCurrency(total)}</strong></div>
-        <QuestButton onClick={onSubmit} disabled={submitting || !cart.length}>{submitting ? "Enviando pedido..." : "Confirmar pedido"}</QuestButton>
+        <QuestButton className="checkout-cta" onClick={onSubmit} disabled={submitting || !cart.length}>{submitting ? "Enviando pedido..." : "Confirmar pedido"}</QuestButton>
         {error ? <p className="inline-error" role="alert">{error}</p> : null}
       </section> : null}
       {transferModalOpen ? <TransferDetailsModal onClose={() => setTransferModalOpen(false)} /> : null}
@@ -1807,11 +1800,23 @@ const Success = ({ order, campaign, onCreateAnother }: { order: OrderConfirmatio
   const earnedTickets = order.earnedTickets;
   const hasEarnedTickets = (earnedTickets?.totalTickets ?? 0) > 0;
   const raffleTitle = order.activeRaffleTitle ?? campaign?.title;
-  const statusLabel = statusLabels[order.status] ?? order.status;
+  const hasShareCode = Boolean(order.customerReferralCode);
+  const hasReferralFeedback = typeof order.referralAccepted === "boolean";
+  const hasRaffleContext = Boolean(raffleTitle || campaign);
+  const successBonusTitle = isPreviewMode
+    ? "Beneficios del pedido real"
+    : hasRaffleContext || hasEarnedTickets || hasShareCode || hasReferralFeedback
+      ? "Tickets y código para compartir"
+      : "Consulta privada";
+  const successBonusCopy = isPreviewMode
+    ? "Los tickets y códigos se confirman cuando el pedido es real."
+    : hasRaffleContext || hasEarnedTickets || hasShareCode || hasReferralFeedback
+      ? "Tu pedido también puede sumar chances para el sorteo activo."
+      : "Revisa tus tickets cuando quieras desde una página separada.";
   const referralRewardCopy = campaign ? `${ticketLabel(campaign.ticketPerReferral)} extra` : "tickets extra";
   const referralLeadCopy = hasEarnedTickets
-    ? `Comparte este código. Si tu compa lo usa y ordena al menos 1 burger pagada, tú ganas ${referralRewardCopy}.`
-    : "Este pedido no sumó tickets porque no incluye burger, pero puedes compartir tu código para ganar tickets cuando tus invitados pidan burger.";
+    ? `Comparte este código. Cuando alguien ordene con él, tú ganas ${referralRewardCopy}.`
+    : `Comparte tu código: cuando alguien pida una burger con él, tú ganas ${referralRewardCopy}.`;
   const copyReferralCode = async () => {
     if (!order.customerReferralCode) return;
     try {
@@ -1825,82 +1830,66 @@ const Success = ({ order, campaign, onCreateAnother }: { order: OrderConfirmatio
   return (
     <section className="quest-panel success-panel" aria-live="polite">
       <section className="success-operational-block" aria-labelledby="successOrderTitle">
-        <span className="eyebrow">{isPreviewMode ? "Preview operativo" : "Confirmación operativa"}</span>
-        <h2 id="successOrderTitle">{isPreviewMode ? "Pedido preview recibido" : "Pedido recibido"}</h2>
-        <p className="muted section-subcopy">
-          {isPreviewMode ? "Tu orden entró como prueba interna. No preparar." : "Tu orden ya entró a cocina."}
-        </p>
-        <div className="success-folio-card">
+        <span className="eyebrow success-kicker">{isPreviewMode ? "Pedido de prueba" : "Pedido confirmado"}</span>
+        <div className="success-title-stack">
+          <h2 id="successOrderTitle">{isPreviewMode ? "Orden recibida" : "Tu burger ya está en cocina"}</h2>
+          <p className="muted section-subcopy">
+            {isPreviewMode ? "Este folio sirve para revisar la experiencia antes de abrir pedidos reales." : "Guarda tu folio. Te avisaremos por WhatsApp cuando esté lista para pickup."}
+          </p>
+        </div>
+        <div className="success-folio-card" aria-label={`Folio ${order.folio}`}>
           <span>Folio</span>
           <strong>{order.folio}</strong>
         </div>
         <dl className="success-details">
           <div><dt>Total</dt><dd>{formatCurrency(order.total)}</dd></div>
-          <div><dt>Ubicación</dt><dd>{order.location}</dd></div>
+          <div><dt>Pickup</dt><dd>{order.location}</dd></div>
           <div><dt>Pago</dt><dd>{paymentMethodLabels[order.paymentMethod]}</dd></div>
-          <div><dt>Estado</dt><dd className="success-status-pill">{statusLabel}</dd></div>
-          <div><dt>Tiempo estimado</dt><dd>15–25 min</dd></div>
+          <div><dt>Tiempo estimado</dt><dd>15-25 min</dd></div>
         </dl>
         <p className="success-whatsapp">
-          {isPreviewMode ? "Modo preview: este folio es solo para validar cambios." : "Te avisaremos por WhatsApp cuando tu pedido esté listo."}
+          {isPreviewMode ? "Pedido de prueba: no cuenta para cocina ni sorteo." : "Ten tu WhatsApp a la mano para el aviso de entrega."}
         </p>
-        <div className="success-wa-group-wrapper" style={{ marginTop: "14px" }}>
-          <a
-            href="https://chat.whatsapp.com/GycE5zALOypGPvJVaMfbPp"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="catalog-checkout-wa-group-btn"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-              width: "100%",
-              padding: "12px 18px",
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #25D366 0%, #128C7E 100%)",
-              color: "#FFFFFF",
-              fontWeight: 800,
-              fontSize: "14px",
-              textDecoration: "none",
-              boxShadow: "0 4px 14px rgba(37, 211, 102, 0.35)",
-            }}
-          >
-            💬 Únete al grupo oficial de WhatsApp
-          </a>
-        </div>
       </section>
       <section className="success-bonus-block" aria-labelledby="successBonusTitle">
-        <span className="eyebrow">Bonus secundario</span>
-        <h3 id="successBonusTitle">Tickets / referido</h3>
-      {isPreviewMode ? <p className="success-note muted">Preview no genera tickets, referidos ni métricas reales.</p> : null}
+        <span className="eyebrow">Recompensas</span>
+        <div className="success-title-stack">
+          <h3 id="successBonusTitle">{successBonusTitle}</h3>
+          <p className="success-bonus-copy">{successBonusCopy}</p>
+        </div>
+      {isPreviewMode ? <p className="success-note muted">Pedido de prueba: los beneficios se confirman en pedidos reales.</p> : null}
       {!isPreviewMode && hasEarnedTickets && earnedTickets ? <article className="success-reward-card">
-        <span className="eyebrow">Loot desbloqueado</span>
-        <strong className="success-ticket-total">+{earnedTickets.totalTickets} tickets</strong>
-        {raffleTitle ? <p className="success-raffle-title">Van para: {raffleTitle}</p> : null}
-        <ul>
-          <li>Burgers/combos de tu pedido: +{earnedTickets.burgerTickets}</li>
-          {earnedTickets.referralUsedTickets > 0 ? <li>Código de invitado aplicado: +{earnedTickets.referralUsedTickets}</li> : null}
+        <span className="eyebrow">Tickets sumados</span>
+        <div className="success-ticket-total" aria-label={`${earnedTickets.totalTickets} tickets sumados`}>
+          <span>+</span>
+          <strong>{earnedTickets.totalTickets}</strong>
+          <small>tickets</small>
+        </div>
+        {raffleTitle ? <p className="success-raffle-title">Participas en {raffleTitle}</p> : null}
+        <ul className="success-ticket-breakdown">
+          <li><span>Pedido</span><strong>+{earnedTickets.burgerTickets}</strong></li>
+          {earnedTickets.referralUsedTickets > 0 ? <li><span>Código invitado</span><strong>+{earnedTickets.referralUsedTickets}</strong></li> : null}
         </ul>
-        {order.referralAccepted === true && earnedTickets.referralUsedTickets === 0 ? <p>Tu código invitado quedó aplicado. Los tickets de referido se asignan a quien te compartió el código.</p> : null}
+        {order.referralAccepted === true && earnedTickets.referralUsedTickets === 0 ? <p>El código invitado quedó aplicado para quien te lo compartió.</p> : null}
       </article> : null}
       {!isPreviewMode && order.customerReferralCode ? <article className="success-referral-card">
-        <span className="eyebrow">Power-up de invitado</span>
+        <span className="eyebrow">Código para compartir</span>
         <p className="success-referral-lead">{referralLeadCopy}</p>
         <strong className="success-referral-code">{order.customerReferralCode}</strong>
         {raffleTitle ? <p>Sorteo activo: {raffleTitle}</p> : null}
         <div className="success-referral-actions">
-          <QuestButton className="ghost" onClick={copyReferralCode}>{copyStatus === "copied" ? "Código copiado ✅" : "Copiar código"}</QuestButton>
-          <QuestButton onClick={() => setShareModalOpen(true)}>Compartir mi código</QuestButton>
+          <QuestButton className="ghost" onClick={copyReferralCode}>{copyStatus === "copied" ? "Código copiado" : "Copiar código"}</QuestButton>
+          <QuestButton onClick={() => setShareModalOpen(true)}>Compartir por WhatsApp</QuestButton>
         </div>
-        {copyStatus === "idle" ? <p className="success-copy-status muted">Toca copiar y pégalo en WhatsApp, Discord o donde armen la raid.</p> : null}
-        {copyStatus === "copied" ? <p className="success-copy-status">Copiado al portapapeles. GG.</p> : null}
+        {copyStatus === "idle" ? <p className="success-copy-status muted">Compártelo por WhatsApp o donde armen el plan.</p> : null}
+        {copyStatus === "copied" ? <p className="success-copy-status">Código copiado.</p> : null}
         {copyStatus === "error" ? <p className="success-copy-status error">No se pudo copiar automático. Mantén presionado el código para copiarlo manualmente.</p> : null}
         {shareModalOpen ? <ReferralShareModal code={order.customerReferralCode} raffleTitle={raffleTitle} onClose={() => setShareModalOpen(false)} /> : null}
       </article> : null}
       {!isPreviewMode && order.referralAccepted === true && !earnedTickets ? <p className="success-note">Código de invitado aplicado.</p> : null}
       {!isPreviewMode && order.referralAccepted === false ? <p className="success-note muted">Pedido recibido. El código de invitado no aplicó.</p> : null}
-        {!isPreviewMode && !hasEarnedTickets && !order.customerReferralCode ? <p className="success-note muted">Tickets y referido quedan como bonus secundario cuando el sistema los confirme.</p> : null}
+        {!isPreviewMode && !hasEarnedTickets && !order.customerReferralCode && !hasReferralFeedback ? <p className="success-note muted">Este pedido quedó registrado. Si tienes tickets disponibles, podrás revisarlos desde la consulta privada.</p> : null}
+        {!isPreviewMode ? <a className="success-ticket-link" href="/tickets">Consultar mis tickets</a> : null}
       </section>
       <QuestButton onClick={onCreateAnother}>Nuevo pedido</QuestButton>
     </section>
@@ -1958,29 +1947,16 @@ export function PublicOrderApp() {
   const [cartCustomizationError, setCartCustomizationError] = useState<string | null>(null);
   const publicConfig = useMemo(() => resolvePublicConfig(menuData.publicConfig), [menuData.publicConfig]);
   const shouldRenderCatalogMode = shouldUseCatalogMode(publicConfig);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("pov2-theme");
-      const isDark = stored === "dark" || (stored === null && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-      if (isDark) {
-        document.documentElement.classList.add("theme-dark");
-      } else {
-        document.documentElement.classList.remove("theme-dark");
-      }
-    } catch {
-      /* noop */
-    }
-  }, []);
   const total = useMemo(() => getCartTotal(cart, menuData.items), [cart, menuData.items]);
-  const count = getCartCount(cart);
+  const count = useMemo(() => getCartCount(cart), [cart]);
   const availableBurgerItems = useMemo(() => menuData.items.filter((item) => inferItemKind(item) === "burger" && item.isAvailable), [menuData.items]);
   const availableComboItems = useMemo(() => menuData.items.filter((item) => inferItemKind(item) === "combo" && item.isAvailable), [menuData.items]);
-  const extras = menuData.items.filter((item) => item.category === "extras" && inferItemKind(item) !== "combo" && item.isAvailable);
-  const garnishes = menuData.items.filter((item) => item.category === "guarniciones" && item.isAvailable);
-  const drinks = menuData.items.filter((item) => isDrinkItem(item) && item.isAvailable);
-  const hasBurgerOrComboInCart = cart.some((entry) => entry.itemKind === "burger" || entry.itemKind === "combo");
-  const sideHasSelection = Object.values(extraGarnishQuantities).some((quantity) => quantity > 0);
+  const extras = useMemo(() => menuData.items.filter((item) => item.category === "extras" && inferItemKind(item) !== "combo" && item.isAvailable), [menuData.items]);
+  const garnishes = useMemo(() => menuData.items.filter((item) => item.category === "guarniciones" && item.isAvailable), [menuData.items]);
+  const drinks = useMemo(() => menuData.items.filter((item) => isDrinkItem(item) && item.isAvailable), [menuData.items]);
+  const menuItemsBySku = useMemo(() => new Map(menuData.items.map((item) => [item.sku, item])), [menuData.items]);
+  const hasBurgerOrComboInCart = useMemo(() => cart.some((entry) => entry.itemKind === "burger" || entry.itemKind === "combo"), [cart]);
+  const sideHasSelection = useMemo(() => Object.values(extraGarnishQuantities).some((quantity) => quantity > 0), [extraGarnishQuantities]);
   const clearCheckoutErrorMessage = () => setCheckoutError(null);
   const clearCheckoutFieldError = (field: CheckoutField) => setCheckoutFieldErrors((prev) => {
     if (!prev[field]) return prev;
@@ -2238,7 +2214,7 @@ export function PublicOrderApp() {
       garnish: entry.garnish ? { sku: entry.garnish.sku, name: entry.garnish.name, upcharge: entry.garnish.upcharge } : null,
       includedDrink: entry.includedDrink ? { sku: entry.includedDrink.sku, name: entry.includedDrink.name } : null,
       sideQuestExtras: (entry.sideQuestExtras ?? []).map((extra) => {
-        const menuItem = extra.sku ? menuData.items.find((item) => item.sku === extra.sku) : null;
+        const menuItem = extra.sku ? menuItemsBySku.get(extra.sku) : null;
         const kind = menuItem ? inferItemKind(menuItem) : "other";
         return { sku: extra.sku, name: extra.name, price: extra.price, itemKind: kind === "drink" ? "drink" as const : "garnish" as const };
       }),
@@ -2252,7 +2228,7 @@ export function PublicOrderApp() {
       const referralCode = customer.referralCode.trim().toUpperCase();
       const response = await createOrderV2({ customer: { name: customer.name.trim(), phone: normalizePhoneDigits(customer.phone) }, orderMode: orderModeForBackend, paymentMethod: customer.paymentMethod, notes, items: payloadItems, ...(referralCode ? { referralCode } : {}), ...(isPreviewMode ? { environment: orderEnvironment } : {}) }, idempotencyKey);
       const order = response.data?.order;
-      if (!order) throw new Error("El backend no devolvió folio de confirmación.");
+      if (!order) throw new Error("No pudimos confirmar el folio del pedido. Intenta de nuevo.");
       setOrderConfirmation({ ...order, paymentMethod: customer.paymentMethod, location: customer.location, environment: orderEnvironment, referralAccepted: response.data?.referralAccepted, customerReferralCode: response.data?.customerReferralCode, activeRaffleTitle: response.data?.activeRaffleTitle, earnedTickets: response.data?.earnedTickets });
       setCart([]);
       setCustomer(createEmptyCustomer());

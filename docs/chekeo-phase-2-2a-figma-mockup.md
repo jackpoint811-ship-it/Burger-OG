@@ -39,7 +39,7 @@ Screenshots usados como referencia: `operacion-seeded-mobile-390.png`, `resumen-
 
 Data usada: `seed-result.json`, `visual-qa-result.json`, y la verificacion live guardada en [`reference-live-check/`](./assets/chekeo-phase-2-2a-figma-mockup/reference-live-check/).
 
-Nota de consistencia: el chequeo live del 2026-06-22 encontro la preview accesible con PIN `0485`, pero el estado operativo actual ya no conserva toda la cola activa de 10 pedidos de Phase 2.1. Por eso el mockup usa la siembra `QA-UIUX-PHASE2-1` y sus screenshots/JSON como baseline operativo reproducible.
+Nota de consistencia: el chequeo live del 2026-06-22 encontro la preview accesible con PIN `BOG_INTERNAL_PIN`, pero el estado operativo actual ya no conserva toda la cola activa de 10 pedidos de Phase 2.1. Por eso el mockup usa la siembra `QA-UIUX-PHASE2-1` y sus screenshots/JSON como baseline operativo reproducible.
 
 ## 5. Variante recomendada
 

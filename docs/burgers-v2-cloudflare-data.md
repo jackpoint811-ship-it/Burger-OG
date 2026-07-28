@@ -2,6 +2,8 @@
 
 > Nota histórica: las secciones de fases preview anteriores conservan su contexto original. La configuración oficial de producción vigente está documentada abajo en `Official Cloudflare Pages production configuration`.
 
+> Nota Fase 6: los scripts root `public-order:*` fueron removidos del `package.json` activo. Apps Script/Sheets y los comandos public-order antiguos quedan como contexto legacy/historico, no como flujo V2 actual.
+
 
 ## Official Cloudflare Pages production configuration
 
@@ -85,11 +87,11 @@ npm run db:v2:migrate:local
 npm run db:v2:seed:local
 ```
 
-Aplicar remoto (preview):
+Aplicar remoto preview (requiere autorizacion explicita):
 
 ```bash
-npm run db:v2:migrate:remote
-npm run db:v2:seed:remote
+npm run db:v2:preview:migrate
+npm run db:v2:preview:seed
 ```
 
 ## Configurar binding en Cloudflare Pages
@@ -296,10 +298,10 @@ Local:
 npm run db:v2:orders:migrate:local
 ```
 
-Remota preview:
+Remota preview (requiere autorizacion explicita):
 
 ```bash
-npm run db:v2:orders:migrate:remote
+npm run db:v2:preview:orders:migrate
 ```
 
 Ambos scripts ejecutan `migrations/0003_v2_orders_schema.sql` sobre `burgers-exe-menu-v2-preview`, el D1 usado por `BOG_MENU_DB`.
@@ -414,7 +416,7 @@ V2-9D no agrega endpoints, tablas, migrations ni bindings de Cloudflare. El fluj
 - `GET /api/orders-v2-admin`
 - `PATCH /api/orders-v2-admin/:id/status`
 
-La consola interna sigue usando D1 orders mediante Backend V2 y sesión interna por cookie HttpOnly; Public V2 sigue creando órdenes con `Idempotency-Key`. No se modifica `/api/order`, `/api/rpc`, Apps Script, Sheets, legacy, `cloudflare/public-order`, `cloudflare/internal-chekeo`, pagos, WhatsApp ni `BOG_ACTIVE_ENV`.
+La consola interna sigue usando D1 orders mediante Backend V2 y sesión interna por cookie HttpOnly; Public V2 sigue creando órdenes con `Idempotency-Key`. No se modifica `/api/order`, `/api/rpc`, Apps Script, Sheets, legacy, `legacy/cloudflare/public-order`, `legacy/cloudflare/internal-chekeo`, pagos, WhatsApp ni `BOG_ACTIVE_ENV`.
 
 ## V2-10A.1 Protected orders CSV export
 
@@ -472,7 +474,7 @@ The endpoint:
 
 ### No changes in V2-10A.1
 
-V2-10A.1 does not change Public V2, Internal V2, `/api/order`, `/api/rpc`, Apps Script, Sheets, legacy code, `cloudflare/public-order`, `cloudflare/internal-chekeo`, migrations, payments, WhatsApp, or `BOG_ACTIVE_ENV`.
+V2-10A.1 does not change Public V2, Internal V2, `/api/order`, `/api/rpc`, Apps Script, Sheets, legacy code, `legacy/cloudflare/public-order`, `legacy/cloudflare/internal-chekeo`, migrations, payments, WhatsApp, or `BOG_ACTIVE_ENV`.
 
 ## V2-10A.2 Internal CSV export usage
 
@@ -546,7 +548,7 @@ The Cierre tab does not use mock fallback; missing credencial or backend errors 
 
 ### No changes in V2-10B
 
-V2-10B does not change Public V2, `/api/order`, `/api/rpc`, Apps Script, Sheets sync, `cloudflare/public-order`, `cloudflare/internal-chekeo`, legacy code, migrations, payments, WhatsApp, or `BOG_ACTIVE_ENV`. Sheets remains a manual destination for downloaded CSV files only.
+V2-10B does not change Public V2, `/api/order`, `/api/rpc`, Apps Script, Sheets sync, `legacy/cloudflare/public-order`, `legacy/cloudflare/internal-chekeo`, legacy code, migrations, payments, WhatsApp, or `BOG_ACTIVE_ENV`. Sheets remains a manual destination for downloaded CSV files only.
 
 ## V2-11A Manual WhatsApp data policy
 
@@ -721,7 +723,7 @@ No-touch V2-12:
 
 ## Sorteos V2 / Raffles migrations
 
-Este bloque es el checklist operativo para no omitir las migraciones de Sorteos V2 al preparar o reparar el D1 de `burgers-exe-menu-live` desde Codespace. Usa siempre `cloudflare/public-order/wrangler.toml`; no cambies `BOG_ACTIVE_ENV` para ejecutar estas migraciones.
+Este bloque es historico y de alto riesgo: en Fase 5 la config legacy se movio a `legacy/cloudflare/public-order/wrangler.toml` y en Fase 6 los scripts `public-order:*` se removieron de `package.json`. No uses este flujo contra live sin aprobacion explicita; no cambies `BOG_ACTIVE_ENV` para ejecutar estas migraciones.
 
 Prerequisitos de schema en el mismo D1:
 
@@ -733,34 +735,31 @@ Prerequisitos de schema en el mismo D1:
 Aplicar Sorteos V2 local:
 
 ```bash
-npm run public-order:d1:raffles:migrate:local
+Comando historico removido de scripts activos en Fase 6. Definir un flujo nuevo antes de ejecutar migraciones.
 ```
 
 Aplicar Sorteos V2 remote/live:
 
 ```bash
-npm run public-order:d1:raffles:migrate:remote
+Comando historico removido de scripts activos en Fase 6. No ejecutar contra live sin aprobacion explicita.
 ```
 
 Si necesitas ejecutar una migración puntual en vez del bloque completo:
 
 ```bash
-npm run public-order:d1:raffles:schema:migrate:local
-npm run public-order:d1:raffles:referrals:migrate:local
-npm run public-order:d1:raffles:schema:migrate:remote
-npm run public-order:d1:raffles:referrals:migrate:remote
+Comandos historicos removidos de scripts activos en Fase 6. No hay reemplazo automatico en esta fase.
 ```
 
 Validación de tablas críticas después de migrar local:
 
 ```bash
-npx wrangler d1 execute burgers-exe-menu-live --local --config cloudflare/public-order/wrangler.toml --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('orders_v2','order_items_v2','raffle_campaigns_v2','raffle_referral_codes_v2','raffle_referrals_v2');"
+Comando historico legacy. No usar como flujo activo; preparar un comando nuevo con ambiente explicito si una fase futura lo autoriza.
 ```
 
 Validación de tablas críticas después de migrar remote/live:
 
 ```bash
-npx wrangler d1 execute burgers-exe-menu-live --remote --config cloudflare/public-order/wrangler.toml --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('orders_v2','order_items_v2','raffle_campaigns_v2','raffle_referral_codes_v2','raffle_referrals_v2');"
+Comando historico legacy. No ejecutar contra live sin aprobacion explicita y plan de ambiente.
 ```
 
 SQL de validación, para copiarlo en consola D1 si no se usa Wrangler:
@@ -831,7 +830,7 @@ Troubleshooting:
 Migración remote/live para columnas de imagen vertical:
 
 ```bash
-npx wrangler d1 execute burgers-exe-menu-live --remote --config cloudflare/public-order/wrangler.toml --file=./migrations/0008_v2_raffle_detail_images.sql
+Comando historico removido de scripts activos en Fase 6. No ejecutar contra live sin aprobacion explicita y plan de ambiente.
 ```
 
 ### Cálculo de tickets desde D1
