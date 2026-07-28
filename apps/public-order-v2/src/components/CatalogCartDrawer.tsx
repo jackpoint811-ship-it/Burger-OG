@@ -101,21 +101,8 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout, sides = [] }: C
         exit={shouldReduceMotion ? { opacity: 0 } : { y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
       >
-        {/* ── Handle bar ── */}
-        <div className="catalog-drawer__handle" aria-hidden="true" />
-
         <header className="catalog-drawer__header catalog-cart-drawer__header">
-          <div className="catalog-cart-drawer__title-row">
-            <h2 id={titleId} className="catalog-cart-drawer__title">
-              <span className="catalog-cart-drawer__title-icon" aria-hidden="true">🛒</span>
-              Tu carrito
-            </h2>
-            {items.length > 0 && (
-              <span className="catalog-cart-drawer__item-count">
-                {items.reduce((acc, i) => acc + i.qty, 0)} {items.reduce((acc, i) => acc + i.qty, 0) === 1 ? "producto" : "productos"}
-              </span>
-            )}
-          </div>
+          <h2 id={titleId} className="catalog-cart-drawer__title">Tu carrito</h2>
           <button
             ref={closeRef}
             type="button"
@@ -129,18 +116,9 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout, sides = [] }: C
 
         {items.length === 0 ? (
           <div className="catalog-cart-drawer__empty">
-            <svg viewBox="0 0 120 120" fill="none" className="catalog-cart-drawer__empty-svg" aria-hidden="true">
-              <circle cx="60" cy="60" r="58" fill="currentColor" fillOpacity="0.04" stroke="var(--color-accent)" strokeWidth="1" strokeOpacity="0.2" />
-              <path d="M30 40H38L46 82H88" stroke="var(--color-accent)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.5" />
-              <circle cx="52" cy="92" r="6" fill="var(--color-accent)" fillOpacity="0.3" stroke="var(--color-accent)" strokeWidth="2" />
-              <circle cx="80" cy="92" r="6" fill="var(--color-accent)" fillOpacity="0.3" stroke="var(--color-accent)" strokeWidth="2" />
-              <path d="M46 50H90L86 74H50L46 50Z" fill="var(--color-accent)" fillOpacity="0.08" stroke="var(--color-accent)" strokeWidth="2" strokeLinejoin="round" />
-              <path d="M62 58V68M68 58V68M74 58V68" stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.4" />
-            </svg>
-            <p className="catalog-cart-drawer__empty-text">Tu carrito está vacío</p>
-            <p className="catalog-cart-drawer__empty-hint">Agrega productos del menú para empezar</p>
+            <p>Tu carrito está vacío.</p>
             <button type="button" className="catalog-cart-drawer__empty-cta" onClick={onClose}>
-              ← Explorar menú
+              Seguir explorando
             </button>
           </div>
         ) : (
@@ -158,14 +136,7 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout, sides = [] }: C
                     </div>
                     <div className="catalog-cart-item__info">
                       <p className="catalog-cart-item__name">{item.name}</p>
-                      <div className="catalog-cart-item__price-row">
-                        <span className="catalog-cart-item__price">{formatCurrency(item.price)}</span>
-                        {item.qty > 1 && (
-                          <span className="catalog-cart-item__subtotal">
-                            × {item.qty} = {formatCurrency(item.price * item.qty)}
-                          </span>
-                        )}
-                      </div>
+                      <p className="catalog-cart-item__price">{formatCurrency(item.price)}</p>
                     </div>
                     <div className="catalog-cart-item__controls">
                       <button
@@ -237,19 +208,11 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout, sides = [] }: C
 
             <div className="catalog-cart-drawer__footer">
               <div className="catalog-cart-drawer__total">
-                <div className="catalog-cart-drawer__total-label">
-                  <span>Total</span>
-                  <span className="catalog-cart-drawer__iva-note">IVA incluido</span>
-                </div>
+                <span>Total</span>
                 <strong>{formatCurrency(total)}</strong>
               </div>
-              <button
-                type="button"
-                className="catalog-cart-drawer__checkout"
-                onClick={onCheckout}
-              >
-                <span className="catalog-cart-drawer__checkout-icon" aria-hidden="true">→</span>
-                <span>Ir a Checkout</span>
+              <button type="button" className="catalog-cart-drawer__checkout" onClick={onCheckout}>
+                Ir a Checkout
               </button>
             </div>
           </>

@@ -23,7 +23,7 @@ export function CatalogCartBar({ onOpenCart }: CatalogCartBarProps) {
     >
       <div className="catalog-cart-bar__summary">
         <span className="catalog-cart-bar__count" aria-label={`${count} ${count === 1 ? "producto" : "productos"} en el carrito`}>
-          🛒 {count}
+          {count}
         </span>
         <span className="catalog-cart-bar__label">
           {count === 1 ? "producto" : "productos"}
@@ -38,8 +38,7 @@ export function CatalogCartBar({ onOpenCart }: CatalogCartBarProps) {
         onClick={onOpenCart}
         aria-haspopup="dialog"
       >
-        <span>Ver carrito</span>
-        <span className="catalog-cart-bar__cta-arrow" aria-hidden="true">→</span>
+        Ver carrito
       </button>
     </motion.aside>
   );
