@@ -7,6 +7,9 @@ import { CatalogCartBar } from "./CatalogCartBar";
 import { CatalogCartProvider, useCatalogCart } from "./CatalogCartContext";
 import { AnimatePresence } from "framer-motion";
 import { CatalogBannerRail } from "./CatalogBannerRail";
+import { DynamicRenderer } from "./DynamicRenderer";
+import type { DesignSpecification } from "../types/design";
+import { DEFAULT_STUDIO_DESIGN_SPEC } from "../lib/default-design-spec";
 import {
   type CatalogProduct,
   type CatalogProductType,
@@ -23,6 +26,7 @@ type CatalogModeAppProps = {
   siteConfig: SiteConfig;
   catalogBanners?: CatalogBanner[];
   source?: string;
+  designSpec?: DesignSpecification | null;
 };
 
 const CatalogFallbackSvg = ({ type }: { type: CatalogProductType }) => {
@@ -304,7 +308,7 @@ function useDarkMode() {
   return { isDark, toggle };
 }
 
-function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [], source }: CatalogModeAppProps) {
+function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [], source, designSpec }: CatalogModeAppProps) {
   const products = useMemo(() => mapMenuItemsToCatalogProducts(items, categories), [items, categories]);
   const visibleCategories = useMemo(() => {
     const categoryKeys = new Set(products.map((product) => product.categoryKey));
@@ -441,6 +445,13 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
       </header>
 
       <main className="catalog-shell" aria-labelledby="catalogTitle">
+        {/* ── Headless UI Dynamic Renderer (Android Studio Export Spec) ───────── */}
+        <DynamicRenderer
+          spec={designSpec || DEFAULT_STUDIO_DESIGN_SPEC}
+          chekeoItems={items}
+          chekeoCategories={categories}
+          onProductSelect={(item) => setSelectedProduct(mapMenuItemsToCatalogProducts([item], categories)[0] || null)}
+        />
         <section className="catalog-hero" id="catalog-hero">
           <div className="catalog-hero__content">
             <div className="catalog-hero__badge-row">

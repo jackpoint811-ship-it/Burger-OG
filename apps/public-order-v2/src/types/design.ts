@@ -36,20 +36,28 @@ export interface ContentReferences {
 export interface LayoutModule {
   id: string;
   type:
+    | "HEADER"
+    | "BANNER_CAROUSEL_1"
+    | "REORDER"
     | "BANNER_RAIL"
     | "FEATURED"
+    | "CATEGORIES_STICKY"
+    | "CATEGORIES_HORIZONTAL"
     | "CATALOG"
     | "HERO_BANNER"
     | "GRID"
     | "CATEGORY_NAV"
+    | "CART_BAR"
     | string;
   title?: string;
+  subtitle?: string;
+  variant?: string;
   visible: boolean;
   density?: "ONE_COLUMN" | "TWO_COLUMNS" | "HORIZONTAL_LIST" | string;
   bgColor?: string;
   textColor?: string;
-  borderRadius?: string;
-  padding?: string;
+  borderRadius?: number | string;
+  padding?: number | string;
   isClickable?: boolean;
   clickAction?: string;
   itemRefs?: string[];
