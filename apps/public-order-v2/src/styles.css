@@ -85,8 +85,8 @@
   --focus-ring: rgba(45, 106, 79, 0.65);
 
   /* ──────────────────────────────────────────────────
-     Aliases de compatibilidad (legacy, se irán en PR3–4)
-     Evitan romper reglas CSS existentes que usen
+     LEGACY DEPRECATED TOKENS — SOLO LECTURA (NO TOCAR / NO USAR EN NUEVO CÓDIGO)
+     Aliases para retrocompatibilidad con reglas antiguas:
      --neon, --amber, --panel, etc.
   ────────────────────────────────────────────────── */
   --neon:         var(--color-accent);
@@ -149,6 +149,11 @@
 
   --focus-ring: rgba(74, 222, 128, 0.65);
 
+  /* ──────────────────────────────────────────────────
+     LEGACY DEPRECATED TOKENS — SOLO LECTURA (NO TOCAR / NO USAR EN NUEVO CÓDIGO)
+     Aliases para retrocompatibilidad con reglas antiguas:
+     --neon, --amber, --panel, etc.
+  ────────────────────────────────────────────────── */
   --neon:         var(--color-accent);
   --neon-soft:    var(--color-accent-soft);
   --amber:        var(--color-warning);

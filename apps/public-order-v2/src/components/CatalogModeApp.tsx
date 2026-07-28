@@ -290,8 +290,6 @@ function useDarkMode() {
       : false;
   });
 
-  const firstRun = useRef(true);
-
   useEffect(() => {
     const root = document.documentElement;
     if (isDark) {
@@ -299,7 +297,6 @@ function useDarkMode() {
     } else {
       root.classList.remove("theme-dark");
     }
-    if (firstRun.current) { firstRun.current = false; return; }
     try { localStorage.setItem("pov2-theme", isDark ? "dark" : "light"); } catch { /* noop */ }
   }, [isDark]);
 

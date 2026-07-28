@@ -1958,6 +1958,20 @@ export function PublicOrderApp() {
   const [cartCustomizationError, setCartCustomizationError] = useState<string | null>(null);
   const publicConfig = useMemo(() => resolvePublicConfig(menuData.publicConfig), [menuData.publicConfig]);
   const shouldRenderCatalogMode = shouldUseCatalogMode(publicConfig);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("pov2-theme");
+      const isDark = stored === "dark" || (stored === null && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      if (isDark) {
+        document.documentElement.classList.add("theme-dark");
+      } else {
+        document.documentElement.classList.remove("theme-dark");
+      }
+    } catch {
+      /* noop */
+    }
+  }, []);
   const total = useMemo(() => getCartTotal(cart, menuData.items), [cart, menuData.items]);
   const count = getCartCount(cart);
   const availableBurgerItems = useMemo(() => menuData.items.filter((item) => inferItemKind(item) === "burger" && item.isAvailable), [menuData.items]);
