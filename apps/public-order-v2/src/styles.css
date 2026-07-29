@@ -6955,10 +6955,10 @@ html {
   max-height: min(92dvh, 800px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  border: 1px solid var(--color-accent-line);
+  border: 1px solid var(--color-line);
   border-radius: 28px 28px 20px 20px;
   background: var(--color-surface);
-  box-shadow: var(--shadow-floating), 0 0 48px rgba(0, 255, 102, 0.06);
+  box-shadow: var(--shadow-floating);
 }
 
 /* ── Handle bar ───────────────────────────────────────────── */
@@ -6973,7 +6973,7 @@ html {
 
 .catalog-drawer__media {
   position: relative;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
   background: var(--color-surface-alt);
 }
