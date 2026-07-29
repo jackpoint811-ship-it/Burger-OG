@@ -517,9 +517,9 @@ export function LayoutEngine({
                   flexShrink: 0,
                   width: "168px",
                   backgroundColor: "var(--color-surface)",
-                  border: "1px solid var(--color-line)",
+                  border: "1px solid var(--color-line-soft)",
                   borderRadius: "16px",
-                  padding: "12px",
+                  padding: "0px",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
@@ -527,6 +527,7 @@ export function LayoutEngine({
                   cursor: "pointer",
                   boxSizing: "border-box",
                   boxShadow: "var(--shadow-card)",
+                  overflow: "hidden",
                 }}
                 onClick={() => onProductSelect && onProductSelect(item)}
               >
@@ -555,15 +556,15 @@ export function LayoutEngine({
                 <div
                   style={{
                     width: "100%",
-                    height: "108px",
+                    height: "140px",
                     backgroundColor: "var(--color-surface-alt)",
-                    borderRadius: "12px",
+                    borderRadius: "0px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    marginTop: "8px",
-                    marginBottom: "8px",
-                    border: "1px solid var(--color-line-soft)",
+                    marginTop: "0px",
+                    marginBottom: "0px",
+                    borderBottom: "1px solid var(--color-line-soft)",
                     overflow: "hidden",
                   }}
                 >
@@ -571,53 +572,55 @@ export function LayoutEngine({
                     <img
                       src={assetUrl}
                       alt={item.name}
-                      style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "12px" }}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       onError={(e) => handleAssetImageError(e, item.name)}
                     />
                   ) : (
                     <img
                       src={getCasualSvgPlaceholder(item.name)}
                       alt={item.name}
-                      style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "12px" }}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
                     />
                   )}
                 </div>
 
                 {/* Info & Precio */}
-                <div>
-                  <h3
-                    style={{
-                      margin: 0,
-                      fontSize: "12px",
-                      fontFamily: "'Inter', sans-serif",
-                      fontWeight: 700,
-                      color: "var(--color-text-primary)",
-                      lineHeight: 1.3,
-                      height: "32px",
-                      overflow: "hidden",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                    }}
-                  >
-                    {item.name}
-                  </h3>
-                  {item.description && (
-                    <p
+                <div style={{ padding: "12px", display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: "space-between" }}>
+                  <div>
+                    <h3
                       style={{
-                        margin: "4px 0 0 0",
-                        fontSize: "11px",
+                        margin: 0,
+                        fontSize: "12px",
                         fontFamily: "'Inter', sans-serif",
-                        color: "var(--color-text-secondary)",
-                        lineHeight: 1.2,
-                        whiteSpace: "nowrap",
+                        fontWeight: 700,
+                        color: "var(--color-text-primary)",
+                        lineHeight: 1.3,
+                        height: "32px",
                         overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
                       }}
                     >
-                      {item.description}
-                    </p>
-                  )}
+                      {item.name}
+                    </h3>
+                    {item.description && (
+                      <p
+                        style={{
+                          margin: "4px 0 0 0",
+                          fontSize: "11px",
+                          fontFamily: "'Inter', sans-serif",
+                          color: "var(--color-text-secondary)",
+                          lineHeight: 1.2,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
                   <div
                     style={{
                       display: "flex",
@@ -726,9 +729,9 @@ export function LayoutEngine({
                 whileTap={{ scale: 0.97 }}
                 style={{
                   backgroundColor: "var(--color-surface)",
-                  border: "1px solid var(--color-line)",
+                  border: "1px solid var(--color-line-soft)",
                   borderRadius: "16px",
-                  padding: "12px",
+                  padding: "0px",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
@@ -736,6 +739,7 @@ export function LayoutEngine({
                   cursor: "pointer",
                   boxSizing: "border-box",
                   boxShadow: "var(--shadow-card)",
+                  overflow: "hidden",
                 }}
                 onClick={() => onProductSelect && onProductSelect(item)}
               >
@@ -766,13 +770,13 @@ export function LayoutEngine({
                     width: "100%",
                     aspectRatio: "4 / 3",
                     backgroundColor: "var(--color-surface-alt)",
-                    borderRadius: "12px",
+                    borderRadius: "0px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    marginTop: "8px",
-                    marginBottom: "8px",
-                    border: "1px solid var(--color-line-soft)",
+                    marginTop: "0px",
+                    marginBottom: "0px",
+                    borderBottom: "1px solid var(--color-line-soft)",
                     overflow: "hidden",
                   }}
                 >
@@ -780,7 +784,7 @@ export function LayoutEngine({
                     <img
                       src={assetUrl}
                       alt={item.name}
-                      style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "12px" }}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       onError={(e) => handleAssetImageError(e, item.name)}
                     />
                   ) : (
@@ -791,40 +795,42 @@ export function LayoutEngine({
                 </div>
 
                 {/* Product title & Price */}
-                <div>
-                  <h3
-                    style={{
-                      margin: "0 0 8px 0",
-                      fontSize: "12px",
-                      fontFamily: "'Inter', sans-serif",
-                      fontWeight: 700,
-                      color: "var(--color-text-primary)",
-                      lineHeight: 1.3,
-                      height: "32px",
-                      overflow: "hidden",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                    }}
-                  >
-                    {item.name}
-                  </h3>
-                  {item.description && (
-                    <p
+                <div style={{ padding: "12px", display: "flex", flexDirection: "column", flexGrow: 1, justifyContent: "space-between" }}>
+                  <div>
+                    <h3
                       style={{
-                        margin: "4px 0 0 0",
-                        fontSize: "11px",
+                        margin: "0 0 8px 0",
+                        fontSize: "12px",
                         fontFamily: "'Inter', sans-serif",
-                        color: "var(--color-text-secondary)",
-                        lineHeight: 1.2,
-                        whiteSpace: "nowrap",
+                        fontWeight: 700,
+                        color: "var(--color-text-primary)",
+                        lineHeight: 1.3,
+                        height: "32px",
                         overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
                       }}
                     >
-                      {item.description}
-                    </p>
-                  )}
+                      {item.name}
+                    </h3>
+                    {item.description && (
+                      <p
+                        style={{
+                          margin: "4px 0 0 0",
+                          fontSize: "11px",
+                          fontFamily: "'Inter', sans-serif",
+                          color: "var(--color-text-secondary)",
+                          lineHeight: 1.2,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
                   <div
                     style={{
                       display: "flex",
