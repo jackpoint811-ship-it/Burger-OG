@@ -29,7 +29,7 @@ export function CatalogToast({ toast, hasCartBar = true }: CatalogToastProps) {
             bottom: hasCartBar ? "76px" : "20px",
             left: "16px",
             right: "16px",
-            maxWidth: "430px",
+            maxWidth: "calc(var(--catalog-max-width, 768px) - 32px)",
             margin: "0 auto",
             zIndex: 45,
             backgroundColor: "var(--color-surface, #FFFFFF)",

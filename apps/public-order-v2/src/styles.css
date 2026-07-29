@@ -58,11 +58,12 @@
   --radius-2xl: 32px;
   --radius-pill:999px;
 
-  /* ── Espaciado ───────────────────────────────────── */
+  /* ── Espaciado & Layout ───────────────────────────── */
   --space-page:      16px;
   --space-page-wide: 24px;
   --space-panel:     20px;
   --touch-target-min:44px;
+  --catalog-max-width:768px;
 
   /* ── Sombras ─────────────────────────────────────── */
   --shadow-card:    0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
@@ -6204,13 +6205,119 @@ html {
   font-weight: 900;
 }
 
-/* ── Catalog shell — base claro ────────────────────────── */
+/* ── Site Header (Main top bar) ────────────────────────── */
+.site-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-sticky, 20);
+  background: var(--color-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-line);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.site-header__container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: var(--catalog-max-width, 768px);
+  margin: 0 auto;
+  height: 56px;
+  padding: 0 16px;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.site-header__brand {
+  display: flex;
+  align-items: center;
+}
+
+.site-header__logo-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--color-text-primary);
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.site-header__logo-ext {
+  color: var(--color-accent);
+}
+
+.site-header__status {
+  display: flex;
+  align-items: center;
+}
+
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.site-header__tickets-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill, 9999px);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-line);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  min-height: 36px;
+  transition: all var(--motion-fast) var(--motion-ease);
+}
+
+.site-header__tickets-btn:hover,
+.site-header__tickets-btn:focus-visible {
+  border-color: var(--color-accent-line);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.site-header__theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill, 9999px);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-line);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  padding: 0;
+  font-size: 16px;
+  transition: all var(--motion-fast) var(--motion-ease);
+}
+
+.site-header__theme-toggle:hover,
+.site-header__theme-toggle:focus-visible {
+  border-color: var(--color-accent-line);
+  background: var(--color-accent-soft);
+  transform: scale(1.05);
+}
+
+/* ── Catalog shell — base claro & adaptativo ────────────── */
 .catalog-shell {
   min-height: 100dvh;
-  padding-top: calc(56px + clamp(0.75rem, 2vw, 1.25rem));
-  padding-left: clamp(0.85rem, 3vw, 2rem);
-  padding-right: clamp(0.85rem, 3vw, 2rem);
-  padding-bottom: clamp(1rem, 3vw, 2rem);
+  width: 100%;
+  max-width: var(--catalog-max-width, 768px);
+  margin: 0 auto;
+  padding-left: clamp(12px, 3vw, 24px);
+  padding-right: clamp(12px, 3vw, 24px);
+  padding-top: 12px;
+  padding-bottom: 96px;
+  box-sizing: border-box;
   background-color: var(--color-bg-base);
   color: var(--color-text-primary);
 }
@@ -6837,6 +6944,7 @@ html {
   z-index: 110;
   display: grid;
   align-items: end;
+  justify-items: center;
   padding: 0.75rem 0.75rem max(0.75rem, env(safe-area-inset-bottom));
   background: rgba(0, 0, 0, 0.76);
   backdrop-filter: blur(10px);
