@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
 export interface ToastMessage {
@@ -14,6 +14,17 @@ interface CatalogToastProps {
 
 export function CatalogToast({ toast, hasCartBar = true }: CatalogToastProps) {
   const shouldReduceMotion = useReducedMotion();
+  const [phase, setPhase] = useState<"confirming" | "done">("confirming");
+
+  useEffect(() => {
+    if (toast) {
+      setPhase("confirming");
+      const timer = setTimeout(() => {
+        setPhase("done");
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   return (
     <AnimatePresence>
@@ -45,29 +56,46 @@ export function CatalogToast({ toast, hasCartBar = true }: CatalogToastProps) {
             pointerEvents: "none",
           }}
         >
-          <span
-            style={{
-              fontSize: "20px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              lineHeight: 1,
-            }}
-            role="img"
-            aria-hidden="true"
-          >
-            {toast.emoji}
-          </span>
-          <span
-            style={{
-              fontSize: "13px",
-              fontFamily: "'Inter', sans-serif",
-              fontWeight: 600,
-              lineHeight: 1.3,
-            }}
-          >
-            {toast.message}
-          </span>
+          {phase === "confirming" ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", justifyContent: "center" }}
+            >
+              <span style={{ fontSize: "14px", fontWeight: 600 }}>Procesando...</span>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{ display: "flex", alignItems: "center", gap: "10px" }}
+            >
+              <span
+                style={{
+                  fontSize: "20px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  lineHeight: 1,
+                }}
+                role="img"
+                aria-hidden="true"
+              >
+                {toast.emoji}
+              </span>
+              <span
+                style={{
+                  fontSize: "13px",
+                  fontFamily: "'Inter', sans-serif",
+                  fontWeight: 600,
+                  lineHeight: 1.3,
+                }}
+              >
+                {toast.message}
+              </span>
+            </motion.div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

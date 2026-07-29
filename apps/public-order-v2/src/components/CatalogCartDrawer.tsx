@@ -144,7 +144,7 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout }: CatalogCartDr
               {items.map((item) => {
                 const src = resolveCatalogAssetUrl(item.imageUrl, item.imageKey);
                 return (
-                  <li key={item.productId} className="catalog-cart-item">
+                  <li key={item.cartItemId} className="catalog-cart-item">
                     <div className="catalog-cart-item__image" aria-hidden="true">
                       {src
                         ? <img src={src} alt="" decoding="async" loading="lazy" />
@@ -161,13 +161,18 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout }: CatalogCartDr
                           </span>
                         )}
                       </div>
+                      {item.mods && item.mods.length > 0 && (
+                        <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "2px" }}>
+                          {item.mods.join(", ")}
+                        </div>
+                      )}
                     </div>
                     <div className="catalog-cart-item__controls">
                       <button
                         type="button"
                         className="catalog-cart-item__qty-btn"
                         aria-label={`Reducir cantidad de ${item.name}`}
-                        onClick={() => setQty(item.productId, item.qty - 1)}
+                        onClick={() => setQty(item.cartItemId, item.qty - 1)}
                       >
                         −
                       </button>
@@ -179,7 +184,7 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout }: CatalogCartDr
                         className="catalog-cart-item__qty-btn"
                         aria-label={`Aumentar cantidad de ${item.name}`}
                         disabled={item.qty >= CATALOG_CART_MAX_QTY}
-                        onClick={() => setQty(item.productId, item.qty + 1)}
+                        onClick={() => setQty(item.cartItemId, item.qty + 1)}
                       >
                         +
                       </button>

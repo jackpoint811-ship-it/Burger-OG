@@ -77,6 +77,7 @@ export function LayoutEngine({
         action: () => {
           if (onSelectCategory) onSelectCategory("combos");
           if (onAction) onAction("TOAST:🔥|Categoría Combos seleccionada");
+          document.getElementById("catalog-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
         },
       },
       {
@@ -261,12 +262,26 @@ export function LayoutEngine({
 
   // 3. REORDER MODULE (1-CLICK REORDER)
   if (moduleType === "reorder") {
+    let lastOrderItems: any[] = [];
+    try {
+      const stored = localStorage.getItem("pov2-last-order");
+      if (stored) lastOrderItems = JSON.parse(stored);
+    } catch { /* ignore */ }
+
+    if (lastOrderItems.length === 0) return null; // Don't show if no previous order
+
+    const title = lastOrderItems.map((i) => i.name).join(", ");
+
     const handleReorder = () => {
-      if (chekeoItems.length > 0) {
-        const firstItem = chekeoItems[0];
-        const mapped = mapMenuItemsToCatalogProducts([firstItem], chekeoCategories)[0];
-        if (mapped) addItem(mapped);
-      }
+      lastOrderItems.forEach((cartItem) => {
+        const menuItem = chekeoItems.find((i) => i.sku === cartItem.productId);
+        if (menuItem) {
+          const mapped = mapMenuItemsToCatalogProducts([menuItem], chekeoCategories)[0];
+          for (let i = 0; i < cartItem.qty; i++) {
+            if (mapped) addItem(mapped, cartItem.mods);
+          }
+        }
+      });
       if (onAction) {
         onAction("TOAST:🍔|¡Último pedido agregado al carrito!");
         onAction("OPEN_CART");
@@ -290,7 +305,7 @@ export function LayoutEngine({
           boxSizing: "border-box",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: 0 }}>
           <div
             style={{
               width: "42px",
@@ -302,11 +317,12 @@ export function LayoutEngine({
               alignItems: "center",
               justifyContent: "center",
               fontSize: "20px",
+              flexShrink: 0
             }}
           >
             🍔
           </div>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <span
               style={{
                 fontSize: "10px",
@@ -327,9 +343,12 @@ export function LayoutEngine({
                 fontFamily: "'Inter', sans-serif",
                 fontWeight: 800,
                 color: "var(--color-text-primary)",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
               }}
             >
-              CyberPunk Double
+              {title}
             </h3>
             <p
               style={{
@@ -583,6 +602,22 @@ export function LayoutEngine({
                   >
                     {item.name}
                   </h3>
+                  {item.description && (
+                    <p
+                      style={{
+                        margin: "4px 0 0 0",
+                        fontSize: "11px",
+                        fontFamily: "'Inter', sans-serif",
+                        color: "var(--color-text-secondary)",
+                        lineHeight: 1.2,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {item.description}
+                    </p>
+                  )}
                   <div
                     style={{
                       display: "flex",
@@ -623,9 +658,7 @@ export function LayoutEngine({
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        const mapped = mapMenuItemsToCatalogProducts([item], chekeoCategories)[0];
-                        if (mapped) addItem(mapped);
-                        if (onAction) onAction(`TOAST:🛒|${item.name} agregado al pedido`);
+                        if (onProductSelect) onProductSelect(item);
                       }}
                     >
                       +
@@ -649,7 +682,7 @@ export function LayoutEngine({
     const fallbackBadges = ["🔥 TOP 1", "2x1 FLASH", "ULTRA", "CRISPY", "REFRESH"];
 
     return (
-      <section style={{ width: "100%", marginTop: "12px", marginBottom: "16px" }}>
+      <section id="catalog-grid" style={{ width: "100%", marginTop: "12px", marginBottom: "16px" }}>
         <div
           style={{
             display: "flex",
@@ -776,6 +809,22 @@ export function LayoutEngine({
                   >
                     {item.name}
                   </h3>
+                  {item.description && (
+                    <p
+                      style={{
+                        margin: "4px 0 0 0",
+                        fontSize: "11px",
+                        fontFamily: "'Inter', sans-serif",
+                        color: "var(--color-text-secondary)",
+                        lineHeight: 1.2,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {item.description}
+                    </p>
+                  )}
                   <div
                     style={{
                       display: "flex",
@@ -815,9 +864,7 @@ export function LayoutEngine({
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        const mapped = mapMenuItemsToCatalogProducts([item], chekeoCategories)[0];
-                        if (mapped) addItem(mapped);
-                        if (onAction) onAction(`TOAST:🛒|${item.name} agregado al pedido`);
+                        if (onProductSelect) onProductSelect(item);
                       }}
                     >
                       +

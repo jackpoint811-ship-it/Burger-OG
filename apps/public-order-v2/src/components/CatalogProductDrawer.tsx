@@ -71,6 +71,7 @@ const focusableSelector = [
 export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerProps) {
   const { items, addItem } = useCatalogCart();
   const [justAdded, setJustAdded] = useState(false);
+  const [selectedMods, setSelectedMods] = useState<string[]>([]);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -84,6 +85,7 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
 
   useEffect(() => {
     setJustAdded(false);
+    setSelectedMods([]);
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
   }, [product?.id]);
 
@@ -143,11 +145,15 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
   };
 
   const handleAddToCart = () => {
+    if (justAdded) {
+      onClose();
+      return;
+    }
     if (isAtMax) return;
-    addItem(product);
+    addItem(product, selectedMods);
     setJustAdded(true);
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
-    feedbackTimer.current = setTimeout(() => setJustAdded(false), ADDED_FEEDBACK_MS);
+    feedbackTimer.current = setTimeout(() => setJustAdded(false), 2000);
   };
 
   return (
@@ -170,7 +176,7 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
         initial={shouldReduceMotion ? { opacity: 0 } : { y: "100%" }}
         animate={shouldReduceMotion ? { opacity: 1 } : { y: 0 }}
         exit={shouldReduceMotion ? { opacity: 0 } : { y: "100%" }}
-        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        transition={{ type: "tween", ease: "easeOut", duration: 0.25 }}
       >
         {/* ── Handle bar ────────────────────────────────── */}
         <div className="catalog-drawer__handle" aria-hidden="true" />
@@ -225,7 +231,26 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
             </span>
           </div>
 
-          {product.type === "burger" ? <p className="catalog-drawer__notice">Ingredientes informativos. Esta burger no se modifica en Modo Catálogo.</p> : null}
+          {product.type === "burger" ? (
+            <div className="catalog-drawer__mods">
+              <p className="catalog-drawer__mods-title">Personaliza tu burger</p>
+              <div className="catalog-drawer__mods-grid">
+                {["Sin cebolla", "Sin pepinillos", "Sin tomate", "Extra queso"].map((mod) => (
+                  <label key={mod} className="catalog-drawer__mod-label">
+                    <input
+                      type="checkbox"
+                      checked={selectedMods.includes(mod)}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedMods([...selectedMods, mod]);
+                        else setSelectedMods(selectedMods.filter((m) => m !== mod));
+                      }}
+                    />
+                    <span>{mod}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {product.type === "topping" ? <p className="catalog-drawer__notice">Los toppings se entregan por separado.</p> : null}
 
           <div className="catalog-drawer__footer">
@@ -238,10 +263,10 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
                 disabled={isAtMax && !justAdded}
               >
                 <span className="catalog-drawer__add-btn-icon" aria-hidden="true">
-                  {justAdded ? "✓" : isAtMax ? "—" : "+"}
+                  {justAdded ? "✅" : isAtMax ? "—" : "+"}
                 </span>
                 <span>
-                  {justAdded ? "¡Agregado al carrito!" : isAtMax ? "Límite alcanzado" : "Agregar al carrito"}
+                  {justAdded ? "¡Agregado! Volver al menú" : isAtMax ? "Límite alcanzado" : "Agregar al carrito"}
                 </span>
               </button>
             ) : (
