@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import type { MenuCategory, MenuItem } from "@config/index";
 import type { DesignSpecification, LayoutModule } from "../types/design";
 import { LayoutEngine } from "./LayoutEngine";
@@ -22,6 +22,8 @@ export function DynamicRenderer({
   onAction,
   className = "",
 }: DynamicRendererProps) {
+  const [activeCategoryKey, setActiveCategoryKey] = useState<string>("all");
+
   // Guard spec and spec.layout with Array.isArray
   const layout = Array.isArray(spec?.layout) ? spec.layout : null;
 
@@ -39,12 +41,20 @@ export function DynamicRenderer({
   if (!spec || !layout || visibleModules.length === 0) {
     if (isLoading) {
       return (
-        <div className={`w-full space-y-6 p-4 animate-pulse motion-reduce:animate-none ${className}`}>
-          <div className="h-48 bg-zinc-900/80 border border-zinc-800 rounded-2xl" />
-          <div className="h-10 bg-zinc-900/80 border border-zinc-800 rounded-lg w-full" />
-          <div className="grid grid-cols-2 gap-4">
-            <div className="h-64 bg-zinc-900/80 border border-zinc-800 rounded-xl" />
-            <div className="h-64 bg-zinc-900/80 border border-zinc-800 rounded-xl" />
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: "24px",
+            padding: "16px",
+          }}
+        >
+          <div style={{ height: "192px", backgroundColor: "rgba(24, 24, 27, 0.8)", border: "1px solid #27272a", borderRadius: "16px" }} />
+          <div style={{ height: "40px", backgroundColor: "rgba(24, 24, 27, 0.8)", border: "1px solid #27272a", borderRadius: "8px", width: "100%" }} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
+            <div style={{ height: "256px", backgroundColor: "rgba(24, 24, 27, 0.8)", border: "1px solid #27272a", borderRadius: "12px" }} />
+            <div style={{ height: "256px", backgroundColor: "rgba(24, 24, 27, 0.8)", border: "1px solid #27272a", borderRadius: "12px" }} />
           </div>
         </div>
       );
@@ -52,9 +62,16 @@ export function DynamicRenderer({
 
     return (
       <div
-        className={`w-full p-8 text-center border border-dashed border-zinc-800 rounded-2xl bg-[#0d0f12] ${className}`}
+        style={{
+          width: "100%",
+          padding: "32px",
+          textAlign: "center",
+          border: "1px dashed #27272a",
+          borderRadius: "16px",
+          backgroundColor: "#0d0f12",
+        }}
       >
-        <p className="text-sm font-mono text-zinc-500">
+        <p style={{ fontSize: "14px", fontFamily: "monospace", color: "#71717a", margin: 0 }}>
           [SYS_MSG] Especificación de diseño vacía o no provista.
         </p>
       </div>
@@ -67,11 +84,11 @@ export function DynamicRenderer({
     backgroundColor:
       typeof globalTheme?.backgroundColor === "string"
         ? globalTheme.backgroundColor
-        : undefined,
+        : "#0B0B0B",
     color:
       typeof globalTheme?.textColor === "string"
         ? globalTheme.textColor
-        : undefined,
+        : "#00FF66",
     fontFamily:
       typeof globalTheme?.fontFamily === "string"
         ? globalTheme.fontFamily
@@ -80,8 +97,14 @@ export function DynamicRenderer({
 
   return (
     <div
-      className={`dynamic-renderer w-full flex flex-col space-y-6 ${className}`}
-      style={themeStyle}
+      style={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: "12px",
+        boxSizing: "border-box",
+        ...themeStyle,
+      }}
     >
       {visibleModules.map((module, index) => (
         <LayoutEngine
@@ -93,9 +116,10 @@ export function DynamicRenderer({
           isLoading={isLoading}
           onProductSelect={onProductSelect}
           onAction={onAction}
+          activeCategoryKey={activeCategoryKey}
+          onSelectCategory={(key: string) => setActiveCategoryKey(key)}
         />
       ))}
     </div>
   );
 }
-
