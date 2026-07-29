@@ -59,13 +59,25 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
   const orderEnvironment = useMemo(getPublicOrderEnvironment, []);
   const isPreviewMode = orderEnvironment === "preview";
 
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [name, setName] = useState(() => {
+    try { return localStorage.getItem("pov2-customer-name") || ""; } catch { return ""; }
+  });
+  const [phone, setPhone] = useState(() => {
+    try { return localStorage.getItem("pov2-customer-phone") || ""; } catch { return ""; }
+  });
   const [paymentMethod, setPaymentMethod] = useState<OrderV2PaymentMethod>("unknown");
   const [wantsWhatsapp, setWantsWhatsapp] = useState(true);
   const [checkoutState, setCheckoutState] = useState<CheckoutState>({ status: "idle" });
 
   const shouldReduceMotion = useReducedMotion();
+
+  // Persist customer details in localStorage
+  useEffect(() => {
+    try {
+      if (name) localStorage.setItem("pov2-customer-name", name);
+      if (phone) localStorage.setItem("pov2-customer-phone", phone);
+    } catch { /* noop */ }
+  }, [name, phone]);
 
   // Stable idempotency key: regenerated only when cart or customer data changes.
   const idempotencyKeyRef = useRef(generateIdempotencyKey());
@@ -80,10 +92,8 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
 
   useEffect(() => {
     if (!isOpen) {
-      // Reset state when closed
+      // Reset submission state when closed without wiping saved customer details
       setCheckoutState({ status: "idle" });
-      setName("");
-      setPhone("");
       setPaymentMethod("unknown");
       setWantsWhatsapp(true);
       return;

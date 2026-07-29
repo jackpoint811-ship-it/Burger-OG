@@ -7,6 +7,7 @@ import { CatalogCartBar } from "./CatalogCartBar";
 import { CatalogCartProvider } from "./CatalogCartContext";
 import { AnimatePresence } from "framer-motion";
 import { DynamicRenderer } from "./DynamicRenderer";
+import { CatalogToast, type ToastMessage } from "./CatalogToast";
 import type { DesignSpecification } from "../types/design";
 import { DEFAULT_STUDIO_DESIGN_SPEC } from "../lib/default-design-spec";
 import {
@@ -57,7 +58,9 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [activeToast, setActiveToast] = useState<ToastMessage | null>(null);
   const { isDark, toggle: toggleDark } = useDarkMode();
+
   const closeProductDrawer = useCallback(() => setSelectedProduct(null), []);
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
@@ -67,9 +70,21 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
   }, []);
   const closeCheckout = useCallback(() => setIsCheckoutOpen(false), []);
 
+  const triggerToast = useCallback((emoji: string, message: string) => {
+    const newToast: ToastMessage = {
+      id: `toast-${Date.now()}`,
+      emoji,
+      message,
+    };
+    setActiveToast(newToast);
+    setTimeout(() => {
+      setActiveToast((current) => (current?.id === newToast.id ? null : current));
+    }, 2800);
+  }, []);
+
   return (
     <>
-      {/* ── Header fijo de la app (PR 2) ─────────────────────────────────────────── */}
+      {/* ── Header fijo de la app ─────────────────────────────────────────── */}
       <header className="site-header" role="banner">
         <div className="site-header__container">
           <div className="site-header__brand">
@@ -134,7 +149,7 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
         }}
         aria-labelledby="catalogTitle"
       >
-        {/* ── Headless UI Dynamic Renderer (Android Studio Export Spec) ───────── */}
+        {/* ── Headless UI Dynamic Renderer ───────── */}
         <DynamicRenderer
           spec={designSpec || DEFAULT_STUDIO_DESIGN_SPEC}
           chekeoItems={items}
@@ -146,9 +161,15 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
           onAction={(action) => {
             if (action === "OPEN_CHECKOUT") openCheckout();
             if (action === "OPEN_CART") openCart();
+            if (action.startsWith("TOAST:")) {
+              const parts = action.replace("TOAST:", "").split("|");
+              triggerToast(parts[0] || "✅", parts[1] || "Acción realizada");
+            }
           }}
         />
       </main>
+
+      <CatalogToast toast={activeToast} hasCartBar={true} />
 
       <AnimatePresence>
         <CatalogCartBar key="cart-bar" onOpenCart={openCart} />

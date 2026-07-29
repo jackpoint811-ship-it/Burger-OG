@@ -28,47 +28,53 @@ export function CatalogCartBar({ onOpenCart }: CatalogCartBarProps) {
         maxWidth: "430px",
         margin: "0 auto",
         zIndex: 40,
-        backgroundColor: "#00FF66",
-        color: "#000000",
-        borderRadius: "16px",
-        padding: "12px 16px",
+        backgroundColor: "var(--color-accent, #16A34A)",
+        color: "#FFFFFF",
+        borderRadius: "9999px",
+        padding: "10px 18px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        boxShadow: "0 8px 32px rgba(0, 255, 102, 0.35)",
+        boxShadow: "0 8px 28px rgba(22, 163, 74, 0.35)",
         cursor: "pointer",
         boxSizing: "border-box",
       }}
       onClick={onOpenCart}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <div
+        <motion.div
+          key={count}
+          initial={shouldReduceMotion ? false : { scale: 1.35 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 400, damping: 15 }}
           style={{
-            width: "32px",
-            height: "32px",
+            width: "30px",
+            height: "30px",
             borderRadius: "50%",
-            backgroundColor: "#000000",
-            color: "#00FF66",
+            backgroundColor: "#FFFFFF",
+            color: "var(--color-accent, #16A34A)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontFamily: "monospace",
-            fontWeight: 900,
-            fontSize: "14px",
+            fontFamily: "'Inter', sans-serif",
+            fontWeight: 800,
+            fontSize: "13px",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
           }}
           aria-label={`${count} ${count === 1 ? "producto" : "productos"}`}
         >
           {count}
-        </div>
+        </motion.div>
         <div>
           <span
             style={{
-              fontSize: "11px",
-              fontFamily: "monospace",
-              fontWeight: 900,
+              fontSize: "10px",
+              fontFamily: "'Inter', sans-serif",
+              fontWeight: 700,
               textTransform: "uppercase",
               letterSpacing: "0.05em",
               display: "block",
+              opacity: 0.9,
             }}
           >
             MI PEDIDO
@@ -76,9 +82,9 @@ export function CatalogCartBar({ onOpenCart }: CatalogCartBarProps) {
           <span
             style={{
               fontSize: "14px",
-              fontFamily: "monospace",
-              fontWeight: 900,
-              color: "#000000",
+              fontFamily: "'Inter', sans-serif",
+              fontWeight: 800,
+              color: "#FFFFFF",
             }}
           >
             {formatCurrency(total)}
@@ -91,18 +97,18 @@ export function CatalogCartBar({ onOpenCart }: CatalogCartBarProps) {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "8px",
+          gap: "6px",
           fontSize: "12px",
-          fontFamily: "monospace",
-          fontWeight: 900,
+          fontFamily: "'Inter', sans-serif",
+          fontWeight: 800,
           textTransform: "uppercase",
-          backgroundColor: "#000000",
-          color: "#00FF66",
+          backgroundColor: "#FFFFFF",
+          color: "var(--color-accent, #16A34A)",
           padding: "8px 16px",
-          borderRadius: "12px",
+          borderRadius: "9999px",
           border: "none",
           cursor: "pointer",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
         }}
         onClick={(e) => {
           e.stopPropagation();
