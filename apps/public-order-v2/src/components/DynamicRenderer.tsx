@@ -82,13 +82,13 @@ export function DynamicRenderer({
   const globalTheme = spec.globalTheme;
   const themeStyle: React.CSSProperties = {
     backgroundColor:
-      typeof globalTheme?.backgroundColor === "string"
+      typeof globalTheme?.backgroundColor === "string" && globalTheme.backgroundColor !== "#0B0B0B"
         ? globalTheme.backgroundColor
-        : "#0B0B0B",
+        : "var(--color-bg-base)",
     color:
-      typeof globalTheme?.textColor === "string"
+      typeof globalTheme?.textColor === "string" && globalTheme.textColor !== "#00FF66"
         ? globalTheme.textColor
-        : "#00FF66",
+        : "var(--color-text-primary)",
     fontFamily:
       typeof globalTheme?.fontFamily === "string"
         ? globalTheme.fontFamily

@@ -51,7 +51,7 @@ const generateIdempotencyKey = () =>
     : `catalog-${Date.now()}-${Math.random()}`;
 
 export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawerProps) {
-  const { items, total, clear } = useCatalogCart();
+  const { items, total, setQty, removeItem, clear } = useCatalogCart();
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
@@ -276,6 +276,59 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
         ) : (
           <form className="catalog-checkout-form" onSubmit={handleSubmit}>
             <div className="catalog-checkout-form__fields">
+              {/* ── Resumen interactivo de ítems en Checkout ────────────── */}
+              <div style={{ backgroundColor: "var(--color-surface-alt)", padding: "12px", borderRadius: "12px", border: "1px solid var(--color-line-soft)", marginBottom: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 800, color: "var(--color-accent)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    🛒 Tu pedido ({items.reduce((acc, i) => acc + i.qty, 0)} ítems)
+                  </span>
+                </div>
+                <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {items.map((cartItem) => (
+                    <li key={cartItem.cartItemId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", fontSize: "12px", borderBottom: "1px border var(--color-line-soft)", paddingBottom: "6px" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ fontWeight: 700, color: "var(--color-text-primary)", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {cartItem.name}
+                        </span>
+                        <span style={{ fontSize: "11px", color: "var(--color-accent)", fontWeight: 800 }}>
+                          {formatCurrency(cartItem.price * cartItem.qty)}
+                        </span>
+                        {cartItem.mods && cartItem.mods.length > 0 && (
+                          <span style={{ display: "block", fontSize: "10px", color: "var(--color-text-muted)" }}>
+                            {cartItem.mods.join(", ")}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <button
+                          type="button"
+                          style={{ width: "26px", height: "26px", borderRadius: "50%", border: "1px solid var(--color-line)", backgroundColor: "var(--color-surface)", color: "var(--color-text-primary)", fontWeight: "bold", cursor: "pointer" }}
+                          onClick={() => setQty(cartItem.cartItemId, cartItem.qty - 1)}
+                        >
+                          −
+                        </button>
+                        <span style={{ fontWeight: 800, minWidth: "16px", textAlign: "center" }}>{cartItem.qty}</span>
+                        <button
+                          type="button"
+                          style={{ width: "26px", height: "26px", borderRadius: "50%", border: "1px solid var(--color-line)", backgroundColor: "var(--color-surface)", color: "var(--color-text-primary)", fontWeight: "bold", cursor: "pointer" }}
+                          onClick={() => setQty(cartItem.cartItemId, cartItem.qty + 1)}
+                        >
+                          +
+                        </button>
+                        <button
+                          type="button"
+                          style={{ border: "none", background: "none", color: "var(--color-danger)", cursor: "pointer", fontSize: "16px", fontWeight: "bold", marginLeft: "4px" }}
+                          onClick={() => removeItem(cartItem.productId)}
+                          title="Eliminar del pedido"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
               <label className="catalog-checkout-field">
                 <span>Nombre</span>
                 <input
