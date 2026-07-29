@@ -14,20 +14,34 @@ Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más especí
 - No cambiar backend, payloads, contratos de datos, nombres de campos, precios, tickets, promociones ni reglas comerciales salvo autorización explícita.
 - No modificar migraciones, esquemas, seeds ni servicios backend si el PR es de UI o documentación.
 - Preservar compatibilidad con flujos existentes de pedidos, tickets, menú, ubicación y WhatsApp.
+- Preservar la resolución de assets e imágenes mediante Cloudflare R2 (`resolveCatalogAssetUrl`) y datos reales de Cloudflare D1.
 
-## UX/UI permanente
-- Mantener enfoque mobile-first en layout, copy, interacción y validación.
-- Mantener estética Burgers.exe: cyberpunk, gaming, fondo oscuro, verde neón, glow y tono de quest.
-- Mantener accesibilidad: foco visible, `aria-*` cuando aplique, labels persistentes, errores inline y targets táctiles de al menos 44px.
-- Mantener soporte para `prefers-reduced-motion`; no agregar animaciones obligatorias para personas que reducen movimiento.
-- Evitar cambios visuales amplios si el prompt pide una mejora puntual.
+## UX/UI permanente (Estética Premium Casual)
+- **Aesthetic**: Mantener la estética **Burgers.exe (Premium Casual Vibe)** (sustituyendo el estilo legacy cyberpunk/neón).
+- **Temas**: Tema light-first por defecto (blanco cálido/crema suave `#F5F2EE`, tarjetas blancas `#FFFFFF`), con soporte completo para dark mode slate/carbón neutro (`#121212` / `#1E1E1E`) mediante clase `.theme-dark` en `<html>` o `prefers-color-scheme`.
+- **Acento**: Verde bosque (`#16A34A` en light mode / `#22C55E` en dark mode).
+- **Tipografía y Estilos**: Tipografía Inter, bordes sutiles (`--color-line`), sombras de elevación limpia (`--shadow-card`, `--shadow-panel`, `--shadow-floating`).
+- **Layout Adaptativo Mobile-First**: Diseñado mobile-first, escalando fluidamente en tablets y computadoras de escritorio mediante el contenedor `--catalog-max-width: 768px` y grilla autoadaptable `repeat(auto-fill, minmax(min(100%, 160px), 1fr))`.
+- **Accesibilidad**: Foco visible (`:focus-visible`), atributos `aria-*` en modales y drawers, labels persistentes, errores inline y targets táctiles de al menos 44px (`--touch-target-min`).
+- **Movimiento**: Respetar `prefers-reduced-motion`; las animaciones con Framer Motion deben contar con fallback estático o desactivación sin romper el flujo.
 
-## Reglas específicas para `apps/public-order-v2`
-- No romper el public order flow mobile-first ni los aprendizajes de PRs 237–240.
-- Mantener CTA claro para iniciar pedido, personalización comprensible, checkout con labels/helper text/errores inline y acciones táctiles cómodas.
-- No cambiar payloads enviados desde `orders-v2`, lectura de menú, tickets, promociones, precios ni ubicación sin autorización explícita.
-- Validar visualmente en viewport móvil cuando el cambio sea perceptible en la UI.
-- Priorizar cambios locales en componentes/estilos existentes antes de crear abstracciones nuevas.
+## Arquitectura de `apps/public-order-v2` (Headless UI)
+- **Motor de Renderizado Dinámico**: La interfaz principal se renderiza a través de `DynamicRenderer` y `LayoutEngine` basándose en especificaciones de diseño (`DEFAULT_STUDIO_DESIGN_SPEC`).
+- **Módulos Headless UI**:
+  1. `banner_carousel_1`: Banners promocionales interactivos con autoplay y swipe.
+  2. `reorder`: Módulo 1-Click Reorder para repetir el último pedido.
+  3. `categories_horizontal` / `categories_sticky`: Navegación sticky de categorías con scroll horizontal suave.
+  4. `featured`: Rail horizontal de productos "Top Vendidos".
+  5. `catalog` / `grid`: Grilla dinámica de productos adaptativa a cualquier resolución.
+  6. `cart_bar`: Barra inferior flotante de resumen del pedido.
+- **Drawers y Notificaciones**:
+  - `CatalogProductDrawer`: Detalle de producto con opciones de cantidad y fallbacks SVG.
+  - `CatalogCartDrawer`: Resumen y gestión de ítems en carrito.
+  - `CatalogCheckoutDrawer`: Formulario de datos para completar el pedido.
+  - `CatalogToast`: Notificaciones flotantes no bloqueantes.
+- **Reglas del flujo de pedido**:
+  - No romper el public order flow mobile-first ni los aprendizajes acumulados en PRs 237–240 y PRs 397–400.
+  - Mantener CTA claro para iniciar pedido, checkout responsivo con etiquetas claras y validación inline.
 
 ## Checks esperados
 - Ejecutar `git diff --check` en todo PR.
@@ -43,8 +57,8 @@ Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más especí
 - No ocultar errores de validación ni reemplazar labels persistentes por placeholders.
 - No dejar cambios sin test/check reportado ni riesgos sin mencionar.
 
-## Metodología de trabajo (PRs 350–355+)
-- Dividir features grandes en roadmap secuencial de PRs antes de implementar (PR1 → contrato, PR2 → flag, PR3 → shell, PR4 → drawer, etc.). Cada PR tiene un único objetivo; nunca mezclar responsabilidades.
+## Metodología de trabajo (PRs 350–355+ & PRs 397–400+)
+- Dividir features grandes en roadmap secuencial de PRs antes de implementar (PR1 → contrato, PR2 → flag/tokens, PR3 → headless shell, PR4 → drawers/ux, etc.). Cada PR tiene un único objetivo; nunca mezclar responsabilidades.
 - Funcionalidad primero, polish después. Animaciones, micro-interacciones, responsive fino y UX visual van en PRs separados posteriores.
 - Reutilizar componentes, helpers, tipos, hooks y contratos existentes antes de crear código nuevo.
 - Follow-ups pequeños: si el bot comenta algo, se corrige en el mismo PR o en un follow-up mínimo. No se abre un PR enorme para atender feedback.
