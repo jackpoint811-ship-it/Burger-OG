@@ -399,62 +399,72 @@ export function LayoutEngine({
     ];
 
     return (
-      <nav
-        aria-label="Categorías"
+      <div
         style={{
           width: "100%",
           position: "sticky",
           top: "56px",
           zIndex: 15,
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          overflowX: "auto",
-          paddingTop: "8px",
-          paddingBottom: "8px",
           marginTop: "6px",
           marginBottom: "12px",
           backgroundColor: "var(--color-bg-base)",
-          backdropFilter: "blur(8px)",
-          WebkitOverflowScrolling: "touch",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          paddingTop: "4px",
+          paddingBottom: "4px",
         }}
       >
-        {categoryPills.map((cat) => {
-          const isActive = activeCategoryKey === cat.key;
-          return (
-            <button
-              key={cat.key}
-              type="button"
-              style={{
-                position: "relative",
-                flexShrink: 0,
-                padding: "8px 16px",
-                borderRadius: "9999px",
-                fontSize: "12px",
-                fontFamily: "'Inter', sans-serif",
-                fontWeight: 700,
-                border: isActive ? "1px solid var(--color-accent)" : "1px solid var(--color-line)",
-                backgroundColor: isActive ? "var(--color-accent)" : "var(--color-surface)",
-                color: isActive ? "#FFFFFF" : "var(--color-text-primary)",
-                boxShadow: isActive ? "0 2px 10px rgba(22, 163, 74, 0.25)" : "var(--shadow-card)",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                whiteSpace: "nowrap",
-              }}
-              onClick={(e) => {
-                if (onSelectCategory) onSelectCategory(cat.key);
-                if (onAction) onAction(`SELECT_CATEGORY:${cat.key}`);
-                e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-              }}
-            >
-              {cat.name}
-            </button>
-          );
-        })}
-      </nav>
+        <nav
+          aria-label="Categorías"
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            overflowX: "auto",
+            paddingTop: "4px",
+            paddingBottom: "4px",
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
+          }}
+        >
+          {categoryPills.map((cat) => {
+            const isActive = activeCategoryKey === cat.key;
+            return (
+              <button
+                key={cat.key}
+                type="button"
+                style={{
+                  position: "relative",
+                  flexShrink: 0,
+                  padding: "8px 16px",
+                  borderRadius: "9999px",
+                  fontSize: "12px",
+                  fontFamily: "'Inter', sans-serif",
+                  fontWeight: 700,
+                  border: isActive ? "1px solid var(--color-accent)" : "1px solid var(--color-line)",
+                  backgroundColor: isActive ? "var(--color-accent)" : "var(--color-surface)",
+                  color: isActive ? "#FFFFFF" : "var(--color-text-primary)",
+                  boxShadow: isActive ? "0 2px 10px rgba(22, 163, 74, 0.25)" : "var(--shadow-card)",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  whiteSpace: "nowrap",
+                }}
+                onClick={(e) => {
+                  if (onSelectCategory) onSelectCategory(cat.key);
+                  if (onAction) onAction(`SELECT_CATEGORY:${cat.key}`);
+                  e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+                }}
+              >
+                {cat.name}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
     );
   }
 

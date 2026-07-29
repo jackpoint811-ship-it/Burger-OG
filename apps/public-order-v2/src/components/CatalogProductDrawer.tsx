@@ -217,6 +217,20 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
 
           {product.description ? <p id={descriptionId} className="catalog-drawer__description">{product.description}</p> : null}
 
+          {/* ── Sección de Ingredientes ─────────────────────── */}
+          <div style={{ marginTop: "12px", marginBottom: "12px", padding: "10px 12px", backgroundColor: "var(--color-surface-alt)", borderRadius: "12px", border: "1px solid var(--color-line-soft)" }}>
+            <span style={{ fontSize: "11px", fontWeight: 800, color: "var(--color-accent)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: "4px" }}>
+              🥗 Ingredientes & Detalles
+            </span>
+            <p style={{ margin: 0, fontSize: "12px", color: "var(--color-text-secondary)", lineHeight: 1.4 }}>
+              {product.type === "burger" || product.type === "combo"
+                ? "Pan brioche artesanal, 100% carne smash de res seleccionada, doble queso americano/manchego, tocino crujiente, pepinillos, jitomate fresco y aderezo especial de la casa."
+                : product.type === "side"
+                ? "Sazón especial de la casa, papas crujientes doradas al momento o vegetales frescos."
+                : "Bebida individual de sabor intenso bien fría."}
+            </p>
+          </div>
+
           <div className="catalog-drawer__details">
             <div className="catalog-drawer__price-row">
               <strong className="catalog-drawer__price">{formatCurrency(product.price)}</strong>
@@ -231,11 +245,38 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
             </span>
           </div>
 
-          {product.type === "burger" ? (
+          {/* ── Selección de Guarnición para Combos (La burger se mantiene fija, la guarnición se elige) ── */}
+          {product.type === "combo" && (
+            <div className="catalog-drawer__mods" style={{ marginTop: "12px" }}>
+              <p className="catalog-drawer__mods-title">🍟 Elige tu guarnición del combo (La burger viene fija):</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "6px" }}>
+                {["Papas a la francesa OG (Incluida)", "Papas Especiales (+ $5)", "Aros de Cebolla (+ $5)", "Pepinillos extra"].map((sideOpt, idx) => (
+                  <label key={sideOpt} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", cursor: "pointer", color: "var(--color-text-primary)" }}>
+                    <input
+                      type="radio"
+                      name="combo-side"
+                      defaultChecked={idx === 0}
+                      onChange={() => {
+                        if (!selectedMods.some(m => m.startsWith("Guarnición:"))) {
+                          setSelectedMods([...selectedMods.filter(m => !m.startsWith("Guarnición:")), `Guarnición: ${sideOpt}`]);
+                        } else {
+                          setSelectedMods([...selectedMods.filter(m => !m.startsWith("Guarnición:")), `Guarnición: ${sideOpt}`]);
+                        }
+                      }}
+                    />
+                    <span>{sideOpt}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Mods & Upgrades para Burgers, Combos y Sides ── */}
+          {["burger", "combo", "side"].includes(product.type) ? (
             <div className="catalog-drawer__mods">
-              <p className="catalog-drawer__mods-title">Personaliza tu burger</p>
+              <p className="catalog-drawer__mods-title">Personaliza o haz Upgrade</p>
               <div className="catalog-drawer__mods-grid">
-                {["Sin cebolla", "Sin pepinillos", "Sin tomate", "Extra queso"].map((mod) => (
+                {["Sin cebolla", "Sin pepinillos", "Sin tomate", "Extra queso (+ $7)", "Extra tocino (+ $10)", "Salsa extra (+ $5)"].map((mod) => (
                   <label key={mod} className="catalog-drawer__mod-label">
                     <input
                       type="checkbox"
