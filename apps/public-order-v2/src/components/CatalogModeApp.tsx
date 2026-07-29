@@ -140,13 +140,6 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
 
       <main
         className="catalog-shell"
-        style={{
-          maxWidth: "430px",
-          margin: "0 auto",
-          paddingLeft: "12px",
-          paddingRight: "12px",
-          paddingBottom: "96px",
-        }}
         aria-labelledby="catalogTitle"
       >
         {/* ── Headless UI Dynamic Renderer ───────── */}

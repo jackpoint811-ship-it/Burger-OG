@@ -667,7 +667,7 @@ export function LayoutEngine({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 160px), 1fr))",
             gap: "12px",
           }}
         >
@@ -719,7 +719,9 @@ export function LayoutEngine({
                 <div
                   style={{
                     width: "100%",
-                    height: "120px",
+                    aspectRatio: "4 / 3",
+                    minHeight: "100px",
+                    maxHeight: "140px",
                     backgroundColor: "var(--color-surface-alt)",
                     borderRadius: "12px",
                     display: "flex",

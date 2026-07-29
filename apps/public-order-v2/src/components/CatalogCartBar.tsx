@@ -25,7 +25,7 @@ export function CatalogCartBar({ onOpenCart }: CatalogCartBarProps) {
         bottom: "12px",
         left: "12px",
         right: "12px",
-        maxWidth: "430px",
+        maxWidth: "calc(var(--catalog-max-width, 768px) - 24px)",
         margin: "0 auto",
         zIndex: 40,
         backgroundColor: "var(--color-accent, #16A34A)",
