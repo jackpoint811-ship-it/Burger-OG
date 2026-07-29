@@ -7,7 +7,7 @@ import {
   mapMenuItemsToCatalogProducts,
   getCategoryEmoji,
 } from "../lib/catalog-mode";
-import { handleAssetImageError, getCyberpunkSvgPlaceholder } from "../utils/assets";
+import { handleAssetImageError, getCasualSvgPlaceholder } from "../utils/assets";
 import { useCatalogCart } from "./CatalogCartContext";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -53,26 +53,26 @@ export function LayoutEngine({
     const banners = [
       {
         id: "b1",
-        badge1: "DESCUENTO $0",
-        badge2: "⚡ CLICK Y COPIA",
+        badge1: "PROMO EXCLUSIVA",
+        badge2: "⚡ CÓDIGO BURGERS",
         title: "⚡ ENVÍO GRATIS $0",
-        subtitle: "En tus compras mayores a $150 con código BURGER.EXE",
-        icon: "🚀",
+        subtitle: "En tu primer pedido mayor a $150 con código BURGERS",
+        icon: "🍔",
         gradient: "linear-gradient(135deg, #15803D 0%, #16A34A 100%)",
         action: () => {
           try {
-            navigator.clipboard.writeText("BURGER.EXE");
+            navigator.clipboard.writeText("BURGERS");
           } catch { /* noop */ }
-          if (onAction) onAction("TOAST:🎟️|¡Código BURGER.EXE copiado al portapapeles!");
+          if (onAction) onAction("TOAST:🎟️|¡Código BURGERS copiado al portapapeles!");
         },
       },
       {
         id: "b2",
         badge1: "🔥 2x1 FLASH",
-        badge2: "COMBO SPECIAL",
-        title: "🔥 COMBO OVERCLOCK 2x1",
-        subtitle: "Aprovecha 2 hamburguesas dobles al precio de 1 en Combos",
-        icon: "🍔",
+        badge2: "SOLO HOY",
+        title: "🔥 DOBLE SMASH 2x1",
+        subtitle: "Aprovecha 2 hamburguesas dobles al precio de 1",
+        icon: "🍟",
         gradient: "linear-gradient(135deg, #C2410C 0%, #EA580C 100%)",
         action: () => {
           if (onSelectCategory) onSelectCategory("combos");
@@ -81,11 +81,11 @@ export function LayoutEngine({
       },
       {
         id: "b3",
-        badge1: "🎟️ RIFAS",
-        badge2: "GRAN SORTEO",
-        title: "🎟️ SORTEO PS5 PRO",
-        subtitle: "Gana boletos gratis en cada compra superior a $200",
-        icon: "🎮",
+        badge1: "🏆 SORTEO",
+        badge2: "GANA COMBOS",
+        title: "🏆 COMBOS GRATIS",
+        subtitle: "Participa por un año de combos en cada pedido",
+        icon: "🎁",
         gradient: "linear-gradient(135deg, #4338CA 0%, #6366F1 100%)",
         action: () => {
           window.location.href = "/tickets";
@@ -118,7 +118,7 @@ export function LayoutEngine({
             paddingLeft: "4px",
           }}
         >
-          CARRUSEL PROMOS #1
+          PROMOS DEL DÍA
         </span>
         <div style={{ position: "relative", width: "100%", overflow: "hidden", borderRadius: "16px" }}>
           <motion.div
@@ -127,6 +127,17 @@ export function LayoutEngine({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0.7, x: -20 }}
             transition={{ duration: 0.3 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(e, info) => {
+              const swipeThreshold = 40;
+              if (info.offset.x < -swipeThreshold) {
+                setBannerIndex((prev) => (prev + 1) % banners.length);
+              } else if (info.offset.x > swipeThreshold) {
+                setBannerIndex((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
+              }
+            }}
             style={{
               width: "100%",
               borderRadius: "16px",
@@ -137,8 +148,9 @@ export function LayoutEngine({
               boxShadow: "0 8px 24px rgba(0, 0, 0, 0.15)",
               border: "1px solid rgba(255, 255, 255, 0.15)",
               boxSizing: "border-box",
-              cursor: "pointer",
+              cursor: "grab",
               userSelect: "none",
+              touchAction: "pan-y",
             }}
             onClick={activeBanner.action}
           >
@@ -373,8 +385,8 @@ export function LayoutEngine({
         style={{
           width: "100%",
           position: "sticky",
-          top: 0,
-          zIndex: 30,
+          top: "56px",
+          zIndex: 15,
           display: "flex",
           alignItems: "center",
           gap: "8px",
@@ -545,7 +557,7 @@ export function LayoutEngine({
                     />
                   ) : (
                     <img
-                      src={getCyberpunkSvgPlaceholder(item.name)}
+                      src={getCasualSvgPlaceholder(item.name)}
                       alt={item.name}
                       style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "12px" }}
                     />
@@ -720,8 +732,6 @@ export function LayoutEngine({
                   style={{
                     width: "100%",
                     aspectRatio: "4 / 3",
-                    minHeight: "100px",
-                    maxHeight: "140px",
                     backgroundColor: "var(--color-surface-alt)",
                     borderRadius: "12px",
                     display: "flex",
@@ -741,11 +751,9 @@ export function LayoutEngine({
                       onError={(e) => handleAssetImageError(e, item.name)}
                     />
                   ) : (
-                    <img
-                      src={getCyberpunkSvgPlaceholder(item.name)}
-                      alt={item.name}
-                      style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "12px" }}
-                    />
+                    <div style={{ fontSize: "48px", opacity: 0.6, userSelect: "none" }}>
+                      {getCategoryEmoji(item.category || "burger", item.name)}
+                    </div>
                   )}
                 </div>
 
