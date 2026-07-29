@@ -44,8 +44,10 @@ function useDarkMode() {
     const root = document.documentElement;
     if (isDark) {
       root.classList.add("theme-dark");
+      root.classList.remove("theme-light");
     } else {
       root.classList.remove("theme-dark");
+      root.classList.add("theme-light");
     }
     try { localStorage.setItem("pov2-theme", isDark ? "dark" : "light"); } catch { /* noop */ }
   }, [isDark]);

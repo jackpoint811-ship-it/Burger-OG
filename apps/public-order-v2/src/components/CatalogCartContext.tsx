@@ -12,9 +12,9 @@ type CatalogCartContextValue = {
   items: CatalogCartItem[];
   count: number;
   total: number;
-  addItem: (product: CatalogProduct) => void;
-  setQty: (productId: string, qty: number) => void;
-  removeItem: (productId: string) => void;
+  addItem: (product: CatalogProduct, mods?: string[]) => void;
+  setQty: (cartItemId: string, qty: number) => void;
+  removeItem: (cartItemId: string) => void;
   clear: () => void;
 };
 
@@ -23,16 +23,16 @@ const CatalogCartContext = createContext<CatalogCartContextValue | null>(null);
 export function CatalogCartProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(catalogCartReducer, CATALOG_CART_INITIAL_STATE);
 
-  const addItem = useCallback((product: CatalogProduct) => {
-    dispatch({ type: "ADD_ITEM", product });
+  const addItem = useCallback((product: CatalogProduct, mods?: string[]) => {
+    dispatch({ type: "ADD_ITEM", product, mods });
   }, []);
 
-  const setQty = useCallback((productId: string, qty: number) => {
-    dispatch({ type: "SET_QTY", productId, qty });
+  const setQty = useCallback((cartItemId: string, qty: number) => {
+    dispatch({ type: "SET_QTY", cartItemId, qty });
   }, []);
 
-  const removeItem = useCallback((productId: string) => {
-    dispatch({ type: "REMOVE_ITEM", productId });
+  const removeItem = useCallback((cartItemId: string) => {
+    dispatch({ type: "REMOVE_ITEM", cartItemId });
   }, []);
 
   const clear = useCallback(() => {

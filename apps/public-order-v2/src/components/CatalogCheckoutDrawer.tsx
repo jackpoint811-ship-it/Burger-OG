@@ -183,6 +183,11 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
       }
 
       setCheckoutState({ status: "success", folio: order.folio });
+      
+      try {
+        localStorage.setItem("pov2-last-order", JSON.stringify(items));
+      } catch { /* ignore */ }
+
       // Regenerate key so next order gets a fresh one.
       idempotencyKeyRef.current = generateIdempotencyKey();
       clear();
@@ -349,6 +354,10 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
             </div>
 
             <div className="catalog-cart-drawer__footer">
+              <div className="catalog-checkout-delivery-notice" style={{ fontSize: "12px", color: "var(--color-text-secondary)", marginBottom: "16px", padding: "10px", backgroundColor: "var(--color-surface-alt)", borderRadius: "8px", textAlign: "center" }}>
+                🕒 Horario fijo de entrega: <strong>A partir de la 1:30 PM</strong>
+              </div>
+
               <div className="catalog-cart-drawer__total">
                 <div className="catalog-cart-drawer__total-label">
                   <span>Total a pagar</span>

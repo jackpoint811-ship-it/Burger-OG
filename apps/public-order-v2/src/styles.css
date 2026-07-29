@@ -8286,3 +8286,35 @@ html {
     transform: translateY(-2px);
   }
 }
+
+/* ── Mods (Personalización) ────────────────────────────── */
+.catalog-drawer__mods {
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-line);
+}
+.catalog-drawer__mods-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  color: var(--color-text-primary);
+}
+.catalog-drawer__mods-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.catalog-drawer__mod-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+.catalog-drawer__mod-label input[type="checkbox"] {
+  accent-color: var(--color-accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
