@@ -26,20 +26,51 @@ type CatalogModeAppProps = {
 };
 
 /** ───────────────────────────────────────────────────
- * Hook: dark mode con persistencia en localStorage
- * y fallback a prefers-color-scheme del sistema.
- * Aplica .theme-dark en <html> para activar tokens.
+ * Hook: tema nativo con soporte tri-estado:
+ * - "system": Nativo del sistema reactivo en tiempo real
+ * - "light": Claro forzado
+ * - "dark": Oscuro forzado
+ * Aplica .theme-dark / .theme-light en <html> y actualiza meta theme-color.
  * ─────────────────────────────────────────────────── */
-function useDarkMode() {
-  const [isDark, setIsDark] = useState<boolean>(() => {
+export type ThemePreference = "system" | "light" | "dark";
+
+function useSystemTheme() {
+  const [preference, setPreference] = useState<ThemePreference>(() => {
     try {
-      const stored = localStorage.getItem("pov2-theme");
-      if (stored !== null) return stored === "dark";
-    } catch { /* noop */ }
+      const stored = localStorage.getItem("pov2-theme-preference");
+      if (stored === "light" || stored === "dark" || stored === "system") {
+        return stored;
+      }
+      const oldStored = localStorage.getItem("pov2-theme");
+      if (oldStored === "dark" || oldStored === "light") {
+        return oldStored;
+      }
+    } catch {
+      /* noop */
+    }
+    return "system";
+  });
+
+  const [systemIsDark, setSystemIsDark] = useState<boolean>(() => {
     return typeof window !== "undefined"
       ? window.matchMedia("(prefers-color-scheme: dark)").matches
       : false;
   });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      setSystemIsDark(e.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  const resolvedTheme = preference === "system" ? (systemIsDark ? "dark" : "light") : preference;
+  const isDark = resolvedTheme === "dark";
 
   useEffect(() => {
     const root = document.documentElement;
@@ -50,11 +81,31 @@ function useDarkMode() {
       root.classList.remove("theme-dark");
       root.classList.add("theme-light");
     }
-    try { localStorage.setItem("pov2-theme", isDark ? "dark" : "light"); } catch { /* noop */ }
-  }, [isDark]);
 
-  const toggle = useCallback(() => setIsDark((d) => !d), []);
-  return { isDark, toggle };
+    let metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (!metaTheme) {
+      metaTheme = document.createElement("meta");
+      metaTheme.setAttribute("name", "theme-color");
+      document.head.appendChild(metaTheme);
+    }
+    metaTheme.setAttribute("content", isDark ? "#121212" : "#F5F2EE");
+
+    try {
+      localStorage.setItem("pov2-theme-preference", preference);
+    } catch {
+      /* noop */
+    }
+  }, [isDark, preference]);
+
+  const cycleTheme = useCallback(() => {
+    setPreference((prev) => {
+      if (prev === "system") return "light";
+      if (prev === "light") return "dark";
+      return "system";
+    });
+  }, []);
+
+  return { preference, resolvedTheme, isDark, cycleTheme };
 }
 
 function getCategoryEmoji(key: string, name: string): string {
@@ -77,7 +128,7 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
   const [activeToast, setActiveToast] = useState<ToastMessage | null>(null);
   const [isTowerModalOpen, setIsTowerModalOpen] = useState(false);
   const [selectedTowerKey, setSelectedTowerKey] = useState<string | null>(null);
-  const { isDark, toggle: toggleDark } = useDarkMode();
+  const { preference, resolvedTheme, isDark, cycleTheme } = useSystemTheme();
 
   const towerStatus = useMemo(() => getTowerStatus(), []);
 
@@ -166,11 +217,13 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
               id="dark-mode-toggle"
               type="button"
               className="site-header__theme-toggle"
-              onClick={toggleDark}
-              aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-              aria-pressed={isDark}
+              onClick={cycleTheme}
+              aria-label={`Tema: ${preference === "system" ? `Nativo del sistema (${isDark ? "Oscuro" : "Claro"} activo)` : preference === "light" ? "Claro forzado" : "Oscuro forzado"}. Tocar para cambiar.`}
+              title={`Modo: ${preference === "system" ? `Sistema (${isDark ? "Oscuro" : "Claro"})` : preference === "light" ? "Claro" : "Oscuro"}`}
             >
-              <span aria-hidden="true">{isDark ? "☀️" : "🌙"}</span>
+              <span aria-hidden="true">
+                {preference === "system" ? "💻" : preference === "light" ? "☀️" : "🌙"}
+              </span>
             </button>
           </div>
         </div>
