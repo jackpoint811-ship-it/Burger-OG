@@ -6303,6 +6303,307 @@ html {
   color: var(--color-text-secondary);
 }
 
+/* ── Sub-bar Towers Pill Buttons ───────────────────────── */
+.site-header__towers-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tower-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill, 9999px);
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--motion-fast) var(--motion-ease);
+  border: 1px solid var(--color-line);
+}
+
+.tower-pill-btn--active {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+  border-color: var(--color-accent-line);
+}
+
+.tower-pill-btn--active:hover {
+  background-color: var(--color-accent-soft);
+  transform: translateY(-1px);
+}
+
+.tower-pill-btn--off {
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+  border-color: var(--color-line-soft);
+  opacity: 0.65;
+  filter: grayscale(40%);
+}
+
+.tower-pill-btn--off:hover {
+  opacity: 0.9;
+  filter: grayscale(0%);
+}
+
+.tower-pill-btn__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.tower-pill-btn__dot--active {
+  background-color: var(--color-accent);
+  box-shadow: 0 0 6px var(--color-accent);
+}
+
+.tower-pill-btn__dot--off {
+  background-color: var(--color-text-muted);
+}
+
+/* ── Tower Schedule Modal UX Pro ───────────────────────── */
+.tower-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background-color: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.tower-modal-card {
+  width: 100%;
+  max-width: 440px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line-soft);
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tower-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--color-line-soft);
+}
+
+.tower-modal-title-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tower-modal-icon {
+  font-size: 28px;
+}
+
+.tower-modal-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-text-primary);
+}
+
+.tower-modal-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-text-secondary);
+}
+
+.tower-modal-close-btn {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-line);
+  color: var(--color-text-primary);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.tower-modal-close-btn:hover {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.tower-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tower-modal-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+}
+
+.tower-modal-status-banner--active {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent-line);
+}
+
+.tower-modal-status-banner--inactive {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-line-soft);
+}
+
+.tower-modal-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.tower-modal-desc {
+  margin: 0;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.tower-schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tower-schedule-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--color-line-soft);
+  transition: all 0.2s ease;
+}
+
+.tower-schedule-item--active {
+  background-color: var(--color-surface);
+  border-color: var(--color-accent-line);
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.08);
+}
+
+.tower-schedule-item--inactive {
+  background-color: var(--color-surface-alt);
+  opacity: 0.75;
+}
+
+.tower-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tower-item-emoji {
+  font-size: 22px;
+}
+
+.tower-item-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-text-primary);
+}
+
+.tower-item-days {
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-text-secondary);
+  display: block;
+  margin-top: 2px;
+}
+
+.tower-badge-pill {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.tower-badge-pill--active {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent-line);
+}
+
+.tower-badge-pill--off {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-line-soft);
+}
+
+.tower-modal-footer-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  background-color: var(--color-surface-alt);
+  border-radius: 10px;
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-text-secondary);
+  line-height: 1.3;
+}
+
+.tower-modal-footer-note p {
+  margin: 0;
+}
+
+.tower-modal-actions {
+  padding: 14px 20px 20px 20px;
+  border-top: 1px solid var(--color-line-soft);
+}
+
+.tower-modal-confirm-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background-color: var(--color-accent);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
+}
+
+.tower-modal-confirm-btn:hover {
+  background-color: var(--color-accent-hover, #15803d);
+  transform: translateY(-1px);
+}
+
 .site-header__actions {
   display: flex;
   align-items: center;

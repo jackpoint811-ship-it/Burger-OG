@@ -10,6 +10,7 @@ import { DynamicRenderer } from "./DynamicRenderer";
 import { CatalogToast, type ToastMessage } from "./CatalogToast";
 import type { DesignSpecification } from "../types/design";
 import { DEFAULT_STUDIO_DESIGN_SPEC } from "../lib/default-design-spec";
+import { TowerScheduleModal, getTowerStatus } from "./TowerScheduleModal";
 import {
   type CatalogProduct,
   mapMenuItemsToCatalogProducts,
@@ -74,7 +75,11 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [activeToast, setActiveToast] = useState<ToastMessage | null>(null);
+  const [isTowerModalOpen, setIsTowerModalOpen] = useState(false);
+  const [selectedTowerKey, setSelectedTowerKey] = useState<string | null>(null);
   const { isDark, toggle: toggleDark } = useDarkMode();
+
+  const towerStatus = useMemo(() => getTowerStatus(), []);
 
   const catalogProducts = useMemo(() => mapMenuItemsToCatalogProducts(items, categories), [items, categories]);
 
@@ -170,14 +175,43 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
           </div>
         </div>
 
-        {/* ── Sub-barra sutil de estado de tienda ────────────────────────────── */}
+        {/* ── Sub-barra de entregas por edificio ────────────────────────────── */}
         <div className="site-header__sub-bar">
           <div className="site-header__sub-bar-container">
             <span className="store-status-badge store-status-badge--open" role="status" aria-label="Estado del servicio: Tomando pedidos">
               <span className="store-status-badge__dot" aria-hidden="true" />
               <span>Tomando pedidos</span>
             </span>
-            <span className="site-header__sub-bar-detail">⚡ Envíos express disponibles</span>
+
+            <div className="site-header__towers-bar">
+              <button
+                type="button"
+                className={`tower-pill-btn ${towerStatus.gga.active ? "tower-pill-btn--active" : "tower-pill-btn--off"}`}
+                onClick={() => {
+                  setSelectedTowerKey("gga");
+                  setIsTowerModalOpen(true);
+                }}
+                aria-label={`Ver horario de ${towerStatus.gga.name} (${towerStatus.gga.active ? "Disponible hoy" : "Inactivo hoy"})`}
+              >
+                <span className="tower-pill-btn__emoji">🏢</span>
+                <span className="tower-pill-btn__label">Torre GGA</span>
+                <span className={`tower-pill-btn__dot ${towerStatus.gga.active ? "tower-pill-btn__dot--active" : "tower-pill-btn__dot--off"}`} />
+              </button>
+
+              <button
+                type="button"
+                className={`tower-pill-btn ${towerStatus.valcob.active ? "tower-pill-btn--active" : "tower-pill-btn--off"}`}
+                onClick={() => {
+                  setSelectedTowerKey("valcob");
+                  setIsTowerModalOpen(true);
+                }}
+                aria-label={`Ver horario de ${towerStatus.valcob.name} (${towerStatus.valcob.active ? "Disponible hoy" : "Inactivo hoy"})`}
+              >
+                <span className="tower-pill-btn__emoji">🏢</span>
+                <span className="tower-pill-btn__label">Torre Valcob</span>
+                <span className={`tower-pill-btn__dot ${towerStatus.valcob.active ? "tower-pill-btn__dot--active" : "tower-pill-btn__dot--off"}`} />
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -234,6 +268,13 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
       <AnimatePresence>
         {isCheckoutOpen && <CatalogCheckoutDrawer key="checkout-drawer" isOpen={isCheckoutOpen} onClose={closeCheckout} />}
       </AnimatePresence>
+
+      {/* ── Modal de Horario por Edificio ────────────────────────────── */}
+      <TowerScheduleModal
+        isOpen={isTowerModalOpen}
+        onClose={() => setIsTowerModalOpen(false)}
+        selectedTowerKey={selectedTowerKey}
+      />
     </>
   );
 }
