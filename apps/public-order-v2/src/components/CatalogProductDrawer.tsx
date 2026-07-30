@@ -79,7 +79,7 @@ export function CatalogProductDrawer({ product, initialCartItem, onClose }: Cata
   const [removedMods, setRemovedMods] = useState<string[]>([]);
   const [upgrades, setUpgrades] = useState<{ id: string; name: string; price: number; qty: number }[]>([]);
   const [comboSide, setComboSide] = useState<string>(COMBO_SIDES[0].label);
-  const [comboMode, setComboMode] = useState<"original" | "customize">("original");
+  const [itemMode, setItemMode] = useState<"original" | "customize">("original");
 
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
@@ -108,15 +108,15 @@ export function CatalogProductDrawer({ product, initialCartItem, onClose }: Cata
       }
 
       if (parsedRemoved.length > 0 || (initialCartItem.upgrades && initialCartItem.upgrades.length > 0)) {
-        setComboMode("customize");
+        setItemMode("customize");
       } else {
-        setComboMode("original");
+        setItemMode("original");
       }
     } else {
       setRemovedMods([]);
       setUpgrades([]);
       setComboSide(COMBO_SIDES[0].label);
-      setComboMode("original");
+      setItemMode("original");
     }
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
   }, [product?.id, initialCartItem]);
@@ -188,8 +188,8 @@ export function CatalogProductDrawer({ product, initialCartItem, onClose }: Cata
 
   const currentTotal = useMemo(() => {
     const upgradesTotal = upgrades.reduce((sum, u) => sum + u.price * u.qty, 0);
-    return product.price + comboExtraPrice + upgradesTotal;
-  }, [product.price, comboExtraPrice, upgrades]);
+    return product.price + comboExtraPrice + (itemMode === "customize" ? upgradesTotal : 0);
+  }, [product.price, comboExtraPrice, upgrades, itemMode]);
 
   const handleAddToCart = () => {
     if (justAdded) {
@@ -199,13 +199,13 @@ export function CatalogProductDrawer({ product, initialCartItem, onClose }: Cata
     if (isAtMax && !isEditing) return;
 
     const modsList: string[] = [];
-    if (comboMode === "customize" || product.type !== "combo") {
+    if (itemMode === "customize") {
       modsList.push(...removedMods.map((m) => `Sin ${m}`));
     }
     if (product.type === "combo") {
       modsList.push(`Guarnición: ${comboSide}`);
     }
-    const activeUpgrades = comboMode === "customize" || product.type !== "combo" ? upgrades.filter((u) => u.qty > 0) : [];
+    const activeUpgrades = itemMode === "customize" ? upgrades.filter((u) => u.qty > 0) : [];
 
     if (isEditing && initialCartItem) {
       updateItem(initialCartItem.cartItemId, product, modsList, activeUpgrades);
@@ -304,26 +304,9 @@ export function CatalogProductDrawer({ product, initialCartItem, onClose }: Cata
               {product.type === "burger"
                 ? "Receta artesanal con 100% carne smash de res seleccionada, sazón especial y pan brioche horneado."
                 : product.type === "combo"
-                ? "Combo completo con tu hamburguesa especial fija, guarnición y bebida bien fría."
+                ? "Combo completo con tu hamburguesa especial, guarnición y bebida bien fría."
                 : "Preparado al momento con ingredientes frescos de primera calidad."}
             </p>
-          )}
-
-          {/* ── Lista de Ingredientes Incluidos SOLO para Burgers Solas ── */}
-          {product.type === "burger" && (
-            <div className="catalog-drawer__ingredients-card">
-              <span className="catalog-drawer__section-subtitle">
-                🥗 INGREDIENTES INCLUIDOS
-              </span>
-              <ul className="catalog-drawer__ingredients-list">
-                <li>• Pan Brioche artesanal horneado</li>
-                <li>• 100% Carne Smash de res seleccionada</li>
-                <li>• Doble Queso Americano / Manchego</li>
-                <li>• Tocino crujiente dorado</li>
-                <li>• Pepinillos artesanales & Jitomate fresco</li>
-                <li>• Aderezo especial de la casa</li>
-              </ul>
-            </div>
           )}
 
           <div className="catalog-drawer__details">
@@ -338,16 +321,74 @@ export function CatalogProductDrawer({ product, initialCartItem, onClose }: Cata
             </span>
           </div>
 
-          {/* ── MODAL ESPECÍFICO PARA COMBOS ── */}
+          {/* ── BURGERS SOLAS: Botones de Modo & Ingredientes Incluidos ── */}
+          {product.type === "burger" && (
+            <div className="catalog-drawer__section-card">
+              <span className="catalog-drawer__section-title">🥗 INGREDIENTES INCLUIDOS</span>
+              <ul className="catalog-drawer__ingredients-list">
+                <li>• Pan Brioche artesanal horneado</li>
+                <li>• 100% Carne Smash de res seleccionada</li>
+                <li>• Doble Queso Americano / Manchego</li>
+                <li>• Tocino crujiente dorado</li>
+                <li>• Pepinillos artesanales & Jitomate fresco</li>
+                <li>• Aderezo especial de la casa</li>
+              </ul>
+
+              {/* Botones Receta Original vs Personalizar */}
+              <div className="catalog-drawer__mode-toggle-grid" style={{ marginTop: "14px" }}>
+                <button
+                  type="button"
+                  className={`catalog-drawer__mode-btn ${itemMode === "original" ? "catalog-drawer__mode-btn--active" : ""}`}
+                  onClick={() => setItemMode("original")}
+                >
+                  🍔 Receta Original
+                </button>
+                <button
+                  type="button"
+                  className={`catalog-drawer__mode-btn ${itemMode === "customize" ? "catalog-drawer__mode-btn--active" : ""}`}
+                  onClick={() => setItemMode("customize")}
+                >
+                  🛠️ Personalizar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── ESTRUCTURA EN 3 SECCIONES PARA COMBOS ── */}
           {product.type === "combo" && (
-            <div className="catalog-drawer__combo-box">
-              <div className="catalog-drawer__combo-notice">
-                <span>🍔 La hamburguesa del combo es única y fija (Receta de la Casa BBQ / OG).</span>
+            <div className="catalog-drawer__combo-container">
+              {/* SECCIÓN 1: Hamburguesa del Combo */}
+              <div className="catalog-drawer__section-card">
+                <span className="catalog-drawer__section-title">🍔 HAMBURGUESA DEL COMBO</span>
+                <p className="catalog-drawer__section-desc">
+                  {product.name} (Incluye Pan Brioche, 100% Carne Smash de Res, Doble Queso, Pepinillos y Aderezo).
+                </p>
               </div>
 
-              {/* Selector de Guarnición */}
-              <div className="catalog-drawer__combo-sides">
-                <p className="catalog-drawer__mods-title">🍟 Elige tu guarnición del combo:</p>
+              {/* SECCIÓN 2: Botones de Modo (Receta Original / Personalizar) */}
+              <div className="catalog-drawer__section-card">
+                <span className="catalog-drawer__section-title">⚙️ OPCIONES DE PREPARACIÓN</span>
+                <div className="catalog-drawer__mode-toggle-grid">
+                  <button
+                    type="button"
+                    className={`catalog-drawer__mode-btn ${itemMode === "original" ? "catalog-drawer__mode-btn--active" : ""}`}
+                    onClick={() => setItemMode("original")}
+                  >
+                    🍔 Receta Original
+                  </button>
+                  <button
+                    type="button"
+                    className={`catalog-drawer__mode-btn ${itemMode === "customize" ? "catalog-drawer__mode-btn--active" : ""}`}
+                    onClick={() => setItemMode("customize")}
+                  >
+                    🛠️ Personalizar
+                  </button>
+                </div>
+              </div>
+
+              {/* SECCIÓN 3: Selección de Guarnición */}
+              <div className="catalog-drawer__section-card">
+                <span className="catalog-drawer__section-title">🍟 ELIGE TU GUARNICIÓN</span>
                 <div className="catalog-drawer__radio-group">
                   {COMBO_SIDES.map((side) => (
                     <label key={side.label} className="catalog-drawer__radio-label">
@@ -362,31 +403,13 @@ export function CatalogProductDrawer({ product, initialCartItem, onClose }: Cata
                   ))}
                 </div>
               </div>
-
-              {/* 2 Botones de Modo para Combos */}
-              <div className="catalog-drawer__combo-toggle-row">
-                <button
-                  type="button"
-                  className={`catalog-drawer__combo-mode-btn ${comboMode === "original" ? "catalog-drawer__combo-mode-btn--active" : ""}`}
-                  onClick={() => setComboMode("original")}
-                >
-                  🍔 Receta Original
-                </button>
-                <button
-                  type="button"
-                  className={`catalog-drawer__combo-mode-btn ${comboMode === "customize" ? "catalog-drawer__combo-mode-btn--active" : ""}`}
-                  onClick={() => setComboMode("customize")}
-                >
-                  🛠️ Personalizar
-                </button>
-              </div>
             </div>
           )}
 
-          {/* ── PERSONALIZACIÓN Y EXTRAS (Burgers solas o Combos en modo Customize) ── */}
-          {(product.type === "burger" || (product.type === "combo" && comboMode === "customize")) && (
-            <>
-              {/* Badges Verde / Rojo con tachado (Sin texto 'sin costo') */}
+          {/* ── PERSONALIZACIÓN Y EXTRAS (Desplegado solo si activa modo 'customize') ── */}
+          {itemMode === "customize" && (
+            <div className="catalog-drawer__section-card" style={{ marginTop: "12px" }}>
+              {/* Badges Verde / Rojo con tachado */}
               <div className="catalog-drawer__mods">
                 <p className="catalog-drawer__mods-title">Personaliza ingredientes</p>
                 <div className="catalog-drawer__mods-grid">
@@ -441,9 +464,10 @@ export function CatalogProductDrawer({ product, initialCartItem, onClose }: Cata
                   })}
                 </div>
               </div>
-            </>
+            </div>
           )}
 
+          {/* ── FOOTER DE CTA FIJO PEGAJOSO (Sticky Footer) ── */}
           <div className="catalog-drawer__footer">
             {product.isAvailable ? (
               <button
