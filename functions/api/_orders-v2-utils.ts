@@ -136,17 +136,136 @@ export const parseJsonDetail = (value: unknown): Record<string, unknown> | undef
 
 export const parseJsonSnapshot = (value: unknown): Record<string, unknown> | undefined => parseJsonDetail(value);
 
-export const mapD1OrderItemToOrderV2Item = (row: any): OrderV2Item => ({
-  id: String(row.id),
-  orderId: String(row.order_id ?? row.orderId),
-  sku: String(row.sku),
-  name: String(row.name),
-  qty: Number(row.qty),
-  unitPrice: centsToPrice(row.unit_price_cents ?? row.unitPriceCents),
-  lineTotal: centsToPrice(row.line_total_cents ?? row.lineTotalCents),
-  snapshot: parseJsonSnapshot(row.snapshot_json ?? row.snapshotJson),
-  createdAt: row.created_at ?? row.createdAt ? String(row.created_at ?? row.createdAt) : undefined
-});
+export type FormattedCustomizationSummary = {
+  lines: string[];
+  summaryText: string;
+  hasCustomizations: boolean;
+};
+
+export const buildFormattedCustomizationSummary = (snapshot: Record<string, unknown> | undefined): FormattedCustomizationSummary => {
+  if (!snapshot) return { lines: [], summaryText: '', hasCustomizations: false };
+
+  const lines: string[] = [];
+
+  // 1. Single burger / item removed ingredients
+  if (Array.isArray(snapshot.removedIngredients) && snapshot.removedIngredients.length > 0) {
+    for (const ing of snapshot.removedIngredients) {
+      if (typeof ing === 'string' && ing.trim()) {
+        lines.push(`❌ SIN ${ing.trim()}`);
+      }
+    }
+  }
+
+  // 2. Single burger / item extras
+  if (Array.isArray(snapshot.extras) && snapshot.extras.length > 0) {
+    for (const ext of snapshot.extras) {
+      if (ext && typeof ext === 'object') {
+        const rawExt = ext as Record<string, unknown>;
+        const name = typeof rawExt.name === 'string' ? rawExt.name.trim() : '';
+        const price = Number(rawExt.price);
+        if (name) {
+          lines.push(`➕ EXTRA ${name}${Number.isFinite(price) && price > 0 ? ` (+$${price})` : ''}`);
+        }
+      }
+    }
+  }
+
+  // 3. Single burger note
+  if (typeof snapshot.burgerNote === 'string' && snapshot.burgerNote.trim()) {
+    lines.push(`📝 NOTA: ${snapshot.burgerNote.trim()}`);
+  }
+
+  // 4. Combo burgers breakdown
+  if (Array.isArray(snapshot.comboBurgers) && snapshot.comboBurgers.length > 0) {
+    snapshot.comboBurgers.forEach((cb: unknown, idx: number) => {
+      if (!cb || typeof cb !== 'object') return;
+      const rawCb = cb as Record<string, unknown>;
+      const bName = typeof rawCb.name === 'string' && rawCb.name.trim() ? rawCb.name.trim() : `Hamburguesa ${idx + 1}`;
+      lines.push(`🍔 Burger ${idx + 1}: ${bName}`);
+      if (Array.isArray(rawCb.removedIngredients) && rawCb.removedIngredients.length > 0) {
+        rawCb.removedIngredients.forEach((ing: unknown) => {
+          if (typeof ing === 'string' && ing.trim()) lines.push(`   • ❌ SIN ${ing.trim()}`);
+        });
+      }
+      if (Array.isArray(rawCb.extras) && rawCb.extras.length > 0) {
+        rawCb.extras.forEach((ext: unknown) => {
+          if (!ext || typeof ext !== 'object') return;
+          const rawExt = ext as Record<string, unknown>;
+          const name = typeof rawExt.name === 'string' ? rawExt.name.trim() : '';
+          const price = Number(rawExt.price);
+          if (name) lines.push(`   • ➕ EXTRA ${name}${Number.isFinite(price) && price > 0 ? ` (+$${price})` : ''}`);
+        });
+      }
+      if (typeof rawCb.burgerNote === 'string' && rawCb.burgerNote.trim()) {
+        lines.push(`   • 📝 NOTA: ${rawCb.burgerNote.trim()}`);
+      }
+    });
+  }
+
+  // 5. Garnish
+  if (snapshot.garnish && typeof snapshot.garnish === 'object') {
+    const g = snapshot.garnish as Record<string, unknown>;
+    const gName = typeof g.name === 'string' ? g.name.trim() : '';
+    const upcharge = Number(g.upcharge);
+    if (gName) {
+      lines.push(`🍟 Acompañamiento: ${gName}${Number.isFinite(upcharge) && upcharge > 0 ? ` (+$${upcharge})` : ''}`);
+    }
+  }
+
+  // 6. Included drink
+  if (snapshot.includedDrink && typeof snapshot.includedDrink === 'object') {
+    const d = snapshot.includedDrink as Record<string, unknown>;
+    const dName = typeof d.name === 'string' ? d.name.trim() : '';
+    if (dName) {
+      lines.push(`🥤 Bebida: ${dName}`);
+    }
+  }
+
+  // 7. SideQuest Extras
+  if (Array.isArray(snapshot.sideQuestExtras) && snapshot.sideQuestExtras.length > 0) {
+    for (const sq of snapshot.sideQuestExtras) {
+      if (sq && typeof sq === 'object') {
+        const rawSq = sq as Record<string, unknown>;
+        const name = typeof rawSq.name === 'string' ? rawSq.name.trim() : '';
+        const price = Number(rawSq.price);
+        if (name) {
+          lines.push(`➕ EXTRA ${name}${Number.isFinite(price) && price > 0 ? ` (+$${price})` : ''}`);
+        }
+      }
+    }
+  }
+
+  return {
+    lines,
+    summaryText: lines.join(' | '),
+    hasCustomizations: lines.length > 0
+  };
+};
+
+export const mapD1OrderItemToOrderV2Item = (row: any): OrderV2Item => {
+  const snapshot = parseJsonSnapshot(row.snapshot_json ?? row.snapshotJson);
+  const formatted = buildFormattedCustomizationSummary(snapshot);
+  const enrichedSnapshot = snapshot
+    ? {
+        ...snapshot,
+        formattedCustomizationLines: formatted.lines,
+        formattedSummaryText: formatted.summaryText,
+        hasCustomizations: formatted.hasCustomizations
+      }
+    : undefined;
+
+  return {
+    id: String(row.id),
+    orderId: String(row.order_id ?? row.orderId),
+    sku: String(row.sku),
+    name: String(row.name),
+    qty: Number(row.qty),
+    unitPrice: centsToPrice(row.unit_price_cents ?? row.unitPriceCents),
+    lineTotal: centsToPrice(row.line_total_cents ?? row.lineTotalCents),
+    snapshot: enrichedSnapshot,
+    createdAt: row.created_at ?? row.createdAt ? String(row.created_at ?? row.createdAt) : undefined
+  };
+};
 
 export const mapD1OrderEventToOrderV2Event = (row: any): OrderV2Event => ({
   id: String(row.id),
