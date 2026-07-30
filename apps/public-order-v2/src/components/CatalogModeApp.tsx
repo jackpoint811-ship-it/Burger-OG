@@ -56,15 +56,38 @@ function useDarkMode() {
   return { isDark, toggle };
 }
 
+function getCategoryEmoji(key: string, name: string): string {
+  const k = key.toLowerCase();
+  const n = name.toLowerCase();
+  if (k.includes("burg") || n.includes("burg")) return "🍔";
+  if (k.includes("combo") || n.includes("combo")) return "🔥";
+  if (k.includes("entr") || k.includes("side") || n.includes("papas") || n.includes("entr")) return "🍟";
+  if (k.includes("beb") || k.includes("drink") || n.includes("beb")) return "🥤";
+  if (k.includes("postre") || n.includes("postre")) return "🍦";
+  return "🏷️";
+}
+
 function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [], source, designSpec }: CatalogModeAppProps) {
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
   const [editingCartItem, setEditingCartItem] = useState<any>(null);
+  const [activeCategoryKey, setActiveCategoryKey] = useState<string>("all");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [activeToast, setActiveToast] = useState<ToastMessage | null>(null);
   const { isDark, toggle: toggleDark } = useDarkMode();
 
   const catalogProducts = useMemo(() => mapMenuItemsToCatalogProducts(items, categories), [items, categories]);
+
+  const categoryPills = useMemo(
+    () => [
+      { key: "all", name: "📖 Todo" },
+      ...categories.map((c) => ({
+        key: c.key,
+        name: `${getCategoryEmoji(c.key, c.name)} ${c.name}`,
+      })),
+    ],
+    [categories]
+  );
 
   const closeProductDrawer = useCallback(() => {
     setSelectedProduct(null);
@@ -79,14 +102,17 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
   }, []);
   const closeCheckout = useCallback(() => setIsCheckoutOpen(false), []);
 
-  const handleEditCartItem = useCallback((cartItem: any) => {
-    const foundProduct = catalogProducts.find((p: CatalogProduct) => p.id === cartItem.productId);
-    if (foundProduct) {
-      setSelectedProduct(foundProduct);
-      setEditingCartItem(cartItem);
-      setIsCartOpen(false);
-    }
-  }, [catalogProducts]);
+  const handleEditCartItem = useCallback(
+    (cartItem: any) => {
+      const foundProduct = catalogProducts.find((p: CatalogProduct) => p.id === cartItem.productId);
+      if (foundProduct) {
+        setSelectedProduct(foundProduct);
+        setEditingCartItem(cartItem);
+        setIsCartOpen(false);
+      }
+    },
+    [catalogProducts]
+  );
 
   const triggerToast = useCallback((emoji: string, message: string) => {
     const newToast: ToastMessage = {
@@ -156,15 +182,14 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
         </div>
       </header>
 
-      <main
-        className="catalog-shell"
-        aria-labelledby="catalogTitle"
-      >
+      <main className="catalog-shell" aria-labelledby="catalogTitle">
         {/* ── Headless UI Dynamic Renderer ───────── */}
         <DynamicRenderer
           spec={designSpec || DEFAULT_STUDIO_DESIGN_SPEC}
           chekeoItems={items}
           chekeoCategories={categories}
+          activeCategoryKey={activeCategoryKey}
+          onSelectCategory={setActiveCategoryKey}
           onProductSelect={(item) => {
             const mapped = mapMenuItemsToCatalogProducts([item], categories)[0];
             if (mapped) setSelectedProduct(mapped);
