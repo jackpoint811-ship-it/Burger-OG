@@ -267,7 +267,7 @@ body,
 
 body {
   margin: 0;
-  overflow-x: clip;
+  overflow-x: visible;
   font-family:
     'Inter',
     ui-sans-serif,
@@ -6375,26 +6375,34 @@ html {
    PR3 — Sticky Category Navigation & Cyberpunk Neon Glow
    ═══════════════════════════════════════════════════════ */
 
-.catalog-category-nav {
+.catalog-category-sticky-header {
   position: sticky;
-  top: 56px; /* Offset right below fixed top bar (56px) */
-  z-index: 15;
+  position: -webkit-sticky;
+  top: 56px;
+  z-index: 50;
+  background: var(--color-bg-base);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-line);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: visible;
+}
+
+.catalog-category-nav,
+.catalog-category-nav-scroll {
   display: flex;
   gap: 0.55rem;
   max-width: 1120px;
-  margin: 0 auto 1.25rem;
+  margin: 0 auto;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 0.6rem 0.5rem;
-  background: var(--color-bg-base);
-  border-bottom: 1px solid var(--color-line-soft);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  padding: 0.4rem 0.5rem;
   scrollbar-width: none;
 }
 
-.catalog-category-nav::-webkit-scrollbar {
+.catalog-category-nav::-webkit-scrollbar,
+.catalog-category-nav-scroll::-webkit-scrollbar {
   display: none;
 }
 

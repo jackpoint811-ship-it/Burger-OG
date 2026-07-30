@@ -413,12 +413,12 @@ export function LayoutEngine({
 
     return (
       <div
-        className="catalog-category-nav-sticky-wrapper"
+        className="catalog-category-sticky-header"
         style={{
           width: "100%",
           position: "sticky",
           top: "56px",
-          zIndex: 18,
+          zIndex: 50,
           marginTop: "0px",
           marginBottom: "12px",
           backgroundColor: "var(--color-bg-base)",
@@ -427,11 +427,13 @@ export function LayoutEngine({
           paddingTop: "6px",
           paddingBottom: "6px",
           borderBottom: "1px solid var(--color-line)",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
           overflow: "visible",
         }}
       >
         <nav
           aria-label="Categorías"
+          className="catalog-category-nav-scroll"
           style={{
             width: "100%",
             display: "flex",
