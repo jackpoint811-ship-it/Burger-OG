@@ -119,21 +119,6 @@ export function LayoutEngine({
 
     return (
       <section style={{ width: "100%", marginTop: "8px", marginBottom: "12px" }}>
-        <span
-          style={{
-            display: "block",
-            fontSize: "10px",
-            fontFamily: "'Inter', sans-serif",
-            fontWeight: 800,
-            color: "var(--color-text-muted)",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            marginBottom: "6px",
-            paddingLeft: "4px",
-          }}
-        >
-          PROMOS DEL DÍA
-        </span>
         <div style={{ position: "relative", width: "100%", overflow: "hidden", borderRadius: "16px" }}>
           <motion.div
             key={activeBanner.id}
@@ -425,6 +410,12 @@ export function LayoutEngine({
                   if (onSelectCategory) onSelectCategory(cat.key);
                   if (onAction) onAction(`SELECT_CATEGORY:${cat.key}`);
                   e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+                  setTimeout(() => {
+                    const catalogSection = document.getElementById("catalog-grid");
+                    if (catalogSection) {
+                      catalogSection.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
+                  }, 50);
                 }}
               >
                 {cat.name}
@@ -672,6 +663,11 @@ export function LayoutEngine({
 
     const fallbackBadges = ["🔥 TOP 1", "2x1 FLASH", "ULTRA", "CRISPY", "REFRESH"];
 
+    const activeCategoryObj = chekeoCategories.find((c) => c.key === activeCategoryKey);
+    const selectedCategoryName = (activeCategoryKey === "all" || !activeCategoryKey)
+      ? "Todo"
+      : activeCategoryObj?.name || activeCategoryKey;
+
     return (
       <section id="catalog-grid" style={{ width: "100%", marginTop: "12px", marginBottom: "16px" }}>
         <div
@@ -696,7 +692,7 @@ export function LayoutEngine({
               gap: "6px",
             }}
           >
-            <span>🍔</span> GRILLA DE CATÁLOGO ({activeCategoryKey === "all" || !activeCategoryKey ? "📖 Todo" : activeCategoryKey})
+            <span>🍔</span> MENÚ — {selectedCategoryName.toUpperCase()}
           </h2>
         </div>
 
