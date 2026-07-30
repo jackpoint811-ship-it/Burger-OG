@@ -34,8 +34,21 @@ export function LayoutEngine({
   activeCategoryKey = "all",
   onSelectCategory,
 }: LayoutEngineProps) {
-  const { addItem, count: cartCount, total: cartTotal } = useCatalogCart();
+  const { items, addItem, count: cartCount, total: cartTotal } = useCatalogCart();
   const [bannerIndex, setBannerIndex] = useState(0);
+  const [pulsingItemIds, setPulsingItemIds] = useState<Record<string, boolean>>({});
+
+  const handleQuickAdd = (item: MenuItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const mappedProduct = mapMenuItemsToCatalogProducts([item], chekeoCategories)[0];
+    if (mappedProduct) {
+      addItem(mappedProduct, [], []);
+      setPulsingItemIds((prev) => ({ ...prev, [item.sku]: true }));
+      setTimeout(() => {
+        setPulsingItemIds((prev) => ({ ...prev, [item.sku]: false }));
+      }, 500);
+    }
+  };
 
   if (!module || typeof module !== "object" || module.visible === false) {
     return null;
@@ -541,7 +554,31 @@ export function LayoutEngine({
                 }}
                 onClick={() => onProductSelect && onProductSelect(item)}
               >
-                {/* Badge */}
+                {/* Badge Qty */}
+                {(() => {
+                  const itemQty = items.filter(i => i.productId === item.sku).reduce((sum, i) => sum + i.qty, 0);
+                  if (itemQty > 0) {
+                    return (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="catalog-card__badge-qty"
+                      >
+                        {itemQty}
+                      </motion.div>
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* Floating Plus Animation */}
+                <AnimatePresence>
+                  {pulsingItemIds[item.sku] && (
+                    <div className="catalog-card__floating-plus">+1</div>
+                  )}
+                </AnimatePresence>
+
+                {/* Promo Badge */}
                 <div
                   style={{
                     position: "absolute",
@@ -651,31 +688,14 @@ export function LayoutEngine({
                     >
                       {formatCurrency(item.price)}
                     </span>
-                    <motion.button
+                    <button
                       type="button"
-                      whileTap={{ scale: 0.85 }}
                       aria-label={`Agregar ${item.name} al carrito`}
-                      style={{
-                        width: "30px",
-                        height: "30px",
-                        borderRadius: "50%",
-                        backgroundColor: "var(--color-accent-soft)",
-                        border: "1px solid var(--color-accent)",
-                        color: "var(--color-accent)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "16px",
-                        fontWeight: "bold",
-                        cursor: "pointer",
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (onProductSelect) onProductSelect(item);
-                      }}
+                      className={`catalog-card__btn-add ${pulsingItemIds[item.sku] ? "catalog-card__btn-add--pulse" : ""}`}
+                      onClick={(e) => handleQuickAdd(item, e)}
                     >
                       +
-                    </motion.button>
+                    </button>
                   </div>
                 </div>
               </motion.div>
@@ -774,6 +794,30 @@ export function LayoutEngine({
                   {badgeText}
                 </div>
 
+                {/* Badge Qty */}
+                {(() => {
+                  const itemQty = items.filter(i => i.productId === item.sku).reduce((sum, i) => sum + i.qty, 0);
+                  if (itemQty > 0) {
+                    return (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="catalog-card__badge-qty"
+                      >
+                        {itemQty}
+                      </motion.div>
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* Floating Plus Animation */}
+                <AnimatePresence>
+                  {pulsingItemIds[item.sku] && (
+                    <div className="catalog-card__floating-plus">+1</div>
+                  )}
+                </AnimatePresence>
+
                 {/* Imagen del producto */}
                 <div
                   style={{
@@ -860,31 +904,14 @@ export function LayoutEngine({
                     >
                       {formatCurrency(item.price)}
                     </span>
-                    <motion.button
+                    <button
                       type="button"
-                      whileTap={{ scale: 0.85 }}
                       aria-label={`Agregar ${item.name}`}
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "50%",
-                        backgroundColor: "var(--color-accent-soft)",
-                        border: "1px solid var(--color-accent)",
-                        color: "var(--color-accent)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "18px",
-                        fontWeight: "bold",
-                        cursor: "pointer",
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (onProductSelect) onProductSelect(item);
-                      }}
+                      className={`catalog-card__btn-add ${pulsingItemIds[item.sku] ? "catalog-card__btn-add--pulse" : ""}`}
+                      onClick={(e) => handleQuickAdd(item, e)}
                     >
                       +
-                    </motion.button>
+                    </button>
                   </div>
                 </div>
               </motion.article>

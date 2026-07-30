@@ -12,6 +12,7 @@ export type CatalogCartItem = {
   imageUrl?: string;
   imageKey?: string;
   mods?: string[];
+  upgrades?: { id: string; name: string; price: number; qty: number }[];
 };
 
 export type CatalogCartState = {
@@ -19,7 +20,7 @@ export type CatalogCartState = {
 };
 
 export type CatalogCartAction =
-  | { type: "ADD_ITEM"; product: CatalogProduct; mods?: string[] }
+  | { type: "ADD_ITEM"; product: CatalogProduct; mods?: string[]; upgrades?: { id: string; name: string; price: number; qty: number }[] }
   | { type: "SET_QTY"; cartItemId: string; qty: number }
   | { type: "REMOVE_ITEM"; cartItemId: string }
   | { type: "CLEAR" };
@@ -32,8 +33,9 @@ export function catalogCartReducer(
 ): CatalogCartState {
   switch (action.type) {
     case "ADD_ITEM": {
-      const modsKey = action.mods?.length ? `|${action.mods.join(",")}` : "";
-      const cartItemId = `${action.product.id}${modsKey}`;
+      const modsKey = action.mods?.length ? `|m:${action.mods.join(",")}` : "";
+      const upgradesKey = action.upgrades?.length ? `|u:${action.upgrades.map(u => `${u.id}:${u.qty}`).join(",")}` : "";
+      const cartItemId = `${action.product.id}${modsKey}${upgradesKey}`;
       const existing = state.items.find((item) => item.cartItemId === cartItemId);
       if (existing) {
         return {
@@ -54,6 +56,7 @@ export function catalogCartReducer(
         imageUrl: action.product.imageUrl,
         imageKey: action.product.imageKey,
         mods: action.mods,
+        upgrades: action.upgrades,
       };
       return { items: [...state.items, newItem] };
     }
@@ -85,5 +88,8 @@ export function getCatalogCartCount(items: CatalogCartItem[]): number {
 }
 
 export function getCatalogCartTotal(items: CatalogCartItem[]): number {
-  return items.reduce((sum, item) => sum + item.price * item.qty, 0);
+  return items.reduce((sum, item) => {
+    const upgradesTotal = item.upgrades?.reduce((uSum, u) => uSum + u.price * u.qty, 0) || 0;
+    return sum + (item.price + upgradesTotal) * item.qty;
+  }, 0);
 }

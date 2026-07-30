@@ -291,12 +291,19 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                           {cartItem.name}
                         </span>
                         <span style={{ fontSize: "11px", color: "var(--color-accent)", fontWeight: 800 }}>
-                          {formatCurrency(cartItem.price * cartItem.qty)}
+                          {formatCurrency((cartItem.price + (cartItem.upgrades?.reduce((sum, u) => sum + u.price * u.qty, 0) || 0)) * cartItem.qty)}
                         </span>
                         {cartItem.mods && cartItem.mods.length > 0 && (
-                          <span style={{ display: "block", fontSize: "10px", color: "var(--color-text-muted)" }}>
+                          <span style={{ display: "block", fontSize: "10px", color: "var(--color-danger)" }}>
                             {cartItem.mods.join(", ")}
                           </span>
+                        )}
+                        {cartItem.upgrades && cartItem.upgrades.length > 0 && (
+                          <div style={{ fontSize: "10px", color: "var(--color-accent)", display: "flex", flexDirection: "column" }}>
+                            {cartItem.upgrades.map(u => (
+                              <span key={u.id}>+ {u.qty}x {u.name} ({formatCurrency(u.price)})</span>
+                            ))}
+                          </div>
                         )}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -318,7 +325,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                         <button
                           type="button"
                           style={{ border: "none", background: "none", color: "var(--color-danger)", cursor: "pointer", fontSize: "16px", fontWeight: "bold", marginLeft: "4px" }}
-                          onClick={() => removeItem(cartItem.productId)}
+                          onClick={() => removeItem(cartItem.cartItemId)}
                           title="Eliminar del pedido"
                         >
                           ×

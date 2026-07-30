@@ -12,7 +12,7 @@ type CatalogCartContextValue = {
   items: CatalogCartItem[];
   count: number;
   total: number;
-  addItem: (product: CatalogProduct, mods?: string[]) => void;
+  addItem: (product: CatalogProduct, mods?: string[], upgrades?: { id: string; name: string; price: number; qty: number }[]) => void;
   setQty: (cartItemId: string, qty: number) => void;
   removeItem: (cartItemId: string) => void;
   clear: () => void;
@@ -23,8 +23,8 @@ const CatalogCartContext = createContext<CatalogCartContextValue | null>(null);
 export function CatalogCartProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(catalogCartReducer, CATALOG_CART_INITIAL_STATE);
 
-  const addItem = useCallback((product: CatalogProduct, mods?: string[]) => {
-    dispatch({ type: "ADD_ITEM", product, mods });
+  const addItem = useCallback((product: CatalogProduct, mods?: string[], upgrades?: { id: string; name: string; price: number; qty: number }[]) => {
+    dispatch({ type: "ADD_ITEM", product, mods, upgrades });
   }, []);
 
   const setQty = useCallback((cartItemId: string, qty: number) => {
