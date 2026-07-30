@@ -97,11 +97,9 @@ export function DynamicRenderer({
 
   return (
     <div
+      className="catalog-renderer-container"
       style={{
         width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
         boxSizing: "border-box",
         ...themeStyle,
       }}
