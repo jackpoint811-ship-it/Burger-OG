@@ -34,6 +34,26 @@ export function getTowerStatus() {
   };
 }
 
+export function getNextAvailableDeliveryDate(location: "Torre GGA" | "Torre Valcob"): string {
+  const today = new Date();
+  const result = new Date(today);
+
+  for (let offset = 1; offset <= 7; offset++) {
+    result.setDate(today.getDate() + offset);
+    const day = result.getDay();
+    const isValidGga = day === 1 || day === 3 || day === 5;
+    const isValidValcob = day === 2 || day === 4 || day === 5;
+
+    if (location === "Torre GGA" && isValidGga) {
+      return result.toISOString().split("T")[0];
+    }
+    if (location === "Torre Valcob" && isValidValcob) {
+      return result.toISOString().split("T")[0];
+    }
+  }
+  return result.toISOString().split("T")[0];
+}
+
 export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
   isOpen,
   onClose,

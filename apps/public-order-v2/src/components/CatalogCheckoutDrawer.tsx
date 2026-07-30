@@ -6,6 +6,7 @@ import { useCatalogCart } from "./CatalogCartContext";
 import { createOrderV2 } from "../lib/orders-v2";
 import { motion, useReducedMotion } from "framer-motion";
 import type { CatalogProductType } from "../lib/catalog-mode";
+import { getTowerStatus, getNextAvailableDeliveryDate } from "./TowerScheduleModal";
 
 /** Map catalog product types to backend OrderV2ItemKind values. */
 const catalogTypeToItemKind: Record<CatalogProductType, OrderV2ItemKind> = {
@@ -90,6 +91,34 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
   const [paymentMethod, setPaymentMethod] = useState<OrderV2PaymentMethod>("cash");
   const [wantsWhatsapp, setWantsWhatsapp] = useState(true);
   const [checkoutState, setCheckoutState] = useState<CheckoutState>({ status: "idle" });
+
+  const towerStatus = useMemo(() => getTowerStatus(), []);
+  const isGgaActiveToday = towerStatus.gga.active;
+  const isValcobActiveToday = towerStatus.valcob.active;
+
+  const isSelectedLocationActive =
+    (location === "Torre GGA" && isGgaActiveToday) ||
+    (location === "Torre Valcob" && isValcobActiveToday);
+
+  const [dateMode, setDateMode] = useState<"today" | "scheduled">(() => {
+    const active = (location === "Torre GGA" && isGgaActiveToday) || (location === "Torre Valcob" && isValcobActiveToday);
+    return active ? "today" : "scheduled";
+  });
+
+  const minScheduledDate = useMemo(() => {
+    return getNextAvailableDeliveryDate(location);
+  }, [location]);
+
+  const [scheduledDate, setScheduledDate] = useState<string>(minScheduledDate);
+
+  useEffect(() => {
+    const active = (location === "Torre GGA" && isGgaActiveToday) || (location === "Torre Valcob" && isValcobActiveToday);
+    const nextDate = getNextAvailableDeliveryDate(location);
+    setScheduledDate(nextDate);
+    if (!active) {
+      setDateMode("scheduled");
+    }
+  }, [location, isGgaActiveToday, isValcobActiveToday]);
 
   const shouldReduceMotion = useReducedMotion();
 
@@ -176,6 +205,14 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
   const handleNextStep = (e: FormEvent) => {
     e.preventDefault();
     if (items.length === 0) return;
+    if (dateMode === "today" && !isSelectedLocationActive) {
+      setCheckoutState({
+        status: "error",
+        error: `${location} no recibe entregas el día de hoy. Elige 'Programar pedido' para agendar tu entrega.`,
+      });
+      return;
+    }
+    setCheckoutState({ status: "idle" });
     setStep(2);
   };
 
@@ -204,7 +241,11 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
         name: item.name,
       }));
 
-      const fullCustomerName = `${name.trim()} (${location})${notes.trim() ? ` [Nota: ${notes.trim()}]` : ""}`;
+      const deliveryInfoText = dateMode === "scheduled"
+        ? `ENTREGA PROGRAMADA: ${scheduledDate} a las 1:30 PM`
+        : `Entrega hoy a las 1:30 PM`;
+
+      const fullCustomerName = `${name.trim()} (${location}) [${deliveryInfoText}]${notes.trim() ? ` [Nota: ${notes.trim()}]` : ""}`;
 
       const response = await createOrderV2(
         {
@@ -378,16 +419,67 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                         className={`catalog-checkout-location-btn ${location === "Torre GGA" ? "catalog-checkout-location-btn--active" : ""}`}
                         onClick={() => setLocation("Torre GGA")}
                       >
-                        🏢 Torre GGA
+                        🏢 Torre GGA {isGgaActiveToday ? "🟢" : "⚪"}
                       </button>
                       <button
                         type="button"
                         className={`catalog-checkout-location-btn ${location === "Torre Valcob" ? "catalog-checkout-location-btn--active" : ""}`}
                         onClick={() => setLocation("Torre Valcob")}
                       >
-                        🏢 Torre Valcob
+                        🏢 Torre Valcob {isValcobActiveToday ? "🟢" : "⚪"}
                       </button>
                     </div>
+                  </div>
+
+                  {/* ⏰ FECHA Y HORARIO DE ENTREGA (Fijo 1:30 PM + Programar fecha futura) */}
+                  <div className="catalog-checkout-field">
+                    <div className="catalog-checkout-fixed-time-banner">
+                      <span>⏰ Horario de entrega único: <strong>1:30 PM</strong> (Fijo todos los días)</span>
+                    </div>
+
+                    <div className="catalog-checkout-date-grid">
+                      <button
+                        type="button"
+                        className={`catalog-checkout-date-btn ${dateMode === "today" ? "catalog-checkout-date-btn--active" : ""} ${!isSelectedLocationActive ? "catalog-checkout-date-btn--disabled" : ""}`}
+                        onClick={() => {
+                          if (isSelectedLocationActive) setDateMode("today");
+                        }}
+                      >
+                        ⚡ Entregar Hoy (1:30 PM) {!isSelectedLocationActive && "❌"}
+                      </button>
+                      <button
+                        type="button"
+                        className={`catalog-checkout-date-btn ${dateMode === "scheduled" ? "catalog-checkout-date-btn--active" : ""}`}
+                        onClick={() => setDateMode("scheduled")}
+                      >
+                        📅 Programar fecha futura
+                      </button>
+                    </div>
+
+                    {!isSelectedLocationActive && dateMode === "today" && (
+                      <div className="catalog-checkout-tower-warning">
+                        ⚠️ <strong>{location}</strong> no recibe entregas el día de hoy. Por favor selecciona <strong>Programar fecha futura</strong>.
+                      </div>
+                    )}
+
+                    {dateMode === "scheduled" && (
+                      <div className="catalog-checkout-schedule-box">
+                        <label style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
+                          <span style={{ fontSize: "12px", fontWeight: 700 }}>Elige la fecha programada (Entrega 1:30 PM):</span>
+                          <input
+                            type="date"
+                            value={scheduledDate}
+                            min={minScheduledDate}
+                            onChange={(e) => setScheduledDate(e.target.value)}
+                            required
+                            className="catalog-checkout-date-input"
+                          />
+                        </label>
+                        <p className="catalog-checkout-schedule-note">
+                          💡 Tu pedido será entregado en <strong>{location}</strong> el día <strong>{scheduledDate || minScheduledDate}</strong> puntualmente a las <strong>1:30 PM</strong>.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* 💳 FORMA DE PAGO (3 opciones exactas: Efectivo, Transferencia, Confirmar por WA) */}
