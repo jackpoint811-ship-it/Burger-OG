@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useId, useRef, useState, useMemo, type MouseEvent } from "react";
 import { type CatalogProduct, type CatalogProductType, PRODUCT_TYPE_LABELS, resolveCatalogAssetUrl } from "../lib/catalog-mode";
 import { CATALOG_CART_MAX_QTY } from "../lib/catalog-cart";
 import { formatCurrency } from "../lib/order";
@@ -71,7 +71,9 @@ const focusableSelector = [
 export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerProps) {
   const { items, addItem } = useCatalogCart();
   const [justAdded, setJustAdded] = useState(false);
-  const [selectedMods, setSelectedMods] = useState<string[]>([]);
+  const [removedMods, setRemovedMods] = useState<string[]>([]);
+  const [upgrades, setUpgrades] = useState<{id: string, name: string, price: number, qty: number}[]>([]);
+  const [comboSide, setComboSide] = useState<string>("Papas a la francesa OG (Incluida)");
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -85,7 +87,9 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
 
   useEffect(() => {
     setJustAdded(false);
-    setSelectedMods([]);
+    setRemovedMods([]);
+    setUpgrades([]);
+    setComboSide("Papas a la francesa OG (Incluida)");
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
   }, [product?.id]);
 
@@ -150,10 +154,46 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
       return;
     }
     if (isAtMax) return;
-    addItem(product, selectedMods);
+    
+    // Convert removedMods to string[] like ["Sin Cebolla", "Sin Tomate"]
+    const modsList = removedMods.map(m => `Sin ${m}`);
+    if (product.type === "combo") modsList.push(`Guarnición: ${comboSide}`);
+    const activeUpgrades = upgrades.filter(u => u.qty > 0);
+    
+    addItem(product, modsList, activeUpgrades);
     setJustAdded(true);
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
     feedbackTimer.current = setTimeout(() => setJustAdded(false), 2000);
+  };
+
+  const currentTotal = useMemo(() => {
+    const upgradesTotal = upgrades.reduce((sum, u) => sum + (u.price * u.qty), 0);
+    return product.price + upgradesTotal;
+  }, [product.price, upgrades]);
+
+  const AVAILABLE_MODS = ["Cebolla", "Pepinillos", "Tomate", "Lechuga", "Mostaza", "Ketchup"];
+  const AVAILABLE_UPGRADES = [
+    { id: "u1", name: "Extra Queso", price: 15 },
+    { id: "u2", name: "Extra Tocino", price: 25 },
+    { id: "u3", name: "Carne Extra (Smash)", price: 45 },
+    { id: "u4", name: "Salsa de la casa extra", price: 10 }
+  ];
+
+  const handleModToggle = (mod: string) => {
+    setRemovedMods(prev => prev.includes(mod) ? prev.filter(m => m !== mod) : [...prev, mod]);
+  };
+
+  const handleUpgradeChange = (id: string, name: string, price: number, delta: number) => {
+    setUpgrades(prev => {
+      const existing = prev.find(u => u.id === id);
+      if (existing) {
+        const newQty = Math.max(0, existing.qty + delta);
+        if (newQty === 0) return prev.filter(u => u.id !== id);
+        return prev.map(u => u.id === id ? { ...u, qty: newQty } : u);
+      }
+      if (delta > 0) return [...prev, { id, name, price, qty: delta }];
+      return prev;
+    });
   };
 
   return (
@@ -233,7 +273,7 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
 
           <div className="catalog-drawer__details">
             <div className="catalog-drawer__price-row">
-              <strong className="catalog-drawer__price">{formatCurrency(product.price)}</strong>
+              <strong className="catalog-drawer__price">{formatCurrency(currentTotal)}</strong>
               {currentItem && currentItem.qty > 0 && (
                 <span className="catalog-drawer__qty-badge">
                   {currentItem.qty} en carrito
@@ -256,13 +296,7 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
                       type="radio"
                       name="combo-side"
                       defaultChecked={idx === 0}
-                      onChange={() => {
-                        if (!selectedMods.some(m => m.startsWith("Guarnición:"))) {
-                          setSelectedMods([...selectedMods.filter(m => !m.startsWith("Guarnición:")), `Guarnición: ${sideOpt}`]);
-                        } else {
-                          setSelectedMods([...selectedMods.filter(m => !m.startsWith("Guarnición:")), `Guarnición: ${sideOpt}`]);
-                        }
-                      }}
+                      onChange={() => setComboSide(sideOpt)}
                     />
                     <span>{sideOpt}</span>
                   </label>
@@ -273,24 +307,67 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
 
           {/* ── Mods & Upgrades para Burgers, Combos y Sides ── */}
           {["burger", "combo", "side"].includes(product.type) ? (
-            <div className="catalog-drawer__mods">
-              <p className="catalog-drawer__mods-title">Personaliza o haz Upgrade</p>
-              <div className="catalog-drawer__mods-grid">
-                {["Sin cebolla", "Sin pepinillos", "Sin tomate", "Extra queso (+ $7)", "Extra tocino (+ $10)", "Salsa extra (+ $5)"].map((mod) => (
-                  <label key={mod} className="catalog-drawer__mod-label">
-                    <input
-                      type="checkbox"
-                      checked={selectedMods.includes(mod)}
-                      onChange={(e) => {
-                        if (e.target.checked) setSelectedMods([...selectedMods, mod]);
-                        else setSelectedMods(selectedMods.filter((m) => m !== mod));
-                      }}
-                    />
-                    <span>{mod}</span>
-                  </label>
-                ))}
+            <>
+              {/* MODS ($0) */}
+              <div className="catalog-drawer__mods">
+                <p className="catalog-drawer__mods-title" style={{ color: "var(--color-text-secondary)", fontSize: "12px", fontWeight: 600 }}>
+                  Personaliza (Toca para quitar)
+                </p>
+                <div className="catalog-drawer__mods-grid">
+                  {AVAILABLE_MODS.map((mod) => {
+                    const isRemoved = removedMods.includes(mod);
+                    return (
+                      <button
+                        key={mod}
+                        type="button"
+                        onClick={() => handleModToggle(mod)}
+                        className={`catalog-drawer__mod-chip ${isRemoved ? "catalog-drawer__mod-chip--removed" : "catalog-drawer__mod-chip--active"}`}
+                      >
+                        {isRemoved ? `Sin ${mod}` : mod}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+
+              {/* UPGRADES (+$X) */}
+              <div className="catalog-drawer__mods" style={{ marginTop: "16px" }}>
+                <p className="catalog-drawer__mods-title" style={{ color: "var(--color-text-secondary)", fontSize: "12px", fontWeight: 600 }}>
+                  Agrega Extras
+                </p>
+                <div className="catalog-drawer__upgrades-grid">
+                  {AVAILABLE_UPGRADES.map((upgrade) => {
+                    const currentQty = upgrades.find(u => u.id === upgrade.id)?.qty || 0;
+                    return (
+                      <div key={upgrade.id} className="catalog-drawer__upgrade-card">
+                        <div className="catalog-drawer__upgrade-info">
+                          <span className="catalog-drawer__upgrade-name">{upgrade.name}</span>
+                          <span className="catalog-drawer__upgrade-price">+{formatCurrency(upgrade.price)}</span>
+                        </div>
+                        <div className="catalog-drawer__upgrade-actions">
+                          <button
+                            type="button"
+                            className={`catalog-drawer__upgrade-btn ${currentQty === 0 ? "catalog-drawer__upgrade-btn--disabled" : ""}`}
+                            onClick={() => handleUpgradeChange(upgrade.id, upgrade.name, upgrade.price, -1)}
+                            disabled={currentQty === 0}
+                          >
+                            -
+                          </button>
+                          <span className="catalog-drawer__upgrade-qty">{currentQty}</span>
+                          <button
+                            type="button"
+                            className="catalog-drawer__upgrade-btn"
+                            onClick={() => handleUpgradeChange(upgrade.id, upgrade.name, upgrade.price, 1)}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
           ) : null}
           {product.type === "topping" ? <p className="catalog-drawer__notice">Los toppings se entregan por separado.</p> : null}
 
