@@ -808,7 +808,7 @@ const asInternalOrders = (orders: MockOrder[]): InternalOrder[] =>
     createdAtMs: parseOrderTimestamp(order.createdAt),
     items: order.items.map(normalizeMockOrderItem),
   }));
-const AUTO_REFRESH_INTERVAL_MS = 25_000;
+const AUTO_REFRESH_INTERVAL_MS = 10_000;
 const NEW_ORDER_HIGHLIGHT_MS = 12_000;
 const NEW_ORDER_NOTICE_MS = 5_000;
 const formatOrderRefreshTime = (reason?: "manual" | "auto" | "session") => {
