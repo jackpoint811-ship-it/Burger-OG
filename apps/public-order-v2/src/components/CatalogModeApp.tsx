@@ -183,28 +183,6 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
       </header>
 
       <main className="catalog-shell" aria-labelledby="catalogTitle">
-        {/* ── BARRA PEGAJOSA DEDICADA DE CATEGORÍAS (Sticky a top: 56px de por vida en todo el scroll) ── */}
-        <div className="catalog-category-sticky-header">
-          <nav aria-label="Categorías" className="catalog-category-nav-scroll">
-            {categoryPills.map((cat) => {
-              const isActive = activeCategoryKey === cat.key;
-              return (
-                <button
-                  key={cat.key}
-                  type="button"
-                  className={`catalog-category-pill ${isActive ? "catalog-category-pill--active" : ""}`}
-                  onClick={(e) => {
-                    setActiveCategoryKey(cat.key);
-                    e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-                  }}
-                >
-                  {cat.name}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
         {/* ── Headless UI Dynamic Renderer ───────── */}
         <DynamicRenderer
           spec={designSpec || DEFAULT_STUDIO_DESIGN_SPEC}

@@ -412,65 +412,15 @@ export function LayoutEngine({
     ];
 
     return (
-      <div
-        className="catalog-category-sticky-header"
-        style={{
-          width: "100%",
-          position: "sticky",
-          top: "56px",
-          zIndex: 50,
-          marginTop: "0px",
-          marginBottom: "12px",
-          backgroundColor: "var(--color-bg-base)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          paddingTop: "6px",
-          paddingBottom: "6px",
-          borderBottom: "1px solid var(--color-line)",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-          overflow: "visible",
-        }}
-      >
-        <nav
-          aria-label="Categorías"
-          className="catalog-category-nav-scroll"
-          style={{
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            overflowX: "auto",
-            paddingTop: "4px",
-            paddingBottom: "4px",
-            WebkitOverflowScrolling: "touch",
-            scrollbarWidth: "none",
-          }}
-        >
+      <div className="catalog-category-sticky-header">
+        <nav aria-label="Categorías" className="catalog-category-nav-scroll">
           {categoryPills.map((cat) => {
             const isActive = activeCategoryKey === cat.key;
             return (
               <button
                 key={cat.key}
                 type="button"
-                style={{
-                  position: "relative",
-                  flexShrink: 0,
-                  padding: "8px 16px",
-                  borderRadius: "9999px",
-                  fontSize: "12px",
-                  fontFamily: "'Inter', sans-serif",
-                  fontWeight: 700,
-                  border: isActive ? "1px solid var(--color-accent)" : "1px solid var(--color-line)",
-                  backgroundColor: isActive ? "var(--color-accent)" : "var(--color-surface)",
-                  color: isActive ? "#FFFFFF" : "var(--color-text-primary)",
-                  boxShadow: isActive ? "0 2px 10px rgba(22, 163, 74, 0.25)" : "var(--shadow-card)",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  whiteSpace: "nowrap",
-                }}
+                className={`catalog-category-pill ${isActive ? "catalog-category-pill--active" : ""}`}
                 onClick={(e) => {
                   if (onSelectCategory) onSelectCategory(cat.key);
                   if (onAction) onAction(`SELECT_CATEGORY:${cat.key}`);
