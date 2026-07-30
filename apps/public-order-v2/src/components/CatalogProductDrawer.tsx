@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, useMemo, type MouseEvent } from "react";
 import { type CatalogProduct, type CatalogProductType, PRODUCT_TYPE_LABELS, resolveCatalogAssetUrl } from "../lib/catalog-mode";
-import { CATALOG_CART_MAX_QTY } from "../lib/catalog-cart";
+import { CATALOG_CART_MAX_QTY, type CatalogCartItem } from "../lib/catalog-cart";
 import { formatCurrency } from "../lib/order";
 import { useCatalogCart } from "./CatalogCartContext";
 import { motion, useReducedMotion } from "framer-motion";
@@ -54,10 +54,9 @@ const DrawerFallbackSvg = ({ type }: { type: CatalogProductType }) => {
 
 type CatalogProductDrawerProps = {
   product: CatalogProduct;
+  initialCartItem?: CatalogCartItem | null;
   onClose: () => void;
 };
-
-const ADDED_FEEDBACK_MS = 1400;
 
 const focusableSelector = [
   "a[href]",
@@ -68,12 +67,20 @@ const focusableSelector = [
   "[tabindex]:not([tabindex='-1'])",
 ].join(",");
 
-export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerProps) {
-  const { items, addItem } = useCatalogCart();
+const COMBO_SIDES = [
+  { label: "Papas a la francesa tradicionales", extraPrice: 0 },
+  { label: "Papas sazonadas especial", extraPrice: 0 },
+  { label: "Aros de Cebolla crujientes (+ $5)", extraPrice: 5 },
+];
+
+export function CatalogProductDrawer({ product, initialCartItem, onClose }: CatalogProductDrawerProps) {
+  const { items, addItem, updateItem } = useCatalogCart();
   const [justAdded, setJustAdded] = useState(false);
   const [removedMods, setRemovedMods] = useState<string[]>([]);
-  const [upgrades, setUpgrades] = useState<{id: string, name: string, price: number, qty: number}[]>([]);
-  const [comboSide, setComboSide] = useState<string>("Papas a la francesa OG (Incluida)");
+  const [upgrades, setUpgrades] = useState<{ id: string; name: string; price: number; qty: number }[]>([]);
+  const [comboSide, setComboSide] = useState<string>(COMBO_SIDES[0].label);
+  const [comboMode, setComboMode] = useState<"original" | "customize">("original");
+
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -82,19 +89,42 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
   const shouldReduceMotion = useReducedMotion();
   const src = product ? resolveCatalogAssetUrl(product.imageUrl, product.imageKey) : undefined;
 
-  const currentItem = items.find((i) => i.productId === product?.id);
-  const isAtMax = currentItem ? currentItem.qty >= CATALOG_CART_MAX_QTY : false;
+  const isEditing = Boolean(initialCartItem);
 
   useEffect(() => {
     setJustAdded(false);
-    setRemovedMods([]);
-    setUpgrades([]);
-    setComboSide("Papas a la francesa OG (Incluida)");
+    if (initialCartItem) {
+      const parsedRemoved = (initialCartItem.mods || [])
+        .filter((m) => m.startsWith("Sin "))
+        .map((m) => m.replace("Sin ", ""));
+      setRemovedMods(parsedRemoved);
+      setUpgrades(initialCartItem.upgrades || []);
+
+      const sideMod = (initialCartItem.mods || []).find((m) => m.startsWith("Guarnición: "));
+      if (sideMod) {
+        setComboSide(sideMod.replace("Guarnición: ", ""));
+      } else {
+        setComboSide(COMBO_SIDES[0].label);
+      }
+
+      if (parsedRemoved.length > 0 || (initialCartItem.upgrades && initialCartItem.upgrades.length > 0)) {
+        setComboMode("customize");
+      } else {
+        setComboMode("original");
+      }
+    } else {
+      setRemovedMods([]);
+      setUpgrades([]);
+      setComboSide(COMBO_SIDES[0].label);
+      setComboMode("original");
+    }
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
-  }, [product?.id]);
+  }, [product?.id, initialCartItem]);
 
   useEffect(() => {
-    return () => { if (feedbackTimer.current) clearTimeout(feedbackTimer.current); };
+    return () => {
+      if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -109,7 +139,6 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
         onClose();
         return;
       }
-
       if (event.key !== "Tab") return;
 
       const focusableElements = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? []);
@@ -144,52 +173,73 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
 
   if (!product) return null;
 
+  const currentItem = items.find((i) => i.productId === product.id);
+  const isAtMax = currentItem ? currentItem.qty >= CATALOG_CART_MAX_QTY : false;
+
   const handleBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) onClose();
   };
+
+  const comboExtraPrice = useMemo(() => {
+    if (product.type !== "combo") return 0;
+    const sideObj = COMBO_SIDES.find((s) => s.label === comboSide);
+    return sideObj ? sideObj.extraPrice : 0;
+  }, [product.type, comboSide]);
+
+  const currentTotal = useMemo(() => {
+    const upgradesTotal = upgrades.reduce((sum, u) => sum + u.price * u.qty, 0);
+    return product.price + comboExtraPrice + upgradesTotal;
+  }, [product.price, comboExtraPrice, upgrades]);
 
   const handleAddToCart = () => {
     if (justAdded) {
       onClose();
       return;
     }
-    if (isAtMax) return;
+    if (isAtMax && !isEditing) return;
 
-    // Convert removedMods to string[] like ["Sin Cebolla", "Sin Tomate"]
-    const modsList = removedMods.map(m => `Sin ${m}`);
-    if (product.type === "combo") modsList.push(`Guarnición: ${comboSide}`);
-    const activeUpgrades = upgrades.filter(u => u.qty > 0);
+    const modsList: string[] = [];
+    if (comboMode === "customize" || product.type !== "combo") {
+      modsList.push(...removedMods.map((m) => `Sin ${m}`));
+    }
+    if (product.type === "combo") {
+      modsList.push(`Guarnición: ${comboSide}`);
+    }
+    const activeUpgrades = comboMode === "customize" || product.type !== "combo" ? upgrades.filter((u) => u.qty > 0) : [];
 
-    addItem(product, modsList, activeUpgrades);
+    if (isEditing && initialCartItem) {
+      updateItem(initialCartItem.cartItemId, product, modsList, activeUpgrades);
+    } else {
+      addItem(product, modsList, activeUpgrades);
+    }
+
     setJustAdded(true);
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
-    feedbackTimer.current = setTimeout(() => setJustAdded(false), 2000);
+    feedbackTimer.current = setTimeout(() => {
+      setJustAdded(false);
+      onClose();
+    }, 1200);
   };
-
-  const currentTotal = useMemo(() => {
-    const upgradesTotal = upgrades.reduce((sum, u) => sum + (u.price * u.qty), 0);
-    return product.price + upgradesTotal;
-  }, [product.price, upgrades]);
 
   const AVAILABLE_MODS = ["Cebolla", "Pepinillos", "Tomate", "Lechuga", "Mostaza", "Ketchup"];
   const AVAILABLE_UPGRADES = [
-    { id: "u1", name: "Extra Queso", price: 15 },
-    { id: "u2", name: "Extra Tocino", price: 25 },
-    { id: "u3", name: "Carne Extra (Smash)", price: 45 },
-    { id: "u4", name: "Salsa de la casa extra", price: 10 }
+    { id: "u1", name: "Extra Queso Americano", price: 15 },
+    { id: "u2", name: "Extra Tocino Crujiente", price: 25 },
+    { id: "u3", name: "Carne Smash Adicional", price: 45 },
+    { id: "u4", name: "Salsa de la casa extra", price: 10 },
   ];
 
   const handleModToggle = (mod: string) => {
-    setRemovedMods(prev => prev.includes(mod) ? prev.filter(m => m !== mod) : [...prev, mod]);
+    setRemovedMods((prev) => (prev.includes(mod) ? prev.filter((m) => m !== mod) : [...prev, mod]));
   };
 
   const handleUpgradeChange = (id: string, name: string, price: number, delta: number) => {
-    setUpgrades(prev => {
-      const existing = prev.find(u => u.id === id);
+    setUpgrades((prev) => {
+      const existing = prev.find((u) => u.id === id);
       if (existing) {
         const newQty = Math.max(0, existing.qty + delta);
-        if (newQty === 0) return prev.filter(u => u.id !== id);
-        return prev.map(u => u.id === id ? { ...u, qty: newQty } : u);
+        if (newQty === 0) return prev.filter((u) => u.id !== id);
+        return prev.map((u) => (u.id === id ? { ...u, qty: newQty } : u));
       }
       if (delta > 0) return [...prev, { id, name, price, qty: delta }];
       return prev;
@@ -218,26 +268,15 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
         exit={shouldReduceMotion ? { opacity: 0 } : { y: "100%" }}
         transition={{ type: "tween", ease: "easeOut", duration: 0.25 }}
       >
-        {/* ── Handle bar ────────────────────────────────── */}
         <div className="catalog-drawer__handle" aria-hidden="true" />
 
-        {/* ── Media 16:9 con overlay degradado ─────────── */}
         <div className="catalog-drawer__media" aria-hidden="true">
-          {src
-            ? <img src={src} alt="" decoding="async" loading="lazy" />
-            : <DrawerFallbackSvg type={product.type} />}
+          {src ? <img src={src} alt="" decoding="async" loading="lazy" /> : <DrawerFallbackSvg type={product.type} />}
           <div className="catalog-drawer__media-overlay" />
-          {/* Badges flotantes sobre la imagen */}
           <div className="catalog-drawer__media-badges">
-            {product.type === "combo" && (
-              <span className="catalog-badge catalog-badge--best-seller">🔥 Más Vendido</span>
-            )}
-            {product.isFeatured && product.type !== "combo" && (
-              <span className="catalog-badge catalog-badge--featured">⭐ Destacado</span>
-            )}
-            {product.badge && product.type !== "combo" && !product.isFeatured && (
-              <span className="catalog-badge catalog-badge--custom">{product.badge}</span>
-            )}
+            {product.type === "combo" && <span className="catalog-badge catalog-badge--best-seller">🔥 Combo Especial</span>}
+            {product.isFeatured && product.type !== "combo" && <span className="catalog-badge catalog-badge--featured">⭐ Destacado</span>}
+            {product.badge && product.type !== "combo" && !product.isFeatured && <span className="catalog-badge catalog-badge--custom">{product.badge}</span>}
           </div>
         </div>
 
@@ -255,64 +294,101 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
             </button>
           </header>
 
-          {product.description ? <p id={descriptionId} className="catalog-drawer__description">{product.description}</p> : null}
-
-          {/* ── Sección de Ingredientes ─────────────────────── */}
-          <div style={{ marginTop: "12px", marginBottom: "12px", padding: "10px 12px", backgroundColor: "var(--color-surface-alt)", borderRadius: "12px", border: "1px solid var(--color-line-soft)" }}>
-            <span style={{ fontSize: "11px", fontWeight: 800, color: "var(--color-accent)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: "4px" }}>
-              🥗 Ingredientes & Detalles
-            </span>
-            <p style={{ margin: 0, fontSize: "12px", color: "var(--color-text-secondary)", lineHeight: 1.4 }}>
-              {product.type === "burger" || product.type === "combo"
-                ? "Pan brioche artesanal, 100% carne smash de res seleccionada, doble queso americano/manchego, tocino crujiente, pepinillos, jitomate fresco y aderezo especial de la casa."
-                : product.type === "side"
-                ? "Sazón especial de la casa, papas crujientes doradas al momento o vegetales frescos."
-                : "Bebida individual de sabor intenso bien fría."}
+          {/* ── Copi de Descripción oficial ── */}
+          {product.description ? (
+            <p id={descriptionId} className="catalog-drawer__description">
+              {product.description}
             </p>
-          </div>
+          ) : (
+            <p id={descriptionId} className="catalog-drawer__description">
+              {product.type === "burger"
+                ? "Receta artesanal con 100% carne smash de res seleccionada, sazón especial y pan brioche horneado."
+                : product.type === "combo"
+                ? "Combo completo con tu hamburguesa especial fija, guarnición y bebida bien fría."
+                : "Preparado al momento con ingredientes frescos de primera calidad."}
+            </p>
+          )}
+
+          {/* ── Lista de Ingredientes Incluidos SOLO para Burgers Solas ── */}
+          {product.type === "burger" && (
+            <div className="catalog-drawer__ingredients-card">
+              <span className="catalog-drawer__section-subtitle">
+                🥗 INGREDIENTES INCLUIDOS
+              </span>
+              <ul className="catalog-drawer__ingredients-list">
+                <li>• Pan Brioche artesanal horneado</li>
+                <li>• 100% Carne Smash de res seleccionada</li>
+                <li>• Doble Queso Americano / Manchego</li>
+                <li>• Tocino crujiente dorado</li>
+                <li>• Pepinillos artesanales & Jitomate fresco</li>
+                <li>• Aderezo especial de la casa</li>
+              </ul>
+            </div>
+          )}
 
           <div className="catalog-drawer__details">
             <div className="catalog-drawer__price-row">
               <strong className="catalog-drawer__price">{formatCurrency(currentTotal)}</strong>
-              {currentItem && currentItem.qty > 0 && (
-                <span className="catalog-drawer__qty-badge">
-                  {currentItem.qty} en carrito
-                </span>
+              {currentItem && currentItem.qty > 0 && !isEditing && (
+                <span className="catalog-drawer__qty-badge">{currentItem.qty} en carrito</span>
               )}
             </div>
             <span className={product.isAvailable ? "catalog-drawer__availability" : "catalog-drawer__availability catalog-drawer__availability--unavailable"}>
-              {product.isAvailable ? "✓ Disponible" : "✗ No disponible"}
+              {product.isAvailable ? "✓ Disponible" : "✕ No disponible"}
             </span>
           </div>
 
-          {/* ── Selección de Guarnición para Combos (La burger se mantiene fija, la guarnición se elige) ── */}
+          {/* ── MODAL ESPECÍFICO PARA COMBOS ── */}
           {product.type === "combo" && (
-            <div className="catalog-drawer__mods" style={{ marginTop: "12px" }}>
-              <p className="catalog-drawer__mods-title">🍟 Elige tu guarnición del combo (La burger viene fija):</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "6px" }}>
-                {["Papas a la francesa OG (Incluida)", "Papas Especiales (+ $5)", "Aros de Cebolla (+ $5)", "Pepinillos extra"].map((sideOpt, idx) => (
-                  <label key={sideOpt} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", cursor: "pointer", color: "var(--color-text-primary)" }}>
-                    <input
-                      type="radio"
-                      name="combo-side"
-                      defaultChecked={idx === 0}
-                      onChange={() => setComboSide(sideOpt)}
-                    />
-                    <span>{sideOpt}</span>
-                  </label>
-                ))}
+            <div className="catalog-drawer__combo-box">
+              <div className="catalog-drawer__combo-notice">
+                <span>🍔 La hamburguesa del combo es única y fija (Receta de la Casa BBQ / OG).</span>
+              </div>
+
+              {/* Selector de Guarnición */}
+              <div className="catalog-drawer__combo-sides">
+                <p className="catalog-drawer__mods-title">🍟 Elige tu guarnición del combo:</p>
+                <div className="catalog-drawer__radio-group">
+                  {COMBO_SIDES.map((side) => (
+                    <label key={side.label} className="catalog-drawer__radio-label">
+                      <input
+                        type="radio"
+                        name="combo-side-opt"
+                        checked={comboSide === side.label}
+                        onChange={() => setComboSide(side.label)}
+                      />
+                      <span>{side.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2 Botones de Modo para Combos */}
+              <div className="catalog-drawer__combo-toggle-row">
+                <button
+                  type="button"
+                  className={`catalog-drawer__combo-mode-btn ${comboMode === "original" ? "catalog-drawer__combo-mode-btn--active" : ""}`}
+                  onClick={() => setComboMode("original")}
+                >
+                  🍔 Receta Original
+                </button>
+                <button
+                  type="button"
+                  className={`catalog-drawer__combo-mode-btn ${comboMode === "customize" ? "catalog-drawer__combo-mode-btn--active" : ""}`}
+                  onClick={() => setComboMode("customize")}
+                >
+                  🛠️ Personalizar
+                </button>
               </div>
             </div>
           )}
 
-          {/* ── Mods & Upgrades para Burgers, Combos y Sides ── */}
-          {["burger", "combo", "side"].includes(product.type) ? (
+          {/* ── PERSONALIZACIÓN Y EXTRAS (Burgers solas o Combos en modo Customize) ── */}
+          {(product.type === "burger" || (product.type === "combo" && comboMode === "customize")) && (
             <>
-              {/* MODS ($0) */}
+              {/* Badges Verde / Rojo con tachado (Sin texto 'sin costo') */}
               <div className="catalog-drawer__mods">
-                <p className="catalog-drawer__mods-title" style={{ color: "var(--color-text-secondary)", fontSize: "12px", fontWeight: 600 }}>
-                  Personaliza (Toca para quitar)
-                </p>
+                <p className="catalog-drawer__mods-title">Personaliza ingredientes</p>
                 <div className="catalog-drawer__mods-grid">
                   {AVAILABLE_MODS.map((mod) => {
                     const isRemoved = removedMods.includes(mod);
@@ -323,21 +399,19 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
                         onClick={() => handleModToggle(mod)}
                         className={`catalog-drawer__mod-chip ${isRemoved ? "catalog-drawer__mod-chip--removed" : "catalog-drawer__mod-chip--active"}`}
                       >
-                        {isRemoved ? `Sin ${mod}` : mod}
+                        {isRemoved ? `✕ Sin ${mod}` : `✓ ${mod}`}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* UPGRADES (+$X) */}
+              {/* Upgrades & Extras con costo explícito (+ $15, + $25) */}
               <div className="catalog-drawer__mods" style={{ marginTop: "16px" }}>
-                <p className="catalog-drawer__mods-title" style={{ color: "var(--color-text-secondary)", fontSize: "12px", fontWeight: 600 }}>
-                  Agrega Extras
-                </p>
+                <p className="catalog-drawer__mods-title">Agrega extras adicionales</p>
                 <div className="catalog-drawer__upgrades-grid">
                   {AVAILABLE_UPGRADES.map((upgrade) => {
-                    const currentQty = upgrades.find(u => u.id === upgrade.id)?.qty || 0;
+                    const currentQty = upgrades.find((u) => u.id === upgrade.id)?.qty || 0;
                     return (
                       <div key={upgrade.id} className="catalog-drawer__upgrade-card">
                         <div className="catalog-drawer__upgrade-info">
@@ -351,7 +425,7 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
                             onClick={() => handleUpgradeChange(upgrade.id, upgrade.name, upgrade.price, -1)}
                             disabled={currentQty === 0}
                           >
-                            -
+                            −
                           </button>
                           <span className="catalog-drawer__upgrade-qty">{currentQty}</span>
                           <button
@@ -368,28 +442,30 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
                 </div>
               </div>
             </>
-          ) : null}
-          {product.type === "topping" ? <p className="catalog-drawer__notice">Los toppings se entregan por separado.</p> : null}
+          )}
 
           <div className="catalog-drawer__footer">
             {product.isAvailable ? (
               <button
                 type="button"
-                className={`catalog-drawer__add-btn${justAdded ? " catalog-drawer__add-btn--added" : ""}${isAtMax && !justAdded ? " catalog-drawer__add-btn--max" : ""}`}
+                className={`catalog-drawer__add-btn${justAdded ? " catalog-drawer__add-btn--added" : ""}`}
                 onClick={handleAddToCart}
                 aria-live="polite"
-                disabled={isAtMax && !justAdded}
               >
                 <span className="catalog-drawer__add-btn-icon" aria-hidden="true">
-                  {justAdded ? "✅" : isAtMax ? "—" : "+"}
+                  {justAdded ? "✅" : isEditing ? "✏️" : "🛒"}
                 </span>
                 <span>
-                  {justAdded ? "¡Agregado! Volver al menú" : isAtMax ? "Límite alcanzado" : "Agregar al carrito"}
+                  {justAdded
+                    ? "¡Guardado!"
+                    : isEditing
+                    ? `Guardar Cambios — ${formatCurrency(currentTotal)}`
+                    : `Agregar al carrito — ${formatCurrency(currentTotal)}`}
                 </span>
               </button>
             ) : (
               <button type="button" className="catalog-drawer__add-btn catalog-drawer__add-btn--unavailable" disabled>
-                <span aria-hidden="true">✗</span>
+                <span aria-hidden="true">✕</span>
                 <span>No disponible</span>
               </button>
             )}

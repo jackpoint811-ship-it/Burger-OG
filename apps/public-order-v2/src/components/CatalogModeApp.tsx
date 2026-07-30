@@ -1,5 +1,5 @@
 import type { MenuCategory, MenuItem, SiteConfig, CatalogBanner } from "@config/index";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CatalogProductDrawer } from "./CatalogProductDrawer";
 import { CatalogCartDrawer } from "./CatalogCartDrawer";
 import { CatalogCheckoutDrawer } from "./CatalogCheckoutDrawer";
@@ -58,12 +58,19 @@ function useDarkMode() {
 
 function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [], source, designSpec }: CatalogModeAppProps) {
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
+  const [editingCartItem, setEditingCartItem] = useState<any>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [activeToast, setActiveToast] = useState<ToastMessage | null>(null);
   const { isDark, toggle: toggleDark } = useDarkMode();
 
-  const closeProductDrawer = useCallback(() => setSelectedProduct(null), []);
+  const catalogProducts = useMemo(() => mapMenuItemsToCatalogProducts(items, categories), [items, categories]);
+
+  const closeProductDrawer = useCallback(() => {
+    setSelectedProduct(null);
+    setEditingCartItem(null);
+  }, []);
+
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
   const openCheckout = useCallback(() => {
@@ -71,6 +78,15 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
     setIsCheckoutOpen(true);
   }, []);
   const closeCheckout = useCallback(() => setIsCheckoutOpen(false), []);
+
+  const handleEditCartItem = useCallback((cartItem: any) => {
+    const foundProduct = catalogProducts.find((p: CatalogProduct) => p.id === cartItem.productId);
+    if (foundProduct) {
+      setSelectedProduct(foundProduct);
+      setEditingCartItem(cartItem);
+      setIsCartOpen(false);
+    }
+  }, [catalogProducts]);
 
   const triggerToast = useCallback((emoji: string, message: string) => {
     const newToast: ToastMessage = {
@@ -170,10 +186,25 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
         <CatalogCartBar key="cart-bar" onOpenCart={openCart} />
       </AnimatePresence>
       <AnimatePresence>
-        {selectedProduct && <CatalogProductDrawer key="product-drawer" product={selectedProduct} onClose={closeProductDrawer} />}
+        {selectedProduct && (
+          <CatalogProductDrawer
+            key="product-drawer"
+            product={selectedProduct}
+            initialCartItem={editingCartItem}
+            onClose={closeProductDrawer}
+          />
+        )}
       </AnimatePresence>
       <AnimatePresence>
-        {isCartOpen && <CatalogCartDrawer key="cart-drawer" isOpen={isCartOpen} onClose={closeCart} onCheckout={openCheckout} />}
+        {isCartOpen && (
+          <CatalogCartDrawer
+            key="cart-drawer"
+            isOpen={isCartOpen}
+            onClose={closeCart}
+            onCheckout={openCheckout}
+            onEditItem={handleEditCartItem}
+          />
+        )}
       </AnimatePresence>
       <AnimatePresence>
         {isCheckoutOpen && <CatalogCheckoutDrawer key="checkout-drawer" isOpen={isCheckoutOpen} onClose={closeCheckout} />}
