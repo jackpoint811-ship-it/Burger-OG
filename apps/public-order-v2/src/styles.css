@@ -6727,7 +6727,7 @@ html {
 .catalog-category-sticky-header {
   position: sticky;
   position: -webkit-sticky;
-  top: 84px;
+  top: 56px;
   z-index: 50;
   background: var(--color-bg-base);
   backdrop-filter: blur(16px);
