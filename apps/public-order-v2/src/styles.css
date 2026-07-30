@@ -6257,6 +6257,30 @@ html {
   align-items: center;
 }
 
+.store-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill, 9999px);
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent-line);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.store-status-badge__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  box-shadow: 0 0 8px var(--color-accent);
+}
+
 .site-header__actions {
   display: flex;
   align-items: center;

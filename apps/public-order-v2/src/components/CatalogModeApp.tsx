@@ -156,10 +156,10 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
             <span
               className="store-status-badge store-status-badge--open"
               role="status"
-              aria-label="Estado del servicio: Abierto"
+              aria-label="Estado del servicio: Tomando pedidos"
             >
               <span className="store-status-badge__dot" aria-hidden="true" />
-              <span>Abierto</span>
+              <span>Tomando pedidos</span>
             </span>
           </div>
 
