@@ -9,6 +9,7 @@ import {
 } from "../lib/catalog-mode";
 import { handleAssetImageError, getCasualSvgPlaceholder } from "../utils/assets";
 import { useCatalogCart } from "./CatalogCartContext";
+import { CatalogImage } from "./CatalogImage";
 import { motion, AnimatePresence } from "framer-motion";
 
 export interface LayoutEngineProps {
@@ -37,6 +38,14 @@ export function LayoutEngine({
   const { items, addItem, count: cartCount, total: cartTotal } = useCatalogCart();
   const [bannerIndex, setBannerIndex] = useState(0);
   const [pulsingItemIds, setPulsingItemIds] = useState<Record<string, boolean>>({});
+
+  const cartQtyByProductId = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const cartItem of items) {
+      map[cartItem.productId] = (map[cartItem.productId] || 0) + cartItem.qty;
+    }
+    return map;
+  }, [items]);
 
   const handleQuickAdd = (item: MenuItem, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -497,12 +506,14 @@ export function LayoutEngine({
                   boxSizing: "border-box",
                   boxShadow: "var(--shadow-card)",
                   overflow: "hidden",
+                  willChange: "transform",
+                  transform: "translateZ(0)",
                 }}
                 onClick={() => onProductSelect && onProductSelect(item)}
               >
                 {/* Badge Qty */}
                 {(() => {
-                  const itemQty = items.filter(i => i.productId === item.sku).reduce((sum, i) => sum + i.qty, 0);
+                  const itemQty = cartQtyByProductId[item.sku] || 0;
                   if (itemQty > 0) {
                     return (
                       <motion.div
@@ -561,20 +572,11 @@ export function LayoutEngine({
                     overflow: "hidden",
                   }}
                 >
-                  {assetUrl ? (
-                    <img
-                      src={assetUrl}
-                      alt={item.name}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      onError={(e) => handleAssetImageError(e, item.name)}
-                    />
-                  ) : (
-                    <img
-                      src={getCasualSvgPlaceholder(item.name)}
-                      alt={item.name}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    />
-                  )}
+                  <CatalogImage
+                    src={assetUrl || getCasualSvgPlaceholder(item.name)}
+                    alt={item.name}
+                    loading="lazy"
+                  />
                 </div>
 
                 {/* Info & Precio */}
@@ -724,6 +726,8 @@ export function LayoutEngine({
                   boxSizing: "border-box",
                   boxShadow: "var(--shadow-card)",
                   overflow: "hidden",
+                  willChange: "transform",
+                  transform: "translateZ(0)",
                 }}
                 onClick={() => onProductSelect && onProductSelect(item)}
               >
@@ -750,7 +754,7 @@ export function LayoutEngine({
 
                 {/* Badge Qty */}
                 {(() => {
-                  const itemQty = items.filter(i => i.productId === item.sku).reduce((sum, i) => sum + i.qty, 0);
+                  const itemQty = cartQtyByProductId[item.sku] || 0;
                   if (itemQty > 0) {
                     return (
                       <motion.div
@@ -788,18 +792,16 @@ export function LayoutEngine({
                     overflow: "hidden",
                   }}
                 >
-                  {assetUrl ? (
-                    <img
-                      src={assetUrl}
-                      alt={item.name}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      onError={(e) => handleAssetImageError(e, item.name)}
-                    />
-                  ) : (
-                    <div style={{ fontSize: "48px", opacity: 0.6, userSelect: "none" }}>
-                      {getCategoryEmoji(item.category || "burger", item.name)}
-                    </div>
-                  )}
+                  <CatalogImage
+                    src={assetUrl || undefined}
+                    alt={item.name}
+                    loading="lazy"
+                    fallbackSvg={
+                      <div style={{ fontSize: "48px", opacity: 0.6, userSelect: "none" }}>
+                        {getCategoryEmoji(item.category || "burger", item.name)}
+                      </div>
+                    }
+                  />
                 </div>
 
                 {/* Product title & Price */}
