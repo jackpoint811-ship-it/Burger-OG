@@ -6413,6 +6413,37 @@ html {
   display: none;
 }
 
+.catalog-category-pill {
+  position: relative;
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  border: 1px solid var(--color-line);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.catalog-category-pill:hover {
+  border-color: var(--color-accent);
+}
+
+.catalog-category-pill--active {
+  border-color: var(--color-accent) !important;
+  background-color: var(--color-accent) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(22, 163, 74, 0.3) !important;
+}
+
 .catalog-category-nav button,
 .catalog-category-nav__btn {
   flex: 0 0 auto;

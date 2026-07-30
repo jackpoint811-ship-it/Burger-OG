@@ -11,6 +11,8 @@ export interface DynamicRendererProps {
   onProductSelect?: (product: MenuItem) => void;
   onAction?: (action: string) => void;
   className?: string;
+  activeCategoryKey?: string;
+  onSelectCategory?: (key: string) => void;
 }
 
 export function DynamicRenderer({
@@ -21,8 +23,12 @@ export function DynamicRenderer({
   onProductSelect,
   onAction,
   className = "",
+  activeCategoryKey: externalCategoryKey,
+  onSelectCategory: externalSelectCategory,
 }: DynamicRendererProps) {
-  const [activeCategoryKey, setActiveCategoryKey] = useState<string>("all");
+  const [internalCategoryKey, setInternalCategoryKey] = useState<string>("all");
+  const activeCategoryKey = externalCategoryKey ?? internalCategoryKey;
+  const handleSelectCategory = externalSelectCategory ?? setInternalCategoryKey;
 
   // Guard spec and spec.layout with Array.isArray
   const layout = Array.isArray(spec?.layout) ? spec.layout : null;
@@ -115,7 +121,7 @@ export function DynamicRenderer({
           onProductSelect={onProductSelect}
           onAction={onAction}
           activeCategoryKey={activeCategoryKey}
-          onSelectCategory={(key: string) => setActiveCategoryKey(key)}
+          onSelectCategory={(key: string) => handleSelectCategory(key)}
         />
       ))}
     </div>
