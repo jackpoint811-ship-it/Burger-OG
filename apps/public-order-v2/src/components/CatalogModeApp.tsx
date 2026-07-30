@@ -26,32 +26,18 @@ type CatalogModeAppProps = {
 };
 
 /** ───────────────────────────────────────────────────
- * Hook: tema nativo con soporte tri-estado:
- * - "system": Nativo del sistema reactivo en tiempo real
- * - "light": Claro forzado
- * - "dark": Oscuro forzado
+ * Hook: tema nativo con fallback a prefers-color-scheme del sistema.
+ * Escucha cambios del sistema en tiempo real y permite alternancia de 2 modos (☀️/🌙).
  * Aplica .theme-dark / .theme-light en <html> y actualiza meta theme-color.
  * ─────────────────────────────────────────────────── */
-export type ThemePreference = "system" | "light" | "dark";
-
 function useSystemTheme() {
-  const [preference, setPreference] = useState<ThemePreference>(() => {
+  const [isDark, setIsDark] = useState<boolean>(() => {
     try {
-      const stored = localStorage.getItem("pov2-theme-preference");
-      if (stored === "light" || stored === "dark" || stored === "system") {
-        return stored;
-      }
-      const oldStored = localStorage.getItem("pov2-theme");
-      if (oldStored === "dark" || oldStored === "light") {
-        return oldStored;
-      }
+      const stored = localStorage.getItem("pov2-theme");
+      if (stored !== null) return stored === "dark";
     } catch {
       /* noop */
     }
-    return "system";
-  });
-
-  const [systemIsDark, setSystemIsDark] = useState<boolean>(() => {
     return typeof window !== "undefined"
       ? window.matchMedia("(prefers-color-scheme: dark)").matches
       : false;
@@ -62,15 +48,18 @@ function useSystemTheme() {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const handleChange = (e: MediaQueryListEvent) => {
-      setSystemIsDark(e.matches);
+      try {
+        if (localStorage.getItem("pov2-theme") === null) {
+          setIsDark(e.matches);
+        }
+      } catch {
+        setIsDark(e.matches);
+      }
     };
 
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
-
-  const resolvedTheme = preference === "system" ? (systemIsDark ? "dark" : "light") : preference;
-  const isDark = resolvedTheme === "dark";
 
   useEffect(() => {
     const root = document.documentElement;
@@ -89,23 +78,21 @@ function useSystemTheme() {
       document.head.appendChild(metaTheme);
     }
     metaTheme.setAttribute("content", isDark ? "#121212" : "#F5F2EE");
+  }, [isDark]);
 
-    try {
-      localStorage.setItem("pov2-theme-preference", preference);
-    } catch {
-      /* noop */
-    }
-  }, [isDark, preference]);
-
-  const cycleTheme = useCallback(() => {
-    setPreference((prev) => {
-      if (prev === "system") return "light";
-      if (prev === "light") return "dark";
-      return "system";
+  const toggleDark = useCallback(() => {
+    setIsDark((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("pov2-theme", next ? "dark" : "light");
+      } catch {
+        /* noop */
+      }
+      return next;
     });
   }, []);
 
-  return { preference, resolvedTheme, isDark, cycleTheme };
+  return { isDark, toggleDark };
 }
 
 function getCategoryEmoji(key: string, name: string): string {
@@ -128,7 +115,7 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
   const [activeToast, setActiveToast] = useState<ToastMessage | null>(null);
   const [isTowerModalOpen, setIsTowerModalOpen] = useState(false);
   const [selectedTowerKey, setSelectedTowerKey] = useState<string | null>(null);
-  const { preference, resolvedTheme, isDark, cycleTheme } = useSystemTheme();
+  const { isDark, toggleDark } = useSystemTheme();
 
   const towerStatus = useMemo(() => getTowerStatus(), []);
 
@@ -217,57 +204,55 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
               id="dark-mode-toggle"
               type="button"
               className="site-header__theme-toggle"
-              onClick={cycleTheme}
-              aria-label={`Tema: ${preference === "system" ? `Nativo del sistema (${isDark ? "Oscuro" : "Claro"} activo)` : preference === "light" ? "Claro forzado" : "Oscuro forzado"}. Tocar para cambiar.`}
-              title={`Modo: ${preference === "system" ? `Sistema (${isDark ? "Oscuro" : "Claro"})` : preference === "light" ? "Claro" : "Oscuro"}`}
+              onClick={toggleDark}
+              aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+              aria-pressed={isDark}
             >
-              <span aria-hidden="true">
-                {preference === "system" ? "💻" : preference === "light" ? "☀️" : "🌙"}
-              </span>
+              <span aria-hidden="true">{isDark ? "☀️" : "🌙"}</span>
             </button>
           </div>
         </div>
+      </header>
 
-        {/* ── Sub-barra de entregas por edificio ────────────────────────────── */}
-        <div className="site-header__sub-bar">
-          <div className="site-header__sub-bar-container">
-            <span className="store-status-badge store-status-badge--open" role="status" aria-label="Estado del servicio: Tomando pedidos">
-              <span className="store-status-badge__dot" aria-hidden="true" />
-              <span>Tomando pedidos</span>
-            </span>
+      {/* ── Sub-barra de entregas por edificio (desplaza naturalmente con la página) ── */}
+      <div className="site-header__sub-bar">
+        <div className="site-header__sub-bar-container">
+          <span className="store-status-badge store-status-badge--open" role="status" aria-label="Estado del servicio: Tomando pedidos">
+            <span className="store-status-badge__dot" aria-hidden="true" />
+            <span>Tomando pedidos</span>
+          </span>
 
-            <div className="site-header__towers-bar">
-              <button
-                type="button"
-                className={`tower-pill-btn ${towerStatus.gga.active ? "tower-pill-btn--active" : "tower-pill-btn--off"}`}
-                onClick={() => {
-                  setSelectedTowerKey("gga");
-                  setIsTowerModalOpen(true);
-                }}
-                aria-label={`Ver horario de ${towerStatus.gga.name} (${towerStatus.gga.active ? "Disponible hoy" : "Inactivo hoy"})`}
-              >
-                <span className="tower-pill-btn__emoji">🏢</span>
-                <span className="tower-pill-btn__label">Torre GGA</span>
-                <span className={`tower-pill-btn__dot ${towerStatus.gga.active ? "tower-pill-btn__dot--active" : "tower-pill-btn__dot--off"}`} />
-              </button>
+          <div className="site-header__towers-bar">
+            <button
+              type="button"
+              className={`tower-pill-btn ${towerStatus.gga.active ? "tower-pill-btn--active" : "tower-pill-btn--off"}`}
+              onClick={() => {
+                setSelectedTowerKey("gga");
+                setIsTowerModalOpen(true);
+              }}
+              aria-label={`Ver horario de ${towerStatus.gga.name} (${towerStatus.gga.active ? "Disponible hoy" : "Inactivo hoy"})`}
+            >
+              <span className="tower-pill-btn__emoji">🏢</span>
+              <span className="tower-pill-btn__label">Torre GGA</span>
+              <span className={`tower-pill-btn__dot ${towerStatus.gga.active ? "tower-pill-btn__dot--active" : "tower-pill-btn__dot--off"}`} />
+            </button>
 
-              <button
-                type="button"
-                className={`tower-pill-btn ${towerStatus.valcob.active ? "tower-pill-btn--active" : "tower-pill-btn--off"}`}
-                onClick={() => {
-                  setSelectedTowerKey("valcob");
-                  setIsTowerModalOpen(true);
-                }}
-                aria-label={`Ver horario de ${towerStatus.valcob.name} (${towerStatus.valcob.active ? "Disponible hoy" : "Inactivo hoy"})`}
-              >
-                <span className="tower-pill-btn__emoji">🏢</span>
-                <span className="tower-pill-btn__label">Torre Valcob</span>
-                <span className={`tower-pill-btn__dot ${towerStatus.valcob.active ? "tower-pill-btn__dot--active" : "tower-pill-btn__dot--off"}`} />
-              </button>
-            </div>
+            <button
+              type="button"
+              className={`tower-pill-btn ${towerStatus.valcob.active ? "tower-pill-btn--active" : "tower-pill-btn--off"}`}
+              onClick={() => {
+                setSelectedTowerKey("valcob");
+                setIsTowerModalOpen(true);
+              }}
+              aria-label={`Ver horario de ${towerStatus.valcob.name} (${towerStatus.valcob.active ? "Disponible hoy" : "Inactivo hoy"})`}
+            >
+              <span className="tower-pill-btn__emoji">🏢</span>
+              <span className="tower-pill-btn__label">Torre Valcob</span>
+              <span className={`tower-pill-btn__dot ${towerStatus.valcob.active ? "tower-pill-btn__dot--active" : "tower-pill-btn__dot--off"}`} />
+            </button>
           </div>
         </div>
-      </header>
+      </div>
 
       <main className="catalog-shell" aria-labelledby="catalogTitle">
         {/* ── Headless UI Dynamic Renderer ───────── */}
