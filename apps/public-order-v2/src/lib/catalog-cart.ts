@@ -21,8 +21,10 @@ export type CatalogCartState = {
 
 export type CatalogCartAction =
   | { type: "ADD_ITEM"; product: CatalogProduct; mods?: string[]; upgrades?: { id: string; name: string; price: number; qty: number }[] }
+  | { type: "UPDATE_ITEM"; oldCartItemId: string; product: CatalogProduct; mods?: string[]; upgrades?: { id: string; name: string; price: number; qty: number }[] }
   | { type: "SET_QTY"; cartItemId: string; qty: number }
   | { type: "REMOVE_ITEM"; cartItemId: string }
+  | { type: "SET_ITEMS"; items: CatalogCartItem[] }
   | { type: "CLEAR" };
 
 export const CATALOG_CART_INITIAL_STATE: CatalogCartState = { items: [] };
@@ -61,6 +63,30 @@ export function catalogCartReducer(
       return { items: [...state.items, newItem] };
     }
 
+    case "UPDATE_ITEM": {
+      const modsKey = action.mods?.length ? `|m:${action.mods.join(",")}` : "";
+      const upgradesKey = action.upgrades?.length ? `|u:${action.upgrades.map(u => `${u.id}:${u.qty}`).join(",")}` : "";
+      const newCartItemId = `${action.product.id}${modsKey}${upgradesKey}`;
+      const oldItem = state.items.find(i => i.cartItemId === action.oldCartItemId);
+      const currentQty = oldItem ? oldItem.qty : 1;
+
+      // Filter out old item
+      const filtered = state.items.filter(i => i.cartItemId !== action.oldCartItemId);
+      const newItem: CatalogCartItem = {
+        cartItemId: newCartItemId,
+        productId: action.product.id,
+        name: action.product.name,
+        price: action.product.price,
+        type: action.product.type,
+        qty: currentQty,
+        imageUrl: action.product.imageUrl,
+        imageKey: action.product.imageKey,
+        mods: action.mods,
+        upgrades: action.upgrades,
+      };
+      return { items: [...filtered, newItem] };
+    }
+
     case "SET_QTY": {
       if (action.qty <= 0) {
         return { items: state.items.filter((item) => item.cartItemId !== action.cartItemId) };
@@ -74,6 +100,9 @@ export function catalogCartReducer(
 
     case "REMOVE_ITEM": {
       return { items: state.items.filter((item) => item.cartItemId !== action.cartItemId) };
+    }
+    case "SET_ITEMS": {
+      return { items: action.items };
     }
     case "CLEAR":
       return CATALOG_CART_INITIAL_STATE;

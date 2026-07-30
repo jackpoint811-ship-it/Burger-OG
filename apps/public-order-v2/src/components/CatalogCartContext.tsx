@@ -13,8 +13,10 @@ type CatalogCartContextValue = {
   count: number;
   total: number;
   addItem: (product: CatalogProduct, mods?: string[], upgrades?: { id: string; name: string; price: number; qty: number }[]) => void;
+  updateItem: (oldCartItemId: string, product: CatalogProduct, mods?: string[], upgrades?: { id: string; name: string; price: number; qty: number }[]) => void;
   setQty: (cartItemId: string, qty: number) => void;
   removeItem: (cartItemId: string) => void;
+  setItems: (items: CatalogCartItem[]) => void;
   clear: () => void;
 };
 
@@ -27,12 +29,20 @@ export function CatalogCartProvider({ children }: { children: React.ReactNode })
     dispatch({ type: "ADD_ITEM", product, mods, upgrades });
   }, []);
 
+  const updateItem = useCallback((oldCartItemId: string, product: CatalogProduct, mods?: string[], upgrades?: { id: string; name: string; price: number; qty: number }[]) => {
+    dispatch({ type: "UPDATE_ITEM", oldCartItemId, product, mods, upgrades });
+  }, []);
+
   const setQty = useCallback((cartItemId: string, qty: number) => {
     dispatch({ type: "SET_QTY", cartItemId, qty });
   }, []);
 
   const removeItem = useCallback((cartItemId: string) => {
     dispatch({ type: "REMOVE_ITEM", cartItemId });
+  }, []);
+
+  const setItems = useCallback((items: CatalogCartItem[]) => {
+    dispatch({ type: "SET_ITEMS", items });
   }, []);
 
   const clear = useCallback(() => {
@@ -43,8 +53,8 @@ export function CatalogCartProvider({ children }: { children: React.ReactNode })
   const total = useMemo(() => getCatalogCartTotal(state.items), [state.items]);
 
   const value = useMemo<CatalogCartContextValue>(
-    () => ({ items: state.items, count, total, addItem, setQty, removeItem, clear }),
-    [state.items, count, total, addItem, setQty, removeItem, clear]
+    () => ({ items: state.items, count, total, addItem, updateItem, setQty, removeItem, setItems, clear }),
+    [state.items, count, total, addItem, updateItem, setQty, removeItem, setItems, clear]
   );
 
   return <CatalogCartContext.Provider value={value}>{children}</CatalogCartContext.Provider>;
