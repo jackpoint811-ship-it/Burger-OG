@@ -294,7 +294,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                           {formatCurrency((cartItem.price + (cartItem.upgrades?.reduce((sum, u) => sum + u.price * u.qty, 0) || 0)) * cartItem.qty)}
                         </span>
                         {cartItem.mods && cartItem.mods.length > 0 && (
-                          <span style={{ display: "block", fontSize: "10px", color: "var(--color-danger)" }}>
+                          <span style={{ display: "block", fontSize: "10px", color: "var(--color-text-muted)" }}>
                             {cartItem.mods.join(", ")}
                           </span>
                         )}

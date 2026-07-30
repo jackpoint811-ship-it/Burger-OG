@@ -154,12 +154,12 @@ export function CatalogProductDrawer({ product, onClose }: CatalogProductDrawerP
       return;
     }
     if (isAtMax) return;
-    
+
     // Convert removedMods to string[] like ["Sin Cebolla", "Sin Tomate"]
     const modsList = removedMods.map(m => `Sin ${m}`);
     if (product.type === "combo") modsList.push(`Guarnición: ${comboSide}`);
     const activeUpgrades = upgrades.filter(u => u.qty > 0);
-    
+
     addItem(product, modsList, activeUpgrades);
     setJustAdded(true);
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
