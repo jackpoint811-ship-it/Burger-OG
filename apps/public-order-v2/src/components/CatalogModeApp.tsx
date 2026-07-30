@@ -152,17 +152,6 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
             </a>
           </div>
 
-          <div className="site-header__status">
-            <span
-              className="store-status-badge store-status-badge--open"
-              role="status"
-              aria-label="Estado del servicio: Tomando pedidos"
-            >
-              <span className="store-status-badge__dot" aria-hidden="true" />
-              <span>Tomando pedidos</span>
-            </span>
-          </div>
-
           <div className="site-header__actions">
             <a href="/tickets" className="site-header__tickets-btn" aria-label="Consultar tickets de rifas">
               <span aria-hidden="true">🎟️</span>
@@ -178,6 +167,17 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
             >
               <span aria-hidden="true">{isDark ? "☀️" : "🌙"}</span>
             </button>
+          </div>
+        </div>
+
+        {/* ── Sub-barra sutil de estado de tienda ────────────────────────────── */}
+        <div className="site-header__sub-bar">
+          <div className="site-header__sub-bar-container">
+            <span className="store-status-badge store-status-badge--open" role="status" aria-label="Estado del servicio: Tomando pedidos">
+              <span className="store-status-badge__dot" aria-hidden="true" />
+              <span>Tomando pedidos</span>
+            </span>
+            <span className="site-header__sub-bar-detail">⚡ Envíos express disponibles</span>
           </div>
         </div>
       </header>
