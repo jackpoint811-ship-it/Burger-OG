@@ -263,6 +263,7 @@ body,
 #root {
   min-width: 320px;
   min-height: 100%;
+  overflow-x: visible;
 }
 
 body {
@@ -6208,10 +6209,11 @@ html {
 /* ── Site Header (Main top bar) ────────────────────────── */
 .site-header {
   position: sticky;
+  position: -webkit-sticky;
   top: 0;
   left: 0;
   right: 0;
-  z-index: var(--z-sticky, 20);
+  z-index: 60;
   background: var(--color-surface);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
