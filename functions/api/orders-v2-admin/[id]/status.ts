@@ -51,15 +51,51 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, params, request 
 
     const now = new Date().toISOString();
     const eventId = generateId('evt');
+    const auditId = generateId('aud');
     const eventType = payload.status === 'cancelled' ? 'ORDER_CANCELLED' : 'STATUS_CHANGED';
     const detail = JSON.stringify({ reason: payload.reason ?? '', source: 'internal-v2', environment: payload.environment ?? 'production' });
-    const batchResult = await env.BOG_MENU_DB.batch([
+
+    const batchQueries = [
       env.BOG_MENU_DB.prepare('UPDATE orders_v2 SET status = ?, updated_at = ? WHERE id = ?').bind(payload.status, now, id),
       env.BOG_MENU_DB.prepare(
         `INSERT INTO order_events_v2 (id, order_id, type, previous_status, next_status, detail_json, actor, created_at)
          VALUES (?, ?, ?, ?, ?, ?, 'internal-v2', ?)`
-      ).bind(eventId, id, eventType, currentStatus, payload.status, detail, now)
-    ]);
+      ).bind(eventId, id, eventType, currentStatus, payload.status, detail, now),
+      env.BOG_MENU_DB.prepare(
+        `INSERT INTO orders_v2_audit_logs (id, order_id, action, actor, details_json, created_at)
+         VALUES (?, ?, ?, 'internal-v2', ?, ?)`
+      ).bind(auditId, id, `STATUS_CHANGED_${payload.status.toUpperCase()}`, JSON.stringify({ previousStatus: currentStatus, nextStatus: payload.status, reason: payload.reason ?? '' }), now)
+    ];
+
+    if (payload.status === 'cancelled') {
+      const folio = String(currentRow.folio || '');
+      if (folio) {
+        const raffleParticipant = await env.BOG_MENU_DB.prepare(
+          'SELECT * FROM raffle_referral_codes_v2 WHERE referral_code = ? LIMIT 1'
+        ).bind(folio).first<any>();
+
+        if (raffleParticipant) {
+          const adjId = generateId('adj');
+          batchQueries.push(
+            env.BOG_MENU_DB.prepare(
+              `INSERT INTO raffle_ticket_adjustments_v2 (id, campaign_id, participant_key, participant_name, participant_phone_masked, tickets_delta, reason, actor, status, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, 1, ?, 'internal-v2', 'reverted', ?, ?)`
+            ).bind(
+              adjId,
+              raffleParticipant.campaign_id,
+              raffleParticipant.participant_key,
+              raffleParticipant.participant_name,
+              raffleParticipant.participant_phone_masked,
+              `Orden ${folio} cancelada en Chekeo`,
+              now,
+              now
+            )
+          );
+        }
+      }
+    }
+
+    const batchResult = await env.BOG_MENU_DB.batch(batchQueries);
     if (!batchResult.every((entry) => entry.success)) return errorResponse(500, 'INTERNAL_ERROR', 'No se pudo actualizar la orden.');
 
     const order = await fetchOrderBundle(env.BOG_MENU_DB, id);

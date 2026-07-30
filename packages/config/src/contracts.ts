@@ -191,6 +191,11 @@ export type CatalogBanner = {
   ctaLabel?: string;
   imageKey?: string;
   imageUrl?: string;
+  bgPreset?: string;
+  badgeText?: string;
+  badgeColor?: string;
+  ctaActionType?: 'category' | 'product' | 'raffle' | 'url' | string;
+  ctaTarget?: string;
   isActive: boolean;
   sortOrder: number;
   updatedAt?: string;
