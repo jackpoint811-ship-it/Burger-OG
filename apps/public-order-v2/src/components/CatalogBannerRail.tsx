@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { CatalogBanner } from "@config/index";
 import { resolveCatalogAssetUrl } from "../lib/catalog-mode";
+import { CatalogImage } from "./CatalogImage";
 
 type CatalogBannerRailProps = {
   banners: CatalogBanner[];
@@ -131,7 +132,7 @@ export function CatalogBannerRail({ banners }: CatalogBannerRailProps) {
             >
               {src ? (
                 <div className="catalog-banner-card__image" aria-hidden="true">
-                  <img src={src} alt="" loading="lazy" decoding="async" />
+                  <CatalogImage src={src} alt={banner.title} loading="eager" />
                 </div>
               ) : null}
               <div className="catalog-banner-card__body">

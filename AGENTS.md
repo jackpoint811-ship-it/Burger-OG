@@ -5,6 +5,7 @@ Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más especí
 ## Forma de trabajo
 - Trabajar por PRs pequeños, controlados y fáciles de revisar.
 - No hacer merges automáticos ni resolver conflictos sin instrucción explícita.
+- **NUNCA hacer merge a `main` ni push directo a `main` sin autorización y confirmación explícita previa del usuario.**
 - No introducir frameworks, CDNs ni librerías externas salvo autorización explícita del prompt.
 - No modificar `package.json`, lockfiles ni dependencias salvo autorización explícita.
 - No tocar carpetas legacy, especialmente `legacy/`, salvo que el prompt lo autorice.
