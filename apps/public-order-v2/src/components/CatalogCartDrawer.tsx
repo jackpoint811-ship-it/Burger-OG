@@ -154,16 +154,25 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout }: CatalogCartDr
                     <div className="catalog-cart-item__info">
                       <p className="catalog-cart-item__name">{item.name}</p>
                       <div className="catalog-cart-item__price-row">
-                        <span className="catalog-cart-item__price">{formatCurrency(item.price)}</span>
+                        <span className="catalog-cart-item__price">
+                          {formatCurrency(item.price + (item.upgrades?.reduce((sum, u) => sum + u.price * u.qty, 0) || 0))}
+                        </span>
                         {item.qty > 1 && (
                           <span className="catalog-cart-item__subtotal">
-                            × {item.qty} = {formatCurrency(item.price * item.qty)}
+                            × {item.qty} = {formatCurrency((item.price + (item.upgrades?.reduce((sum, u) => sum + u.price * u.qty, 0) || 0)) * item.qty)}
                           </span>
                         )}
                       </div>
                       {item.mods && item.mods.length > 0 && (
-                        <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "2px" }}>
+                        <div style={{ fontSize: "11px", color: "var(--color-danger)", marginTop: "4px" }}>
                           {item.mods.join(", ")}
+                        </div>
+                      )}
+                      {item.upgrades && item.upgrades.length > 0 && (
+                        <div style={{ fontSize: "11px", color: "var(--color-accent)", marginTop: "2px", display: "flex", flexDirection: "column", gap: "2px" }}>
+                          {item.upgrades.map(u => (
+                            <span key={u.id}>+ {u.qty}x {u.name} ({formatCurrency(u.price)})</span>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -193,7 +202,7 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout }: CatalogCartDr
                       type="button"
                       className="catalog-cart-item__remove"
                       aria-label={`Eliminar ${item.name} del carrito`}
-                      onClick={() => removeItem(item.productId)}
+                      onClick={() => removeItem(item.cartItemId)}
                     >
                       <span aria-hidden="true">×</span>
                     </button>
