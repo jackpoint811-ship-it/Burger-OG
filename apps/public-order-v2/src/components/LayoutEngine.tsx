@@ -400,18 +400,21 @@ export function LayoutEngine({
 
     return (
       <div
+        className="catalog-category-nav-sticky-wrapper"
         style={{
           width: "100%",
           position: "sticky",
           top: "56px",
-          zIndex: 15,
-          marginTop: "6px",
+          zIndex: 18,
+          marginTop: "0px",
           marginBottom: "12px",
           backgroundColor: "var(--color-bg-base)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
-          paddingTop: "4px",
-          paddingBottom: "4px",
+          paddingTop: "6px",
+          paddingBottom: "6px",
+          borderBottom: "1px solid var(--color-line)",
+          overflow: "visible",
         }}
       >
         <nav
