@@ -10,17 +10,25 @@ import {
 import * as Tabs from "@radix-ui/react-tabs";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
+  Check,
   ChefHat,
+  Copy,
   CreditCard,
   ExternalLink,
   FileText,
   Gift,
   History,
   House,
+  Monitor,
+  Moon,
   PackageSearch,
   RefreshCw,
+  Share2,
   Shield,
   ShoppingBag,
+  Sun,
+  Volume2,
+  VolumeX,
   WalletCards,
 } from "lucide-react";
 import {
@@ -1608,6 +1616,10 @@ const OperatorHeader = ({
   onRefresh,
   onLogout,
   truth,
+  themeMode,
+  onToggleTheme,
+  soundAlerts,
+  onToggleSound,
 }: {
   runtimeEnvironment: ChekeoRuntimeEnvironment;
   runtime: OrdersRuntime;
@@ -1616,6 +1628,10 @@ const OperatorHeader = ({
   onRefresh: () => void;
   onLogout: () => void;
   truth: OperationalTruth;
+  themeMode: "light" | "dark" | "system";
+  onToggleTheme: () => void;
+  soundAlerts: boolean;
+  onToggleSound: () => void;
 }) => {
   const publicOrderUrl = getPublicOrderUrlForEnvironment(runtimeEnvironment);
   const publicOrderLabel = getPublicOrderLabelForEnvironment(runtimeEnvironment);
@@ -1660,6 +1676,28 @@ const OperatorHeader = ({
           <span className="shell-header__sync">
             {runtime.lastUpdated ? `Sync ${runtime.lastUpdated}` : "Sin sync"}
           </span>
+          <Button
+            className={`shell-icon-button ${soundAlerts ? "text-emerald-400" : "text-zinc-500"}`}
+            aria-label={soundAlerts ? "Sonido activado" : "Sonido desactivado"}
+            title={soundAlerts ? "Desactivar alertas sonoras de pedidos" : "Activar alertas sonoras de pedidos"}
+            onClick={onToggleSound}
+          >
+            {soundAlerts ? <Volume2 size={16} aria-hidden="true" /> : <VolumeX size={16} aria-hidden="true" />}
+          </Button>
+          <Button
+            className="shell-icon-button"
+            aria-label={`Tema: ${themeMode}`}
+            title={`Cambiar tema (actual: ${themeMode})`}
+            onClick={onToggleTheme}
+          >
+            {themeMode === "light" ? (
+              <Sun size={16} className="text-amber-500" aria-hidden="true" />
+            ) : themeMode === "dark" ? (
+              <Moon size={16} className="text-cyan-400" aria-hidden="true" />
+            ) : (
+              <Monitor size={16} className="text-zinc-400" aria-hidden="true" />
+            )}
+          </Button>
           <Button
             className="shell-icon-button"
             aria-label="Actualizar datos"
@@ -3131,6 +3169,40 @@ const EmptyCloseState = () => (
   </Card>
 );
 
+const formatWhatsappCorteSummary = (
+  s: OrdersV2Summary,
+  from: string,
+  to: string,
+) => {
+  const rangeStr = from === to ? from : `${from} al ${to}`;
+  const lines = [
+    `🍔 *CORTE DE CAJA — BURGERS.EXE*`,
+    `📅 *Rango:* ${rangeStr}`,
+    `───────────────`,
+    `💰 *Venta Bruta:* ${formatCurrency(s.totals.grossSales)}`,
+    `✅ *Venta Entregada:* ${formatCurrency(s.totals.deliveredSales)}`,
+    `📦 *Total Órdenes:* ${s.totals.orders} (${s.totals.deliveredOrders} entregadas, ${s.totals.cancelledOrders} canceladas)`,
+    `🎟️ *Ticket Promedio:* ${formatCurrency(s.totals.averageTicket)}`,
+    ``,
+    `💳 *DESGLOSE POR PAGO:*`,
+    ...(s.byPaymentMethod.length
+      ? s.byPaymentMethod.map(
+          (p) => `• ${p.paymentMethod}: ${p.orders} órdenes (${formatCurrency(p.total)})`,
+        )
+      : ["• Sin métodos registrados"]),
+    ``,
+    `⭐ *TOP PRODUCTOS:*`,
+    ...(s.topItems.length
+      ? s.topItems.slice(0, 5).map(
+          (item) => `• ${item.name}: ${item.qty} uds (${formatCurrency(item.total)})`,
+        )
+      : ["• Sin ventas"]),
+    `───────────────`,
+    `🤖 *Chekeo V3 Suite*`,
+  ];
+  return lines.join("\n");
+};
+
 const OperationalClosePanel = ({
   environment,
   sessionActive,
@@ -3218,10 +3290,21 @@ const OperationalClosePanel = ({
       setError(
         csvError instanceof Error
           ? csvError.message
-            : "No se pudo descargar el reporte del rango",
+          : "No se pudo descargar el reporte del rango",
       );
     } finally {
       setExporting(false);
+    }
+  };
+
+  const copyWhatsappSummary = async () => {
+    if (!summary) return;
+    const text = formatWhatsappCorteSummary(summary, from, to);
+    try {
+      await navigator.clipboard.writeText(text);
+      setNotice("Resumen para WhatsApp copiado al portapapeles 🚀");
+    } catch {
+      setError("No se pudo copiar al portapapeles automáticamente.");
     }
   };
 
@@ -3236,13 +3319,22 @@ const OperationalClosePanel = ({
               Rango, total, órdenes y exporte sin estados repetidos.
             </p>
           </div>
-          <Button
-            className="border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm disabled:opacity-40"
-            onClick={() => void downloadRangeCsv()}
-            disabled={exporting || !sessionActive}
-          >
-            {exporting ? "Preparando…" : "Descargar reporte"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="border border-emerald-600/50 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/60 px-3 py-2 text-sm disabled:opacity-40 inline-flex items-center gap-1.5"
+              onClick={() => void copyWhatsappSummary()}
+              disabled={!summary || !sessionActive}
+            >
+              <Share2 size={15} /> WhatsApp
+            </Button>
+            <Button
+              className="border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm disabled:opacity-40"
+              onClick={() => void downloadRangeCsv()}
+              disabled={exporting || !sessionActive}
+            >
+              {exporting ? "Preparando…" : "Descargar reporte"}
+            </Button>
+          </div>
         </div>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <label className="text-[11px] text-zinc-400">
@@ -4679,6 +4771,57 @@ export function InternalChekeoApp() {
   const [sessionState, setSessionState] = useState<SessionState>("checking");
   const [tab, setTab] = useState<TabKey>("home");
   const [adminView, setAdminView] = useState<AdminViewKey>("launcher");
+  const [themeMode, setThemeMode] = useState<"light" | "dark" | "system">(() => {
+    try {
+      return (localStorage.getItem("chekeo-v3-theme") as "light" | "dark" | "system") || "system";
+    } catch {
+      return "system";
+    }
+  });
+  const [soundAlerts, setSoundAlerts] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("chekeo-v3-sound") !== "false";
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chekeo-v3-theme", themeMode);
+      const root = document.documentElement;
+      const isDark =
+        themeMode === "dark" ||
+        (themeMode === "system" &&
+          typeof window !== "undefined" &&
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches);
+      if (isDark) {
+        root.classList.add("theme-dark");
+      } else {
+        root.classList.remove("theme-dark");
+      }
+    } catch {
+      /* noop */
+    }
+  }, [themeMode]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chekeo-v3-sound", String(soundAlerts));
+    } catch {
+      /* noop */
+    }
+  }, [soundAlerts]);
+
+  const toggleTheme = useCallback(() => {
+    setThemeMode((prev) => (prev === "system" ? "light" : prev === "light" ? "dark" : "system"));
+  }, []);
+
+  const toggleSound = useCallback(() => {
+    setSoundAlerts((prev) => !prev);
+  }, []);
+
   const [orders, setOrders] = useState<InternalOrder[]>(
     asInternalOrders(mockOrders),
   );
@@ -5370,6 +5513,10 @@ export function InternalChekeoApp() {
         activeTab={tab}
         onOpenTab={openPrimaryTab}
         truth={shellTruth}
+        themeMode={themeMode}
+        onToggleTheme={toggleTheme}
+        soundAlerts={soundAlerts}
+        onToggleSound={toggleSound}
         onRefresh={() => {
           if (runtime.sessionState !== "active") return;
           void runtime.reload(shouldIncludeTerminalOrders(tab, adminView));

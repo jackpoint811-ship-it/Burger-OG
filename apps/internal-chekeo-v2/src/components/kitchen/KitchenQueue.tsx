@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Clock,
   MapPin,
   RefreshCw,
 } from "lucide-react";
@@ -319,6 +320,30 @@ const AccordionItemRow = ({
 /*  Active order container                                            */
 /* ------------------------------------------------------------------ */
 
+const OrderElapsedBadge = ({ createdAtMs }: { createdAtMs?: number }) => {
+  const elapsedMinutes = useMemo(() => {
+    if (!createdAtMs) return null;
+    const diffMs = Date.now() - createdAtMs;
+    return Math.max(0, Math.floor(diffMs / 60000));
+  }, [createdAtMs]);
+
+  if (elapsedMinutes === null) return null;
+
+  let colorClass = "border-emerald-500/30 bg-emerald-950/40 text-emerald-300";
+  if (elapsedMinutes >= 20) {
+    colorClass = "border-rose-500/60 bg-rose-950/60 text-rose-300 animate-pulse";
+  } else if (elapsedMinutes >= 10) {
+    colorClass = "border-amber-500/40 bg-amber-950/40 text-amber-300";
+  }
+
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-xs font-black ${colorClass}`}>
+      <Clock size={13} aria-hidden="true" />
+      {elapsedMinutes} min
+    </span>
+  );
+};
+
 const ActiveOrderContainer = ({
   group,
   busyLineKey,
@@ -376,7 +401,8 @@ const ActiveOrderContainer = ({
           ) : null}
           <p className="kitchen-active-order__folio kitchen-production-card__folio">{group.order.folio}</p>
         </div>
-        <div className="flex flex-wrap md:justify-end gap-1.5 self-start w-full md:w-auto mt-2 md:mt-0">
+        <div className="flex flex-wrap md:justify-end gap-1.5 self-start w-full md:w-auto mt-2 md:mt-0 items-center">
+          <OrderElapsedBadge createdAtMs={group.order.createdAtMs} />
           <span className="kitchen-location-chip">
             <MapPin size={14} aria-hidden="true" />
             {location}
