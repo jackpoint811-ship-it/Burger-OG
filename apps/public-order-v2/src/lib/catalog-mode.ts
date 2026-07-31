@@ -15,6 +15,7 @@ export type CatalogProduct = {
   imageKey?: string;
   badge?: string;
   isAvailable: boolean;
+  isFeatured: boolean;
   sortOrder: number;
 };
 
@@ -90,8 +91,20 @@ export function mapMenuItemsToCatalogProducts(items: MenuItem[], categories: Men
         imageKey: item.imageKey,
         badge: item.badge ?? item.promoLabel,
         isAvailable: item.isAvailable,
+        isFeatured: item.isFeatured,
         sortOrder: item.sortOrder
       };
     })
     .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+}
+
+export function getCategoryEmoji(key: string, name: string): string {
+  const k = key.toLowerCase();
+  const n = name.toLowerCase();
+  if (k.includes("burg") || n.includes("burg")) return "🍔";
+  if (k.includes("combo") || n.includes("combo")) return "🔥";
+  if (k.includes("entr") || k.includes("side") || n.includes("papas") || n.includes("entr")) return "🍟";
+  if (k.includes("beb") || k.includes("drink") || n.includes("beb")) return "🥤";
+  if (k.includes("postre") || n.includes("postre")) return "🍦";
+  return "🏷️";
 }

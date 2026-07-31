@@ -14,6 +14,7 @@ import { TowerScheduleModal, getTowerStatus } from "./TowerScheduleModal";
 import {
   type CatalogProduct,
   mapMenuItemsToCatalogProducts,
+  getCategoryEmoji,
 } from "../lib/catalog-mode";
 
 type CatalogModeAppProps = {
@@ -95,16 +96,7 @@ function useSystemTheme() {
   return { isDark, toggleDark };
 }
 
-function getCategoryEmoji(key: string, name: string): string {
-  const k = key.toLowerCase();
-  const n = name.toLowerCase();
-  if (k.includes("burg") || n.includes("burg")) return "🍔";
-  if (k.includes("combo") || n.includes("combo")) return "🔥";
-  if (k.includes("entr") || k.includes("side") || n.includes("papas") || n.includes("entr")) return "🍟";
-  if (k.includes("beb") || k.includes("drink") || n.includes("beb")) return "🥤";
-  if (k.includes("postre") || n.includes("postre")) return "🍦";
-  return "🏷️";
-}
+
 
 function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [], source, designSpec }: CatalogModeAppProps) {
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);

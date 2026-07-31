@@ -21,6 +21,8 @@
 ### En revision
 
 - [ ] Documentacion de lanzamiento controlado completado
+- [ ] PR #422: Corrección de fallos de compilación V3 (getCategoryEmoji e isFeatured) en producción
+
 
 ### Bloqueado
 
