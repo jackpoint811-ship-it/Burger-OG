@@ -32,11 +32,17 @@ const focusableSelector = [
 ].join(",");
 
 const normalizePhoneDigits = (phone: string) => {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length === 12 && digits.startsWith("52")) {
-    return digits.slice(2);
+  let digits = String(phone || "").replace(/\D/g, "");
+  if (digits.length === 13 && digits.startsWith("521")) {
+    digits = digits.slice(3);
+  } else if (digits.length === 12 && digits.startsWith("52")) {
+    digits = digits.slice(2);
+  } else if (digits.length === 11 && digits.startsWith("0")) {
+    digits = digits.slice(1);
+  } else if (digits.length > 10 && digits.startsWith("52")) {
+    digits = digits.slice(2);
   }
-  return digits;
+  return digits.slice(0, 10);
 };
 
 type CheckoutState = {
