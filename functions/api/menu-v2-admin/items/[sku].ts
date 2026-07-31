@@ -56,7 +56,7 @@ const parseBody = (input: unknown): UpdatePayload | null => {
   const stockRemainingRaw = body.stockRemaining == null || body.stockRemaining === '' ? null : Number(body.stockRemaining);
   const stockLimitRaw = body.stockLimit == null || body.stockLimit === '' ? stockRemainingRaw : Number(body.stockLimit);
 
-  if (!name || !description || !Number.isFinite(price) || price < 0 || !Number.isInteger(sortOrder) || typeof isAvailable !== 'boolean' || typeof isFeatured !== 'boolean' || imageUrl === undefined || imageKey === undefined || comboLinks === null) {
+  if (!name || typeof description !== 'string' || !Number.isFinite(price) || price < 0 || !Number.isInteger(sortOrder) || typeof isAvailable !== 'boolean' || typeof isFeatured !== 'boolean' || imageUrl === undefined || imageKey === undefined || comboLinks === null) {
     return null;
   }
   if (stockManaged && (stockRemainingRaw == null || !Number.isInteger(stockRemainingRaw) || stockRemainingRaw < 0)) return null;

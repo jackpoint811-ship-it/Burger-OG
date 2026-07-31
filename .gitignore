@@ -2,6 +2,9 @@ node_modules/
 dist/
 test-results/
 playwright-report/
+.env
+.env.*
+.dev.vars
 .wrangler/
 .wrangler/tmp/
 .dev.vars

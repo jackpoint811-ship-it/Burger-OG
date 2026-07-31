@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Clock,
   MapPin,
   RefreshCw,
 } from "lucide-react";
@@ -113,7 +114,7 @@ const buildOrderGroups = (items: KitchenProductionItem[]): OrderGroup[] => {
 
 const KitchenEmptyState = ({ title }: { title: string }) => (
   <Card className="border-dashed border-zinc-700/90 p-5 text-center">
-    <p className="text-base font-black text-zinc-100">{title}</p>
+    <p className="text-base font-black text-zinc-900 dark:text-zinc-100">{title}</p>
   </Card>
 );
 
@@ -175,7 +176,7 @@ const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
         <div className="kitchen-detail-block kitchen-detail-block--mod-upgrade grid gap-3 grid-cols-2">
           {/* MOD column — always shown when hasModOrUpgrade */}
           <div className="kitchen-detail-block h-full">
-            <p className="kitchen-detail-label text-rose-300">MOD</p>
+            <p className="kitchen-detail-label text-rose-800 dark:text-rose-300">MOD</p>
             {mods.length ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {mods.map((note) => (
@@ -257,7 +258,7 @@ const AccordionItemRow = ({
       onClick={onExpand}
     >
       {itemImage ? (
-        <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden bg-zinc-900 border border-zinc-800">
+        <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden bg-zinc-50 dark:bg-zinc-900 border border-zinc-800">
           <img src={itemImage} alt={entry.detailLabel || entry.item.name} className="w-full h-full object-cover opacity-90" loading="lazy" />
         </div>
       ) : null}
@@ -319,6 +320,30 @@ const AccordionItemRow = ({
 /*  Active order container                                            */
 /* ------------------------------------------------------------------ */
 
+const OrderElapsedBadge = ({ createdAtMs }: { createdAtMs?: number }) => {
+  const elapsedMinutes = useMemo(() => {
+    if (!createdAtMs) return null;
+    const diffMs = Date.now() - createdAtMs;
+    return Math.max(0, Math.floor(diffMs / 60000));
+  }, [createdAtMs]);
+
+  if (elapsedMinutes === null) return null;
+
+  let colorClass = "border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300";
+  if (elapsedMinutes >= 20) {
+    colorClass = "border-rose-300 dark:border-rose-500/60 bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 animate-pulse";
+  } else if (elapsedMinutes >= 10) {
+    colorClass = "border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300";
+  }
+
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-xs font-black ${colorClass}`}>
+      <Clock size={13} aria-hidden="true" />
+      {elapsedMinutes} min
+    </span>
+  );
+};
+
 const ActiveOrderContainer = ({
   group,
   busyLineKey,
@@ -370,13 +395,14 @@ const ActiveOrderContainer = ({
             {group.order.customer}
           </h3>
           {quickSummary ? (
-            <p className="mt-1 mb-2 text-sm font-bold text-cyan-300 bg-cyan-950/30 border border-cyan-800/50 inline-block px-2 py-1 rounded-md">
+            <p className="mt-1 mb-2 text-sm font-bold text-cyan-800 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-800/50 inline-block px-2 py-1 rounded-md">
               {quickSummary}
             </p>
           ) : null}
           <p className="kitchen-active-order__folio kitchen-production-card__folio">{group.order.folio}</p>
         </div>
-        <div className="flex flex-wrap md:justify-end gap-1.5 self-start w-full md:w-auto mt-2 md:mt-0">
+        <div className="flex flex-wrap md:justify-end gap-1.5 self-start w-full md:w-auto mt-2 md:mt-0 items-center">
+          <OrderElapsedBadge createdAtMs={group.order.createdAtMs} />
           <span className="kitchen-location-chip">
             <MapPin size={14} aria-hidden="true" />
             {location}
@@ -438,7 +464,7 @@ const PendingOrdersQueue = ({
       {expanded ? (
         <button
           type="button"
-          className="kitchen-following-orders__toggle w-full flex items-center justify-between px-4 py-3 text-left font-black text-cyan-400 hover:bg-zinc-800/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime-300 transition-colors"
+          className="kitchen-following-orders__toggle w-full flex items-center justify-between px-4 py-3 text-left font-black text-cyan-400 hover:bg-zinc-100 dark:bg-zinc-800/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime-300 transition-colors"
           onClick={() => setExpanded(false)}
           aria-expanded={true}
         >
@@ -456,16 +482,16 @@ const PendingOrdersQueue = ({
               ? buildKitchenOrderQueueSummary(group.order)
               : null;
             return (
-              <div key={group.orderId} className="kitchen-production-card bg-zinc-950/60 border border-zinc-800/80 p-3 rounded-xl text-left">
+              <div key={group.orderId} className="kitchen-production-card bg-white dark:bg-zinc-950/60 border border-zinc-800/80 p-3 rounded-xl text-left">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-black text-zinc-100 text-lg">{group.order.customer}</p>
+                    <p className="font-black text-zinc-900 dark:text-zinc-100 text-lg">{group.order.customer}</p>
                     {shortSummary ? (
-                      <p className="text-xs text-zinc-400 mt-0.5">{shortSummary}</p>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">{shortSummary}</p>
                     ) : null}
                   </div>
                   <Button
-                    className="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-xs px-3 py-1.5 h-auto min-h-0 whitespace-nowrap"
+                    className="bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 text-xs px-3 py-1.5 h-auto min-h-0 whitespace-nowrap"
                     onClick={() => onSelect(group.orderId)}
                   >
                     Abrir
@@ -477,7 +503,7 @@ const PendingOrdersQueue = ({
         </div>
       ) : (
         <div
-          className="kitchen-following-orders__list p-3 grid gap-2 cursor-pointer hover:bg-zinc-900/20"
+          className="kitchen-following-orders__list p-3 grid gap-2 cursor-pointer hover:bg-zinc-50 dark:bg-zinc-900/20"
           onClick={() => setExpanded(true)}
           role="button"
           tabIndex={0}
@@ -504,15 +530,15 @@ const PendingOrdersQueue = ({
               <div
                 key={group.orderId}
                 className={`kitchen-production-card flex justify-between items-center px-3 py-2.5 rounded-lg border transition-all ${
-                  isFirst ? "border-cyan-500/30 bg-cyan-950/20" : "border-zinc-800/40 bg-zinc-950/20"
+                  isFirst ? "border-cyan-300 dark:border-cyan-500/30 bg-cyan-50 dark:bg-cyan-950/20" : "border-zinc-800/40 bg-white dark:bg-zinc-950/20"
                 }`}
                 style={{ opacity: opacityValue }}
               >
                 <div className="text-left min-w-0 flex-1">
-                  <p className={`text-[10px] font-black uppercase tracking-[0.16em] mb-0.5 ${isFirst ? "text-cyan-300" : "text-zinc-500"}`}>
+                  <p className={`text-[10px] font-black uppercase tracking-[0.16em] mb-0.5 ${isFirst ? "text-cyan-800 dark:text-cyan-300" : "text-zinc-500"}`}>
                     {isFirst ? "Siguiente" : "Después"}
                   </p>
-                  <p className={`font-black ${isFirst ? "text-zinc-100 text-base" : "text-zinc-300 text-sm"}`}>
+                  <p className={`font-black ${isFirst ? "text-zinc-900 dark:text-zinc-100 text-base" : "text-zinc-700 dark:text-zinc-300 text-sm"}`}>
                     {group.order.customer}
                   </p>
                   {shortSummary ? (
@@ -560,15 +586,15 @@ const DoneOrdersList = ({
     <section className="kitchen-done-list">
       <button
         type="button"
-        className="kitchen-done-list__toggle flex flex-col items-start gap-1 p-3 w-full border-t border-zinc-800/40 hover:bg-zinc-800/20 transition-colors mt-4"
+        className="kitchen-done-list__toggle flex flex-col items-start gap-1 p-3 w-full border-t border-zinc-800/40 hover:bg-zinc-100 dark:bg-zinc-800/20 transition-colors mt-4"
         onClick={() => setExpanded((prev) => !prev)}
         aria-expanded={expanded}
       >
         <div className="flex w-full items-center justify-between">
-          <span className="text-[11px] font-black tracking-[0.2em] uppercase text-zinc-300">
+          <span className="text-[11px] font-black tracking-[0.2em] uppercase text-zinc-700 dark:text-zinc-300">
             {label} · {groups.length} {groups.length === 1 ? "pedido" : "pedidos"}
           </span>
-          {expanded ? <ChevronUp size={16} className="text-zinc-400" /> : <ChevronDown size={16} className="text-zinc-400" />}
+          {expanded ? <ChevronUp size={16} className="text-zinc-600 dark:text-zinc-400" /> : <ChevronDown size={16} className="text-zinc-600 dark:text-zinc-400" />}
         </div>
         {!expanded ? (
           <span className="text-xs text-zinc-500">Toca para revisar o revertir</span>
@@ -591,11 +617,11 @@ const DoneOrdersList = ({
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="font-black text-zinc-100">{group.order.customer}</p>
+                      <p className="font-black text-zinc-900 dark:text-zinc-100">{group.order.customer}</p>
                       <span className="kitchen-dot kitchen-dot--done">Hecha</span>
                     </div>
                     <p className="mt-0.5 text-sm text-zinc-500">{group.order.folio}</p>
-                    <p className="mt-1 text-xs text-zinc-400 font-bold">{buildKitchenOrderQueueSummary(group.order)}</p>
+                    <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400 font-bold">{buildKitchenOrderQueueSummary(group.order)}</p>
                   </div>
                   {isGroupExpanded ? (
                     <ChevronUp size={16} className="text-zinc-500 flex-shrink-0" />
@@ -688,7 +714,7 @@ const ProductionLanePanel = ({
           >
             {laneName}
           </p>
-          <p className="mt-1 text-sm text-zinc-400">{laneDescription}</p>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{laneDescription}</p>
         </div>
         <span className="kitchen-note-chip">
           {pendingGroups.reduce((acc, g) => acc + g.pendingCount, 0)} pendientes
@@ -735,11 +761,11 @@ const SummaryMetric = ({
   label: string;
   value: string | number;
 }) => (
-  <Card className="border-cyan-500/20 bg-zinc-950 p-4">
-    <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400">
+  <Card className="border-cyan-300 dark:border-cyan-500/20 bg-white dark:bg-zinc-950 p-4">
+    <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-600 dark:text-zinc-400">
       {label}
     </p>
-    <p className="mt-2 text-3xl font-black text-cyan-100">{value}</p>
+    <p className="mt-2 text-3xl font-black text-cyan-900 dark:text-cyan-100">{value}</p>
   </Card>
 );
 
@@ -824,22 +850,22 @@ const KitchenSummaryKPanel = ({
       </div>
 
       {loading ? (
-        <Card className="border-cyan-500/20 bg-zinc-950 p-4">
-          <p className="text-sm font-semibold text-cyan-100">Cargando Resumen K...</p>
+        <Card className="border-cyan-300 dark:border-cyan-500/20 bg-white dark:bg-zinc-950 p-4">
+          <p className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">Cargando Resumen K...</p>
         </Card>
       ) : null}
 
       {error ? (
-        <Card className="border-rose-400/30 bg-rose-950/30 p-4">
+        <Card className="border-rose-400/30 bg-rose-50 dark:bg-rose-950/30 p-4">
           <p className="text-sm font-bold text-rose-100">{error}</p>
-          <Button className="mt-3 border border-rose-300/30 bg-zinc-950" onClick={load}>
+          <Button className="mt-3 border border-rose-300/30 bg-white dark:bg-zinc-950" onClick={load}>
             Reintentar
           </Button>
         </Card>
       ) : null}
 
       {summary && !summary.hasRecipes ? (
-        <Card className="border-amber-400/30 bg-amber-950/20 p-4">
+        <Card className="border-amber-400/30 bg-amber-50 dark:bg-amber-950/20 p-4">
           <p className="text-sm font-bold text-amber-100">
             Configura recetas aproximadas en Chekeo para desbloquear el cálculo de ingredientes.
           </p>
@@ -849,8 +875,8 @@ const KitchenSummaryKPanel = ({
       {summary ? (
         <>
           <div className="grid gap-4 lg:grid-cols-2">
-            <Card className="border-emerald-500/20 bg-zinc-950 p-4">
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-emerald-200">
+            <Card className="border-emerald-300 dark:border-emerald-500/20 bg-white dark:bg-zinc-950 p-4">
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-200">
                 {orderEnvironmentLabel[environment]} · burgers
               </h3>
               <div className="mt-3 space-y-2">
@@ -866,7 +892,7 @@ const KitchenSummaryKPanel = ({
                 )}
               </div>
             </Card>
-            <Card className="border-amber-500/20 bg-zinc-950 p-4">
+            <Card className="border-amber-300 dark:border-amber-500/20 bg-white dark:bg-zinc-950 p-4">
               <h3 className="text-sm font-black uppercase tracking-[0.2em] text-amber-200">
                 {orderEnvironmentLabel[environment]} · guarniciones
               </h3>
@@ -884,7 +910,7 @@ const KitchenSummaryKPanel = ({
               </div>
             </Card>
           </div>
-          <Card className="border-cyan-500/20 bg-zinc-950 p-4">
+          <Card className="border-cyan-300 dark:border-cyan-500/20 bg-white dark:bg-zinc-950 p-4">
             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-cyan-200">
               Ingredientes estimados
             </h3>
@@ -893,18 +919,18 @@ const KitchenSummaryKPanel = ({
                 summary.ingredients.map((ingredient) => (
                   <div key={ingredient.ingredientId} className="kitchen-ingredient-row">
                     <div>
-                      <p className="font-bold text-zinc-100">{ingredient.name}</p>
-                      <p className="text-xs text-zinc-400">
+                      <p className="font-bold text-zinc-900 dark:text-zinc-100">{ingredient.name}</p>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400">
                         Precio unitario:{" "}
                         {ingredient.unitPriceCents == null
                           ? "—"
                           : formatCurrency(ingredient.unitPriceCents / 100)}
                       </p>
                     </div>
-                    <p className="font-black text-cyan-100">
+                    <p className="font-black text-cyan-900 dark:text-cyan-100">
                       {ingredient.quantity.toFixed(2)} {ingredient.unit}
                     </p>
-                    <p className="font-black text-emerald-200">
+                    <p className="font-black text-emerald-700 dark:text-emerald-200">
                       {ingredient.estimatedCostCents == null
                         ? "—"
                         : formatCurrency(ingredient.estimatedCostCents / 100)}
@@ -1018,7 +1044,7 @@ export const KitchenQueue = ({
             <h2 className="mt-1 text-2xl font-black text-zinc-50 md:text-3xl">
               Cocina
             </h2>
-            <p className="mt-1 max-w-3xl text-sm text-zinc-400">
+            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
               {kitchenTitle}. {kitchenHint}
             </p>
           </div>
