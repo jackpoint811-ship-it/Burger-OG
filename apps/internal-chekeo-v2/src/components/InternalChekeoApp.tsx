@@ -300,19 +300,19 @@ const adminModuleStatusMeta: Record<
 > = {
   "base-lista": {
     label: "Base lista",
-    className: "border-emerald-400/40 bg-emerald-500/10 text-emerald-100",
+    className: "border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100",
   },
   "solo-lectura": {
     label: "Solo lectura",
-    className: "border-zinc-600 bg-zinc-900 text-zinc-100",
+    className: "border-zinc-600 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100",
   },
   basico: {
     label: "Básico",
-    className: "border-cyan-400/40 bg-cyan-500/10 text-cyan-100",
+    className: "border-cyan-400/40 bg-cyan-500/10 text-cyan-900 dark:text-cyan-800 dark:text-cyan-100",
   },
   pendiente: {
     label: "Pendiente",
-    className: "border-amber-400/40 bg-amber-500/10 text-amber-100",
+    className: "border-amber-400/40 bg-amber-500/10 text-amber-800 dark:text-amber-100",
   },
 };
 const adminViews: AdminViewDefinition[] = [
@@ -417,10 +417,10 @@ const statusLabel: Record<OrderStatus, string> = {
 };
 const statusTone: Record<OrderStatus, string> = {
   new: "border-sky-400/40 text-sky-200",
-  preparing: "border-amber-400/40 text-amber-200",
-  ready: "border-emerald-400/40 text-emerald-200",
-  delivered: "border-zinc-500/40 text-zinc-200",
-  cancelled: "border-rose-500/40 text-rose-300",
+  preparing: "border-amber-400/40 text-amber-700 dark:text-amber-200",
+  ready: "border-emerald-400/40 text-emerald-700 dark:text-emerald-200",
+  delivered: "border-zinc-500/40 text-zinc-800 dark:text-zinc-200",
+  cancelled: "border-rose-300 dark:border-rose-500/40 text-rose-800 dark:text-rose-300",
 };
 const paymentStatusLabel: Record<OrderV2PaymentStatus, string> = {
   pending: "Pago pendiente",
@@ -428,9 +428,9 @@ const paymentStatusLabel: Record<OrderV2PaymentStatus, string> = {
   cancelled: "Cancelado",
 };
 const paymentStatusTone: Record<OrderV2PaymentStatus, string> = {
-  pending: "border-amber-400/40 text-amber-200",
-  paid: "border-emerald-400/40 text-emerald-200",
-  cancelled: "border-rose-500/40 text-rose-300",
+  pending: "border-amber-400/40 text-amber-700 dark:text-amber-200",
+  paid: "border-emerald-400/40 text-emerald-700 dark:text-emerald-200",
+  cancelled: "border-rose-300 dark:border-rose-500/40 text-rose-800 dark:text-rose-300",
 };
 const isOrderV2PaymentStatus = (value: string): value is OrderV2PaymentStatus =>
   value === "pending" || value === "paid" || value === "cancelled";
@@ -722,9 +722,9 @@ const ordersStatusLabel: Record<Exclude<OrdersStatusFilter, "all">, string> = {
 };
 const ordersStatusTone: Record<Exclude<OrdersStatusFilter, "all">, string> = {
   received: "border-sky-400/40 text-sky-200",
-  ready: "border-emerald-400/40 text-emerald-200",
-  delivered: "border-zinc-500/40 text-zinc-200",
-  cancelled: "border-rose-500/40 text-rose-300",
+  ready: "border-emerald-400/40 text-emerald-700 dark:text-emerald-200",
+  delivered: "border-zinc-500/40 text-zinc-800 dark:text-zinc-200",
+  cancelled: "border-rose-300 dark:border-rose-500/40 text-rose-800 dark:text-rose-300",
 };
 const ordersStatusFilterOptions: Array<{
   value: OrdersStatusFilter;
@@ -1182,9 +1182,9 @@ const EmptyOrdersState = ({
   action?: ReactNode;
 }) => (
   <Card className="border-dashed border-zinc-700/90 p-5 text-center">
-    <p className="text-base font-black text-zinc-100">{title}</p>
+    <p className="text-base font-black text-zinc-900 dark:text-zinc-100">{title}</p>
     {description ? (
-      <p className="mx-auto mt-1 max-w-md text-sm text-zinc-400">{description}</p>
+      <p className="mx-auto mt-1 max-w-md text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
     ) : null}
     {action ? <div className="mt-3">{action}</div> : null}
   </Card>
@@ -1276,22 +1276,22 @@ const OrdersExportControls = ({
   };
 
   return (
-    <div className="mt-3 rounded-lg border border-zinc-800 bg-zinc-950/70 p-2">
+    <div className="mt-3 rounded-lg border border-zinc-800 bg-white dark:bg-zinc-950/70 p-2">
       <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs font-bold text-zinc-100">Descargar reporte</p>
-          <p className="text-[11px] text-zinc-400">
+          <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Descargar reporte</p>
+          <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
             Baja los pedidos filtrados para revisión o cierre.
           </p>
         </div>
         {!sessionActive ? (
-          <p className="text-[11px] text-amber-200">
+          <p className="text-[11px] text-amber-700 dark:text-amber-200">
             Sesión expirada. Vuelve a iniciar sesión.
           </p>
         ) : null}
       </div>
       <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-        <label className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs text-zinc-200 sm:col-span-2 lg:col-span-1">
+        <label className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 sm:col-span-2 lg:col-span-1">
           <input
             type="checkbox"
             checked={includeTerminal}
@@ -1299,7 +1299,7 @@ const OrdersExportControls = ({
           />
           Incluir entregados y cancelados
         </label>
-        <label className="text-[11px] text-zinc-400">
+        <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
           Estado
           <select
             className="input mt-1 text-xs"
@@ -1315,7 +1315,7 @@ const OrdersExportControls = ({
             ))}
           </select>
         </label>
-        <label className="text-[11px] text-zinc-400">
+        <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
           Máximo de registros
           <input
             className="input mt-1 text-xs"
@@ -1328,7 +1328,7 @@ const OrdersExportControls = ({
             onChange={(event) => setLimit(event.target.value)}
           />
         </label>
-        <label className="text-[11px] text-zinc-400">
+        <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
           Desde
           <input
             className="input mt-1 text-xs"
@@ -1337,7 +1337,7 @@ const OrdersExportControls = ({
             onChange={(event) => setFrom(event.target.value)}
           />
         </label>
-        <label className="text-[11px] text-zinc-400">
+        <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
           Hasta
           <input
             className="input mt-1 text-xs"
@@ -1348,17 +1348,17 @@ const OrdersExportControls = ({
         </label>
       </div>
       {invalidLimit ? (
-        <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-200">
+        <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-rose-200">
           El límite debe ser un entero entre 1 y 1000.
         </p>
       ) : null}
       {error ? (
-        <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-200">
+        <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-rose-200">
           {error}
         </p>
       ) : null}
       {success ? (
-        <p className="mt-2 rounded bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200">
+        <p className="mt-2 rounded bg-emerald-500/10 px-2 py-1 text-xs text-emerald-700 dark:text-emerald-200">
           {success}
         </p>
       ) : null}
@@ -1389,12 +1389,12 @@ const NewOrderBanner = ({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-black">{notice.message}</p>
-          <p className="mt-1 break-words text-[11px] text-cyan-100/80">
+          <p className="mt-1 break-words text-[11px] text-cyan-900 dark:text-cyan-800 dark:text-cyan-100/80">
             Folios: {notice.orderFolios.join(", ")}
           </p>
         </div>
         <Button
-          className="w-full shrink-0 border border-cyan-200/40 bg-cyan-950/50 px-3 py-1.5 text-xs text-cyan-50 sm:w-auto"
+          className="w-full shrink-0 border border-cyan-200/40 bg-cyan-50 dark:bg-cyan-950/50 px-3 py-1.5 text-xs text-cyan-50 sm:w-auto"
           onClick={onDismiss}
         >
           Entendido
@@ -1454,10 +1454,10 @@ const InternalLogin = ({
 
   return (
     <main className="shell flex items-center justify-center py-8">
-      <section className="login card w-full max-w-md border-cyan-400/20 bg-zinc-950/95 p-4 shadow-cyan-950/30">
+      <section className="login card w-full max-w-md border-cyan-400/20 bg-white dark:bg-zinc-950/95 p-4 shadow-cyan-950/30">
         <div className="mb-4 text-center">
           <p className="text-2xl font-black tracking-tight text-zinc-50">
-            Burgers<span className="text-cyan-300">.exe</span>
+            Burgers<span className="text-cyan-800 dark:text-cyan-300">.exe</span>
           </p>
           <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200">
             Chekeo
@@ -1487,7 +1487,7 @@ const InternalLogin = ({
               {sessionStateLabel[sessionState].value}
             </StatusPill>
           </div>
-          <p className="mt-2 text-xs text-zinc-300">{copy.secondary}</p>
+          <p className="mt-2 text-xs text-zinc-700 dark:text-zinc-300">{copy.secondary}</p>
           <a
             className="runtime-environment-link runtime-environment-link--muted mt-3 w-full"
             href={publicOrderUrl}
@@ -1555,7 +1555,7 @@ const SessionPinForm = ({
 
   return (
     <form className="space-y-4" onSubmit={(event) => void submit(event)}>
-      <label className="block text-sm font-bold text-zinc-100" htmlFor={inputId}>
+      <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100" htmlFor={inputId}>
         {label}
         <input
           id={inputId}
@@ -1695,7 +1695,7 @@ const OperatorHeader = ({
             ) : themeMode === "dark" ? (
               <Moon size={16} className="text-cyan-400" aria-hidden="true" />
             ) : (
-              <Monitor size={16} className="text-zinc-400" aria-hidden="true" />
+              <Monitor size={16} className="text-zinc-600 dark:text-zinc-400" aria-hidden="true" />
             )}
           </Button>
           <Button
@@ -1983,7 +1983,7 @@ const HomePanel = ({
             </span>
           </div>
         ) : (
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             {todayLoading ? "Cargando resumen..." : "Sin Resumen K disponible."}
           </p>
         )}
@@ -2012,13 +2012,13 @@ const AdminReportsPanel = ({
 }) => (
   <div className="grid gap-3 xl:grid-cols-[1.1fr_0.9fr]">
     <Card className="p-4">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-200">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700 dark:text-amber-200">
         Reportes y exportes
       </p>
       <h3 className="mt-2 text-xl font-black text-zinc-50">
         Exportes operativos
       </h3>
-      <p className="mt-2 text-sm text-zinc-400">
+      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
         Descarga cortes y listas filtradas sin volver a mezclar estos controles con Pedidos, Cocina o Pagos.
       </p>
       <OrdersExportControls
@@ -2077,10 +2077,10 @@ const AdminGate = ({
         <h2 className="mt-1 text-xl font-black text-zinc-50">
           Acceso Admin
         </h2>
-        <p className="mt-2 text-sm text-zinc-400">
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           Admin siempre requiere PIN interno. Home, Pedidos, Cocina y Pagos solo pueden abrirse sin PIN global cuando la URL ya está protegida externamente.
         </p>
-        <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-zinc-950/70 p-4">
+        <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-white dark:bg-zinc-950/70 p-4">
           <SessionPinForm
             inputId="admin-pin"
             label="PIN Admin"
@@ -2207,7 +2207,7 @@ const AdminWorkspace = ({
                 Enlace de estado a la experiencia de clientes; este PR no la modifica.
               </p>
             </div>
-            <StatusPill className="border-emerald-400/40 bg-emerald-500/10 text-emerald-100">
+            <StatusPill className="border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100">
               Base lista
             </StatusPill>
           </div>
@@ -2221,7 +2221,7 @@ const AdminWorkspace = ({
               <span className="admin-module-card__icon">
                 <ExternalLink size={18} aria-hidden="true" />
               </span>
-              <StatusPill className="admin-module-card__status border-emerald-400/40 bg-emerald-500/10 text-emerald-100">
+              <StatusPill className="admin-module-card__status border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100">
                 Base lista
               </StatusPill>
             </span>
@@ -2250,7 +2250,7 @@ const AdminWorkspace = ({
             <h2 className="mt-1 text-xl font-black text-zinc-50">
               {view === "launcher" ? "Módulos secundarios" : activeView.label}
             </h2>
-            <p className="mt-1 max-w-3xl text-sm text-zinc-400">
+            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
               {view === "launcher"
                 ? "Datos bancarios, historial, cierre, catálogo, sorteos y reportes viven aquí para mantener la navegación principal enfocada en operación."
                 : activeView.description}
@@ -2260,7 +2260,7 @@ const AdminWorkspace = ({
             {view !== "launcher" ? (
               <Button
                 type="button"
-                className="admin-back-button border border-cyan-400/40 bg-cyan-400/10 text-cyan-100"
+                className="admin-back-button border border-cyan-400/40 bg-cyan-400/10 text-cyan-900 dark:text-cyan-800 dark:text-cyan-100"
                 onClick={() => setView("launcher")}
               >
                 Volver al hub
@@ -2307,13 +2307,13 @@ const BankConfigAdminPanel = () => {
             <h3 className="mt-1 text-xl font-black text-zinc-50">
               Datos bancarios
             </h3>
-            <p className="mt-1 max-w-3xl text-sm text-zinc-400">
+            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
               Fuente central compartida para transferencias. Pagos la consume
               para el mensaje operativo y esta vista la expone solo dentro de
               Admin.
             </p>
           </div>
-          <StatusPill className="border-zinc-700 bg-zinc-900 text-zinc-100">
+          <StatusPill className="border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
             {bankPaymentConfig.editable ? "Editable" : "Solo lectura"}
           </StatusPill>
         </div>
@@ -2322,7 +2322,7 @@ const BankConfigAdminPanel = () => {
       <div className="grid gap-3 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="p-4">
           <div className="grid gap-3 min-[520px]:grid-cols-2">
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/65 p-3">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3">
               <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
                 Banco
               </p>
@@ -2330,7 +2330,7 @@ const BankConfigAdminPanel = () => {
                 {bankPaymentConfig.bankName}
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/65 p-3">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3">
               <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
                 Titular
               </p>
@@ -2338,7 +2338,7 @@ const BankConfigAdminPanel = () => {
                 {bankPaymentConfig.accountHolder}
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/65 p-3 min-[520px]:col-span-2">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3 min-[520px]:col-span-2">
               <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
                 {primaryLabel}
               </p>
@@ -2352,24 +2352,24 @@ const BankConfigAdminPanel = () => {
         <Card className="p-4">
           <div className="space-y-3">
             <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-100">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-800 dark:text-emerald-100">
                 Alcance
               </p>
-              <p className="mt-2 text-sm text-zinc-100">
+              <p className="mt-2 text-sm text-zinc-900 dark:text-zinc-100">
                 Solo transferencia. Pedidos, ticket, Home y Cocina no deben
                 mostrar estos datos.
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/65 p-3 text-sm text-zinc-300">
-              <p className="font-black text-zinc-100">Estado de edición</p>
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3 text-sm text-zinc-700 dark:text-zinc-300">
+              <p className="font-black text-zinc-900 dark:text-zinc-100">Estado de edición</p>
               <p className="mt-2">
                 La configuración actual es de solo lectura y vive en la capa
                 compartida del proyecto. La edición persistente queda pendiente
                 hasta definir una fuente segura en backend.
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/65 p-3 text-sm text-zinc-300">
-              <p className="font-black text-zinc-100">Fuente</p>
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3 text-sm text-zinc-700 dark:text-zinc-300">
+              <p className="font-black text-zinc-900 dark:text-zinc-100">Fuente</p>
               <p className="mt-2">
                 <code>{bankPaymentConfig.source}</code> compartida por{" "}
                 <code>Pagos</code>, <code>Admin</code> y la integración de
@@ -2423,7 +2423,7 @@ const ActionButtons = ({
           <button
             key={action.status}
             type="button"
-            className={`btn-sm ${action.tone === "danger" ? "danger" : "border-cyan-500/50 bg-cyan-500/10 text-cyan-100"}`}
+            className={`btn-sm ${action.tone === "danger" ? "danger" : "border-cyan-300 dark:border-cyan-500/50 bg-cyan-500/10 text-cyan-900 dark:text-cyan-800 dark:text-cyan-100"}`}
             onClick={() =>
               isCancellation
                 ? onCancel(order)
@@ -2530,26 +2530,26 @@ const WhatsappOrderActions = ({
   return (
     <div className="mt-2 rounded-lg border border-cyan-400/20 bg-cyan-400/5 p-2">
       {!phone ? (
-        <p className="mb-2 rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200">
+        <p className="mb-2 rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-700 dark:text-amber-200">
           Teléfono inválido para WhatsApp
         </p>
       ) : null}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <Button
-          className="border border-amber-700 bg-amber-950/50 px-2 py-1.5 text-[11px] text-amber-100 disabled:opacity-40"
+          className="border border-amber-700 bg-amber-50 dark:bg-amber-950/50 px-2 py-1.5 text-[11px] text-amber-800 dark:text-amber-100 disabled:opacity-40"
           onClick={() => void downloadTicket()}
           disabled={generatingTicket}
         >
           {generatingTicket ? "Generando…" : "Descargar ticket"}
         </Button>
         <Button
-          className="border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-[11px]"
+          className="border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-2 py-1.5 text-[11px]"
           onClick={() => void copySummary()}
         >
           Copiar WhatsApp
         </Button>
         <Button
-          className="border border-emerald-700 bg-emerald-950/50 px-2 py-1.5 text-[11px] text-emerald-100 disabled:opacity-40"
+          className="border border-emerald-700 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-1.5 text-[11px] text-emerald-800 dark:text-emerald-100 disabled:opacity-40"
           onClick={openWhatsapp}
           disabled={!phone}
         >
@@ -2558,7 +2558,7 @@ const WhatsappOrderActions = ({
       </div>
       {notice ? (
         <p
-          className={`mt-2 rounded px-2 py-1 text-[11px] ${notice.tone === "success" ? "bg-emerald-500/10 text-emerald-200" : "bg-rose-500/10 text-rose-200"}`}
+          className={`mt-2 rounded px-2 py-1 text-[11px] ${notice.tone === "success" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200" : "bg-rose-500/10 text-rose-700 dark:text-rose-200"}`}
         >
           {notice.message}
         </p>
@@ -2654,25 +2654,25 @@ const CancellationReasonDialog = ({
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-rose-200">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-rose-700 dark:text-rose-200">
               Cancelación manual
             </p>
             <h2 id="cancel-title" className="text-lg font-black">
               Cancelar {order.folio}
             </h2>
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
               {order.customer} · {order.createdAt}
             </p>
           </div>
           <StatusBadge status={order.status} />
         </div>
-        <div className="mt-3 rounded-lg border border-zinc-800 bg-zinc-900/60 p-2 text-xs text-zinc-300">
+        <div className="mt-3 rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-2 text-xs text-zinc-700 dark:text-zinc-300">
           <p>
             La cancelación quedará guardada con su razón para seguimiento
             administrativo.
           </p>
           {runtime.source !== "d1" ? (
-            <p className="mt-1 rounded bg-amber-500/10 px-2 py-1 text-amber-100">
+            <p className="mt-1 rounded bg-amber-500/10 px-2 py-1 text-amber-800 dark:text-amber-100">
               Vista local: la cancelación se refleja solo en pantalla.
             </p>
           ) : null}
@@ -2682,7 +2682,7 @@ const CancellationReasonDialog = ({
             <button
               key={option}
               type="button"
-              className={`rounded-lg border px-3 py-2 text-xs font-semibold ${preset === option ? "border-rose-300 bg-rose-300 text-black" : "border-zinc-700 bg-zinc-900 text-zinc-200"}`}
+              className={`rounded-lg border px-3 py-2 text-xs font-semibold ${preset === option ? "border-rose-300 bg-rose-300 text-black" : "border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200"}`}
               onClick={() => selectPreset(option)}
               disabled={busy}
             >
@@ -2690,7 +2690,7 @@ const CancellationReasonDialog = ({
             </button>
           ))}
         </div>
-        <label className="mt-3 block text-xs font-semibold text-zinc-200">
+        <label className="mt-3 block text-xs font-semibold text-zinc-800 dark:text-zinc-200">
           Razón obligatoria
           <textarea
             className="input min-h-24 text-sm"
@@ -2713,20 +2713,20 @@ const CancellationReasonDialog = ({
           <span>{reason.length}/200</span>
         </div>
         {error || validationError ? (
-          <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-200">
+          <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-rose-200">
             {error ?? validationError}
           </p>
         ) : null}
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <Button
-            className="flex-1 border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm disabled:opacity-40"
+            className="flex-1 border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm disabled:opacity-40"
             onClick={onClose}
             disabled={busy}
           >
             Volver
           </Button>
           <Button
-            className="flex-1 border border-rose-700 bg-rose-950/70 px-3 py-2 text-sm font-bold text-rose-100 disabled:opacity-40"
+            className="flex-1 border border-rose-700 bg-rose-50 dark:bg-rose-950/70 px-3 py-2 text-sm font-bold text-rose-800 dark:text-rose-100 disabled:opacity-40"
             onClick={() => void submit()}
             disabled={disabled}
           >
@@ -3013,7 +3013,7 @@ const OrdersBoard = ({
             <h2 className="mt-1 text-2xl font-black text-zinc-50">
               Pedidos
             </h2>
-            <p className="mt-1 max-w-3xl text-sm text-zinc-400">
+            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
               Movimientos, detalle, ticket y confirmación corta del pedido.
             </p>
           </div>
@@ -3164,7 +3164,7 @@ const CloseMetricCard = ({
 );
 
 const EmptyCloseState = () => (
-  <Card className="p-3 text-sm text-zinc-400">
+  <Card className="p-3 text-sm text-zinc-600 dark:text-zinc-400">
     No hay datos de cierre para el rango seleccionado.
   </Card>
 );
@@ -3315,20 +3315,20 @@ const OperationalClosePanel = ({
           <div>
             <p className="home-section-label">Cierre de caja</p>
             <h2 className="text-xl font-black">Cierre</h2>
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
               Rango, total, órdenes y exporte sin estados repetidos.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
-              className="border border-emerald-600/50 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/60 px-3 py-2 text-sm disabled:opacity-40 inline-flex items-center gap-1.5"
+              className="border border-emerald-600/50 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-900/60 px-3 py-2 text-sm disabled:opacity-40 inline-flex items-center gap-1.5"
               onClick={() => void copyWhatsappSummary()}
               disabled={!summary || !sessionActive}
             >
               <Share2 size={15} /> WhatsApp
             </Button>
             <Button
-              className="border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm disabled:opacity-40"
+              className="border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm disabled:opacity-40"
               onClick={() => void downloadRangeCsv()}
               disabled={exporting || !sessionActive}
             >
@@ -3337,7 +3337,7 @@ const OperationalClosePanel = ({
           </div>
         </div>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="text-[11px] text-zinc-400">
+          <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
             Desde
             <input
               className="input text-xs"
@@ -3346,7 +3346,7 @@ const OperationalClosePanel = ({
               onChange={(event) => setFrom(event.target.value)}
             />
           </label>
-          <label className="text-[11px] text-zinc-400">
+          <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
             Hasta
             <input
               className="input text-xs"
@@ -3355,7 +3355,7 @@ const OperationalClosePanel = ({
               onChange={(event) => setTo(event.target.value)}
             />
           </label>
-          <label className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs text-zinc-200">
+          <label className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200">
             <input
               type="checkbox"
               checked={includeTerminal}
@@ -3372,17 +3372,17 @@ const OperationalClosePanel = ({
           </Button>
         </div>
         {!sessionActive ? (
-          <p className="mt-2 rounded bg-amber-500/10 px-2 py-1 text-xs text-amber-200">
+          <p className="mt-2 rounded bg-amber-500/10 px-2 py-1 text-xs text-amber-700 dark:text-amber-200">
             Sesión expirada. Vuelve a iniciar sesión.
           </p>
         ) : null}
         {error ? (
-          <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-200">
+          <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-rose-200">
             {error}
           </p>
         ) : null}
         {notice ? (
-          <p className="mt-2 rounded bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200">
+          <p className="mt-2 rounded bg-emerald-500/10 px-2 py-1 text-xs text-emerald-700 dark:text-emerald-200">
             {notice}
           </p>
         ) : null}
@@ -3396,7 +3396,7 @@ const OperationalClosePanel = ({
       </Card>
 
       {loading ? (
-        <Card className="p-3 text-sm text-zinc-300">
+        <Card className="p-3 text-sm text-zinc-700 dark:text-zinc-300">
           Cargando cierre operativo…
         </Card>
       ) : null}
@@ -3474,7 +3474,7 @@ const OperationalClosePanel = ({
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-zinc-400">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     Sin métodos en el rango.
                   </p>
                 )}
@@ -3493,7 +3493,7 @@ const OperationalClosePanel = ({
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-zinc-400">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     Sin modos en el rango.
                   </p>
                 )}
@@ -3508,7 +3508,7 @@ const OperationalClosePanel = ({
                 summary.topItems.map((item) => (
                   <div
                     key={item.sku}
-                    className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-2 text-xs"
+                    className="rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-2 text-xs"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <span className="font-semibold">{item.name}</span>
@@ -3522,7 +3522,7 @@ const OperationalClosePanel = ({
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-zinc-400">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
                   Sin productos no cancelados en el rango.
                 </p>
               )}
@@ -3536,7 +3536,7 @@ const OperationalClosePanel = ({
                 summary.recentOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-2 text-xs"
+                    className="rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-2 text-xs"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -3556,7 +3556,7 @@ const OperationalClosePanel = ({
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-zinc-400">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
                   Sin órdenes recientes en el rango.
                 </p>
               )}
@@ -3591,7 +3591,7 @@ const PaymentStatusBadge = ({ status }: { status: string }) => {
     : status;
   const tone = isOrderV2PaymentStatus(status)
     ? paymentStatusTone[status]
-    : "border-zinc-500/40 text-zinc-200";
+    : "border-zinc-500/40 text-zinc-800 dark:text-zinc-200";
   return <StatusPill className={tone}>{label}</StatusPill>;
 };
 
@@ -3751,10 +3751,10 @@ const PaymentDetailModal = ({
             <h2 id="payment-detail-title" className="payments-detail__title">
               {order.folio}
             </h2>
-            <p className="break-words text-sm font-semibold text-zinc-100">
+            <p className="break-words text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               {order.customer}
             </p>
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
               {order.createdAt} · {channelLabel[order.channel]} ·{" "}
               {sourceLabel(order.source)}
             </p>
@@ -3795,11 +3795,11 @@ const PaymentDetailModal = ({
         </div>
 
         <div className="mt-3 space-y-3">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/55 p-3">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/55 p-3">
             <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
               Resumen del pedido
             </p>
-            <p className="mt-2 text-sm text-zinc-300">{getPaymentItemsDigest(order)}</p>
+            <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{getPaymentItemsDigest(order)}</p>
             <OrderItems order={order} />
           </div>
 
@@ -3827,10 +3827,10 @@ const PaymentDetailModal = ({
             <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-3">
               <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-100">
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-900 dark:text-cyan-800 dark:text-cyan-100">
                     Ticket visual
                   </p>
-                  <p className="text-xs text-zinc-400">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
                     Preview compacto para validar folio, lugar, pago y total.
                   </p>
                 </div>
@@ -3845,7 +3845,7 @@ const PaymentDetailModal = ({
             </div>
           ) : null}
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/55 p-3">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/55 p-3">
             <label className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
               Nota para seguimiento
               <textarea
@@ -3857,14 +3857,14 @@ const PaymentDetailModal = ({
               />
             </label>
             {noteWithoutLocation ? (
-              <p className="mt-2 text-[11px] text-zinc-400">
+              <p className="mt-2 text-[11px] text-zinc-600 dark:text-zinc-400">
                 Nota actual: {noteWithoutLocation}
               </p>
             ) : null}
           </div>
 
           <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-3">
-            <label className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-100">
+            <label className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-900 dark:text-cyan-800 dark:text-cyan-100">
               Mensaje listo para WhatsApp
               <textarea
                 className="input mt-2 min-h-48 text-xs leading-5"
@@ -3873,7 +3873,7 @@ const PaymentDetailModal = ({
               />
             </label>
             {!phone ? (
-              <p className="mt-2 rounded-lg bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+              <p className="mt-2 rounded-lg bg-amber-400/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-100">
                 Telefono invalido para abrir WhatsApp desde esta vista.
               </p>
             ) : null}
@@ -3936,14 +3936,14 @@ const PaymentDetailModal = ({
 
         {notice ? (
           <p
-            className={`mt-3 rounded-xl px-3 py-2 text-xs ${notice.tone === "error" ? "bg-rose-500/10 text-rose-200" : "bg-emerald-500/10 text-emerald-200"}`}
+            className={`mt-3 rounded-xl px-3 py-2 text-xs ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-200" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"}`}
           >
             {notice.message}
           </p>
         ) : null}
         {ticketNotice ? (
           <p
-            className={`mt-3 rounded-xl px-3 py-2 text-xs ${ticketNotice.tone === "error" ? "bg-rose-500/10 text-rose-200" : "bg-emerald-500/10 text-emerald-200"}`}
+            className={`mt-3 rounded-xl px-3 py-2 text-xs ${ticketNotice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-200" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"}`}
           >
             {ticketNotice.message}
           </p>
@@ -4179,7 +4179,7 @@ const PaymentNotesPanel = ({
             </p>
           </div>
           <Button
-            className="border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs disabled:opacity-40"
+            className="border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-1.5 text-xs disabled:opacity-40"
             onClick={() => runtime.reload(true)}
             disabled={runtime.loading || !runtime.sessionActive}
           >
@@ -4253,7 +4253,7 @@ const PaymentNotesPanel = ({
         </div>
 
         {!runtime.sessionActive ? (
-          <p className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+          <p className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-100">
             Inicia sesión para operar pagos y guardar seguimiento.
           </p>
         ) : null}
@@ -4273,7 +4273,7 @@ const PaymentNotesPanel = ({
           action={
             filter !== "all" || search.trim() || rangeFilter !== "today" ? (
               <Button
-                className="border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs"
+                className="border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-xs"
                 onClick={() => {
                   setFilter("all");
                   setSearch("");
@@ -4298,7 +4298,7 @@ const PaymentNotesPanel = ({
               <div className="payments-card__head">
                 <div className="min-w-0">
                   <p className="payments-card__folio">{order.folio}</p>
-                  <p className="break-words text-sm font-semibold text-zinc-100">
+                  <p className="break-words text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                     {order.customer}
                   </p>
                 </div>
@@ -4330,7 +4330,7 @@ const PaymentNotesPanel = ({
               </div>
               {notice ? (
                 <p
-                  className={`mt-2 rounded px-2 py-1 text-xs ${notice.tone === "error" ? "bg-rose-500/10 text-rose-200" : "bg-emerald-500/10 text-emerald-200"}`}
+                  className={`mt-2 rounded px-2 py-1 text-xs ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-200" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"}`}
                 >
                   {notice.message}
                 </p>
@@ -4398,7 +4398,7 @@ const HistoryPanel = ({
           Historial {runtime.source === "d1" ? "de pedidos" : "de esta vista"}
         </h3>
         {runtime.source === "d1" && terminalOrders.length === 0 ? (
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Aún no hay pedidos entregados o cancelados.
           </p>
         ) : null}
@@ -4413,12 +4413,12 @@ const HistoryPanel = ({
                     {o.folio} · {o.customer} · {o.createdAt}
                   </p>
                   {o.status === "cancelled" ? (
-                    <p className="mt-1 text-xs text-rose-200">
+                    <p className="mt-1 text-xs text-rose-700 dark:text-rose-200">
                       Cancelado por operador
                     </p>
                   ) : null}
                   {cancellationReason ? (
-                    <p className="mt-1 text-xs text-amber-200">
+                    <p className="mt-1 text-xs text-amber-700 dark:text-amber-200">
                       Razón: {cancellationReason}
                     </p>
                   ) : null}
@@ -4428,7 +4428,7 @@ const HistoryPanel = ({
                   {o.status === "cancelled" && runtime.source === "d1" ? (
                     <Button
                       type="button"
-                      className="min-h-11 border border-rose-500/40 px-3 py-2 text-xs text-rose-100 disabled:opacity-50"
+                      className="min-h-11 border border-rose-300 dark:border-rose-500/40 px-3 py-2 text-xs text-rose-800 dark:text-rose-100 disabled:opacity-50"
                       disabled={runtime.actionOrderId === o.id}
                       onClick={() => void onArchiveCancelled(o)}
                     >
@@ -4480,7 +4480,7 @@ const TicketPreviewItems = ({ order }: { order: InternalOrder }) => (
               {item.qty}x {item.name}
             </p>
             {notes.length ? (
-              <p className="mt-1 break-words text-xs text-zinc-400">
+              <p className="mt-1 break-words text-xs text-zinc-600 dark:text-zinc-400">
                 {notes.join(" · ")}
               </p>
             ) : null}
@@ -4553,7 +4553,7 @@ const OrderTicketPreview = ({
 
       <div className="orders-ticket-preview__body">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-200">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700 dark:text-amber-200">
             Resumen del pedido
           </p>
           <TicketPreviewItems order={order} />

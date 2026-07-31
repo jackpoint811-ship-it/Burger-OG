@@ -22,22 +22,22 @@ export function CatalogCartBar({ onOpenCart }: CatalogCartBarProps) {
       transition={{ type: "spring", damping: 25, stiffness: 200 }}
       style={{
         position: "fixed",
-        bottom: "12px",
-        left: "12px",
-        right: "12px",
-        maxWidth: "calc(var(--catalog-max-width, 768px) - 24px)",
+        bottom: "16px",
+        left: "16px",
+        right: "16px",
+        maxWidth: "calc(var(--catalog-max-width, 768px) - 32px)",
         margin: "0 auto",
-        zIndex: 40,
-        backgroundColor: "var(--color-accent, #16A34A)",
-        color: "#FFFFFF",
-        borderRadius: "9999px",
-        padding: "10px 18px",
+        zIndex: "var(--z-floating, 24)",
+        backgroundColor: "var(--color-accent)",
+        color: "var(--color-text-on-accent)",
+        borderRadius: "var(--radius-pill)",
+        padding: "6px 16px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        boxShadow: "0 8px 28px rgba(22, 163, 74, 0.35)",
+        boxShadow: "var(--shadow-cta)",
         cursor: "pointer",
-        boxSizing: "border-box",
+        minHeight: "var(--touch-target-min, 44px)",
       }}
       onClick={onOpenCart}
     >
@@ -48,24 +48,24 @@ export function CatalogCartBar({ onOpenCart }: CatalogCartBarProps) {
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 400, damping: 15 }}
           style={{
-            width: "30px",
-            height: "30px",
+            width: "32px",
+            height: "32px",
             borderRadius: "50%",
-            backgroundColor: "#FFFFFF",
-            color: "var(--color-accent, #16A34A)",
+            backgroundColor: "var(--color-text-on-accent)",
+            color: "var(--color-accent)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontFamily: "'Inter', sans-serif",
             fontWeight: 800,
-            fontSize: "13px",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+            fontSize: "14px",
+            boxShadow: "var(--shadow-card)",
           }}
           aria-label={`${count} ${count === 1 ? "producto" : "productos"}`}
         >
           {count}
         </motion.div>
-        <div>
+        <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <span
             style={{
               fontSize: "10px",
@@ -73,18 +73,19 @@ export function CatalogCartBar({ onOpenCart }: CatalogCartBarProps) {
               fontWeight: 700,
               textTransform: "uppercase",
               letterSpacing: "0.05em",
-              display: "block",
               opacity: 0.9,
+              lineHeight: 1,
+              marginBottom: "2px",
             }}
           >
             MI PEDIDO
           </span>
           <span
             style={{
-              fontSize: "14px",
+              fontSize: "15px",
               fontFamily: "'Inter', sans-serif",
               fontWeight: 800,
-              color: "#FFFFFF",
+              lineHeight: 1,
             }}
           >
             {formatCurrency(total)}
@@ -98,17 +99,19 @@ export function CatalogCartBar({ onOpenCart }: CatalogCartBarProps) {
           display: "flex",
           alignItems: "center",
           gap: "6px",
-          fontSize: "12px",
+          fontSize: "13px",
           fontFamily: "'Inter', sans-serif",
           fontWeight: 800,
           textTransform: "uppercase",
-          backgroundColor: "#FFFFFF",
-          color: "var(--color-accent, #16A34A)",
-          padding: "8px 16px",
-          borderRadius: "9999px",
+          backgroundColor: "var(--color-text-on-accent)",
+          color: "var(--color-accent)",
+          padding: "0 16px",
+          borderRadius: "var(--radius-pill)",
           border: "none",
           cursor: "pointer",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+          boxShadow: "var(--shadow-card)",
+          minHeight: "36px", /* Botón interno un poco más pequeño visualmente pero... */
+          margin: "4px 0",   /* ... con margen asegura que el contenedor principal alcance los 44px de target táctil */
         }}
         onClick={(e) => {
           e.stopPropagation();
