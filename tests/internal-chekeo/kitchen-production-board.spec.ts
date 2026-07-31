@@ -54,7 +54,7 @@ const viewports = [
   { name: "tablet-768", width: 768, height: 1024 },
   { name: "desktop-1280", width: 1280, height: 900 },
 ] as const;
-const validInternalPin = "0485";
+const validInternalPin = "BOG_INTERNAL_PIN";
 const isAdminOnlyMode = process.env.VITE_INTERNAL_AUTH_MODE === "admin-only";
 
 const isoMinutesAgo = (minutes: number) =>

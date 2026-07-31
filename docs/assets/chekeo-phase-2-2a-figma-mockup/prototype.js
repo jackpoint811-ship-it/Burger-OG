@@ -190,7 +190,7 @@ function header(title, subtitle, actions = "") {
           <p>${subtitle}</p>
         </div>
         <div class="header-actions">
-          ${actions || '<button class="icon-button" title="Sincronizar">SYNC</button><button class="icon-button" title="PIN">0485</button>'}
+          ${actions || '<button class="icon-button" title="Sincronizar">SYNC</button><button class="icon-button" title="PIN">BOG_INTERNAL_PIN</button>'}
         </div>
       </div>
     </header>
@@ -280,7 +280,7 @@ function renderLogin() {
           </div>
           <h1>Turno bajo control.</h1>
           <p>Entrada por PIN para staff. Vista optimizada para cocina, pagos y seguimiento de pedidos activos.</p>
-          <div class="chip-row">${chip("Preview Pages", "green")}${chip("PIN 0485", "cyan")}${chip("Mobile first")}</div>
+          <div class="chip-row">${chip("Preview Pages", "green")}${chip("PIN BOG_INTERNAL_PIN", "cyan")}${chip("Mobile first")}</div>
         </section>
         <section class="pin-pad">
           <div class="pin-code"><span></span><span></span><span></span><span></span></div>
@@ -551,7 +551,7 @@ function renderAdmin() {
     "admin",
     `
       <div class="stack">
-        <div class="grid-2">${metric("Preview", "OK", "Pages live")}${metric("PIN", "0485", "staff")}</div>
+        <div class="grid-2">${metric("Preview", "OK", "Pages live")}${metric("PIN", "BOG_INTERNAL_PIN", "staff")}</div>
         <button class="order-card" type="button" data-screen="catalogo">
           <div class="row-split"><strong>Catalogo</strong>${chip("6 referencias", "green")}</div>
           <small>Estado de menu y lectura de productos activos.</small>
@@ -625,7 +625,7 @@ function renderDesktop() {
         <section class="desktop-main">
           <div class="header-main">
             <div><h1>Operacion desktop</h1><p>Vista densa para coordinacion simultanea de pedidos, cocina y pagos.</p></div>
-            <div class="chip-row">${chip("QA-UIUX-PHASE2-1", "green")}${chip("PIN 0485", "cyan")}${chip("Preview Pages")}</div>
+            <div class="chip-row">${chip("QA-UIUX-PHASE2-1", "green")}${chip("PIN BOG_INTERNAL_PIN", "cyan")}${chip("Preview Pages")}</div>
           </div>
           <div class="desktop-grid">
             <div class="card wide">

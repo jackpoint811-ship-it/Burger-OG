@@ -1,6 +1,7 @@
 import type { RaffleTicketsLookupResult } from '@config/index';
 import { useState } from 'react';
 import { lookupRaffleTicketsV2 } from '../lib/raffles-v2';
+import '../tickets.css';
 
 type LookupState = 'idle' | 'loading' | 'success' | 'error';
 type CopyKind = 'code' | 'link' | 'message';
@@ -131,36 +132,29 @@ export const TicketsLookupPage = () => {
     <main className="tickets-page app-shell" aria-labelledby="ticketsPageTitle">
       <section className="terminal-window tickets-hero-card">
         <div className="tickets-hero-lockup">
-          <span className="terminal-path">⚡ BURGERS.EXE SORTEOS & RIFAS</span>
+          <span className="terminal-path">Burgers.exe sorteo</span>
           <h1 id="ticketsPageTitle">Consulta tus tickets</h1>
         </div>
-        <p className="hero-copy">
-          Consulta los folios y boletos acumulados con tu teléfono o código referido. La búsqueda es totalmente privada.
-        </p>
-        <div className="tickets-hero-signal" aria-hidden="true">
-          <span>🎟️ SORTEO ACTIVO</span>
-          <strong>Acumula tickets con cada pedido</strong>
-        </div>
-        <a className="tickets-back-link" href="/">
-          <span>← Volver al menú</span>
-        </a>
+        <p className="hero-copy">Busca con tu teléfono o código referido. La consulta es privada: solo mostramos teléfonos enmascarados.</p>
+        <div className="tickets-hero-signal" aria-hidden="true"><span>Tickets</span><strong>Comparte y suma</strong></div>
+        <a className="tickets-back-link" href="/">← Volver al menú</a>
       </section>
 
       <section className="terminal-window tickets-lookup-card" aria-labelledby="lookupTitle">
         <div className="tickets-module-heading">
-          <span className="terminal-path">🔐 CONSULTA PRIVADA</span>
+          <span className="terminal-path">Consulta privada</span>
           <h2 id="lookupTitle">Buscar tickets</h2>
         </div>
         <form onSubmit={handleLookup} noValidate>
           <label className="terminal-label" htmlFor="ticketPhoneInput">
-            <span>📱 Teléfono</span>
+            Teléfono
             <input
               id="ticketPhoneInput"
               name="phone"
               type="tel"
               inputMode="numeric"
               autoComplete="tel"
-              placeholder="Ej: 5512345678"
+              placeholder="10 dígitos"
               value={phone}
               onChange={(event) => handlePhoneInput(event.target.value)}
               aria-describedby="ticketLookupHelp ticketLookupError"
@@ -169,7 +163,7 @@ export const TicketsLookupPage = () => {
             />
           </label>
           <label className="terminal-label" htmlFor="ticketCodeInput">
-            <span>🎟️ Código referido</span>
+            Código referido
             <input
               id="ticketCodeInput"
               name="code"
@@ -185,11 +179,9 @@ export const TicketsLookupPage = () => {
               aria-busy={status === 'loading' ? 'true' : 'false'}
             />
           </label>
-          <p className="muted" id="ticketLookupHelp">Ingresa al menos uno. El teléfono requiere 10 dígitos.</p>
-          {fieldError ? <p className="inline-error" id="ticketLookupError" role="alert">⚠️ {fieldError}</p> : <p id="ticketLookupError" className="sr-only" />}
-          <button className="terminal-button tickets-submit-btn" type="submit" disabled={!canLookup}>
-            {status === 'loading' ? '⏳ Consultando...' : '🔍 Consultar tickets'}
-          </button>
+          <p className="muted" id="ticketLookupHelp">Ingresa al menos uno. Si escribes teléfono, debe tener mínimo 10 dígitos.</p>
+          {fieldError ? <p className="inline-error" id="ticketLookupError" role="alert">{fieldError}</p> : <p id="ticketLookupError" className="sr-only" />}
+          <button className="terminal-button" type="submit" disabled={!canLookup}>{status === 'loading' ? 'Consultando...' : 'Consultar tickets'}</button>
         </form>
         <p className={status === 'error' ? 'tickets-status is-error' : status === 'success' ? 'tickets-status is-success' : 'tickets-status'} aria-live="polite">{statusText}</p>
       </section>
@@ -197,41 +189,34 @@ export const TicketsLookupPage = () => {
       {participant ? (
         <section className="terminal-window tickets-result-card" aria-labelledby="ticketsResultTitle" aria-live="polite">
           <div className="tickets-module-heading">
-            <span className="terminal-path">🎉 RESULTADO ENCONTRADO</span>
+            <span className="terminal-path">Resultado encontrado</span>
             <h2 id="ticketsResultTitle">Tus oportunidades</h2>
           </div>
-          <div className="tickets-count-card" aria-label="Total tickets">
-            <div className="tickets-stub-notch left" aria-hidden="true" />
-            <div className="tickets-stub-notch right" aria-hidden="true" />
-            <strong>{participant.totalTickets}</strong>
-            <span>BOLETOS ACUMULADOS 🎟️</span>
-          </div>
+          <div className="tickets-count-card" aria-label="Total tickets"><strong>{participant.totalTickets}</strong><span>total tickets</span></div>
           <dl className="tickets-result-list">
-            <div><dt>🍔 Burgers compradas</dt><dd>{participant.burgerTickets}</dd></div>
-            <div><dt>👥 Referidos</dt><dd>{participant.referralTickets}</dd></div>
-            <div><dt>⭐ Bonus manuales</dt><dd>{participant.manualExtraTickets}</dd></div>
-            <div><dt>📄 Último folio</dt><dd><code>{participant.lastOrderFolio || '—'}</code></dd></div>
-            <div><dt>📅 Última orden</dt><dd>{formatLookupDate(participant.lastOrderAt)}</dd></div>
-            <div><dt>📱 Teléfono</dt><dd>{participant.customerPhoneMasked || 'Confirmado'}</dd></div>
-            {referralCode ? <div><dt>🎟️ Código referido</dt><dd><code>{referralCode.code}</code></dd></div> : null}
-            {referralCode ? <div><dt>⚡ Estado</dt><dd><span className="tickets-badge-status">{referralCode.isActive ? '🟢 Activo' : '🔴 Inactivo'}</span></dd></div> : null}
+            <div><dt>Tickets por burgers</dt><dd>{participant.burgerTickets}</dd></div>
+            <div><dt>Tickets por referidos</dt><dd>{participant.referralTickets}</dd></div>
+            <div><dt>Tickets extra manuales</dt><dd>{participant.manualExtraTickets}</dd></div>
+            <div><dt>Último folio</dt><dd>{participant.lastOrderFolio || '—'}</dd></div>
+            <div><dt>Última orden</dt><dd>{formatLookupDate(participant.lastOrderAt)}</dd></div>
+            <div><dt>Teléfono</dt><dd>{participant.customerPhoneMasked || 'Teléfono confirmado'}</dd></div>
+            {referralCode ? <div><dt>Código referido</dt><dd><code>{referralCode.code}</code></dd></div> : null}
+            {referralCode ? <div><dt>Estado del código</dt><dd>{referralCode.isActive ? 'Activo' : 'Inactivo'}</dd></div> : null}
           </dl>
-          {referralCode ? <p className="tickets-code-owner">Propietario del código: {referralCode.ownerPhoneMasked}</p> : null}
+          {referralCode ? <p className="tickets-code-owner">Teléfono del código: {referralCode.ownerPhoneMasked}</p> : null}
           {referralCode ? (
             <>
               <label className="terminal-label" htmlFor="shareMessage">
-                <span>💬 Copy listo para WhatsApp</span>
-                <textarea id="shareMessage" value={shareMessage} readOnly rows={4} />
+                Mensaje para WhatsApp
+                <textarea id="shareMessage" value={shareMessage} readOnly rows={5} />
               </label>
               <div className="tickets-actions-grid">
-                <button type="button" onClick={() => handleCopy('code')}>📋 Copiar código</button>
-                <button type="button" onClick={() => handleCopy('link')}>🔗 Copiar link</button>
-                <button type="button" onClick={() => handleCopy('message')}>✉️ Copiar mensaje</button>
-                <a className="tickets-whatsapp-button" href={`https://wa.me/?text=${encodeURIComponent(shareMessage)}`} target="_blank" rel="noopener noreferrer">
-                  📲 Compartir por WhatsApp
-                </a>
+                <button type="button" onClick={() => handleCopy('code')}>Copiar código</button>
+                <button type="button" onClick={() => handleCopy('link')}>Copiar link</button>
+                <button type="button" onClick={() => handleCopy('message')}>Copiar mensaje</button>
+                <a className="tickets-whatsapp-button" href={`https://wa.me/?text=${encodeURIComponent(shareMessage)}`} target="_blank" rel="noopener noreferrer">Compartir por WhatsApp</a>
               </div>
-              {copyFeedback ? <p className="tickets-status is-success" aria-live="polite">✓ {copyFeedback}</p> : null}
+              {copyFeedback ? <p className="tickets-status is-success" aria-live="polite">{copyFeedback}</p> : null}
             </>
           ) : null}
         </section>
@@ -247,7 +232,7 @@ export const TicketsLookupPage = () => {
             <div><dt>Estado del código</dt><dd>{referralCode.isActive ? 'Activo' : 'Inactivo'}</dd></div>
           </dl>
           <label className="terminal-label" htmlFor="shareMessageCodeOnly">
-            Copy listo para WhatsApp
+            Mensaje para WhatsApp
             <textarea id="shareMessageCodeOnly" value={shareMessage} readOnly rows={5} />
           </label>
           <div className="tickets-actions-grid">

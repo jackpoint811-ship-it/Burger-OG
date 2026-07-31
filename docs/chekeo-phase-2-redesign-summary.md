@@ -49,7 +49,7 @@ La metadata reporta 13 capturas, `horizontalOverflow: false` en todas, sin offen
 
 - Capturas tomadas con frontend local `http://127.0.0.1:5174/`.
 - Todas las rutas `/api/**` se proxyearon a `https://burgers-exe-internal-v2-preview.pages.dev`.
-- PIN usado en la validación: `0485`.
+- PIN usado en la validación: `BOG_INTERNAL_PIN`.
 - Primer acceso de capturas autenticó con PIN; las capturas posteriores reutilizaron la sesión preview del mismo contexto de API.
 - No se creó servidor falso ni se inyectaron datos falsos para las capturas.
 

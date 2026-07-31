@@ -19,7 +19,7 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 
 ## Estado funcional deseado
 
-- Pedidos: revisar pedidos con detalle, sin saturar con descarga o envío de imagen.
+- Pedidos: revisar pedidos con detalle, sin saturar con descarga/envío de imagen.
 - Pagos: concentrar ticket, WhatsApp y comprobante.
 - Corte: debe funcionar bien y mostrar resumen operativo.
 - Resumen K: debe mostrar burgers, ingredientes, extras y cantidades necesarias.

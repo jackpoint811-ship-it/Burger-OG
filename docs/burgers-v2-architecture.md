@@ -24,6 +24,8 @@
 - Legacy, Apps Script, and Sheets remain deprecated but not deleted.
 - Public V2 preview and Internal V2 preview remain available as backup.
 
+Fase 6 note: root `public-order:*` scripts were removed from active `package.json`. Any remaining Apps Script, Sheets, or old Cloudflare public-order references in this historical architecture log are legacy/no-runtime unless a newer section explicitly says otherwise.
+
 ## Estructura propuesta
 
 - `apps/public-order-v2`: landing + ordering shell.
@@ -34,7 +36,7 @@
 
 ## Decisiones técnicas
 
-- V2 corre en paralelo, sin mutar `cloudflare/public-order` ni `cloudflare/internal-chekeo`.
+- V2 corre en paralelo, sin mutar las superficies legacy que ahora viven en `legacy/cloudflare/public-order` y `legacy/cloudflare/internal-chekeo`.
 - Configuración single-repo con `APP_TARGET` para dev/build independiente por app.
 - Contratos TS explícitos para reducir acoplamiento con backend.
 
@@ -221,7 +223,7 @@ Alcance de la fase:
 No cambia en V2-9D:
 
 - No se agregan endpoints ni bindings.
-- No se modifica `/api/order`, `/api/rpc`, `functions/api`, migrations, Apps Script, Sheets, legacy, `cloudflare/public-order`, `cloudflare/internal-chekeo` ni `BOG_ACTIVE_ENV`.
+- No se modifica `/api/order`, `/api/rpc`, `functions/api`, migrations, Apps Script, Sheets, legacy, `legacy/cloudflare/public-order`, `legacy/cloudflare/internal-chekeo` ni `BOG_ACTIVE_ENV`.
 - No se conectan pagos reales ni WhatsApp real.
 
 ## V2-10A.1 Protected orders CSV export
@@ -274,7 +276,7 @@ No-touch confirmations:
 - No changes to Public V2 checkout behavior.
 - No changes to `/api/order` legacy or `/api/rpc` legacy.
 - No Apps Script or Sheets sync is introduced.
-- No changes to `cloudflare/public-order`, `cloudflare/internal-chekeo`, legacy code, migrations, payments, WhatsApp, or `BOG_ACTIVE_ENV`.
+- No changes to `legacy/cloudflare/public-order`, `legacy/cloudflare/internal-chekeo`, legacy code, migrations, payments, WhatsApp, or `BOG_ACTIVE_ENV`.
 
 ## V2-11A Manual WhatsApp order actions
 

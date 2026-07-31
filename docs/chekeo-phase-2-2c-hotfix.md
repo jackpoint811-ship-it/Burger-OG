@@ -93,7 +93,7 @@ Guardadas en `docs/assets/chekeo-phase-2-2c-hotfix/`:
 ## Riesgos
 
 - El calculo de ganancia estimada depende de ventas visibles y costo estimado del endpoint; no sustituye un corte financiero definitivo.
-- El preview real de Pages aun depende del deploy del PR para validar estos cambios contra URL publica con PIN `0485`.
+- El preview real de Pages aun depende del deploy del PR para validar estos cambios contra URL publica con PIN `BOG_INTERNAL_PIN`.
 - La extension de Side Quest para bebida incluida usa el mismo contrato de checklist existente, sin migracion de schema.
 
 ## Pendientes
@@ -103,4 +103,4 @@ Guardadas en `docs/assets/chekeo-phase-2-2c-hotfix/`:
 
 ## Recomendacion de Merge
 
-Recomendado para merge despues de que el PR deploy publique y se confirme login con PIN `0485` en preview real. El cambio es enfocado, mantiene contratos principales y cubre los flujos criticos con Playwright.
+Recomendado para merge despues de que el PR deploy publique y se confirme login con PIN `BOG_INTERNAL_PIN` en preview real. El cambio es enfocado, mantiene contratos principales y cubre los flujos criticos con Playwright.

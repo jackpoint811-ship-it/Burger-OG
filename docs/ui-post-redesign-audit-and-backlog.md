@@ -2,22 +2,24 @@
 
 ## 0) Alcance, método y restricciones aplicadas
 
+Nota Fase 6: este backlog es historico para superficies legacy. Si aparece una ruta antigua `cloudflare/public-order` o `cloudflare/internal-chekeo`, debe leerse como `legacy/cloudflare/public-order` o `legacy/cloudflare/internal-chekeo`; no es ruta activa V2.
+
 Este documento consolida la auditoría final **post-rediseño visual controlado** para:
-- `cloudflare/public-order`
-- `cloudflare/internal-chekeo`
+- `legacy/cloudflare/public-order`
+- `legacy/cloudflare/internal-chekeo`
 
 Fuentes base revisadas:
 - `docs/ui-visual-system-v1.md`
 - `docs/adr-ui-libraries-2026.md`
 - `docs/ui-ux-2026-audit-chekeo-and-public-order.md`
 - `docs/ui-redesign-qa-checklist.md`
-- `docs/ui-ux-mobile-first-plan.md`
-- `docs/cloudflare-internal-chekeo-phase-0-audit.md`
-- `deep-research-report-actualizado.md` (disponible)
+- `legacy/docs/ui-ux-mobile-first-plan.md`
+- `legacy/docs/cloudflare-internal-chekeo-phase-0-audit.md`
+- `legacy/docs/deep-research-report-actualizado.md` (disponible)
 
 Restricciones respetadas:
 - Sin cambios de lógica/contratos/flujo de negocio.
-- Sin tocar `cloudflare/public-order/*` ni `cloudflare/internal-chekeo/*`.
+- Sin tocar `legacy/cloudflare/public-order/*` ni `legacy/cloudflare/internal-chekeo/*`.
 - Sin tocar backend, Apps Script, Cloudflare Functions, Sheets, `legacy/`, `BOG_ACTIVE_ENV`.
 - Sin dependencias nuevas ni cambios package/build/config.
 

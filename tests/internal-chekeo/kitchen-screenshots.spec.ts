@@ -53,7 +53,7 @@ type OrderRecord = {
   events: OrderEvent[];
 };
 
-const validInternalPin = "0485";
+const validInternalPin = "BOG_INTERNAL_PIN";
 
 const isoMinutesAgo = (minutes: number) =>
   new Date(Date.now() - minutes * 60_000).toISOString();

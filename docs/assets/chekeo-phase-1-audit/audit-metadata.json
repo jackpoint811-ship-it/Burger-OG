@@ -1498,7 +1498,7 @@
     }
   ],
   "notes": [
-    "Preview real usado con PIN temporal 0485.",
+    "Preview real usado con PIN temporal BOG_INTERNAL_PIN.",
     "No se crearon datos ni servidor local para estas capturas."
   ],
   "network404": [
