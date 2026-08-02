@@ -166,22 +166,22 @@ export const buildWhatsappOrderMessage = (
   const note = safeText(order.note, '');
 
   return [
-    `Hola ${name},`,
+    `¡Hola ${name}! 🍔`,
     '',
-    'Tu pedido Burgers.exe queda asi:',
-    `Folio: ${folio}`,
-    `Total: ${total}`,
-    `Entrega: ${deliveryDetail}`,
-    `Pago: ${paymentMethod} (${paymentStatus})`,
+    `*Tu pedido en Burgers.exe:*`,
+    `• *Folio:* ${folio}`,
+    `• *Total:* ${total}`,
+    `• *Entrega:* ${deliveryDetail}`,
+    `• *Pago:* ${paymentMethod} (${paymentStatus})`,
     '',
-    'Resumen del pedido:',
+    '*Detalle del pedido:*',
     ...buildWhatsappOrderSummaryLines(order),
     ...(isTransferPaymentMethod(order.paymentMethod)
       ? ['', ...buildBankDetailLines(order.bankDetails)]
       : []),
-    ...(note ? ['', `Notas: ${note}`] : []),
+    ...(note ? ['', `*Notas:* ${note}`] : []),
     '',
-    'Gracias por pedir en Burgers.exe.',
+    '¡Gracias por tu pedido en Burgers.exe! ✨',
   ].join('\n');
 };
 
@@ -190,7 +190,7 @@ export const buildWhatsappOrderConfirmationMessage = (
 ): string => {
   const name = getCustomerName(order);
   const total = formatWhatsappCurrency(order.total);
-  return `Hola ${name}. Tu pedido en Burgers.exe quedó registrado. Total a pagar: ${total}.`;
+  return `¡Hola ${name}! Tu pedido en Burgers.exe quedó registrado. Total a pagar: ${total}.`;
 };
 
 export const buildWhatsappPaymentMessage = (
@@ -220,26 +220,27 @@ export const buildWhatsappPaymentMessage = (
     : '';
 
   return [
-    `Burgers.exe // ${paymentStatus}`,
+    `*Burgers.exe* — ${paymentStatus}`,
     '',
-    `Hola ${name}`,
+    `¡Hola ${name}!`,
     '',
     isTransfer && !isPaid
-      ? `Tu pedido ${folio} esta pendiente de transferencia.`
+      ? `Tu pedido *${folio}* está pendiente de transferencia.`
       : isTransfer && isPaid
-        ? `Pago confirmado para el pedido ${folio}.`
-        : `Tu pedido ${folio} queda en efectivo.`,
-    `Total: ${total}`,
-    `Entrega: ${deliveryDetail}`,
-    `Pedido: ${orderDigest}`,
+        ? `Pago *confirmado* para el pedido *${folio}*.`
+        : `Tu pedido *${folio}* se pagará en efectivo al recibir.`,
+    `• *Total:* ${total}`,
+    `• *Entrega:* ${deliveryDetail}`,
+    `• *Pedido:* ${orderDigest}`,
     ...(isTransfer && !isPaid && bankLine
-      ? [`Datos para transferir: ${bankLine}`]
+      ? ['', `*Datos para transferir:* ${bankLine}`]
       : []),
+    '',
     isTransfer && !isPaid
-      ? 'Cuando pagues, mandame tu comprobante por aqui.'
+      ? 'Al realizar la transferencia, compárteme tu comprobante por aquí.'
       : isPaid
-        ? 'Gracias. Te aviso cualquier actualizacion por aqui.'
-        : 'Pagas al recibir. Gracias.',
+        ? '¡Gracias! Te avisamos cuando tu pedido vaya en camino.'
+        : 'Pagas al recibir. ¡Gracias por tu pedido!',
   ].join('\n');
 };
 export const normalizeWhatsappPhone = (phone: string): string => {

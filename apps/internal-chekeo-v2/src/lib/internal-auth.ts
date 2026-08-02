@@ -18,20 +18,18 @@ export const normalizeInternalAuthMode = (
   const normalized = value?.trim().toLowerCase();
   return SUPPORTED_INTERNAL_AUTH_MODES.has(normalized as InternalAuthMode)
     ? (normalized as InternalAuthMode)
-    : 'global';
+    : 'admin-only';
 };
 
 export const getInternalAuthMode = (): InternalAuthMode =>
   normalizeInternalAuthMode(readInternalAuthModeEnv());
 
-// `admin-only` stays as an explicit, auditable future mode until there is a
-// server-side external-auth policy that can create a real operational session.
 export const shouldUseGlobalInternalAuthGate = (
-  _mode: InternalAuthMode,
-): boolean => true;
+  mode: InternalAuthMode,
+): boolean => mode === 'global';
 
 export const shouldGateAdminInternally = (mode: InternalAuthMode): boolean =>
-  mode === 'admin-only';
+  mode === 'admin-only' || mode === 'global';
 
 const parseAuthEnvelope = async (res: Response): Promise<InternalAuthEnvelope> => {
   let envelope: InternalAuthEnvelope | null = null;
