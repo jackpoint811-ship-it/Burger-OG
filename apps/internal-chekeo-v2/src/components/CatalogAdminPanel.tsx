@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { CatalogBanner, IngredientV2, MenuCategory, MenuCategoryBanner, MenuItem, MenuV2Response, ProductIngredientRecipeV2, PromoCard as PromoCardType } from '@config/index';
+import type { CatalogBanner, IngredientV2, MenuCategory, MenuCategoryBanner, MenuItem, MenuV2Response, ProductIngredientRecipeV2, PromoCard as PromoCardType, PublicConfig } from '@config/index';
 import { Button, Card } from '@ui/index';
 import { createIngredientV2Admin, fetchIngredientsV2Admin, fetchProductRecipeV2Admin, saveProductRecipeV2Admin, updateIngredientV2Admin } from '../lib/ingredients-v2-admin';
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -111,8 +111,54 @@ export function CatalogAdminPanel() {
   const [selectedCatalogBannerFile, setSelectedCatalogBannerFile] = useState<File | null>(null);
   const [catalogBannerError, setCatalogBannerError] = useState<string | null>(null);
   const catalogBannerFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [siteConfigSaving, setSiteConfigSaving] = useState(false);
+  const [siteConfigError, setSiteConfigError] = useState<string | null>(null);
   const [catalogBannersLoading, setCatalogBannersLoading] = useState(false);
   const [catalogBannersError, setCatalogBannersError] = useState<string | null>(null);
+
+  const onToggleCatalogEnabled = async (enabled: boolean) => {
+    if (!canEdit || siteConfigSaving) return;
+    setSiteConfigSaving(true);
+    setSiteConfigError(null);
+    try {
+      const res = await fetch('/api/menu-v2-admin/site-config', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ catalogEnabled: enabled })
+      });
+      const data = (await res.json()) as { ok: boolean; publicConfig?: PublicConfig; error?: string };
+      if (!res.ok || !data.ok || !data.publicConfig) throw new Error(data.error ?? 'Error al actualizar Modo Catálogo');
+      setMenu((current) => current ? { ...current, publicConfig: data.publicConfig! } : current);
+      setNotice(enabled ? 'Modo Catálogo activado en D1' : 'Modo Catálogo desactivado (Modo Flujo activo)');
+    } catch (e) {
+      setSiteConfigError(e instanceof Error ? e.message : 'No se pudo guardar la configuración');
+    } finally {
+      setSiteConfigSaving(false);
+    }
+  };
+
+  const onChangePublicMode = async (mode: 'flow' | 'catalog') => {
+    if (!canEdit || siteConfigSaving) return;
+    setSiteConfigSaving(true);
+    setSiteConfigError(null);
+    try {
+      const res = await fetch('/api/menu-v2-admin/site-config', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ publicMode: mode })
+      });
+      const data = (await res.json()) as { ok: boolean; publicConfig?: PublicConfig; error?: string };
+      if (!res.ok || !data.ok || !data.publicConfig) throw new Error(data.error ?? 'Error al actualizar modo público');
+      setMenu((current) => current ? { ...current, publicConfig: data.publicConfig! } : current);
+      setNotice(`Modo público cambiado a: ${mode === 'catalog' ? 'Catálogo' : 'Flujo'}`);
+    } catch (e) {
+      setSiteConfigError(e instanceof Error ? e.message : 'No se pudo guardar el modo público');
+    } finally {
+      setSiteConfigSaving(false);
+    }
+  };
 
   const loadCatalogBanners = async () => {
     setCatalogBannersLoading(true);
@@ -783,12 +829,43 @@ export function CatalogAdminPanel() {
     </Card>
   );
   return <section className='catalog-control-room space-y-2'>
-    <Card className='catalog-header p-3'>
-      <div className='flex flex-wrap items-center justify-between gap-2'>
-        <div><h3 className='font-bold'>Catálogo</h3><p className='muted'>Estado: {sourceLabel}</p></div>
-        {menu?.source !== 'd1' ? <p className='text-xs text-amber-300'>Edición deshabilitada por el momento.</p> : null}
+    <Card className='catalog-header border-pink-500/30 bg-zinc-950/80 p-3.5'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
+        <div>
+          <div className='flex flex-wrap items-center gap-2'>
+            <h3 className='font-bold text-zinc-100 text-base'>Catálogo & Configuración Pública</h3>
+            <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${menu?.publicConfig?.catalogEnabled ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-zinc-800 text-zinc-400 border border-zinc-700'}`}>
+              {menu?.publicConfig?.catalogEnabled ? 'CATÁLOGO ACTIVO' : 'MODO FLUJO'}
+            </span>
+          </div>
+          <p className='muted text-xs mt-0.5'>Fuente: {sourceLabel} · Modo actual: {menu?.publicConfig?.publicMode ?? 'flow'}</p>
+        </div>
+
+        <div className='flex flex-wrap items-center gap-3'>
+          <label className='flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-200 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl transition-colors hover:border-pink-500/40'>
+            <input
+              type='checkbox'
+              className='h-4 w-4 rounded border-zinc-700 bg-zinc-950 text-pink-500 focus:ring-pink-400'
+              checked={menu?.publicConfig?.catalogEnabled ?? false}
+              disabled={!canEdit || siteConfigSaving}
+              onChange={(e) => void onToggleCatalogEnabled(e.target.checked)}
+            />
+            <span>{siteConfigSaving ? 'Guardando…' : 'Modo Catálogo'}</span>
+          </label>
+
+          <select
+            className='input text-xs py-1.5 px-3 border-zinc-800 bg-zinc-900 text-zinc-200 rounded-xl md:mt-0'
+            value={menu?.publicConfig?.publicMode ?? 'flow'}
+            disabled={!canEdit || siteConfigSaving}
+            onChange={(e) => void onChangePublicMode(e.target.value as 'flow' | 'catalog')}
+          >
+            <option value='flow'>Experiencia Flujo</option>
+            <option value='catalog'>Experiencia Catálogo</option>
+          </select>
+        </div>
       </div>
-      <div className='mt-2 flex flex-wrap gap-2'><span className='chip'>Sesión activa</span><span className='chip'>Catálogo</span></div>
+      {siteConfigError ? <p className='mt-2 text-xs text-rose-300'>{siteConfigError}</p> : null}
+      {menu?.source !== 'd1' ? <p className='mt-1 text-xs text-amber-300'>Edición deshabilitada por el momento.</p> : null}
     </Card>
 
     <div className='catalog-tabs flex overflow-x-auto'>
