@@ -35,6 +35,24 @@ Evitar que Codex, ChatGPT o el usuario pierdan el estado durante una migracion l
 - Se documenta que Sheets y Apps Script quedan legacy.
 - Se exige actualizar el tracker en cada fase.
 
+### Fecha
+
+2026-08-02 / 2026-08-03
+
+### Decisión
+
+Establecer aislamiento total del entorno Preview en Cloudflare (`burgers-exe-menu-v2-preview` D1 / `burgers-exe-assets-v2-preview` R2) para pruebas e-2-e de pedidos y stock sin fallbacks y con 0% contaminación a producción. Asimismo, habilitar fallback de auth local dev en Vite (`1234` / `0000`) cuando se desarrolla sin wrangler functions.
+
+### Motivo
+
+Permitir probar todo el flujo de pedido y Chekeo en Preview de forma idéntica a producción, con persistencia real D1 y herramientas de reset de datos de prueba (`npm run db:v2:preview:reset-orders`).
+
+### Impacto
+
+- Preview opera con `source: "d1"` real y `ORDERS_V2_WRITE_ENABLED=true`.
+- Producción (`burgers-exe-menu-live`) queda totalmente intacta y aislada.
+- Dev local Vite admite PIN `1234` o `0000` en desarrollo.
+
 ## Formato para nuevas decisiones
 
 ### Fecha
