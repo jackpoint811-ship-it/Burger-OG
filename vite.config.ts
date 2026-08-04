@@ -17,17 +17,17 @@ export default defineConfig({
       '@config': path.resolve(__dirname, 'packages/config/src')
     }
   },
-  // Proxy /api solo para dev:internal — redirige al Chekeo preview para que
-  // las Functions de Cloudflare Pages respondan sin necesidad de wrangler local.
-  // dev:public NO usa este proxy; sus llamadas se resuelven contra el public preview.
+  // Proxy /api para dev:internal → wrangler pages dev corriendo en :8788 (local).
+  // Las functions de Cloudflare corren localmente y leen D1 preview remota con --remote,
+  // o D1 local sin ese flag. dev:public NO usa este proxy.
   ...(isInternal
     ? {
         server: {
           proxy: {
             '/api': {
-              target: 'https://burgers-exe-internal-v2-preview.pages.dev',
-              changeOrigin: true,
-              secure: true,
+              target: 'http://localhost:8788',
+              changeOrigin: false,
+              secure: false,
             },
           },
         },
