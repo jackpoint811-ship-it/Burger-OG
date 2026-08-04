@@ -86,6 +86,7 @@ import {
 } from "../lib/order-ticket-image";
 import { CatalogAdminPanel } from "./CatalogAdminPanel";
 import { RafflesAdminPanel } from "./RafflesAdminPanel";
+import { CatalogV3Panel } from "./CatalogV3Panel";
 import { KitchenQueue } from "./kitchen/KitchenQueue";
 import {
   extractKitchenLocation,
@@ -106,6 +107,7 @@ type AdminViewKey =
   | "historial"
   | "cierre"
   | "catalogo"
+  | "catalogo-v3"
   | "sorteos"
   | "reportes";
 type OrdersSource = "d1" | "mock" | "fallback";
@@ -362,6 +364,17 @@ const adminViews: AdminViewDefinition[] = [
     cta: "Ver módulo",
   },
   {
+    key: "catalogo-v3",
+    label: "Centro de Control",
+    hint: "Catálogo V3",
+    icon: Monitor,
+    category: "configuracion",
+    status: "base-lista",
+    description:
+      "Tu catálogo público, todo en un lugar: menú, banners, horarios y sorteo.",
+    cta: "Abrir centro",
+  },
+  {
     key: "sorteos",
     label: "Sorteos",
     hint: "Campañas",
@@ -400,6 +413,7 @@ const shouldKeepOrdersLoaded = (tab: TabKey, adminView: AdminViewKey) =>
   tab !== "admin" ||
   (adminView !== "banco" &&
     adminView !== "catalogo" &&
+    adminView !== "catalogo-v3" &&
     adminView !== "sorteos" &&
     adminView !== "cierre" &&
     adminView !== "reportes");
@@ -2152,6 +2166,8 @@ const AdminWorkspace = ({
       <BankConfigAdminPanel />
     ) : view === "catalogo" ? (
       <CatalogAdminPanel />
+    ) : view === "catalogo-v3" ? (
+      <CatalogV3Panel />
     ) : view === "sorteos" ? (
       <RafflesAdminPanel runtimeEnvironment={runtimeEnvironment} />
     ) : view === "historial" ? (

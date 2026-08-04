@@ -1,5 +1,5 @@
 import { normalizeAssetKey } from '../../../_asset-utils';
-import { mapD1CatalogBanner } from '../../../_menu-v2-utils';
+import { mapD1CatalogBanner, DEFAULT_CATALOG_BANNERS } from '../../../_menu-v2-utils';
 import { requireAdminToken, type AdminEnv } from '../../../_orders-v2-utils';
 
 type Env = AdminEnv & { BOG_MENU_ASSETS?: R2Bucket };
@@ -92,8 +92,22 @@ export const onRequestPost: PagesFunction<Env, 'id'> = async ({ env, params, req
   const extension = getSafeFileExtension(file);
   if (!extension) return json(415, { ok: false, error: 'Usa JPG, PNG, WebP o AVIF.' });
 
-  const currentBanner = await db.prepare('SELECT image_key FROM catalog_banners WHERE id = ?').bind(id).first();
-  if (!currentBanner) return json(404, { ok: false, error: 'Banner no encontrado' });
+  let currentBanner = await db.prepare('SELECT image_key FROM catalog_banners WHERE id = ?').bind(id).first().catch(() => null);
+  if (!currentBanner && id.startsWith('cb-default-')) {
+    const def = DEFAULT_CATALOG_BANNERS.find((b) => b.id === id);
+    if (def) {
+      try {
+        await db.prepare(
+          `INSERT OR IGNORE INTO catalog_banners (id, title, subtitle, cta_label, bg_preset, badge_text, is_active, sort_order, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+        ).bind(def.id, def.title, def.subtitle, def.cta_label, def.bg_preset, def.badge_text, def.is_active, def.sort_order).run();
+        currentBanner = await db.prepare('SELECT image_key FROM catalog_banners WHERE id = ?').bind(id).first().catch(() => null);
+      } catch {
+        /* table missing */
+      }
+    }
+  }
+  if (!currentBanner && !id.startsWith('cb-default-')) return json(404, { ok: false, error: 'Banner no encontrado' });
 
   const key = `catalog-banners/${id}/${timestampForKey()}.${extension}`;
   const body = await file.arrayBuffer();
@@ -116,7 +130,7 @@ export const onRequestPost: PagesFunction<Env, 'id'> = async ({ env, params, req
     return json(500, { ok: false, error: 'No se pudo actualizar la imagen del banner en DB' });
   }
 
-  const deleteWarning = await deletePreviousBannerAsset(bucket, currentBanner.image_key);
+  const deleteWarning = await deletePreviousBannerAsset(bucket, currentBanner?.image_key);
   const updatedBanner = await db.prepare('SELECT id, title, subtitle, cta_label, image_key, image_url, is_active, sort_order, updated_at FROM catalog_banners WHERE id = ? LIMIT 1').bind(id).first();
 
   return json(200, {

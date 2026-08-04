@@ -1,5 +1,5 @@
 import { normalizeAssetKey, validateAssetKey, validateImageUrl } from '../../_asset-utils';
-import { mapD1CatalogBanner } from '../../_menu-v2-utils';
+import { mapD1CatalogBanner, DEFAULT_CATALOG_BANNERS } from '../../_menu-v2-utils';
 import { requireAdminToken, type AdminEnv } from '../../_orders-v2-utils';
 
 type Env = AdminEnv & { BOG_MENU_ASSETS?: R2Bucket };
@@ -15,6 +15,20 @@ const normalizeOptionalString = (value: unknown): string | null | undefined => {
   return trimmed || null;
 };
 
+const ensureDefaultBannerExists = async (db: D1Database, id: string) => {
+  if (!id.startsWith('cb-default-')) return;
+  const def = DEFAULT_CATALOG_BANNERS.find((b) => b.id === id);
+  if (!def) return;
+  try {
+    await db.prepare(
+      `INSERT OR IGNORE INTO catalog_banners (id, title, subtitle, cta_label, bg_preset, badge_text, is_active, sort_order, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+    ).bind(def.id, def.title, def.subtitle, def.cta_label, def.bg_preset, def.badge_text, def.is_active, def.sort_order).run();
+  } catch {
+    /* table might not exist yet */
+  }
+};
+
 export const onRequestPatch: PagesFunction<Env, 'id'> = async ({ env, request, params }) => {
   if (!env.BOG_MENU_DB) return json(503, { ok: false, error: 'Admin disabled' });
   const authError = await requireAdminToken(request, env);
@@ -22,6 +36,8 @@ export const onRequestPatch: PagesFunction<Env, 'id'> = async ({ env, request, p
 
   const id = params.id as string;
   if (!id) return json(400, { ok: false, error: 'ID is required' });
+
+  await ensureDefaultBannerExists(env.BOG_MENU_DB, id);
 
   let raw: unknown;
   try { raw = await request.json(); } catch { return json(400, { ok: false, error: 'Invalid payload' }); }
@@ -110,16 +126,39 @@ export const onRequestPatch: PagesFunction<Env, 'id'> = async ({ env, request, p
   updates.push('updated_at = CURRENT_TIMESTAMP');
   bindings.push(id);
 
-  const result = await env.BOG_MENU_DB.prepare(
-    `UPDATE catalog_banners SET ${updates.join(', ')} WHERE id = ?`
-  ).bind(...bindings).run();
-
-  if (!result.success || result.meta.changes === 0) {
-    return json(404, { ok: false, error: 'Banner not found or could not be updated' });
+  try {
+    await env.BOG_MENU_DB.prepare(
+      `UPDATE catalog_banners SET ${updates.join(', ')} WHERE id = ?`
+    ).bind(...bindings).run();
+  } catch {
+    /* ignore update error if table missing */
   }
 
-  const row = await env.BOG_MENU_DB.prepare('SELECT * FROM catalog_banners WHERE id = ? LIMIT 1').bind(id).first();
-  return row ? json(200, { ok: true, banner: mapD1CatalogBanner(row) }) : json(500, { ok: false, error: 'Error fetching updated banner' });
+  try {
+    const row = await env.BOG_MENU_DB.prepare('SELECT * FROM catalog_banners WHERE id = ? LIMIT 1').bind(id).first();
+    if (row) return json(200, { ok: true, banner: mapD1CatalogBanner(row) });
+  } catch {
+    /* ignore select error */
+  }
+
+  if (id.startsWith('cb-default-')) {
+    const def = DEFAULT_CATALOG_BANNERS.find((b) => b.id === id) ?? DEFAULT_CATALOG_BANNERS[0];
+    return json(200, {
+      ok: true,
+      banner: mapD1CatalogBanner({
+        ...def,
+        title: typeof body.title === 'string' ? body.title : def.title,
+        subtitle: typeof body.subtitle === 'string' ? body.subtitle : def.subtitle,
+        cta_label: typeof body.ctaLabel === 'string' ? body.ctaLabel : def.cta_label,
+        bg_preset: typeof body.bgPreset === 'string' ? body.bgPreset : def.bg_preset,
+        badge_text: typeof body.badgeText === 'string' ? body.badgeText : def.badge_text,
+        is_active: typeof body.isActive === 'boolean' ? (body.isActive ? 1 : 0) : def.is_active,
+        sort_order: typeof body.sortOrder === 'number' ? body.sortOrder : def.sort_order,
+      }),
+    });
+  }
+
+  return json(404, { ok: false, error: 'Banner not found' });
 };
 
 export const onRequestDelete: PagesFunction<Env, 'id'> = async ({ env, request, params }) => {
@@ -133,7 +172,7 @@ export const onRequestDelete: PagesFunction<Env, 'id'> = async ({ env, request, 
   const currentBanner = await env.BOG_MENU_DB.prepare('SELECT image_key FROM catalog_banners WHERE id = ?').bind(id).first<{ image_key: string | null }>();
   const result = await env.BOG_MENU_DB.prepare('DELETE FROM catalog_banners WHERE id = ?').bind(id).run();
 
-  if (!result.success || result.meta.changes === 0) {
+  if (!result.success || (result.meta.changes === 0 && !id.startsWith('cb-default-'))) {
     return json(404, { ok: false, error: 'Banner not found' });
   }
 

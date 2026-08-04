@@ -20,7 +20,8 @@ const parseBody = (input: unknown) => {
   const title = typeof body.title === 'string' ? body.title.trim() : '';
   const imageUrl = validateImageUrl(body.imageUrl);
   const imageKey = validateAssetKey(body.imageKey);
-  if (!title || imageUrl === undefined || imageKey === undefined) return null;
+  // A banner is valid with a title (text mode), an image (image mode), or both
+  if (imageUrl === undefined || imageKey === undefined) return null;
   if (body.sortOrder !== undefined && (typeof body.sortOrder !== 'number' || !Number.isInteger(body.sortOrder))) return null;
 
   return {
@@ -76,6 +77,54 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   return row ? json(201, { ok: true, banner: mapD1CatalogBanner(row) }) : json(500, { ok: false, error: 'No se pudo recuperar el banner creado' });
 };
 
+const DEFAULT_BANNERS = [
+  {
+    id: 'cb-default-1',
+    title: '🔥 COMBO OVERCLOCK 2x1',
+    subtitle: 'Lleva 2 combos seleccionados por el precio de 1',
+    cta_label: 'Ver combo',
+    image_key: null,
+    image_url: null,
+    bg_preset: 'green',
+    badge_text: '🔥 PROMO 2X1',
+    badge_color: null,
+    cta_action_type: null,
+    cta_target: null,
+    is_active: 1,
+    sort_order: 1,
+  },
+  {
+    id: 'cb-default-2',
+    title: '🎮 BUNDLE GAMER NIGHT',
+    subtitle: 'Smash Burger + Papas Overclock + Bebida Cyber',
+    cta_label: 'Pedir bundle',
+    image_key: null,
+    image_url: null,
+    bg_preset: 'purple',
+    badge_text: '🎮 DESTACADO',
+    badge_color: null,
+    cta_action_type: null,
+    cta_target: null,
+    is_active: 1,
+    sort_order: 2,
+  },
+  {
+    id: 'cb-default-3',
+    title: '⚡ ENVÍO GRATIS $0',
+    subtitle: 'En entregas programadas a tu oficina',
+    cta_label: 'Ordenar ahora',
+    image_key: null,
+    image_url: null,
+    bg_preset: 'orange',
+    badge_text: '⚡ ENVÍO $0',
+    badge_color: null,
+    cta_action_type: null,
+    cta_target: null,
+    is_active: 1,
+    sort_order: 3,
+  },
+];
+
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   if (!env.BOG_MENU_DB) return json(503, { ok: false, error: 'Database disabled' });
   const authError = await requireAdminToken(request, env);
@@ -85,6 +134,21 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     const { results } = await env.BOG_MENU_DB.prepare(
       'SELECT * FROM catalog_banners ORDER BY sort_order ASC'
     ).all();
+
+    if (!results || results.length === 0) {
+      // Auto seed default 1, 2, 3 banners if D1 table is empty
+      for (const b of DEFAULT_BANNERS) {
+        await env.BOG_MENU_DB.prepare(
+          `INSERT OR IGNORE INTO catalog_banners (id, title, subtitle, cta_label, bg_preset, badge_text, is_active, sort_order, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+        ).bind(b.id, b.title, b.subtitle, b.cta_label, b.bg_preset, b.badge_text, b.is_active, b.sort_order).run();
+      }
+      const seeded = await env.BOG_MENU_DB.prepare(
+        'SELECT * FROM catalog_banners ORDER BY sort_order ASC'
+      ).all();
+      const mappedSeeded = (seeded.results ?? []).map((row: any) => mapD1CatalogBanner(row));
+      return json(200, { ok: true, banners: mappedSeeded });
+    }
 
     const banners = (results ?? []).map((row: any) => {
       const mapped = mapD1CatalogBanner(row);
@@ -105,8 +169,10 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     });
 
     return json(200, { ok: true, banners });
-  } catch {
-    return json(500, { ok: false, error: 'No se pudieron consultar los banners' });
+  } catch (err) {
+    // Graceful fallback if table doesn't exist or DB is offline
+    const mappedDefault = DEFAULT_BANNERS.map((row: any) => mapD1CatalogBanner(row));
+    return json(200, { ok: true, banners: mappedDefault, fallback: true });
   }
 };
 

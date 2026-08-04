@@ -248,8 +248,8 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
       }));
 
       const deliveryInfoText = dateMode === "scheduled"
-        ? `ENTREGA PROGRAMADA: ${scheduledDate} a las 1:30 PM`
-        : `Entrega hoy a las 1:30 PM`;
+        ? `ENTREGA PROGRAMADA: ${scheduledDate} (a partir de la 1:30 PM)`
+        : `Entrega hoy a partir de la 1:30 PM`;
 
       const fullCustomerName = `${name.trim()} (${location}) [${deliveryInfoText}]${notes.trim() ? ` [Nota: ${notes.trim()}]` : ""}`;
 

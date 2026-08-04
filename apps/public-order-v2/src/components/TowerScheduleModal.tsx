@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export interface TowerScheduleModalProps {
@@ -7,13 +7,58 @@ export interface TowerScheduleModalProps {
   selectedTowerKey?: string | null;
 }
 
-export function getTowerStatus() {
-  const day = new Date().getDay(); // 0 = Sun, 1 = Mon, 2 = Tue, 3 = Wed, 4 = Thu, 5 = Fri, 6 = Sat
+export type DynamicTowerSchedule = {
+  towerKey: string;
+  towerName: string;
+  emoji: string;
+  activeDays: number[];
+  orderStartTime: string;
+  orderEndTime: string;
+  deliveryStartTime: string;
+  deliveryEndTime: string;
+  deliveryLabel: string | null;
+  isActive: boolean;
+};
 
-  // Mon (1), Wed (3) -> GGA Active
-  // Tue (2), Thu (4) -> Valcob Active
-  // Fri (5) -> Both Active
-  // Sat (6), Sun (0) -> Weekend notice (Default GGA active for demo/weekend)
+const DAY_NAMES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+function formatActiveDaysText(activeDays: number[]): string {
+  if (!activeDays || activeDays.length === 0) return "Ningún día";
+  if (activeDays.length === 7) return "Todos los días";
+  const sorted = [...activeDays].sort((a, b) => a - b);
+  const names = sorted.map((d) => DAY_NAMES[d] ?? "");
+  if (names.length === 1) return names[0] ?? "";
+  if (names.length === 2) return `${names[0]} y ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+}
+
+export function getTowerStatus(dynamicTowers?: DynamicTowerSchedule[]) {
+  const day = new Date().getDay();
+
+  if (dynamicTowers && dynamicTowers.length > 0) {
+    const ggaTower = dynamicTowers.find((t) => t.towerKey === "gga");
+    const valcobTower = dynamicTowers.find((t) => t.towerKey === "valcob");
+
+    const ggaActive = ggaTower ? ggaTower.isActive && (ggaTower.activeDays.includes(day) || day === 0 || day === 6) : true;
+    const valcobActive = valcobTower ? valcobTower.isActive && valcobTower.activeDays.includes(day) : true;
+
+    return {
+      day,
+      gga: {
+        name: ggaTower?.towerName ?? "Torre GGA",
+        emoji: ggaTower?.emoji ?? "🏢",
+        active: ggaActive,
+        daysText: ggaTower ? formatActiveDaysText(ggaTower.activeDays) : "Lunes, Miércoles y Viernes",
+      },
+      valcob: {
+        name: valcobTower?.towerName ?? "Torre Valcob",
+        emoji: valcobTower?.emoji ?? "🏢",
+        active: valcobActive,
+        daysText: valcobTower ? formatActiveDaysText(valcobTower.activeDays) : "Martes, Jueves y Viernes",
+      },
+    };
+  }
+
   const isGgaActive = day === 1 || day === 3 || day === 5 || day === 6 || day === 0;
   const isValcobActive = day === 2 || day === 4 || day === 5;
 
@@ -45,13 +90,13 @@ export function getNextAvailableDeliveryDate(location: "Torre GGA" | "Torre Valc
     const isValidValcob = day === 2 || day === 4 || day === 5;
 
     if (location === "Torre GGA" && isValidGga) {
-      return result.toISOString().split("T")[0];
+      return result.toISOString().split("T")[0] ?? "";
     }
     if (location === "Torre Valcob" && isValidValcob) {
-      return result.toISOString().split("T")[0];
+      return result.toISOString().split("T")[0] ?? "";
     }
   }
-  return result.toISOString().split("T")[0];
+  return result.toISOString().split("T")[0] ?? "";
 }
 
 export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
@@ -59,7 +104,23 @@ export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
   onClose,
   selectedTowerKey,
 }) => {
-  const status = getTowerStatus();
+  const [towers, setTowers] = useState<DynamicTowerSchedule[]>([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch("/api/tower-schedules")
+      .then((res) => res.json())
+      .then((data: any) => {
+        if (data?.ok && Array.isArray(data.towers)) {
+          setTowers(data.towers);
+        }
+      })
+      .catch(() => {
+        /* silent fallback */
+      });
+  }, [isOpen]);
+
+  const status = getTowerStatus(towers);
   const focusedTower = selectedTowerKey === "valcob" ? status.valcob : status.gga;
 
   return (
@@ -114,7 +175,7 @@ export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
                 {/* Torre GGA */}
                 <div className={`tower-schedule-item ${status.gga.active ? "tower-schedule-item--active" : "tower-schedule-item--inactive"}`}>
                   <div className="tower-item-left">
-                    <span className="tower-item-emoji">🏢</span>
+                    <span className="tower-item-emoji">{status.gga.emoji}</span>
                     <div>
                       <h4 className="tower-item-name">{status.gga.name}</h4>
                       <span className="tower-item-days">{status.gga.daysText}</span>
@@ -128,7 +189,7 @@ export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
                 {/* Torre Valcob */}
                 <div className={`tower-schedule-item ${status.valcob.active ? "tower-schedule-item--active" : "tower-schedule-item--inactive"}`}>
                   <div className="tower-item-left">
-                    <span className="tower-item-emoji">🏢</span>
+                    <span className="tower-item-emoji">{status.valcob.emoji}</span>
                     <div>
                       <h4 className="tower-item-name">{status.valcob.name}</h4>
                       <span className="tower-item-days">{status.valcob.daysText}</span>
