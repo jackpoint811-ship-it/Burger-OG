@@ -210,6 +210,7 @@ const toggleTicketExtra = (extras: TicketExtra[], item: MenuItem, source: Ticket
   return [...extras, { sku: item.sku, name: item.name, price: item.price, source }];
 };
 const OG_REMOVABLE_INGREDIENTS = [
+  "Carne smash",
   "Tocino",
   "Queso americano",
   "Queso manchego",
@@ -221,6 +222,7 @@ const OG_REMOVABLE_INGREDIENTS = [
   "Mayonesa",
 ] as const;
 const BBQ_REMOVABLE_INGREDIENTS = [
+  "Carne smash",
   "Tocino",
   "Queso americano",
   "Queso manchego",
@@ -2256,7 +2258,20 @@ export function PublicOrderApp() {
     setSubmitting(true);
     try {
       const referralCode = customer.referralCode.trim().toUpperCase();
-      const response = await createOrderV2({ customer: { name: customer.name.trim(), phone: normalizePhoneDigits(customer.phone) }, orderMode: orderModeForBackend, paymentMethod: customer.paymentMethod, notes, items: payloadItems, ...(referralCode ? { referralCode } : {}), ...(isPreviewMode ? { environment: orderEnvironment } : {}) }, idempotencyKey);
+      const response = await createOrderV2({
+        customer: { name: customer.name.trim(), phone: normalizePhoneDigits(customer.phone) },
+        delivery: {
+          location: customer.location,
+          isScheduled: false,
+          customerNotes: customer.notes.trim() || undefined,
+        },
+        orderMode: orderModeForBackend,
+        paymentMethod: customer.paymentMethod,
+        notes,
+        items: payloadItems,
+        ...(referralCode ? { referralCode } : {}),
+        ...(isPreviewMode ? { environment: orderEnvironment } : {})
+      }, idempotencyKey);
       const order = response.data?.order;
       if (!order) throw new Error("No pudimos confirmar el folio del pedido. Intenta de nuevo.");
       setOrderConfirmation({ ...order, paymentMethod: customer.paymentMethod, location: customer.location, environment: orderEnvironment, referralAccepted: response.data?.referralAccepted, customerReferralCode: response.data?.customerReferralCode, activeRaffleTitle: response.data?.activeRaffleTitle, earnedTickets: response.data?.earnedTickets });

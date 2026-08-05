@@ -252,18 +252,19 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
         name: item.name,
       }));
 
-      const deliveryInfoText = dateMode === "scheduled"
-        ? `ENTREGA PROGRAMADA: ${scheduledDate} (a partir de la 1:30 PM)`
-        : `Entrega hoy a partir de la 1:30 PM`;
-
-      const fullCustomerName = `${name.trim()} (${location}) [${deliveryInfoText}]${notes.trim() ? ` [Nota: ${notes.trim()}]` : ""}`.slice(0, 250);
-
       const response = await createOrderV2(
         {
-          customer: { name: fullCustomerName, phone: normalizedPhone },
+          customer: { name: name.trim(), phone: normalizedPhone },
+          delivery: {
+            location,
+            isScheduled: dateMode === "scheduled",
+            scheduledDate: dateMode === "scheduled" ? scheduledDate : undefined,
+            customerNotes: notes.trim() || undefined,
+          },
           orderMode: "pickup",
           paymentMethod,
           items: payloadItems,
+          ...(notes.trim() ? { notes: notes.trim() } : {}),
           ...(isPreviewMode ? { environment: orderEnvironment } : {}),
         },
         idempotencyKeyRef.current
