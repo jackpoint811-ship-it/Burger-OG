@@ -17,6 +17,7 @@ import {
   Eye,
   EyeOff,
   Type,
+  Pencil,
   Calendar,
 } from 'lucide-react';
 import { CatalogAdminPanel } from './CatalogAdminPanel';
@@ -231,6 +232,62 @@ const BannersSection = ({ onBack }: { onBack: () => void }) => {
   const [newCtaLabel, setNewCtaLabel] = useState('');
   const [newBgPreset, setNewBgPreset] = useState('green');
   const [newFile, setNewFile] = useState<File | null>(null);
+
+  // Edit banner form state
+  const [editingBanner, setEditingBanner] = useState<BannerSlot | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editSubtitle, setEditSubtitle] = useState('');
+  const [editBadgeText, setEditBadgeText] = useState('');
+  const [editCtaLabel, setEditCtaLabel] = useState('');
+  const [editBgPreset, setEditBgPreset] = useState('green');
+
+  const beginEditBanner = (banner: BannerSlot) => {
+    setEditingBanner(banner);
+    setEditTitle(banner.title || '');
+    setEditSubtitle(banner.subtitle || '');
+    setEditBadgeText(banner.badgeText || '');
+    setEditCtaLabel(banner.ctaLabel || '');
+    setEditBgPreset(banner.bgPreset || 'green');
+    setError(null);
+  };
+
+  const cancelEditBanner = () => {
+    setEditingBanner(null);
+    setEditTitle('');
+    setEditSubtitle('');
+    setEditBadgeText('');
+    setEditCtaLabel('');
+    setEditBgPreset('green');
+  };
+
+  const saveEditBanner = async () => {
+    if (!editingBanner) return;
+    setSaving(editingBanner.id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/menu-v2-admin/catalog-banners/${encodeURIComponent(editingBanner.id)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          title: editTitle.trim(),
+          subtitle: editSubtitle.trim() || null,
+          badgeText: editBadgeText.trim() || null,
+          ctaLabel: editCtaLabel.trim() || null,
+          bgPreset: editBgPreset,
+        }),
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al actualizar banner');
+      setEditingBanner(null);
+      await loadBanners();
+      showNotice('Texto del banner actualizado');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setSaving(null);
+    }
+  };
 
   const loadBanners = useCallback(async () => {
     setLoading(true);
@@ -554,6 +611,16 @@ const BannersSection = ({ onBack }: { onBack: () => void }) => {
                     >
                       {banner.isActive ? <Eye size={16} /> : <EyeOff size={16} />}
                     </button>
+                    <button
+                      type="button"
+                      className="v3-icon-btn"
+                      onClick={() => beginEditBanner(banner)}
+                      disabled={isSaving}
+                      title="Editar texto"
+                      aria-label="Editar texto"
+                    >
+                      <Pencil size={16} />
+                    </button>
                     <label className="v3-icon-btn" title="Cambiar imagen" aria-label="Cambiar imagen">
                       <Upload size={16} />
                       <input
@@ -596,6 +663,92 @@ const BannersSection = ({ onBack }: { onBack: () => void }) => {
             >
               + Agregar banner
             </button>
+          )}
+
+          {/* Edit banner form */}
+          {editingBanner && (
+            <Card className="v3-card v3-banner-form">
+              <h3 className="v3-card-title">Editar texto del banner #{banners.findIndex(b => b.id === editingBanner.id) + 1}</h3>
+
+              <label className="v3-field">
+                <span className="v3-field__label">Insignia / Tag (opcional)</span>
+                <input
+                  type="text"
+                  className="v3-field__input"
+                  placeholder="Ej: 🔥 PROMO 2X1, ⚡ ENVÍO $0, 🎟️ SORTEO"
+                  value={editBadgeText}
+                  onChange={(e) => setEditBadgeText(e.target.value)}
+                />
+              </label>
+
+              <label className="v3-field">
+                <span className="v3-field__label">Título</span>
+                <input
+                  type="text"
+                  className="v3-field__input"
+                  placeholder="Ej: 🔥 COMBO OVERCLOCK 2x1"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                />
+              </label>
+
+              <label className="v3-field">
+                <span className="v3-field__label">Subtítulo (opcional)</span>
+                <input
+                  type="text"
+                  className="v3-field__input"
+                  placeholder="Ej: Lleva 2 combos seleccionados por el precio de 1"
+                  value={editSubtitle}
+                  onChange={(e) => setEditSubtitle(e.target.value)}
+                />
+              </label>
+
+              <label className="v3-field">
+                <span className="v3-field__label">Texto del botón / CTA (opcional)</span>
+                <input
+                  type="text"
+                  className="v3-field__input"
+                  placeholder="Ej: Ver combo, Pedir ahora"
+                  value={editCtaLabel}
+                  onChange={(e) => setEditCtaLabel(e.target.value)}
+                />
+              </label>
+
+              <div className="v3-field">
+                <span className="v3-field__label">Color de fondo</span>
+                <div className="v3-preset-grid">
+                  {BG_PRESETS.map((preset) => (
+                    <button
+                      key={preset.key}
+                      type="button"
+                      className={`v3-preset-swatch ${editBgPreset === preset.key ? 'v3-preset-swatch--active' : ''}`}
+                      style={preset.style}
+                      onClick={() => setEditBgPreset(preset.key)}
+                      title={preset.label}
+                      aria-label={preset.label}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="v3-form-actions">
+                <button
+                  type="button"
+                  className="v3-cancel-btn"
+                  onClick={cancelEditBanner}
+                >
+                  Cancelar
+                </button>
+                <Button
+                  type="button"
+                  className="v3-save-btn"
+                  onClick={saveEditBanner}
+                  disabled={saving === editingBanner.id}
+                >
+                  {saving === editingBanner.id ? 'Guardando…' : 'Guardar cambios'}
+                </Button>
+              </div>
+            </Card>
           )}
 
           {showForm && (
