@@ -3980,13 +3980,6 @@ const PaymentDetailModal = ({
             {notice.message}
           </p>
         ) : null}
-        {ticketNotice ? (
-          <p
-            className={`mt-3 rounded-xl px-3 py-2 text-xs ${ticketNotice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-200" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"}`}
-          >
-            {ticketNotice.message}
-          </p>
-        ) : null}
       </section>
     </div>
   );
@@ -4009,6 +4002,7 @@ const PaymentNotesPanel = ({
   registerBackHandler?: (handler: BackHandler) => () => void;
 }) => {
   const [filter, setFilter] = useState<PaymentFilter>("pending");
+  const [selectedDate, setSelectedDate] = useState<string>("today");
   const [rangeFilter, setRangeFilter] = useState<OrdersRangeFilter>("today");
   const [search, setSearch] = useState("");
   const [draftNotes, setDraftNotes] = useState<Record<string, string>>({});
@@ -4059,6 +4053,7 @@ const PaymentNotesPanel = ({
 
   const filteredOrders = useMemo(() => {
     const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const startOfToday = new Date(
       now.getFullYear(),
       now.getMonth(),
@@ -4070,6 +4065,19 @@ const PaymentNotesPanel = ({
     return [...orders]
       .sort((a, b) => (b.createdAtMs ?? 0) - (a.createdAtMs ?? 0))
       .filter((order) => {
+        if (selectedDate !== "all") {
+          const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt);
+          let orderDateStr = todayStr;
+          if (details.isScheduled && details.scheduledDeliveryDate) {
+            orderDateStr = details.scheduledDeliveryDate;
+          } else if (order.createdAtMs) {
+            const d = new Date(order.createdAtMs);
+            orderDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          }
+          if (selectedDate === "today" && orderDateStr !== todayStr) return false;
+          if (selectedDate !== "today" && selectedDate !== "all" && orderDateStr !== selectedDate) return false;
+        }
+
         if (rangeFilter !== "all" && order.createdAtMs) {
           const threshold =
             rangeFilter === "today" ? startOfToday : startOfWeek;
@@ -4078,12 +4086,14 @@ const PaymentNotesPanel = ({
 
         if (!normalizedSearch) return true;
 
+        const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt);
         return (
           order.folio.toLowerCase().includes(normalizedSearch) ||
+          details.cleanCustomerName.toLowerCase().includes(normalizedSearch) ||
           order.customer.toLowerCase().includes(normalizedSearch)
         );
       });
-  }, [orders, rangeFilter, search]);
+  }, [orders, rangeFilter, search, selectedDate]);
 
   const paymentOrders = useMemo(
     () =>
@@ -4148,7 +4158,7 @@ const PaymentNotesPanel = ({
               : "No se pudo actualizar el pago. Revisa la sesión e inténtalo de nuevo.",
         },
       }));
-      }
+    }
   };
 
   const copyPaymentMessage = async (order: InternalOrder) => {
@@ -4225,6 +4235,12 @@ const PaymentNotesPanel = ({
             {runtime.loading ? "Actualizando…" : "Actualizar lista"}
           </Button>
         </div>
+
+        <HorizontalDateCalendarFilter
+          orders={orders}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
 
         {filteredOrders.length ? (
           <div className="payments-summary-grid">
@@ -4310,11 +4326,12 @@ const PaymentNotesPanel = ({
               : "Ajusta rango, estado o busqueda para recuperar registros."
           }
           action={
-            filter !== "all" || search.trim() || rangeFilter !== "today" ? (
+            filter !== "all" || search.trim() || rangeFilter !== "today" || selectedDate !== "today" ? (
               <Button
                 className="border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-xs"
                 onClick={() => {
                   setFilter("all");
+                  setSelectedDate("today");
                   setSearch("");
                   setRangeFilter("today");
                 }}
@@ -4328,7 +4345,8 @@ const PaymentNotesPanel = ({
       <div className="grid gap-2">
         {paymentOrders.map((order) => {
           const notice = inlineNotice[order.id];
-          const location = getOrderLocationLabel(order);
+          const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt);
+          const location = details.deliveryLocation || getOrderLocationLabel(order);
           return (
             <Card
               key={order.id}
@@ -4337,31 +4355,59 @@ const PaymentNotesPanel = ({
               <div className="payments-card__head">
                 <div className="min-w-0">
                   <p className="payments-card__folio">{order.folio}</p>
-                  <p className="break-words text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                    {order.customer}
+                  <p className="break-words text-base font-black text-zinc-900 dark:text-zinc-100">
+                    {details.cleanCustomerName}
                   </p>
+                  {details.scheduledDeliveryTime ? (
+                    <p className="text-xs font-bold text-cyan-600 dark:text-cyan-400 mt-0.5">
+                      {details.deliveryDateLabel}: {details.scheduledDeliveryTime}
+                    </p>
+                  ) : null}
                 </div>
-                <div className="payments-card__amount">
-                  <span>Total</span>
-                  <strong>{formatCurrency(order.total)}</strong>
+                <div className="payments-card__amount text-right">
+                  <span className="text-xs text-zinc-500 uppercase tracking-wider block">Total</span>
+                  <strong className="text-xl font-black text-emerald-600 dark:text-emerald-400">{formatCurrency(order.total)}</strong>
                 </div>
               </div>
 
-              <div className="payments-card__status">
-                <div className="flex flex-wrap gap-1">
+              <div className="payments-card__status mt-2">
+                <div className="flex flex-wrap gap-1.5 items-center">
                   <PaymentStatusBadge status={order.paymentState} />
-                  <span className="orders-location-chip">Entrega: {location}</span>
+                  <span className="orders-location-chip font-bold">📍 {location}</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                    {getPaymentMethodLabel(order.paymentMethod)}
+                  </span>
                 </div>
               </div>
 
-              <div className="payments-card__meta payments-card__meta--compact">
-                <span>Metodo: {getPaymentMethodLabel(order.paymentMethod)}</span>
-                <span>Pago: {getPaymentStatusLabel(order.paymentState)}</span>
-                <span>Lugar: {location}</span>
-              </div>
-              <div className="payments-card__actions">
+              <div className="payments-card__actions mt-3 flex flex-wrap gap-2 items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {order.paymentState === "pending" ? (
+                    <Button
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 h-auto"
+                      onClick={() => runPaymentAction(order, "paid")}
+                    >
+                      Marcar Pagado
+                    </Button>
+                  ) : (
+                    <Button
+                      className="bg-amber-600/20 text-amber-300 border border-amber-500/40 hover:bg-amber-600/30 text-xs font-bold px-3 py-1.5 h-auto"
+                      onClick={() => runPaymentAction(order, "pending")}
+                    >
+                      Regresar a Pendiente
+                    </Button>
+                  )}
+                  {order.customerPhone ? (
+                    <Button
+                      className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-2.5 py-1.5 h-auto flex items-center gap-1"
+                      onClick={() => openPaymentWhatsapp(order)}
+                    >
+                      WhatsApp
+                    </Button>
+                  ) : null}
+                </div>
                 <Button
-                  className="payments-secondary-action"
+                  className="payments-secondary-action text-xs"
                   onClick={() => setSelectedOrderId(order.id)}
                 >
                   Abrir pago
