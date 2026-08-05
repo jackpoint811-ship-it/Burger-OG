@@ -431,7 +431,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                               </div>
                             )}
                           </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
                             <button type="button" className="catalog-checkout-qty-btn" onClick={() => setQty(cartItem.cartItemId, cartItem.qty - 1)}>
                               −
                             </button>
