@@ -270,6 +270,28 @@ export type OrderV2Source =
   | "seed"
   | "import";
 
+export type OrderV2DeliveryInfo = {
+  location?: string;
+  isScheduled?: boolean;
+  scheduledDate?: string;
+  scheduledTime?: string;
+  customerNotes?: string;
+};
+
+export type OrderItemModifier = {
+  type: 'remove' | 'extra' | 'upgrade' | 'note';
+  code?: string;
+  name: string;
+  priceCents: number;
+};
+
+export type OrderItemComponent = {
+  kind: 'garnish' | 'drink' | 'side';
+  sku: string;
+  name: string;
+  upchargeCents: number;
+};
+
 export type OrderV2ItemKind =
   | "burger"
   | "combo"
@@ -307,6 +329,8 @@ export type OrderV2Item = {
   qty: number;
   unitPrice: number;
   lineTotal: number;
+  modifiers?: OrderItemModifier[];
+  components?: OrderItemComponent[];
   snapshot?: Record<string, unknown>;
   createdAt?: string;
 };
@@ -327,6 +351,7 @@ export type OrderV2 = {
   folio: string;
   customerName: string;
   customerPhone: string;
+  delivery?: OrderV2DeliveryInfo;
   orderMode: OrderV2Mode;
   paymentMethod: OrderV2PaymentMethod;
   paymentStatus: OrderV2PaymentStatus;
@@ -346,10 +371,11 @@ export type OrderV2Error = { code: string; message: string };
 
 export type CreateOrderV2Payload = {
   customer: { name: string; phone: string };
+  delivery?: OrderV2DeliveryInfo;
   orderMode: OrderV2Mode;
   paymentMethod?: OrderV2PaymentMethod;
   notes?: string;
-  items: Array<{ sku: string; qty: number } & OrderV2ItemCustomization>;
+  items: Array<{ sku: string; qty: number; modifiers?: OrderItemModifier[]; components?: OrderItemComponent[] } & OrderV2ItemCustomization>;
   idempotencyKey?: string;
   referralCode?: string;
   environment?: OrderV2Environment;

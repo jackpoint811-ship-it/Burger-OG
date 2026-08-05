@@ -1,5 +1,6 @@
 import type {
   OrderV2,
+  OrderV2DeliveryInfo,
   OrderV2Environment,
   OrderV2Event,
   OrderV2Item,
@@ -254,6 +255,9 @@ export const mapD1OrderItemToOrderV2Item = (row: any): OrderV2Item => {
       }
     : undefined;
 
+  const modifiers = Array.isArray(snapshot?.modifiers) ? (snapshot.modifiers as OrderV2Item['modifiers']) : undefined;
+  const components = Array.isArray(snapshot?.components) ? (snapshot.components as OrderV2Item['components']) : undefined;
+
   return {
     id: String(row.id),
     orderId: String(row.order_id ?? row.orderId),
@@ -262,6 +266,8 @@ export const mapD1OrderItemToOrderV2Item = (row: any): OrderV2Item => {
     qty: Number(row.qty),
     unitPrice: centsToPrice(row.unit_price_cents ?? row.unitPriceCents),
     lineTotal: centsToPrice(row.line_total_cents ?? row.lineTotalCents),
+    modifiers,
+    components,
     snapshot: enrichedSnapshot,
     createdAt: row.created_at ?? row.createdAt ? String(row.created_at ?? row.createdAt) : undefined
   };
@@ -278,25 +284,48 @@ export const mapD1OrderEventToOrderV2Event = (row: any): OrderV2Event => ({
   createdAt: String(row.created_at ?? row.createdAt)
 });
 
-export const mapD1OrderToOrderV2 = (row: any, items: OrderV2Item[] = [], events?: OrderV2Event[]): OrderV2 => ({
-  id: String(row.id),
-  folio: String(row.folio),
-  customerName: String(row.customer_name ?? row.customerName),
-  customerPhone: String(row.customer_phone ?? row.customerPhone),
-  orderMode: String(row.order_mode ?? row.orderMode) as OrderV2['orderMode'],
-  paymentMethod: String(row.payment_method ?? row.paymentMethod) as OrderV2['paymentMethod'],
-  paymentStatus: String(row.payment_status ?? row.paymentStatus) as OrderV2['paymentStatus'],
-  notes: row.notes ? String(row.notes) : undefined,
-  subtotal: centsToPrice(row.subtotal_cents ?? row.subtotalCents),
-  total: centsToPrice(row.total_cents ?? row.totalCents),
-  status: String(row.status) as OrderV2Status,
-  source: String(row.source) as OrderV2['source'],
-  createdAt: String(row.created_at ?? row.createdAt),
-  updatedAt: String(row.updated_at ?? row.updatedAt),
-  archivedAt: row.archived_at ?? row.archivedAt ? String(row.archived_at ?? row.archivedAt) : undefined,
-  items,
-  events
-});
+export const mapD1OrderToOrderV2 = (row: any, items: OrderV2Item[] = [], events?: OrderV2Event[]): OrderV2 => {
+  let delivery: OrderV2DeliveryInfo | undefined;
+  if (row.delivery_json || row.deliveryJson) {
+    try {
+      delivery = JSON.parse(row.delivery_json ?? row.deliveryJson);
+    } catch {}
+  }
+  const rawCustomerName = String(row.customer_name ?? row.customerName);
+  if (!delivery && rawCustomerName) {
+    const scheduledMatch = rawCustomerName.match(/ENTREGA PROGRAMADA:\s*(\d{4}-\d{2}-\d{2})/i);
+    if (scheduledMatch) {
+      delivery = {
+        location: rawCustomerName.replace(/\[?ENTREGA PROGRAMADA:[^\]]+\]?/gi, '').trim(),
+        isScheduled: true,
+        scheduledDate: scheduledMatch[1],
+      };
+    }
+  }
+
+  const cleanName = rawCustomerName.replace(/\[?ENTREGA PROGRAMADA:[^\]]+\]?/gi, '').trim();
+
+  return {
+    id: String(row.id),
+    folio: String(row.folio),
+    customerName: cleanName,
+    customerPhone: String(row.customer_phone ?? row.customerPhone),
+    delivery,
+    orderMode: String(row.order_mode ?? row.orderMode) as OrderV2['orderMode'],
+    paymentMethod: String(row.payment_method ?? row.paymentMethod) as OrderV2['paymentMethod'],
+    paymentStatus: String(row.payment_status ?? row.paymentStatus) as OrderV2['paymentStatus'],
+    notes: row.notes ? String(row.notes) : undefined,
+    subtotal: centsToPrice(row.subtotal_cents ?? row.subtotalCents),
+    total: centsToPrice(row.total_cents ?? row.totalCents),
+    status: String(row.status) as OrderV2Status,
+    source: String(row.source) as OrderV2['source'],
+    createdAt: String(row.created_at ?? row.createdAt),
+    updatedAt: String(row.updated_at ?? row.updatedAt),
+    archivedAt: row.archived_at ?? row.archivedAt ? String(row.archived_at ?? row.archivedAt) : undefined,
+    items,
+    events
+  };
+};
 
 export const validateStatusTransition = (current: OrderV2Status, next: OrderV2Status): boolean => {
   if (TERMINAL_STATUSES.has(current)) return false;

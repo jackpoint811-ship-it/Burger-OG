@@ -204,7 +204,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     const orders = orderRows
       .filter((row: any) => includeTerminal || status || !TERMINAL_STATUSES.has(String(row.status) as OrderV2Status))
       .map((row: any) => {
-        const items = appendKitchenSideQuestItems(itemsByOrder.get(String(row.id)) ?? []);
+        const items = itemsByOrder.get(String(row.id)) ?? [];
         return mapD1OrderToOrderV2(row, items, eventsByOrder.get(String(row.id)) ?? []);
       });
 

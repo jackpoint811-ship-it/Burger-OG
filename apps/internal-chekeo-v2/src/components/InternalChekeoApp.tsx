@@ -38,6 +38,7 @@ import {
   type OrdersV2SummaryResponse,
   type OrderStatus,
   type OrderV2,
+  type OrderV2DeliveryInfo,
   type OrderV2Environment,
   type OrderV2Event,
   type OrderV2ItemKind,
@@ -157,6 +158,7 @@ type InternalOrder = Omit<
   paymentMethod: string;
   paymentState: OrderV2PaymentStatus | string;
   customerPhone?: string;
+  delivery?: OrderV2DeliveryInfo;
   source?: string;
   updatedAt?: string;
   createdAtMs?: number;
@@ -1140,6 +1142,7 @@ const mapOrderV2ToInternalOrder = (order: OrderV2): InternalOrder => {
     folio: order.folio,
     customer: order.customerName,
     customerPhone: order.customerPhone,
+    delivery: order.delivery,
     channel: order.orderMode,
     createdAt: formatDateTime(order.createdAt),
     updatedAt: formatDateTime(order.updatedAt),
@@ -1151,7 +1154,7 @@ const mapOrderV2ToInternalOrder = (order: OrderV2): InternalOrder => {
     paymentMethod: order.paymentMethod,
     paymentState: order.paymentStatus,
     note: order.notes,
-    items: appendKitchenSideQuestItems(order.items).map((item) =>
+    items: order.items.map((item) =>
       mapOrderV2ItemToInternalItem(item, doneByLineKey),
     ),
     total: order.total,
@@ -2804,7 +2807,7 @@ const CompactRow = ({
 }) => {
   const previewOrder = isPreviewOrderSource(order.source);
   const itemCount = getOrderItemCount(order);
-  const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt);
+  const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
   const canDeliver = order.status === "ready";
   const canCancel = !terminalStatuses.has(order.status);
   return (
@@ -2922,7 +2925,7 @@ const OrderCommandPanel = ({
   busy: boolean;
 }) => {
   const itemCount = getOrderItemCount(order);
-  const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt);
+  const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
   const canDeliver = order.status === "ready";
   const canCancel = !terminalStatuses.has(order.status);
   const visibleItems = order.items.slice(0, 3);
@@ -3022,7 +3025,7 @@ const OrdersBoard = ({
         const orderStatus = getOrdersStatusFilterValue(order.status);
         if (statusFilter !== "all" && orderStatus !== statusFilter) return false;
 
-        const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt);
+        const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
         let orderDeliveryDate = todayStr;
         if (details.isScheduled && details.scheduledDeliveryDate) {
           orderDeliveryDate = details.scheduledDeliveryDate;
@@ -4066,7 +4069,7 @@ const PaymentNotesPanel = ({
       .sort((a, b) => (b.createdAtMs ?? 0) - (a.createdAtMs ?? 0))
       .filter((order) => {
         if (selectedDate !== "all") {
-          const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt);
+          const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
           let orderDateStr = todayStr;
           if (details.isScheduled && details.scheduledDeliveryDate) {
             orderDateStr = details.scheduledDeliveryDate;
@@ -4086,7 +4089,7 @@ const PaymentNotesPanel = ({
 
         if (!normalizedSearch) return true;
 
-        const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt);
+        const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
         return (
           order.folio.toLowerCase().includes(normalizedSearch) ||
           details.cleanCustomerName.toLowerCase().includes(normalizedSearch) ||
@@ -4345,7 +4348,7 @@ const PaymentNotesPanel = ({
       <div className="grid gap-2">
         {paymentOrders.map((order) => {
           const notice = inlineNotice[order.id];
-          const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt);
+          const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
           const location = details.deliveryLocation || getOrderLocationLabel(order);
           return (
             <Card

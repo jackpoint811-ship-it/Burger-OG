@@ -420,7 +420,7 @@ const ActiveOrderContainer = ({
   };
 
   const createdAtIso = group.order.createdAtIso || (group.order.createdAtMs ? new Date(group.order.createdAtMs).toISOString() : undefined);
-  const details = parseOrderCustomerDetails(group.order.customer, group.order.note, createdAtIso);
+  const details = parseOrderCustomerDetails(group.order.customer, group.order.note, createdAtIso, group.order.delivery);
   const location = details.deliveryLocation || extractKitchenLocation(group.order.note);
   const categoryProgress = buildCategoryProgressBadge(group.order);
   const quickSummary = buildKitchenOrderQueueSummary(group.order);

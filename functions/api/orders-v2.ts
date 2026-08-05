@@ -1,4 +1,4 @@
-import type { OrderV2PaymentMethod, OrderV2Mode, OrderV2, OrderV2Environment } from '../../packages/config/src';
+import type { OrderV2PaymentMethod, OrderV2Mode, OrderV2, OrderV2Environment, OrderV2DeliveryInfo, OrderItemModifier, OrderItemComponent } from '../../packages/config/src';
 import {
   errorResponse,
   fetchOrderBundle,
@@ -55,6 +55,7 @@ type ItemCustomization = {
 type NormalizedPayload = {
   customerName: string;
   customerPhone: string;
+  delivery: OrderV2DeliveryInfo;
   orderMode: OrderV2Mode;
   paymentMethod: OrderV2PaymentMethod;
   notes: string | null;
@@ -180,18 +181,33 @@ const getMexicoCityDate = () => {
 
 const validatePayload = (body: Record<string, unknown>, request: Request): NormalizedPayload | Response => {
   const customer = body.customer && typeof body.customer === 'object' && !Array.isArray(body.customer) ? body.customer as Record<string, unknown> : null;
-  const customerName = normalizeString(customer?.name);
+  const rawCustomerName = normalizeString(customer?.name);
   const customerPhone = normalizePhone(customer?.phone);
-  if (customerName.length < 2 || customerName.length > 300 || customerPhone.length < 10) {
+  const cleanCustomerName = rawCustomerName.replace(/\[?ENTREGA PROGRAMADA:[^\]]+\]?/gi, '').trim();
+
+  if (cleanCustomerName.length < 2 || cleanCustomerName.length > 300 || customerPhone.length < 10) {
     return errorResponse(400, 'INVALID_CUSTOMER', 'Nombre y teléfono de cliente son requeridos.');
   }
 
-  const mxNow = getMexicoCityDate();
-  const scheduledMatch = customerName.match(/ENTREGA PROGRAMADA:\s*(\d{4}-\d{2}-\d{2})/i);
-  const scheduledDateStr = scheduledMatch?.[1];
+  const deliveryRaw = body.delivery && typeof body.delivery === 'object' && !Array.isArray(body.delivery)
+    ? body.delivery as Record<string, unknown>
+    : null;
 
-  if (scheduledDateStr) {
-    const [sYear, sMonth, sDay] = scheduledDateStr.split('-').map((v) => parseInt(v, 10));
+  const scheduledMatch = rawCustomerName.match(/ENTREGA PROGRAMADA:\s*(\d{4}-\d{2}-\d{2})/i);
+  const scheduledDateStr = normalizeString(deliveryRaw?.scheduledDate) || scheduledMatch?.[1];
+
+  const delivery: OrderV2DeliveryInfo = {
+    location: normalizeString(deliveryRaw?.location) || cleanCustomerName,
+    isScheduled: Boolean(deliveryRaw?.isScheduled || scheduledMatch),
+    scheduledDate: scheduledDateStr || undefined,
+    scheduledTime: normalizeString(deliveryRaw?.scheduledTime) || undefined,
+    customerNotes: normalizeString(deliveryRaw?.customerNotes) || undefined
+  };
+
+  const mxNow = getMexicoCityDate();
+
+  if (delivery.scheduledDate) {
+    const [sYear, sMonth, sDay] = delivery.scheduledDate.split('-').map((v) => parseInt(v, 10));
     const scheduledObj = new Date(Date.UTC(sYear, sMonth - 1, sDay));
     const scheduledDayOfWeek = scheduledObj.getUTCDay();
     if (scheduledDayOfWeek === 0 || scheduledDayOfWeek === 6) {
@@ -273,8 +289,9 @@ const validatePayload = (body: Record<string, unknown>, request: Request): Norma
   normalizedItems.unshift(...[...legacyQtyBySku.entries()].map(([sku, qty]) => ({ sku, qty, removedIngredients: [], extras: [], garnish: null, includedDrink: null, sideQuestExtras: [], comboBurgers: [] })));
 
   return {
-    customerName,
+    customerName: cleanCustomerName,
     customerPhone,
+    delivery,
     orderMode,
     paymentMethod,
     notes: notesRaw || null,
@@ -608,6 +625,19 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       const sideQuestExtrasTotalCents = item.sideQuestExtras.reduce((acc, extra) => acc + Math.round((extra.price ?? 0) * 100), 0);
       const includedGarnishUpchargeCents = item.garnish?.sku ? Math.round((item.garnish.upcharge ?? 0) * 100) : 0;
       const lineTotalCents = (unitPriceCents + extrasTotalCents + sideQuestExtrasTotalCents + includedGarnishUpchargeCents) * item.qty;
+
+      const modifiers: OrderItemModifier[] = [
+        ...item.removedIngredients.map((name) => ({ type: 'remove' as const, name, priceCents: 0 })),
+        ...item.extras.map((ext) => ({ type: 'extra' as const, code: ext.sku, name: ext.name, priceCents: Math.round((ext.price ?? 0) * 100) })),
+        ...(item.burgerNote ? [{ type: 'note' as const, name: item.burgerNote, priceCents: 0 }] : []),
+        ...item.sideQuestExtras.map((sq) => ({ type: 'extra' as const, code: sq.sku, name: sq.name, priceCents: Math.round((sq.price ?? 0) * 100) })),
+      ];
+
+      const components: OrderItemComponent[] = [
+        ...(item.garnish?.name ? [{ kind: 'garnish' as const, sku: item.garnish.sku || '', name: item.garnish.name, upchargeCents: Math.round((item.garnish.upcharge ?? 0) * 100) }] : []),
+        ...(item.includedDrink?.name ? [{ kind: 'drink' as const, sku: item.includedDrink.sku || '', name: item.includedDrink.name, upchargeCents: 0 }] : []),
+      ];
+
       return {
         id: generateId('oi'),
         orderId,
@@ -636,7 +666,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
           garnish: item.garnish,
           includedDrink: item.includedDrink,
           sideQuestExtras: item.sideQuestExtras,
-          comboBurgers: item.comboBurgers
+          comboBurgers: item.comboBurgers,
+          modifiers,
+          components
         })
       };
     });
