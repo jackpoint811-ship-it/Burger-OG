@@ -70,15 +70,18 @@ export function HorizontalDateCalendarFilter({
 
     const dates: CalendarDateOption[] = [];
 
-    // Generate next 12 calendar days
-    for (let offset = 0; offset < 14; offset++) {
-      const current = new Date(today);
-      current.setDate(today.getDate() + offset);
-      const currentStr = formatIsoDate(current);
+    // Compile dynamic date list ONLY from dates that have registered orders
+    const dateKeys = Array.from(totalByDate.keys()).sort();
+
+    dateKeys.forEach((dateStr) => {
+      const [year, month, day] = dateStr.split("-").map(Number);
+      if (!year || !month || !day) return;
+      const current = new Date(year, month - 1, day);
+      const isToday = dateStr === todayStr;
       const dayOfWeek = current.getDay();
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-      const dayNameRaw = offset === 0
+      const dayNameRaw = isToday
         ? "Hoy"
         : current.toLocaleDateString("es-MX", { weekday: "short" });
       const dayName = dayNameRaw.charAt(0).toUpperCase() + dayNameRaw.slice(1).replace(".", "");
@@ -86,26 +89,21 @@ export function HorizontalDateCalendarFilter({
       const monthNameRaw = current.toLocaleDateString("es-MX", { month: "short" });
       const monthName = monthNameRaw.charAt(0).toUpperCase() + monthNameRaw.slice(1).replace(".", "");
 
-      const pendingCount = pendingByDate.get(currentStr) || 0;
-      const totalCount = totalByDate.get(currentStr) || 0;
-
-      // Skip weekend dates if there are no orders for them
-      if (isWeekend && totalCount === 0) {
-        continue;
-      }
+      const pendingCount = pendingByDate.get(dateStr) || 0;
+      const totalCount = totalByDate.get(dateStr) || 0;
 
       dates.push({
-        key: offset === 0 ? "today" : currentStr,
-        dateStr: currentStr,
+        key: isToday ? "today" : dateStr,
+        dateStr,
         dayName,
         dayNumber,
         monthName,
         isWeekend,
-        isToday: offset === 0,
+        isToday,
         pendingCount,
         totalCount,
       });
-    }
+    });
 
     return { dates, totalPendingAll };
   }, [orders]);
