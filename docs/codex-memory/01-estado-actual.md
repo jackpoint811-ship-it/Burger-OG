@@ -31,7 +31,7 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - **PR #430**: Persistencia resiliente de Banners de Catálogo en D1 con fallback seguro y cierre automático del modal al guardar.
   - **PR #431**: Habilitada la edición completa de texto (título, subtítulo, tag, CTA, color de fondo) para banners existentes en Central V3 (`CatalogV3Panel.tsx`).
   - **PR #432**: Bloqueada la adición al carrito de productos no disponibles (`isAvailable === false`) desde los botones de rápida adición `+` y el drawer de producto.
-  - **Restauración de Flujo WhatsApp**: Actualizado el checkbox de opt-in e incorporado el botón directo de enlace al grupo oficial de WhatsApp (`chat.whatsapp.com/GycE5zALOypGPvJVaMfbPp`) en la pantalla de éxito de checkout (`CatalogCheckoutDrawer.tsx`).
+  - **Restauración de Flujo WhatsApp**: Actualizado el checkbox de opt-in (`Quiero unirme al grupo oficial de promociones en WhatsApp`) e incorporado el botón directo de enlace al grupo oficial de WhatsApp (`chat.whatsapp.com/GycE5zALOypGPvJVaMfbPp`) en la pantalla de éxito de checkout (`CatalogCheckoutDrawer.tsx`).
 - **Aislamiento de Entorno Preview**:
   - `burgers-exe-public-v2-preview` (App Pública) e `burgers-exe-internal-v2-preview` (Chekeo V2) están 100% conectados a D1 `burgers-exe-menu-v2-preview` y R2 `burgers-exe-assets-v2-preview`.
   - La API de Preview responde `source: "d1"` sin depender de fallbacks locales ni mocks.

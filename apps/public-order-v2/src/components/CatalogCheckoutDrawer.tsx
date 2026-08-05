@@ -627,7 +627,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                       onChange={(e) => setWantsWhatsapp(e.target.checked)}
                       disabled={checkoutState.status === "submitting"}
                     />
-                    <span>✉️ Recibir estatus por WhatsApp y unirme al grupo oficial 📲</span>
+                    <span>📲 Quiero unirme al grupo oficial de promociones en WhatsApp</span>
                   </label>
 
                   {checkoutState.status === "error" && (
