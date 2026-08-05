@@ -350,14 +350,6 @@ const buildCategoryProgressBadge = (order: KitchenOrder) => {
         totalDrinks += qty;
         if (isItemDone) doneDrinks += qty;
       }
-      if (!item.garnish && !item.includedDrink && (!item.sideQuestExtras || item.sideQuestExtras.length === 0)) {
-        totalSides += qty;
-        totalDrinks += qty;
-        if (isItemDone) {
-          doneSides += qty;
-          doneDrinks += qty;
-        }
-      }
     } else if (kind === "garnish") {
       const qty = item.qty || 1;
       totalSides += qty;
