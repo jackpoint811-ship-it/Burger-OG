@@ -368,7 +368,34 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
               <strong>#{checkoutState.folio}</strong>
             </div>
 
-            <button type="button" className="catalog-checkout__submit" onClick={onClose} style={{ marginTop: "24px" }}>
+            {wantsWhatsapp && (
+              <a
+                href="https://chat.whatsapp.com/GycE5zALOypGPvJVaMfbPp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="catalog-checkout-success__wa-group-btn"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  width: "100%",
+                  marginTop: "16px",
+                  padding: "12px 16px",
+                  borderRadius: "14px",
+                  background: "linear-gradient(135deg, #16A34A 0%, #22C55E 100%)",
+                  color: "#ffffff",
+                  fontWeight: 800,
+                  fontSize: "14px",
+                  textDecoration: "none",
+                  boxShadow: "0 4px 14px rgba(34, 197, 94, 0.35)",
+                }}
+              >
+                <span>📲 Unirme al Grupo Oficial de WhatsApp</span>
+              </a>
+            )}
+
+            <button type="button" className="catalog-checkout__submit" onClick={onClose} style={{ marginTop: "16px" }}>
               Cerrar y volver al menú
             </button>
           </div>
@@ -600,7 +627,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                       onChange={(e) => setWantsWhatsapp(e.target.checked)}
                       disabled={checkoutState.status === "submitting"}
                     />
-                    <span>✉️ Recibir confirmación de estatus por WhatsApp</span>
+                    <span>📲 Quiero unirme al grupo oficial de promociones en WhatsApp</span>
                   </label>
 
                   {checkoutState.status === "error" && (

@@ -88,6 +88,8 @@ import { CatalogAdminPanel } from "./CatalogAdminPanel";
 import { RafflesAdminPanel } from "./RafflesAdminPanel";
 import { CatalogV3Panel } from "./CatalogV3Panel";
 import { KitchenQueue } from "./kitchen/KitchenQueue";
+import { parseOrderCustomerDetails } from "../lib/order-parser";
+import { HorizontalDateCalendarFilter } from "./HorizontalDateCalendarFilter";
 import {
   extractKitchenLocation,
   getKitchenLineKey,
@@ -2802,7 +2804,7 @@ const CompactRow = ({
 }) => {
   const previewOrder = isPreviewOrderSource(order.source);
   const itemCount = getOrderItemCount(order);
-  const location = getOrderLocationLabel(order);
+  const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt);
   const canDeliver = order.status === "ready";
   const canCancel = !terminalStatuses.has(order.status);
   return (
@@ -2810,31 +2812,49 @@ const CompactRow = ({
       <span className={`orders-status-rail orders-status-rail--${order.status}`} aria-hidden="true" />
       <div className="orders-card__body">
         <div className="orders-card__head">
-          <div className="orders-card__identity">
-            <p className="orders-card__folio">
-              <span className="truncate">{order.folio}</span>
+          <div className="orders-card__identity min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="orders-card__folio font-black">
+                <span className="truncate">{order.folio}</span>
+              </p>
               {previewOrder ? (
                 <span className="orders-preview-chip">
                   Prueba
                 </span>
               ) : null}
+            </div>
+            <p className="orders-card__customer font-bold text-base text-zinc-900 dark:text-zinc-100 mt-0.5">
+              {details.cleanCustomerName}
             </p>
-            <p className="orders-card__customer">
-              {order.customer}
-            </p>
-            <p className="orders-card__timestamp">
-              {order.createdAt} · {channelLabel[order.channel]}
-            </p>
+            {order.customerPhone ? (
+              <p className="text-xs text-zinc-500 font-medium">📞 {order.customerPhone}</p>
+            ) : null}
           </div>
           <div className="orders-card__badges">
             <OrdersStatusBadge status={order.status} />
           </div>
         </div>
 
-        <div className="orders-card__facts">
-          <OrderFact label="Total" value={formatCurrency(order.total)} emphasis />
-          <OrderFact label="Entrega" value={location} />
-          <OrderFact label="Items" value={itemCount} />
+        {/* 3 Main Priority Facts: Total, Location, Scheduled Delivery Date */}
+        <div className="v3-order-facts-grid grid grid-cols-3 gap-2 my-2.5 p-2 rounded-xl bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800">
+          <div className="v3-fact-card flex flex-col justify-center">
+            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Total</span>
+            <strong className="text-base font-black text-emerald-600 dark:text-emerald-400">
+              {formatCurrency(order.total)}
+            </strong>
+          </div>
+          <div className="v3-fact-card flex flex-col justify-center">
+            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Entrega</span>
+            <strong className="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate" title={details.deliveryLocation}>
+              📍 {details.deliveryLocation}
+            </strong>
+          </div>
+          <div className="v3-fact-card flex flex-col justify-center">
+            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Fecha</span>
+            <span className={`text-xs font-bold truncate ${details.isScheduled ? "text-amber-500 font-extrabold" : "text-sky-500"}`}>
+              📅 {details.deliveryDateLabel}
+            </span>
+          </div>
         </div>
 
         <div className="orders-card__actions">
@@ -2842,14 +2862,13 @@ const CompactRow = ({
             className="orders-primary-action"
             onClick={onOpen}
           >
-            Ver ticket
+            Ver ticket ({itemCount} {itemCount === 1 ? "item" : "items"})
           </Button>
           <details className="orders-card__more">
-            <summary>Mas acciones</summary>
+            <summary>Más acciones</summary>
             <div className="orders-card__secondary-actions">
-              <span className="orders-card__items-pill">Items: {itemCount}</span>
-              {order.note ? (
-                <p className="orders-note">Nota: {order.note}</p>
+              {details.cleanNotes ? (
+                <p className="orders-note">Nota: {details.cleanNotes}</p>
               ) : null}
               {canDeliver ? (
                 <Button
@@ -2891,28 +2910,29 @@ const OrderCommandPanel = ({
   busy: boolean;
 }) => {
   const itemCount = getOrderItemCount(order);
-  const location = getOrderLocationLabel(order);
+  const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt);
   const canDeliver = order.status === "ready";
   const canCancel = !terminalStatuses.has(order.status);
   const visibleItems = order.items.slice(0, 3);
   return (
-    <aside className="orders-command-detail" aria-label={`Detalle rapido ${order.folio}`}>
+    <aside className="orders-command-detail" aria-label={`Detalle rápido ${order.folio}`}>
       <div className="orders-command-detail__hero">
         <div className="min-w-0">
           <p className="orders-command-detail__eyebrow">Ticket abierto</p>
           <h3>{order.folio}</h3>
-          <p>{order.customer} · {location}</p>
+          <p className="font-bold text-zinc-100">{details.cleanCustomerName}</p>
+          <p className="text-xs text-zinc-400">📍 {details.deliveryLocation}</p>
         </div>
-        <strong>{formatCurrency(order.total)}</strong>
+        <strong className="text-emerald-400 text-xl font-black">{formatCurrency(order.total)}</strong>
       </div>
       <div className="orders-command-detail__facts">
         <OrderFact label="Estado" value={statusLabel[order.status]} />
-        <OrderFact label="Entrega" value={location} />
+        <OrderFact label="Fecha" value={`📅 ${details.deliveryDateLabel}`} />
         <OrderFact label="Items" value={itemCount} />
       </div>
       <div className="orders-command-detail__panel">
         <div className="orders-command-detail__panel-head">
-          <p>Resumen</p>
+          <p>Resumen ({itemCount} items)</p>
           <Button className="orders-ghost-action" onClick={onOpen}>
             Ver ticket
           </Button>
@@ -2926,10 +2946,10 @@ const OrderCommandPanel = ({
           ))}
         </div>
       </div>
-      {order.note ? (
-        <details className="orders-card__more orders-card__more--panel">
+      {details.cleanNotes ? (
+        <details className="orders-card__more orders-card__more--panel" open>
           <summary>Nota operativa</summary>
-          <p className="orders-note">{order.note}</p>
+          <p className="orders-note">{details.cleanNotes}</p>
         </details>
       ) : null}
       <div className="orders-command-detail__actions">
@@ -2977,17 +2997,11 @@ const OrdersBoard = ({
   ) => void;
 }) => {
   const [statusFilter, setStatusFilter] = useState<OrdersStatusFilter>("all");
-  const [rangeFilter, setRangeFilter] = useState<OrdersRangeFilter>("today");
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>("today");
   const [search, setSearch] = useState("");
 
   const filteredOrders = useMemo(() => {
-    const now = new Date();
-    const startOfToday = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-    ).getTime();
-    const startOfWeek = startOfToday - 6 * 24 * 60 * 60 * 1000;
+    const todayStr = new Date().toISOString().slice(0, 10);
     const normalizedSearch = search.trim().toLowerCase();
 
     return [...orders]
@@ -2996,25 +3010,35 @@ const OrdersBoard = ({
         const orderStatus = getOrdersStatusFilterValue(order.status);
         if (statusFilter !== "all" && orderStatus !== statusFilter) return false;
 
-        if (rangeFilter !== "all" && order.createdAtMs) {
-          const threshold =
-            rangeFilter === "today" ? startOfToday : startOfWeek;
-          if (order.createdAtMs < threshold) return false;
+        const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt);
+        let orderDeliveryDate = todayStr;
+        if (details.isScheduled && details.scheduledDeliveryDate) {
+          orderDeliveryDate = details.scheduledDeliveryDate;
+        } else if (order.createdAtMs) {
+          const d = new Date(order.createdAtMs);
+          orderDeliveryDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        }
+
+        if (selectedCalendarDate !== "all") {
+          if (selectedCalendarDate === "today" && orderDeliveryDate !== todayStr) return false;
+          if (selectedCalendarDate !== "today" && orderDeliveryDate !== selectedCalendarDate) return false;
         }
 
         if (!normalizedSearch) return true;
         const haystack = [
           order.folio,
           order.customer,
+          details.cleanCustomerName,
           order.customerPhone,
-          getOrderLocationLabel(order),
+          details.deliveryLocation,
         ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
         return haystack.includes(normalizedSearch);
       });
-  }, [orders, rangeFilter, search, statusFilter]);
+  }, [orders, search, selectedCalendarDate, statusFilter]);
+
   const commandOrder =
     filteredOrders.find((order) => order.status === "ready") ??
     filteredOrders.find((order) => order.status === "new") ??
@@ -3022,77 +3046,64 @@ const OrdersBoard = ({
 
   return (
     <section className="orders-command">
-      <Card className="orders-board-shell">
+      <Card className="orders-board-shell p-4">
         <div className="orders-board-shell__header">
           <div>
-            <p className="home-section-label">Cola compacta</p>
+            <p className="home-section-label">Cola de pedidos V3</p>
             <h2 className="mt-1 text-2xl font-black text-zinc-50">
               Pedidos
             </h2>
             <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
-              Movimientos, detalle, ticket y confirmación corta del pedido.
+              Gestión estandarizada con jerarquía clara: Total, Dónde entregar y Fecha de entrega.
             </p>
           </div>
-          <div className="orders-board-shell__summary">
-            <span className="orders-summary-chip">
+          <div className="orders-board-shell__summary flex items-center gap-2">
+            <span className="orders-summary-chip font-bold">
               {filteredOrders.length} visibles
             </span>
-            <span className="orders-summary-chip">
+            <span className="orders-summary-chip bg-emerald-500/20 text-emerald-300 font-bold">
               {orders.filter((order) => order.status === "ready").length} listos
             </span>
           </div>
         </div>
 
+        {/* Horizontal Calendar Date Rail */}
+        <HorizontalDateCalendarFilter
+          orders={orders}
+          selectedDate={selectedCalendarDate}
+          onSelectDate={(dateKey) => setSelectedCalendarDate(dateKey)}
+        />
+
         {orders.length ? (
-          <details className="orders-filter-drawer">
-            <summary>
-              Filtros y búsqueda
-              <span>
-                {statusFilter === "all" ? "Todos" : ordersStatusLabel[statusFilter]} / {rangeFilter}
-              </span>
-            </summary>
-            <div className="orders-filters">
-              <label className="orders-search">
-                <span>Buscar por folio o cliente</span>
-                <input
-                  className="input mt-1 text-sm"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Ej. BX-102 o Andrea"
-                />
-              </label>
-              <div className="orders-filter-group">
-                <span>Estado</span>
-                <div className="orders-filter-pills">
-                  {ordersStatusFilterOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      className={`orders-filter-pill ${statusFilter === option.value ? "orders-filter-pill--active" : ""}`}
-                      onClick={() => setStatusFilter(option.value)}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="orders-filter-group">
-                <span>Rango</span>
-                <div className="orders-filter-pills">
-                  {ordersRangeFilterOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      className={`orders-filter-pill ${rangeFilter === option.value ? "orders-filter-pill--active" : ""}`}
-                      onClick={() => setRangeFilter(option.value)}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
+          <div className="orders-filters flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-3 pt-3 border-t border-zinc-800">
+            <label className="orders-search flex-1">
+              <input
+                className="input text-sm w-full bg-zinc-900/90 border-zinc-800 focus:border-emerald-500"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="🔍 Buscar por folio, cliente o ubicación..."
+              />
+            </label>
+            <div className="orders-filter-group flex items-center gap-2">
+              <span className="text-xs text-zinc-400 font-bold">Estado:</span>
+              <div className="orders-filter-pills flex items-center gap-1 overflow-x-auto">
+                {ordersStatusFilterOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`orders-filter-pill px-2.5 py-1 text-xs font-bold rounded-lg transition-colors ${
+                      statusFilter === option.value
+                        ? "orders-filter-pill--active bg-emerald-500 text-zinc-950"
+                        : "bg-zinc-800/60 text-zinc-300 hover:bg-zinc-700"
+                    }`}
+                    onClick={() => setStatusFilter(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
             </div>
-          </details>
+          </div>
         ) : null}
       </Card>
 
@@ -3112,23 +3123,23 @@ const OrdersBoard = ({
         />
       ) : !filteredOrders.length ? (
         <EmptyOrdersState
-          title="No hay pedidos para ese filtro."
-          description="Ajusta estado, rango o búsqueda para volver a mostrar pedidos."
+          title="No hay pedidos para este filtro."
+          description="Prueba seleccionando otra fecha en el calendario o ajustando el estado y la búsqueda."
           action={
             <Button
               className="orders-secondary-action"
               onClick={() => {
                 setStatusFilter("all");
-                setRangeFilter("today");
+                setSelectedCalendarDate("all");
                 setSearch("");
               }}
             >
-              Limpiar filtros
+              Ver todos los pedidos
             </Button>
           }
         />
       ) : (
-        <div className="orders-command__workspace">
+        <div className="orders-command__workspace mt-4">
           <div className="orders-command__queue">
             {filteredOrders.map((order) => {
               const highlighted = runtime.highlightedOrderIds.has(order.id);

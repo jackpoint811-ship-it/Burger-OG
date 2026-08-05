@@ -150,12 +150,60 @@ const normalizeIdempotencyKey = (request: Request, body: Record<string, unknown>
   return resolved || generateId('idem');
 };
 
+const getMexicoCityDate = () => {
+  const now = new Date();
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  };
+  const parts = new Intl.DateTimeFormat('en-US', options).formatToParts(now);
+  const findPart = (type: string) => parts.find((p) => p.type === type)?.value ?? '0';
+
+  const year = parseInt(findPart('year'), 10);
+  const month = parseInt(findPart('month'), 10);
+  const day = parseInt(findPart('day'), 10);
+  let hours = parseInt(findPart('hour'), 10);
+  if (hours === 24) hours = 0;
+  const minutes = parseInt(findPart('minute'), 10);
+
+  const dateObj = new Date(Date.UTC(year, month - 1, day));
+  const dayOfWeek = dateObj.getUTCDay();
+  const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+  return { year, month, day, dayOfWeek, hours, minutes, dateStr };
+};
+
 const validatePayload = (body: Record<string, unknown>, request: Request): NormalizedPayload | Response => {
   const customer = body.customer && typeof body.customer === 'object' && !Array.isArray(body.customer) ? body.customer as Record<string, unknown> : null;
   const customerName = normalizeString(customer?.name);
   const customerPhone = normalizePhone(customer?.phone);
   if (customerName.length < 2 || customerName.length > 300 || customerPhone.length < 10) {
     return errorResponse(400, 'INVALID_CUSTOMER', 'Nombre y teléfono de cliente son requeridos.');
+  }
+
+  const mxNow = getMexicoCityDate();
+  const scheduledMatch = customerName.match(/ENTREGA PROGRAMADA:\s*(\d{4}-\d{2}-\d{2})/i);
+  const scheduledDateStr = scheduledMatch?.[1];
+
+  if (scheduledDateStr) {
+    const [sYear, sMonth, sDay] = scheduledDateStr.split('-').map((v) => parseInt(v, 10));
+    const scheduledObj = new Date(Date.UTC(sYear, sMonth - 1, sDay));
+    const scheduledDayOfWeek = scheduledObj.getUTCDay();
+    if (scheduledDayOfWeek === 0 || scheduledDayOfWeek === 6) {
+      return errorResponse(400, 'WEEKEND_ORDER_NOT_ALLOWED', 'No hay entregas disponibles en fines de semana (Sábados y Domingos).');
+    }
+  } else {
+    if (mxNow.dayOfWeek === 0 || mxNow.dayOfWeek === 6) {
+      return errorResponse(400, 'WEEKEND_ORDER_NOT_ALLOWED', 'No hay servicio disponible en fines de semana (Sábados y Domingos). Por favor programa para el próximo día hábil.');
+    }
+    if (mxNow.hours > 13 || (mxNow.hours === 13 && mxNow.minutes >= 30)) {
+      return errorResponse(400, 'SERVICE_CLOSED_FOR_TODAY', 'El servicio de hoy cerró a la 1:30 PM. Por favor programa tu pedido para el próximo día hábil.');
+    }
   }
 
   const orderMode = normalizeString(body.orderMode) as OrderV2Mode;
