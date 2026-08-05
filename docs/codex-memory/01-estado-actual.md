@@ -28,6 +28,7 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 ## Última Actualización (2026-08-05)
 
 - **Sincronización Local & PRs Recientes**:
+  - **PR #435**: Rediseño V3 de Pedidos en `chekeo-v2`, estandarización de datos desde Cloudflare D1 (`order-parser.ts`), filtro por calendario horizontal con conteo de pendientes (`HorizontalDateCalendarFilter.tsx`), horario límite 1:30 PM (`orders-v2.ts` y `TowerScheduleModal.tsx`), bloqueo de fines de semana y corrección de responsive mobile.
   - **PR #430**: Persistencia resiliente de Banners de Catálogo en D1 con fallback seguro y cierre automático del modal al guardar.
   - **PR #431**: Habilitada la edición completa de texto (título, subtítulo, tag, CTA, color de fondo) para banners existentes en Central V3 (`CatalogV3Panel.tsx`).
   - **PR #432**: Bloqueada la adición al carrito de productos no disponibles (`isAvailable === false`) desde los botones de rápida adición `+` y el drawer de producto.
