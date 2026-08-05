@@ -22,6 +22,7 @@ import {
   getKitchenBurgerBreakdowns,
   getKitchenItemActionKind,
   getKitchenItemImage,
+  getKitchenItemKind,
   getKitchenItemLabel,
   stripLocationFromNotes,
 } from "./kitchen-helpers";
@@ -319,7 +320,7 @@ const AccordionItemRow = ({
 /*  Category progress breakdown helper                                */
 /* ------------------------------------------------------------------ */
 
-const buildCategoryProgressBadge = (group: OrderGroup) => {
+const buildCategoryProgressBadge = (order: KitchenOrder) => {
   let totalBurgers = 0;
   let doneBurgers = 0;
   let totalSides = 0;
@@ -327,24 +328,59 @@ const buildCategoryProgressBadge = (group: OrderGroup) => {
   let totalDrinks = 0;
   let doneDrinks = 0;
 
-  for (const item of group.items) {
-    const isDone = item.done;
-    if (item.lane === "prep") {
-      totalBurgers++;
-      if (isDone) doneBurgers++;
-    } else if (item.lane === "sideQuest") {
-      const isDrink =
-        item.itemLabel === "Bebida" ||
-        item.detailLabel?.toLowerCase().includes("bebida") ||
-        item.detailLabel?.toLowerCase().includes("refresco") ||
-        item.detailLabel?.toLowerCase().includes("coca") ||
-        item.detailLabel?.toLowerCase().includes("soda");
-      if (isDrink) {
-        totalDrinks++;
-        if (isDone) doneDrinks++;
-      } else {
-        totalSides++;
-        if (isDone) doneSides++;
+  for (const item of order.items) {
+    const kind = getKitchenItemKind(item);
+    const isItemDone = Boolean(item.kitchenDone);
+
+    if (kind === "burger") {
+      const qty = item.qty || 1;
+      totalBurgers += qty;
+      if (isItemDone) doneBurgers += qty;
+    } else if (kind === "combo") {
+      const comboBurgerCount = item.comboBurgers && item.comboBurgers.length > 0 ? item.comboBurgers.length : 1;
+      const qty = item.qty || 1;
+      totalBurgers += comboBurgerCount * qty;
+      if (isItemDone) doneBurgers += comboBurgerCount * qty;
+
+      if (item.garnish) {
+        totalSides += qty;
+        if (isItemDone) doneSides += qty;
+      }
+      if (item.includedDrink) {
+        totalDrinks += qty;
+        if (isItemDone) doneDrinks += qty;
+      }
+      if (!item.garnish && !item.includedDrink && (!item.sideQuestExtras || item.sideQuestExtras.length === 0)) {
+        totalSides += qty;
+        totalDrinks += qty;
+        if (isItemDone) {
+          doneSides += qty;
+          doneDrinks += qty;
+        }
+      }
+    } else if (kind === "garnish") {
+      const qty = item.qty || 1;
+      totalSides += qty;
+      if (isItemDone) doneSides += qty;
+    } else if (kind === "drink") {
+      const qty = item.qty || 1;
+      totalDrinks += qty;
+      if (isItemDone) doneDrinks += qty;
+    }
+
+    if (item.sideQuestExtras && item.sideQuestExtras.length > 0) {
+      for (const extra of item.sideQuestExtras) {
+        const qty = item.qty || 1;
+        if (extra.itemKind === "garnish") {
+          totalSides += qty;
+          if (isItemDone) doneSides += qty;
+        } else if (extra.itemKind === "drink") {
+          totalDrinks += qty;
+          if (isItemDone) doneDrinks += qty;
+        } else {
+          totalSides += qty;
+          if (isItemDone) doneSides += qty;
+        }
       }
     }
   }
@@ -394,7 +430,7 @@ const ActiveOrderContainer = ({
   const createdAtIso = group.order.createdAtIso || (group.order.createdAtMs ? new Date(group.order.createdAtMs).toISOString() : undefined);
   const details = parseOrderCustomerDetails(group.order.customer, group.order.note, createdAtIso);
   const location = details.deliveryLocation || extractKitchenLocation(group.order.note);
-  const categoryProgress = buildCategoryProgressBadge(group);
+  const categoryProgress = buildCategoryProgressBadge(group.order);
   const quickSummary = buildKitchenOrderQueueSummary(group.order);
 
   return (
