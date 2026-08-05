@@ -256,7 +256,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
         ? `ENTREGA PROGRAMADA: ${scheduledDate} (a partir de la 1:30 PM)`
         : `Entrega hoy a partir de la 1:30 PM`;
 
-      const fullCustomerName = `${name.trim()} (${location}) [${deliveryInfoText}]${notes.trim() ? ` [Nota: ${notes.trim()}]` : ""}`;
+      const fullCustomerName = `${name.trim()} (${location}) [${deliveryInfoText}]${notes.trim() ? ` [Nota: ${notes.trim()}]` : ""}`.slice(0, 250);
 
       const response = await createOrderV2(
         {
