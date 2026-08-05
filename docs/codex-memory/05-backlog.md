@@ -8,7 +8,7 @@
 - Afinar ticket pequeño vertical.
 - Mejorar ticket en Pagos.
 - Mejorar copy de WhatsApp.
-- Arreglar Resumen K.
+- Arreglar y desacoplar Resumen K V2 (seguimiento de recetas e insumos).
 - Mejorar Corte.
 - Reacomodar Sorteo.
 - Agregar tickets extra a participantes.

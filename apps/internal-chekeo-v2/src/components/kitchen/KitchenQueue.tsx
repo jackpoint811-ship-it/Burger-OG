@@ -1,19 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card } from "@ui/index";
 import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  Clock,
   MapPin,
   RefreshCw,
 } from "lucide-react";
 import type {
-  KitchenSummaryKResponse,
   OrderStatus,
   OrderV2Environment,
 } from "@config/index";
-import { fetchKitchenSummaryK } from "../../lib/ingredients-v2-admin";
 import { HorizontalDateCalendarFilter } from "../HorizontalDateCalendarFilter";
 import { parseOrderCustomerDetails } from "../../lib/order-parser";
 import {
@@ -22,10 +19,10 @@ import {
   buildKitchenOrderQueueSummary,
   extractKitchenLocation,
   getComboBurgerNotes,
+  getKitchenBurgerBreakdowns,
   getKitchenItemActionKind,
   getKitchenItemImage,
   getKitchenItemLabel,
-  getKitchenItemNotes,
   stripLocationFromNotes,
 } from "./kitchen-helpers";
 import type {
@@ -37,8 +34,7 @@ import type {
   MoveKitchenOrderStatus,
   ToggleKitchenItemDone,
 } from "./kitchen-types";
-
-type KitchenSummaryK = NonNullable<KitchenSummaryKResponse["data"]>;
+import { KitchenSummaryK } from "./KitchenSummaryK";
 
 const aggregateSummaryRows = <T extends { name: string; quantity: number }>(items: T[]): T[] => {
   const map = new Map<string, T>();
@@ -121,7 +117,7 @@ const KitchenEmptyState = ({ title }: { title: string }) => (
 );
 
 /* ------------------------------------------------------------------ */
-/*  Item detail list (unchanged from previous, filters by lane)       */
+/*  Item detail list (structured MOD and UPGRADE per burger)          */
 /* ------------------------------------------------------------------ */
 
 const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
@@ -129,23 +125,6 @@ const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
 
   // BURGER block (Combo burgers)
   const comboNotes = isPrep ? getComboBurgerNotes(item.item) : [];
-
-  // MOD block
-  const mods = isPrep ? item.item.removedIngredients.map((ing) => `Sin ${ing}`) : [];
-
-  // UPGRADE block
-  const upgrades = isPrep
-    ? item.item.extras
-        .map((e) =>
-          e.name
-            .replace(/\bextras?\b/gi, "")
-            .replace(/\s+/g, " ")
-            .trim(),
-        )
-        .filter(Boolean)
-    : [];
-
-  const hasModOrUpgrade = mods.length > 0 || upgrades.length > 0;
 
   // Note block — unified, shown as NOTA DEL PEDIDO
   const generalNote = stripLocationFromNotes(item.order.note);
@@ -155,17 +134,21 @@ const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
   // Side Quest source indicator (De combo / Individual)
   const sideQuestSource: string | null = !isPrep
     ? item.item.parentItemName
-      ? "De combo"
-      : "Individual"
+      ? `De combo ${item.item.parentItemName}`
+      : item.detailLabel?.includes("De combo")
+        ? item.detailLabel.substring(item.detailLabel.indexOf("De combo"))
+        : "Individual"
     : null;
 
+  const breakdowns = isPrep ? getKitchenBurgerBreakdowns(item.item) : [];
+
   return (
-    <div className="kitchen-item-details">
+    <div className="kitchen-item-details space-y-2">
       {comboNotes.length ? (
         <div className="kitchen-detail-block kitchen-detail-block--burger">
           <p className="kitchen-detail-label">Burgers del combo</p>
           <div className="mt-2 grid gap-2">
-            {comboNotes.map((note) => (
+            {comboNotes.map((note: string) => (
               <span key={note} className="kitchen-note-chip kitchen-note-chip--combo">
                 {note}
               </span>
@@ -174,43 +157,57 @@ const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
         </div>
       ) : null}
 
-      {isPrep && hasModOrUpgrade ? (
-        <div className="kitchen-detail-block kitchen-detail-block--mod-upgrade grid gap-3 grid-cols-2">
-          {/* MOD column — always shown when hasModOrUpgrade */}
-          <div className="kitchen-detail-block h-full">
-            <p className="kitchen-detail-label text-rose-800 dark:text-rose-300">MOD</p>
-            {mods.length ? (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {mods.map((note) => (
-                  <span key={note} className="kitchen-note-chip kitchen-note-chip--mod">
-                    {note}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-2 text-xs text-zinc-600 italic">—</p>
-            )}
-          </div>
-          {/* UPGRADE column — always shown when hasModOrUpgrade */}
-          <div className="kitchen-detail-block h-full">
-            <p className="kitchen-detail-label text-lime-300">UPGRADE</p>
-            {upgrades.length ? (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {upgrades.map((note) => (
-                  <span key={note} className="kitchen-note-chip kitchen-note-chip--upgrade">
-                    {note}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-2 text-xs text-zinc-600 italic">—</p>
-            )}
-          </div>
-        </div>
-      ) : null}
+      {isPrep && breakdowns.length ? (
+        <div className="space-y-3 mt-2">
+          {breakdowns.map((b, idx) => (
+            <div key={`${b.burgerName}-${idx}`} className="kitchen-detail-block border-t border-zinc-800/40 pt-2 first:border-0 first:pt-0">
+              {breakdowns.length > 1 ? (
+                <p className="text-xs font-black uppercase text-lime-400 mb-1">
+                  🍔 {b.burgerName}
+                </p>
+              ) : null}
 
-      {isPrep && !hasModOrUpgrade && !comboNotes.length ? (
-        <p className="kitchen-no-changes">Burger original · Sin cambios</p>
+              {!b.isOriginal ? (
+                <div className="kitchen-detail-block--mod-upgrade grid gap-3 grid-cols-2">
+                  <div className="kitchen-detail-block h-full">
+                    <p className="kitchen-detail-label text-rose-400">MOD</p>
+                    {b.mods.length ? (
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {b.mods.map((mod) => (
+                          <span key={mod} className="kitchen-note-chip kitchen-note-chip--mod">
+                            {mod}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-1.5 text-xs text-zinc-500 italic">—</p>
+                    )}
+                  </div>
+                  <div className="kitchen-detail-block h-full">
+                    <p className="kitchen-detail-label text-lime-300">UPGRADE</p>
+                    {b.upgrades.length ? (
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {b.upgrades.map((up) => (
+                          <span key={up} className="kitchen-note-chip kitchen-note-chip--upgrade">
+                            {up}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-1.5 text-xs text-zinc-500 italic">—</p>
+                    )}
+                  </div>
+                </div>
+              ) : !comboNotes.length ? (
+                <p className="kitchen-no-changes">Burger original · Sin cambios</p>
+              ) : null}
+
+              {b.note && !comboNotes.length ? (
+                <p className="mt-1 text-xs text-amber-300 italic">Nota burger: {b.note}</p>
+              ) : null}
+            </div>
+          ))}
+        </div>
       ) : null}
 
       {sideQuestSource ? (
@@ -220,7 +217,7 @@ const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
       ) : null}
 
       {noteText ? (
-        <div className="kitchen-order-note">
+        <div className="kitchen-order-note mt-3">
           <p className="kitchen-order-note__label">NOTA DEL PEDIDO</p>
           <p className="kitchen-order-note__text">{noteText}</p>
         </div>
@@ -319,32 +316,50 @@ const AccordionItemRow = ({
 };
 
 /* ------------------------------------------------------------------ */
-/*  Active order container                                            */
+/*  Category progress breakdown helper                                */
 /* ------------------------------------------------------------------ */
 
-const OrderElapsedBadge = ({ createdAtMs }: { createdAtMs?: number }) => {
-  const elapsedMinutes = useMemo(() => {
-    if (!createdAtMs) return null;
-    const diffMs = Date.now() - createdAtMs;
-    return Math.max(0, Math.floor(diffMs / 60000));
-  }, [createdAtMs]);
+const buildCategoryProgressBadge = (group: OrderGroup) => {
+  let totalBurgers = 0;
+  let doneBurgers = 0;
+  let totalSides = 0;
+  let doneSides = 0;
+  let totalDrinks = 0;
+  let doneDrinks = 0;
 
-  if (elapsedMinutes === null) return null;
-
-  let colorClass = "border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300";
-  if (elapsedMinutes >= 20) {
-    colorClass = "border-rose-300 dark:border-rose-500/60 bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 animate-pulse";
-  } else if (elapsedMinutes >= 10) {
-    colorClass = "border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300";
+  for (const item of group.items) {
+    const isDone = item.done;
+    if (item.lane === "prep") {
+      totalBurgers++;
+      if (isDone) doneBurgers++;
+    } else if (item.lane === "sideQuest") {
+      const isDrink =
+        item.itemLabel === "Bebida" ||
+        item.detailLabel?.toLowerCase().includes("bebida") ||
+        item.detailLabel?.toLowerCase().includes("refresco") ||
+        item.detailLabel?.toLowerCase().includes("coca") ||
+        item.detailLabel?.toLowerCase().includes("soda");
+      if (isDrink) {
+        totalDrinks++;
+        if (isDone) doneDrinks++;
+      } else {
+        totalSides++;
+        if (isDone) doneSides++;
+      }
+    }
   }
 
-  return (
-    <span className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-xs font-black ${colorClass}`}>
-      <Clock size={13} aria-hidden="true" />
-      {elapsedMinutes} min
-    </span>
-  );
+  const parts: string[] = [];
+  if (totalBurgers > 0) parts.push(`🍔 ${doneBurgers}/${totalBurgers} Burgers`);
+  if (totalSides > 0) parts.push(`🍟 ${doneSides}/${totalSides} Side${totalSides !== 1 ? 's' : ''}`);
+  if (totalDrinks > 0) parts.push(`🥤 ${doneDrinks}/${totalDrinks} Bebida${totalDrinks !== 1 ? 's' : ''}`);
+
+  return parts.join(" · ");
 };
+
+/* ------------------------------------------------------------------ */
+/*  Active order container                                            */
+/* ------------------------------------------------------------------ */
 
 const ActiveOrderContainer = ({
   group,
@@ -379,10 +394,7 @@ const ActiveOrderContainer = ({
   const createdAtIso = group.order.createdAtIso || (group.order.createdAtMs ? new Date(group.order.createdAtMs).toISOString() : undefined);
   const details = parseOrderCustomerDetails(group.order.customer, group.order.note, createdAtIso);
   const location = details.deliveryLocation || extractKitchenLocation(group.order.note);
-  const hasCombo = group.items.some(
-    (entry) => entry.kind === "combo" || entry.item.parentItemName,
-  );
-  
+  const categoryProgress = buildCategoryProgressBadge(group);
   const quickSummary = buildKitchenOrderQueueSummary(group.order);
 
   return (
@@ -391,14 +403,15 @@ const ActiveOrderContainer = ({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-lime-400 m-0">Pedido Activo</p>
-            <span className="text-[10px] font-black bg-lime-400/20 text-lime-300 px-1.5 py-0.5 rounded uppercase tracking-[0.1em]">
-              {group.doneCount}/{group.items.length}
-            </span>
-            {details.scheduledDeliveryTime ? (
-              <span className="text-[10px] font-black bg-cyan-400/20 text-cyan-300 px-1.5 py-0.5 rounded uppercase tracking-[0.1em]">
-                {details.deliveryDateLabel}: {details.scheduledDeliveryTime}
+            {categoryProgress ? (
+              <span className="text-xs font-black bg-lime-400/20 text-lime-300 px-2 py-0.5 rounded tracking-[0.05em]">
+                {categoryProgress}
               </span>
-            ) : null}
+            ) : (
+              <span className="text-[10px] font-black bg-lime-400/20 text-lime-300 px-1.5 py-0.5 rounded uppercase tracking-[0.1em]">
+                {group.doneCount}/{group.items.length}
+              </span>
+            )}
           </div>
           <h3 className="kitchen-active-order__customer">
             {details.cleanCustomerName}
@@ -411,16 +424,10 @@ const ActiveOrderContainer = ({
           <p className="kitchen-active-order__folio kitchen-production-card__folio">{group.order.folio}</p>
         </div>
         <div className="flex flex-wrap md:justify-end gap-1.5 self-start w-full md:w-auto mt-2 md:mt-0 items-center">
-          <OrderElapsedBadge createdAtMs={group.order.createdAtMs} />
           <span className="kitchen-location-chip">
             <MapPin size={14} aria-hidden="true" />
             {location}
           </span>
-          {hasCombo ? (
-            <span className="kitchen-location-chip kitchen-location-chip--combo">
-              Combo
-            </span>
-          ) : null}
         </div>
       </div>
 
@@ -760,206 +767,6 @@ const ProductionLanePanel = ({
 };
 
 /* ------------------------------------------------------------------ */
-/*  Summary metrics (unchanged)                                       */
-/* ------------------------------------------------------------------ */
-
-const SummaryMetric = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) => (
-  <Card className="border-cyan-300 dark:border-cyan-500/20 bg-white dark:bg-zinc-950 p-4">
-    <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-600 dark:text-zinc-400">
-      {label}
-    </p>
-    <p className="mt-2 text-3xl font-black text-cyan-900 dark:text-cyan-100">{value}</p>
-  </Card>
-);
-
-/* ------------------------------------------------------------------ */
-/*  Resumen K panel (unchanged)                                       */
-/* ------------------------------------------------------------------ */
-
-const KitchenSummaryKPanel = ({
-  environment,
-  localSummary,
-}: {
-  environment: OrderV2Environment;
-  localSummary: KitchenLocalSummary;
-}) => {
-  const [summary, setSummary] = useState<KitchenSummaryK | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setSummary(await fetchKitchenSummaryK(environment));
-    } catch {
-      setError("No se pudo cargar Resumen K. Cocina sigue funcionando normalmente.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void load();
-  }, [environment]);
-
-  const burgerRows =
-    summary?.hasRecipes && summary.burgers?.length
-      ? aggregateSummaryRows(summary.burgers)
-      : localSummary.burgersList;
-
-  const garnishRows =
-    summary?.hasRecipes && summary.garnishes?.length
-      ? aggregateSummaryRows(summary.garnishes)
-      : localSummary.garnishesList;
-
-  const totalBurgers =
-    summary?.hasRecipes && summary.totals?.burgers
-      ? summary.totals.burgers
-      : localSummary.burgers;
-
-  const totalGarnishes =
-    summary?.hasRecipes && summary.totals?.garnishes
-      ? summary.totals.garnishes
-      : localSummary.garnishes;
-
-  const costText =
-    summary?.totals?.estimatedCostCents == null
-      ? "—"
-      : formatCurrency(summary.totals.estimatedCostCents / 100);
-  const estimatedProfitText =
-    summary?.totals?.estimatedCostCents == null
-      ? "—"
-      : formatCurrency(localSummary.estimatedSales - summary.totals.estimatedCostCents / 100);
-
-  return (
-    <section className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryMetric label="Total burgers" value={totalBurgers} />
-        <SummaryMetric label="Total guarniciones" value={totalGarnishes} />
-        <SummaryMetric label="Combos desglosados" value={localSummary.comboBurgers} />
-        <SummaryMetric label="Side Quest" value={localSummary.sideQuests} />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryMetric label="Por hacer" value={localSummary.pendingItems} />
-        <SummaryMetric label="Hechas" value={localSummary.doneItems} />
-        <SummaryMetric label="Extras" value={localSummary.extras} />
-        <SummaryMetric label="Ventas visibles" value={formatCurrency(localSummary.estimatedSales)} />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <SummaryMetric label="Costo producción" value={costText} />
-        <SummaryMetric label="Ganancia estimada" value={estimatedProfitText} />
-        <SummaryMetric label="Insumos" value={summary?.totals?.ingredients ?? 0} />
-      </div>
-
-      {loading ? (
-        <Card className="border-cyan-300 dark:border-cyan-500/20 bg-white dark:bg-zinc-950 p-4">
-          <p className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">Cargando Resumen K...</p>
-        </Card>
-      ) : null}
-
-      {error ? (
-        <Card className="border-rose-400/30 bg-rose-50 dark:bg-rose-950/30 p-4">
-          <p className="text-sm font-bold text-rose-100">{error}</p>
-          <Button className="mt-3 border border-rose-300/30 bg-white dark:bg-zinc-950" onClick={load}>
-            Reintentar
-          </Button>
-        </Card>
-      ) : null}
-
-      {summary && !summary.hasRecipes ? (
-        <Card className="border-amber-400/30 bg-amber-50 dark:bg-amber-950/20 p-4">
-          <p className="text-sm font-bold text-amber-100">
-            Configura recetas aproximadas en Chekeo para desbloquear el cálculo de ingredientes.
-          </p>
-        </Card>
-      ) : null}
-
-      {summary ? (
-        <>
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card className="border-emerald-300 dark:border-emerald-500/20 bg-white dark:bg-zinc-950 p-4">
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-200">
-                {orderEnvironmentLabel[environment]} · burgers
-              </h3>
-              <div className="mt-3 space-y-2">
-                {burgerRows.length ? (
-                  burgerRows.map((item) => (
-                    <div key={item.sku || item.name} className="kitchen-summary-row">
-                      <span>{item.name}</span>
-                      <strong>{item.quantity}</strong>
-                    </div>
-                  ))
-                ) : (
-                  <KitchenEmptyState title="Sin burgers del día." />
-                )}
-              </div>
-            </Card>
-            <Card className="border-amber-300 dark:border-amber-500/20 bg-white dark:bg-zinc-950 p-4">
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-amber-200">
-                {orderEnvironmentLabel[environment]} · guarniciones
-              </h3>
-              <div className="mt-3 space-y-2">
-                {garnishRows.length ? (
-                  garnishRows.map((item) => (
-                    <div key={item.sku || item.name} className="kitchen-summary-row">
-                      <span>{item.name}</span>
-                      <strong>{item.quantity}</strong>
-                    </div>
-                  ))
-                ) : (
-                  <KitchenEmptyState title="Sin guarniciones del día." />
-                )}
-              </div>
-            </Card>
-          </div>
-          <Card className="border-cyan-300 dark:border-cyan-500/20 bg-white dark:bg-zinc-950 p-4">
-            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-cyan-200">
-              Ingredientes estimados
-            </h3>
-            <div className="mt-3 space-y-2">
-              {summary.ingredients?.length ? (
-                summary.ingredients.map((ingredient) => (
-                  <div key={ingredient.ingredientId} className="kitchen-ingredient-row">
-                    <div>
-                      <p className="font-bold text-zinc-900 dark:text-zinc-100">{ingredient.name}</p>
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                        Precio unitario:{" "}
-                        {ingredient.unitPriceCents == null
-                          ? "—"
-                          : formatCurrency(ingredient.unitPriceCents / 100)}
-                      </p>
-                    </div>
-                    <p className="font-black text-cyan-900 dark:text-cyan-100">
-                      {ingredient.quantity.toFixed(2)} {ingredient.unit}
-                    </p>
-                    <p className="font-black text-emerald-700 dark:text-emerald-200">
-                      {ingredient.estimatedCostCents == null
-                        ? "—"
-                        : formatCurrency(ingredient.estimatedCostCents / 100)}
-                    </p>
-                  </div>
-                ))
-              ) : !summary.hasRecipes ? (
-                <KitchenEmptyState title="Ingredientes estimados no disponibles porque faltan recetas configuradas." />
-              ) : (
-                <KitchenEmptyState title="Sin ingredientes estimados." />
-              )}
-            </div>
-          </Card>
-        </>
-      ) : null}
-    </section>
-  );
-};
-
-/* ------------------------------------------------------------------ */
 /*  Main KitchenQueue component                                       */
 /* ------------------------------------------------------------------ */
 
@@ -1172,7 +979,7 @@ export const KitchenQueue = ({
       ) : null}
 
       {view === "summaryK" ? (
-        <KitchenSummaryKPanel
+        <KitchenSummaryK
           environment={runtime.environment}
           localSummary={localSummary}
         />

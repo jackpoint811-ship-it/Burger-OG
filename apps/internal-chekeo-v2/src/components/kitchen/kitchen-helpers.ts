@@ -184,6 +184,59 @@ export const getComboBurgerNotes = (item: KitchenOrderItem) =>
     return notes.join(" · ");
   });
 
+export type KitchenBurgerBreakdown = {
+  burgerName: string;
+  mods: string[];
+  upgrades: string[];
+  note?: string;
+  isOriginal: boolean;
+};
+
+export const getKitchenBurgerBreakdowns = (
+  item: KitchenOrderItem,
+): KitchenBurgerBreakdown[] => {
+  if (item.comboBurgers && item.comboBurgers.length > 0) {
+    return item.comboBurgers.map((burger) => {
+      const mods = burger.removedIngredients.map((ing) => `Sin ${ing}`);
+      const upgrades = burger.extras
+        .map((e) =>
+          e.name
+            .replace(/\bextras?\b/gi, "")
+            .replace(/\s+/g, " ")
+            .trim(),
+        )
+        .filter(Boolean);
+      return {
+        burgerName: burger.name,
+        mods,
+        upgrades,
+        note: burger.burgerNote,
+        isOriginal: mods.length === 0 && upgrades.length === 0,
+      };
+    });
+  }
+
+  const mods = item.removedIngredients.map((ing) => `Sin ${ing}`);
+  const upgrades = item.extras
+    .map((e) =>
+      e.name
+        .replace(/\bextras?\b/gi, "")
+        .replace(/\s+/g, " ")
+        .trim(),
+    )
+    .filter(Boolean);
+
+  return [
+    {
+      burgerName: item.name,
+      mods,
+      upgrades,
+      note: item.burgerNote,
+      isOriginal: mods.length === 0 && upgrades.length === 0,
+    },
+  ];
+};
+
 const isProductionItem = (item: KitchenOrderItem) => {
   const kind = getKitchenItemKind(item);
   return kind !== "other";
@@ -196,7 +249,7 @@ const hasComboBurgerWork = (item: KitchenOrderItem) => {
 
 const hasSideQuestWork = (item: KitchenOrderItem) => {
   const kind = getKitchenItemKind(item);
-  return kind === "garnish" || kind === "drink";
+  return kind === "garnish" || kind === "drink" || kind === "combo";
 };
 
 const getSideQuestLabel = (item: KitchenOrderItem) => {
@@ -247,12 +300,53 @@ export const buildKitchenProductionItems = (
             detailLabel: item.name,
           });
         }
-        if (hasSideQuestWork(item)) {
+        if (kind === "combo") {
+          let hasSideQuestEntries = false;
+          if (item.garnish) {
+            hasSideQuestEntries = true;
+            nextEntries.push({
+              ...base,
+              id: `${order.id}-${lineKey}-sidequest-garnish`,
+              lane: "sideQuest",
+              itemLabel: "Side Quest",
+              detailLabel: `${item.garnish.name} · De combo ${item.name}`,
+            });
+          }
+          if (item.includedDrink) {
+            hasSideQuestEntries = true;
+            nextEntries.push({
+              ...base,
+              id: `${order.id}-${lineKey}-sidequest-drink`,
+              lane: "sideQuest",
+              itemLabel: "Bebida",
+              detailLabel: `${item.includedDrink.name} · De combo ${item.name}`,
+            });
+          }
+          item.sideQuestExtras.forEach((extra, sqIdx) => {
+            hasSideQuestEntries = true;
+            nextEntries.push({
+              ...base,
+              id: `${order.id}-${lineKey}-sidequest-extra-${sqIdx}`,
+              lane: "sideQuest",
+              itemLabel: extra.itemKind === "drink" ? "Bebida" : "Side Quest",
+              detailLabel: `${extra.name} · De combo ${item.name}`,
+            });
+          });
+          if (!hasSideQuestEntries) {
+            nextEntries.push({
+              ...base,
+              id: `${order.id}-${lineKey}-sidequest-combo-default`,
+              lane: "sideQuest",
+              itemLabel: "Side Quest",
+              detailLabel: `Papas y Refresco · De combo ${item.name}`,
+            });
+          }
+        } else if (hasSideQuestWork(item)) {
           nextEntries.push({
             ...base,
             id: `${order.id}-${lineKey}-sidequest`,
             lane: "sideQuest",
-            itemLabel: "Side Quest",
+            itemLabel: (kind as string) === "drink" ? "Bebida" : "Side Quest",
             detailLabel:
               item.parentItemName && item.parentItemName !== item.name
                 ? `${getSideQuestLabel(item)} · ${item.parentItemName}`
@@ -415,18 +509,9 @@ export const getKitchenItemActionKind = (
   return isKitchenActionKind(kind) ? kind : "burger";
 };
 
-const getShortName = (name: string): string => {
-  const clean = name.trim();
-  if (clean === "Aros de cebolla") return "Aros";
-  if (clean.toLowerCase().startsWith("burger ")) {
-    return clean.substring(7).trim();
-  }
-  return clean;
-};
-
 /**
  * Builds a compact queue summary for the entire kitchen order with emojis.
- * e.g. "🍔 3 Burgers · 🍟 2 Sides"
+ * e.g. "🍔 3 Burgers · 🍟 2 Sides · 🥤 1 Bebida"
  */
 export const buildKitchenOrderQueueSummary = (
   order: KitchenOrder,
@@ -438,16 +523,20 @@ export const buildKitchenOrderQueueSummary = (
   for (const item of order.items) {
     const kind = getKitchenItemKind(item);
 
-    if (kind === "burger" || kind === "combo") {
+    if (kind === "burger") {
       burgers += item.qty;
-      if (kind === "combo") {
-        if (item.comboBurgers && item.comboBurgers.length > 0) {
-          const extraBurgers = item.comboBurgers.length - 1;
-          if (extraBurgers > 0) burgers += extraBurgers * item.qty;
-        }
-        // Combo has 1 side by default
+    } else if (kind === "combo") {
+      const comboBurgerCount = item.comboBurgers.length > 0 ? item.comboBurgers.length : 1;
+      burgers += comboBurgerCount * item.qty;
+
+      if (item.garnish) {
         sides += item.qty;
-        // Combo has 1 drink by default
+      }
+      if (item.includedDrink) {
+        drinks += item.qty;
+      }
+      if (!item.garnish && !item.includedDrink && (!item.sideQuestExtras || item.sideQuestExtras.length === 0)) {
+        sides += item.qty;
         drinks += item.qty;
       }
     } else if (kind === "garnish") {
@@ -460,6 +549,7 @@ export const buildKitchenOrderQueueSummary = (
       for (const extra of item.sideQuestExtras) {
         if (extra.itemKind === "garnish") sides += item.qty;
         else if (extra.itemKind === "drink") drinks += item.qty;
+        else sides += item.qty;
       }
     }
   }

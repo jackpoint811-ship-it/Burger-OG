@@ -25,7 +25,13 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 - Resumen K: debe mostrar burgers, ingredientes, extras y cantidades necesarias.
 - Sorteo: debe mostrar lo más importante sin saturar.
 
-## Última Actualización (2026-08-05)
+- **Reestructuración de Vista de Cocina (Kitchen View V2)**:
+  - **Filtro de Calendario Horizontal**: Listado dinámico de fechas compilado únicamente a partir de fechas reales con pedidos registrados.
+  - **Identificación de MODs y UPGRADES**: Título de burger limpio con desglose visual estructurado de ingredientes omitidos (MOD) y extras añadidos (UPGRADE) al expandir, aplicando a burgers independientes y combos.
+  - **Contador por Categorías**: Badge desglosado por categorías (`🍔 Burgers · 🍟 Sides · 🥤 Bebidas`).
+  - **Desglose de SideQuest en Combos**: Renglones/tarjetas individuales en la pestaña Side Quest para cada guarnición y bebida pertenecientes a un combo con etiqueta de origen.
+  - **Remoción de Timers y Badge Combo sobrante**: Eliminados badges de minutos transcurridos, entregas programadas y pill Combo redundante de ubicación.
+  - **Desacoplamiento de Resumen K**: Panel extraído al componente independiente `KitchenSummaryK.tsx`.
 
 - **Sincronización Local & PRs Recientes**:
   - **PR #438**: Reversión de cambios no solicitados en `InternalChekeoApp.tsx`, manteniendo estrictamente el fix de desbordamiento horizontal responsive en CSS (`styles.css`).
