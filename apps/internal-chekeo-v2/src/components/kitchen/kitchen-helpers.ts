@@ -362,7 +362,7 @@ export const buildKitchenProductionItems = (
               ...base,
               id: `${order.id}-${lineKey}-sidequest-garnish`,
               lane: "sideQuest",
-              itemLabel: "Side Quest",
+              itemLabel: item.garnish.name,
               detailLabel: `${item.garnish.name} · De combo ${item.name}`,
             });
           }
@@ -372,7 +372,7 @@ export const buildKitchenProductionItems = (
               ...base,
               id: `${order.id}-${lineKey}-sidequest-drink`,
               lane: "sideQuest",
-              itemLabel: "Bebida",
+              itemLabel: item.includedDrink.name,
               detailLabel: `${item.includedDrink.name} · De combo ${item.name}`,
             });
           }
@@ -382,7 +382,7 @@ export const buildKitchenProductionItems = (
               ...base,
               id: `${order.id}-${lineKey}-sidequest-extra-${sqIdx}`,
               lane: "sideQuest",
-              itemLabel: extra.itemKind === "drink" ? "Bebida" : "Side Quest",
+              itemLabel: extra.name,
               detailLabel: `${extra.name} · De combo ${item.name}`,
             });
           });
@@ -391,20 +391,21 @@ export const buildKitchenProductionItems = (
               ...base,
               id: `${order.id}-${lineKey}-sidequest-combo-default`,
               lane: "sideQuest",
-              itemLabel: "Side Quest",
-              detailLabel: `Papas y Refresco · De combo ${item.name}`,
+              itemLabel: "Papas Clásicas",
+              detailLabel: `Papas Clásicas · De combo ${item.name}`,
             });
           }
         } else if (hasSideQuestWork(item)) {
+          const sideLabel = getSideQuestLabel(item);
           nextEntries.push({
             ...base,
             id: `${order.id}-${lineKey}-sidequest`,
             lane: "sideQuest",
-            itemLabel: (kind as string) === "drink" ? "Bebida" : "Side Quest",
+            itemLabel: sideLabel,
             detailLabel:
               item.parentItemName && item.parentItemName !== item.name
-                ? `${getSideQuestLabel(item)} · ${item.parentItemName}`
-                : getSideQuestLabel(item),
+                ? `${sideLabel} · De combo ${item.parentItemName}`
+                : sideLabel,
           });
         }
         return nextEntries;
