@@ -13,6 +13,15 @@
   Tipografía: Inter
   ═══════════════════════════════════════════════════════
 */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 :root {
   color-scheme: light;
 
@@ -9456,4 +9465,47 @@ html {
   will-change: transform, opacity;
   transform: translateZ(0);
   backface-visibility: hidden;
+}
+
+/* ── Mobile-First Responsive Safety & Overflow Protections ── */
+@media (max-width: 480px) {
+  .catalog-shell,
+  .catalog-drawer,
+  .catalog-checkout-drawer,
+  .catalog-cart-drawer {
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    overflow-x: hidden !important;
+  }
+
+  .catalog-checkout-wizard-bar {
+    padding: 6px 10px !important;
+  }
+
+  .catalog-checkout-wizard-step {
+    font-size: 11px !important;
+    gap: 4px !important;
+  }
+
+  .catalog-checkout-wizard-divider {
+    margin: 0 6px !important;
+  }
+
+  .catalog-checkout-location-grid,
+  .catalog-checkout-date-grid,
+  .catalog-drawer__mode-toggle-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .catalog-checkout-summary-item {
+    gap: 6px !important;
+  }
+
+  .catalog-checkout-item-name {
+    font-size: 11px !important;
+  }
 }
