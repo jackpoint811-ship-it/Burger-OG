@@ -25,7 +25,14 @@ const ensureDefaultBannerExists = async (db: D1Database, id: string) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
     ).bind(def.id, def.title, def.subtitle, def.cta_label, def.bg_preset, def.badge_text, def.is_active, def.sort_order).run();
   } catch {
-    /* table might not exist yet */
+    try {
+      await db.prepare(
+        `INSERT OR IGNORE INTO catalog_banners (id, title, subtitle, cta_label, is_active, sort_order, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+      ).bind(def.id, def.title, def.subtitle, def.cta_label, def.is_active, def.sort_order).run();
+    } catch {
+      /* table might not exist yet */
+    }
   }
 };
 
@@ -131,7 +138,25 @@ export const onRequestPatch: PagesFunction<Env, 'id'> = async ({ env, request, p
       `UPDATE catalog_banners SET ${updates.join(', ')} WHERE id = ?`
     ).bind(...bindings).run();
   } catch {
-    /* ignore update error if table missing */
+    // Fallback: update using base columns only in case optional columns do not exist
+    const baseUpdates: string[] = [];
+    const baseBindings: any[] = [];
+    if (typeof body.title === 'string' && body.title.trim()) { baseUpdates.push('title = ?'); baseBindings.push(body.title.trim()); }
+    const sub = normalizeOptionalString(body.subtitle); if (sub !== undefined) { baseUpdates.push('subtitle = ?'); baseBindings.push(sub); }
+    const cta = normalizeOptionalString(body.ctaLabel); if (cta !== undefined) { baseUpdates.push('cta_label = ?'); baseBindings.push(cta); }
+    if ('imageUrl' in body && validateImageUrl(body.imageUrl) !== undefined) { baseUpdates.push('image_url = ?'); baseBindings.push(validateImageUrl(body.imageUrl)); }
+    if ('imageKey' in body && validateAssetKey(body.imageKey) !== undefined) { baseUpdates.push('image_key = ?'); baseBindings.push(validateAssetKey(body.imageKey)); }
+    if (typeof body.isActive === 'boolean') { baseUpdates.push('is_active = ?'); baseBindings.push(body.isActive ? 1 : 0); }
+    if (typeof body.sortOrder === 'number') { baseUpdates.push('sort_order = ?'); baseBindings.push(body.sortOrder); }
+    if (baseUpdates.length > 0) {
+      baseUpdates.push('updated_at = CURRENT_TIMESTAMP');
+      baseBindings.push(id);
+      try {
+        await env.BOG_MENU_DB.prepare(`UPDATE catalog_banners SET ${baseUpdates.join(', ')} WHERE id = ?`).bind(...baseBindings).run();
+      } catch {
+        /* ignore fallback update error */
+      }
+    }
   }
 
   try {

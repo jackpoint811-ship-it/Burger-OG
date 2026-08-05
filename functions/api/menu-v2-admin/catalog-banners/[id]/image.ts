@@ -103,7 +103,15 @@ export const onRequestPost: PagesFunction<Env, 'id'> = async ({ env, params, req
         ).bind(def.id, def.title, def.subtitle, def.cta_label, def.bg_preset, def.badge_text, def.is_active, def.sort_order).run();
         currentBanner = await db.prepare('SELECT image_key FROM catalog_banners WHERE id = ?').bind(id).first().catch(() => null);
       } catch {
-        /* table missing */
+        try {
+          await db.prepare(
+            `INSERT OR IGNORE INTO catalog_banners (id, title, subtitle, cta_label, is_active, sort_order, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+          ).bind(def.id, def.title, def.subtitle, def.cta_label, def.is_active, def.sort_order).run();
+          currentBanner = await db.prepare('SELECT image_key FROM catalog_banners WHERE id = ?').bind(id).first().catch(() => null);
+        } catch {
+          /* table missing */
+        }
       }
     }
   }

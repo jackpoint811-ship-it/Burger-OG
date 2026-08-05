@@ -661,7 +661,16 @@ export function CatalogAdminPanel() {
       return { ...current, catalogBanners: newBanners };
     });
     if (banner && catalogBannerForm?.id === banner.id) {
-      setCatalogBannerForm((f) => f ? { ...f, imageUrl: banner.imageUrl || '', imageKey: banner.imageKey || '' } : f);
+      setCatalogBannerForm({
+        id: banner.id,
+        title: banner.title,
+        subtitle: banner.subtitle || '',
+        ctaLabel: banner.ctaLabel || '',
+        isActive: banner.isActive,
+        sortOrder: String(banner.sortOrder),
+        imageUrl: banner.imageUrl || '',
+        imageKey: banner.imageKey || ''
+      });
     }
   };
 
@@ -686,7 +695,7 @@ export function CatalogAdminPanel() {
       if (!res.ok || !data.ok || !data.banner) throw new Error(data.error ?? 'Error al guardar banner del catálogo');
       updateCatalogBannerInMenu(data.banner);
       setNotice(id ? 'Banner actualizado' : 'Banner creado');
-      if (!id) closeCatalogBannerEditor();
+      closeCatalogBannerEditor();
     } catch (e) {
       setCatalogBannerError(e instanceof Error ? e.message : 'Error al guardar banner del catálogo');
     } finally {
