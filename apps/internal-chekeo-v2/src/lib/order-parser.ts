@@ -1,7 +1,4 @@
-/**
- * Standardized parsing utility for order customer details, delivery location,
- * scheduled dates/times, and operational notes coming from Cloudflare D1.
- */
+import type { OrderV2DeliveryInfo } from "@config/index";
 
 export type StandardizedOrderDetails = {
   cleanCustomerName: string;
@@ -19,15 +16,16 @@ export function parseOrderCustomerDetails(
   rawCustomerName?: string,
   rawNotes?: string,
   createdAtIso?: string,
+  delivery?: OrderV2DeliveryInfo,
 ): StandardizedOrderDetails {
   let customerText = (rawCustomerName || "").replace(FIXTURE_TAG_PATTERN, "").trim();
   let notesText = (rawNotes || "").replace(FIXTURE_TAG_PATTERN, "").trim();
 
-  let location = "Sin ubicación";
-  let scheduledDate: string | undefined = undefined;
-  let scheduledTime: string | undefined = undefined;
-  let isScheduled = false;
-  let extractedNote = "";
+  let location = delivery?.location || "Sin ubicación";
+  let scheduledDate: string | undefined = delivery?.scheduledDate;
+  let scheduledTime: string | undefined = delivery?.scheduledTime;
+  let isScheduled = delivery?.isScheduled ?? false;
+  let extractedNote = delivery?.customerNotes || "";
 
   // 1. Extract location from customer name format: "Name (Torre GGA)"
   const locationMatch = customerText.match(/\((Torre [^)]+)\)/i);
