@@ -847,6 +847,9 @@ export const KitchenQueue = ({
       if (selectedDate === "today") {
         return orderDateStr === todayStr;
       }
+      if (selectedDate === "past") {
+        return orderDateStr < todayStr;
+      }
       return orderDateStr === selectedDate;
     });
   }, [activeOrders, selectedDate]);
