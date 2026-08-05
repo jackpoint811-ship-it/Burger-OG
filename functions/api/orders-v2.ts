@@ -154,7 +154,7 @@ const validatePayload = (body: Record<string, unknown>, request: Request): Norma
   const customer = body.customer && typeof body.customer === 'object' && !Array.isArray(body.customer) ? body.customer as Record<string, unknown> : null;
   const customerName = normalizeString(customer?.name);
   const customerPhone = normalizePhone(customer?.phone);
-  if (customerName.length < 2 || customerName.length > 80 || customerPhone.length < 10) {
+  if (customerName.length < 2 || customerName.length > 300 || customerPhone.length < 10) {
     return errorResponse(400, 'INVALID_CUSTOMER', 'Nombre y teléfono de cliente son requeridos.');
   }
 
