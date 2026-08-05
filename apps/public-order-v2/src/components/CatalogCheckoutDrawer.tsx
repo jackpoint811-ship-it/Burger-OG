@@ -226,14 +226,19 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
     e.preventDefault();
     if (items.length === 0) return;
 
-    const normalizedPhone = normalizePhoneDigits(phone);
-    if (normalizedPhone.length !== 10) {
-      setCheckoutState({ status: "error", error: "El teléfono debe tener exactamente 10 dígitos." });
+    if (!name.trim() || name.trim().length < 2) {
+      setCheckoutState({ status: "error", error: "Por favor, ingresa tu nombre completo (mínimo 2 caracteres)." });
       return;
     }
 
-    if (!name.trim()) {
-      setCheckoutState({ status: "error", error: "Por favor, ingresa tu nombre completo." });
+    const normalizedPhone = normalizePhoneDigits(phone);
+    if (!normalizedPhone) {
+      setCheckoutState({ status: "error", error: "Por favor, ingresa tu número de teléfono (10 dígitos)." });
+      return;
+    }
+
+    if (normalizedPhone.length !== 10) {
+      setCheckoutState({ status: "error", error: "El teléfono debe tener exactamente 10 dígitos (ej: 222 123 4567)." });
       return;
     }
 
@@ -561,7 +566,6 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Ej: Juan Pérez"
-                      required
                       disabled={checkoutState.status === "submitting"}
                     />
                   </label>
@@ -573,7 +577,6 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="Ej: 55 1234 5678"
-                      required
                       disabled={checkoutState.status === "submitting"}
                     />
                   </label>
