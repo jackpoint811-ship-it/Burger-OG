@@ -196,6 +196,7 @@ export function CatalogProductDrawer({ product, initialCartItem, onClose }: Cata
       onClose();
       return;
     }
+    if (!product.isAvailable) return;
     if (isAtMax && !isEditing) return;
 
     const modsList: string[] = [];

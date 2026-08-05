@@ -26,6 +26,7 @@ export function CatalogCartProvider({ children }: { children: React.ReactNode })
   const [state, dispatch] = useReducer(catalogCartReducer, CATALOG_CART_INITIAL_STATE);
 
   const addItem = useCallback((product: CatalogProduct, mods?: string[], upgrades?: { id: string; name: string; price: number; qty: number }[]) => {
+    if (product.isAvailable === false) return;
     dispatch({ type: "ADD_ITEM", product, mods, upgrades });
   }, []);
 
