@@ -138,10 +138,21 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     if (!results || results.length === 0) {
       // Auto seed default 1, 2, 3 banners if D1 table is empty
       for (const b of DEFAULT_BANNERS) {
-        await env.BOG_MENU_DB.prepare(
-          `INSERT OR IGNORE INTO catalog_banners (id, title, subtitle, cta_label, bg_preset, badge_text, is_active, sort_order, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
-        ).bind(b.id, b.title, b.subtitle, b.cta_label, b.bg_preset, b.badge_text, b.is_active, b.sort_order).run();
+        try {
+          await env.BOG_MENU_DB.prepare(
+            `INSERT OR IGNORE INTO catalog_banners (id, title, subtitle, cta_label, bg_preset, badge_text, is_active, sort_order, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+          ).bind(b.id, b.title, b.subtitle, b.cta_label, b.bg_preset, b.badge_text, b.is_active, b.sort_order).run();
+        } catch {
+          try {
+            await env.BOG_MENU_DB.prepare(
+              `INSERT OR IGNORE INTO catalog_banners (id, title, subtitle, cta_label, is_active, sort_order, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+            ).bind(b.id, b.title, b.subtitle, b.cta_label, b.is_active, b.sort_order).run();
+          } catch {
+            /* table might not exist yet */
+          }
+        }
       }
       const seeded = await env.BOG_MENU_DB.prepare(
         'SELECT * FROM catalog_banners ORDER BY sort_order ASC'
