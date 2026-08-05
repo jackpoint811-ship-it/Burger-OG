@@ -22,6 +22,7 @@ type CatalogModeAppProps = {
   categories: MenuCategory[];
   siteConfig: SiteConfig;
   catalogBanners?: CatalogBanner[];
+  categoryBanners?: any[];
   source?: string;
   designSpec?: DesignSpecification | null;
 };
@@ -98,7 +99,7 @@ function useSystemTheme() {
 
 
 
-function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [], source, designSpec }: CatalogModeAppProps) {
+function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [], categoryBanners = [], source, designSpec }: CatalogModeAppProps) {
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
   const [editingCartItem, setEditingCartItem] = useState<any>(null);
   const [activeCategoryKey, setActiveCategoryKey] = useState<string>("all");
@@ -252,6 +253,8 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
           spec={designSpec || DEFAULT_STUDIO_DESIGN_SPEC}
           chekeoItems={items}
           chekeoCategories={categories}
+          catalogBanners={catalogBanners}
+          categoryBanners={categoryBanners}
           activeCategoryKey={activeCategoryKey}
           onSelectCategory={setActiveCategoryKey}
           onProductSelect={(item) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import type { MenuCategory, MenuItem } from "@config/index";
+import type { MenuCategory, MenuItem, CatalogBanner, MenuCategoryBanner } from "@config/index";
 import type { GlobalTheme, LayoutModule } from "../types/design";
 import { formatCurrency } from "../lib/order";
 import {
@@ -17,6 +17,8 @@ export interface LayoutEngineProps {
   globalTheme?: GlobalTheme;
   chekeoItems?: MenuItem[];
   chekeoCategories?: MenuCategory[];
+  catalogBanners?: CatalogBanner[];
+  categoryBanners?: MenuCategoryBanner[];
   isLoading?: boolean;
   onProductSelect?: (product: MenuItem) => void;
   onAction?: (action: string) => void;
@@ -29,6 +31,8 @@ export function LayoutEngine({
   globalTheme,
   chekeoItems = [],
   chekeoCategories = [],
+  catalogBanners = [],
+  categoryBanners = [],
   isLoading = false,
   onProductSelect,
   onAction,
@@ -72,14 +76,20 @@ export function LayoutEngine({
 
   // 2. BANNER CAROUSEL 1 (SWIPEABLE PROMO BANNERS)
   if (moduleType === "banner_carousel_1" || moduleType === "banner_carousel") {
-    const banners = [
+    const activeDbBanners = (catalogBanners || [])
+      .filter((b) => b.isActive !== false)
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+
+    const defaultBanners = [
       {
         id: "b1",
         badge1: "PROMO EXCLUSIVA",
         badge2: "⚡ CÓDIGO BURGERS",
         title: "⚡ ENVÍO GRATIS $0",
         subtitle: "En tu primer pedido mayor a $150 con código BURGERS",
+        ctaLabel: undefined as string | undefined,
         icon: "🍔",
+        src: undefined as string | undefined,
         gradient: "linear-gradient(135deg, #15803D 0%, #16A34A 100%)",
         action: () => {
           try {
@@ -94,7 +104,9 @@ export function LayoutEngine({
         badge2: "SOLO HOY",
         title: "🔥 DOBLE SMASH 2x1",
         subtitle: "Aprovecha 2 hamburguesas dobles al precio de 1",
+        ctaLabel: undefined as string | undefined,
         icon: "🍟",
+        src: undefined as string | undefined,
         gradient: "linear-gradient(135deg, #C2410C 0%, #EA580C 100%)",
         action: () => {
           if (onSelectCategory) onSelectCategory("combos");
@@ -108,13 +120,46 @@ export function LayoutEngine({
         badge2: "GANA COMBOS",
         title: "🏆 COMBOS GRATIS",
         subtitle: "Participa por un año de combos en cada pedido",
+        ctaLabel: undefined as string | undefined,
         icon: "🎁",
+        src: undefined as string | undefined,
         gradient: "linear-gradient(135deg, #4338CA 0%, #6366F1 100%)",
         action: () => {
           window.location.href = "/tickets";
         },
       },
     ];
+
+    const banners = activeDbBanners.length > 0
+      ? activeDbBanners.map((dbBanner, idx) => {
+          const src = resolveCatalogAssetUrl(dbBanner.imageUrl, dbBanner.imageKey);
+          return {
+            id: dbBanner.id || `db-b-${idx}`,
+            badge1: dbBanner.badgeText || "PROMO EXCLUSIVA",
+            badge2: dbBanner.badgeColor ? `BANNER #${idx + 1}` : "DESTACADO",
+            title: dbBanner.title,
+            subtitle: dbBanner.subtitle || "",
+            ctaLabel: dbBanner.ctaLabel,
+            src,
+            icon: dbBanner.badgeText ? "⭐" : "🍔",
+            gradient: dbBanner.bgPreset || (idx % 3 === 0
+              ? "linear-gradient(135deg, #15803D 0%, #16A34A 100%)"
+              : idx % 3 === 1
+              ? "linear-gradient(135deg, #C2410C 0%, #EA580C 100%)"
+              : "linear-gradient(135deg, #4338CA 0%, #6366F1 100%)"),
+            action: () => {
+              if (dbBanner.ctaActionType === "category" && dbBanner.ctaTarget) {
+                if (onSelectCategory) onSelectCategory(dbBanner.ctaTarget);
+                document.getElementById("catalog-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              } else if (dbBanner.ctaActionType === "url" && dbBanner.ctaTarget) {
+                window.location.href = dbBanner.ctaTarget;
+              } else if (onAction) {
+                onAction(`TOAST:⭐|${dbBanner.title}`);
+              }
+            },
+          };
+        })
+      : defaultBanners;
 
     // Autoplay cada 5s
     useEffect(() => {
@@ -197,8 +242,8 @@ export function LayoutEngine({
               </span>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ maxWidth: "72%" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <h2
                   style={{
                     margin: 0,
@@ -212,27 +257,53 @@ export function LayoutEngine({
                 >
                   {activeBanner.title}
                 </h2>
-                <p
+                {activeBanner.subtitle ? (
+                  <p
+                    style={{
+                      margin: "6px 0 0 0",
+                      fontSize: "12px",
+                      fontFamily: "'Inter', sans-serif",
+                      color: "rgba(255, 255, 255, 0.92)",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {activeBanner.subtitle}
+                  </p>
+                ) : null}
+                {activeBanner.ctaLabel ? (
+                  <span
+                    style={{
+                      display: "inline-block",
+                      marginTop: "10px",
+                      fontSize: "11px",
+                      fontWeight: 800,
+                      color: "#FFFFFF",
+                      backgroundColor: "rgba(0, 0, 0, 0.3)",
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid rgba(255,255,255,0.25)",
+                    }}
+                  >
+                    {activeBanner.ctaLabel} →
+                  </span>
+                ) : null}
+              </div>
+              {activeBanner.src ? (
+                <div style={{ width: "64px", height: "64px", borderRadius: "12px", overflow: "hidden", flexShrink: 0, border: "1px solid rgba(255,255,255,0.2)" }}>
+                  <CatalogImage src={activeBanner.src} alt={activeBanner.title} loading="eager" />
+                </div>
+              ) : (
+                <div
                   style={{
-                    margin: "6px 0 0 0",
-                    fontSize: "12px",
-                    fontFamily: "'Inter', sans-serif",
-                    color: "rgba(255, 255, 255, 0.92)",
-                    lineHeight: 1.3,
+                    fontSize: "42px",
+                    userSelect: "none",
+                    filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.3))",
+                    flexShrink: 0,
                   }}
                 >
-                  {activeBanner.subtitle}
-                </p>
-              </div>
-              <div
-                style={{
-                  fontSize: "42px",
-                  userSelect: "none",
-                  filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.3))",
-                }}
-              >
-                {activeBanner.icon}
-              </div>
+                  {activeBanner.icon}
+                </div>
+              )}
             </div>
 
             {/* Puntos indicadores interactivos */}
