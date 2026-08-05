@@ -192,20 +192,38 @@ export type KitchenBurgerBreakdown = {
   isOriginal: boolean;
 };
 
+const formatModIngredient = (raw: string): string => {
+  const clean = raw.replace(/^sin\s+/i, "").trim();
+  if (!clean) return "";
+  return `Sin ${clean.charAt(0).toUpperCase() + clean.slice(1)}`;
+};
+
+const formatUpgradeExtra = (raw: string): string => {
+  const clean = raw.replace(/^extras?\s+/i, "").trim();
+  if (!clean) return "";
+  return `Extra ${clean.charAt(0).toUpperCase() + clean.slice(1)}`;
+};
+
 export const getKitchenBurgerBreakdowns = (
   item: KitchenOrderItem,
 ): KitchenBurgerBreakdown[] => {
   if (item.comboBurgers && item.comboBurgers.length > 0) {
     return item.comboBurgers.map((burger) => {
-      const mods = burger.removedIngredients.map((ing) => `Sin ${ing}`);
-      const upgrades = burger.extras
-        .map((e) =>
-          e.name
-            .replace(/\bextras?\b/gi, "")
-            .replace(/\s+/g, " ")
-            .trim(),
-        )
-        .filter(Boolean);
+      const modsSet = new Set<string>();
+      (burger.removedIngredients || []).forEach((ing) => {
+        const formatted = formatModIngredient(ing);
+        if (formatted) modsSet.add(formatted);
+      });
+
+      const upgradesSet = new Set<string>();
+      (burger.extras || []).forEach((e) => {
+        const formatted = formatUpgradeExtra(e.name);
+        if (formatted) upgradesSet.add(formatted);
+      });
+
+      const mods = Array.from(modsSet);
+      const upgrades = Array.from(upgradesSet);
+
       return {
         burgerName: burger.name,
         mods,
@@ -216,15 +234,20 @@ export const getKitchenBurgerBreakdowns = (
     });
   }
 
-  const mods = item.removedIngredients.map((ing) => `Sin ${ing}`);
-  const upgrades = item.extras
-    .map((e) =>
-      e.name
-        .replace(/\bextras?\b/gi, "")
-        .replace(/\s+/g, " ")
-        .trim(),
-    )
-    .filter(Boolean);
+  const modsSet = new Set<string>();
+  (item.removedIngredients || []).forEach((ing) => {
+    const formatted = formatModIngredient(ing);
+    if (formatted) modsSet.add(formatted);
+  });
+
+  const upgradesSet = new Set<string>();
+  (item.extras || []).forEach((e) => {
+    const formatted = formatUpgradeExtra(e.name);
+    if (formatted) upgradesSet.add(formatted);
+  });
+
+  const mods = Array.from(modsSet);
+  const upgrades = Array.from(upgradesSet);
 
   return [
     {
