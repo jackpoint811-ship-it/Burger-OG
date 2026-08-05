@@ -2789,21 +2789,6 @@ const OrderFact = ({
   </span>
 );
 
-const getPrimaryStatusAction = (
-  status: OrderStatus,
-): { label: string; nextStatus: OrderStatus; icon: string } | null => {
-  switch (status) {
-    case "new":
-      return { label: "Iniciar Prep", nextStatus: "preparing", icon: "🔥" };
-    case "preparing":
-      return { label: "Marcar Listo", nextStatus: "ready", icon: "✓" };
-    case "ready":
-      return { label: "Entregado", nextStatus: "delivered", icon: "🚚" };
-    default:
-      return null;
-  }
-};
-
 const CompactRow = ({
   order,
   onOpen,
@@ -2820,111 +2805,92 @@ const CompactRow = ({
   const previewOrder = isPreviewOrderSource(order.source);
   const itemCount = getOrderItemCount(order);
   const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt);
-  const primaryAction = getPrimaryStatusAction(order.status);
+  const canDeliver = order.status === "ready";
   const canCancel = !terminalStatuses.has(order.status);
-  const itemsSummaryText = order.items.map((i) => `${i.qty}x ${i.name}`).join(" · ");
-
   return (
     <div className={`orders-card orders-card--${order.status}`}>
       <span className={`orders-status-rail orders-status-rail--${order.status}`} aria-hidden="true" />
       <div className="orders-card__body">
-        {/* Top Header: Folio, Customer & Status Badge */}
-        <div className="orders-card__head flex items-start justify-between gap-2">
+        <div className="orders-card__head">
           <div className="orders-card__identity min-w-0">
             <div className="flex items-center gap-2">
-              <p className="orders-card__folio font-black text-lg">
+              <p className="orders-card__folio font-black">
                 <span className="truncate">{order.folio}</span>
               </p>
               {previewOrder ? (
-                <span className="orders-preview-chip text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30">
+                <span className="orders-preview-chip">
                   Prueba
                 </span>
               ) : null}
             </div>
-            <p className="orders-card__customer font-extrabold text-base text-zinc-900 dark:text-zinc-100 mt-0.5">
+            <p className="orders-card__customer font-bold text-base text-zinc-900 dark:text-zinc-100 mt-0.5">
               {details.cleanCustomerName}
             </p>
             {order.customerPhone ? (
-              <p className="text-xs text-zinc-400 font-medium">📞 {order.customerPhone}</p>
+              <p className="text-xs text-zinc-500 font-medium">📞 {order.customerPhone}</p>
             ) : null}
           </div>
-          <div className="orders-card__badges flex flex-col items-end gap-1">
+          <div className="orders-card__badges">
             <OrdersStatusBadge status={order.status} />
-            <span className="text-[11px] text-zinc-500 font-semibold">{order.createdAt}</span>
           </div>
         </div>
 
         {/* 3 Main Priority Facts: Total, Location, Scheduled Delivery Date */}
-        <div className="v3-order-facts-grid grid grid-cols-3 gap-2 my-2 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800">
-          <div className="v3-fact-card flex flex-col justify-center min-w-0">
-            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Total</span>
-            <strong className="text-base font-black text-emerald-400">
+        <div className="v3-order-facts-grid grid grid-cols-3 gap-2 my-2.5 p-2 rounded-xl bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800">
+          <div className="v3-fact-card flex flex-col justify-center">
+            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Total</span>
+            <strong className="text-base font-black text-emerald-600 dark:text-emerald-400">
               {formatCurrency(order.total)}
             </strong>
           </div>
-          <div className="v3-fact-card flex flex-col justify-center min-w-0">
-            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Entrega</span>
-            <strong className="text-xs font-bold text-zinc-200 truncate" title={details.deliveryLocation}>
+          <div className="v3-fact-card flex flex-col justify-center">
+            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Entrega</span>
+            <strong className="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate" title={details.deliveryLocation}>
               📍 {details.deliveryLocation}
             </strong>
           </div>
-          <div className="v3-fact-card flex flex-col justify-center min-w-0">
-            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Fecha</span>
-            <span className={`text-xs font-bold truncate ${details.isScheduled ? "text-amber-400 font-extrabold" : "text-sky-400"}`}>
+          <div className="v3-fact-card flex flex-col justify-center">
+            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Fecha</span>
+            <span className={`text-xs font-bold truncate ${details.isScheduled ? "text-amber-500 font-extrabold" : "text-sky-500"}`}>
               📅 {details.deliveryDateLabel}
             </span>
           </div>
         </div>
 
-        {/* Inline Items Preview */}
-        {itemsSummaryText ? (
-          <div className="v3-order-items-preview px-2.5 py-1.5 rounded-lg bg-zinc-950/60 border border-zinc-800/80 text-xs text-zinc-300">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 block mb-0.5">
-              Productos ({itemCount}):
-            </span>
-            <p className="line-clamp-2 font-medium text-zinc-200">
-              {itemsSummaryText}
-            </p>
-          </div>
-        ) : null}
-
-        {/* Action Bar */}
-        <div className="orders-card__actions flex flex-wrap items-center gap-2 mt-1">
-          {primaryAction ? (
-            <Button
-              className="orders-primary-action flex-1 bg-emerald-400 hover:bg-emerald-300 text-zinc-950 font-black py-2 px-3 rounded-xl min-h-[42px] flex items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-500/10"
-              onClick={() => void onMove(order.id, primaryAction.nextStatus)}
-              disabled={busy}
-            >
-              <span>{primaryAction.icon}</span>
-              <span>{busy ? "Actualizando…" : primaryAction.label}</span>
-            </Button>
-          ) : null}
-
+        <div className="orders-card__actions">
           <Button
-            className="orders-ghost-action px-3 py-2 text-xs font-bold text-zinc-300 bg-zinc-800/80 hover:bg-zinc-700 rounded-xl min-h-[42px] flex items-center justify-center border border-zinc-700"
+            className="orders-primary-action"
             onClick={onOpen}
           >
-            📋 Ver ticket
+            Ver ticket ({itemCount} {itemCount === 1 ? "item" : "items"})
           </Button>
-
-          {canCancel ? (
-            <Button
-              className="px-2.5 py-2 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl min-h-[42px] border border-rose-500/20"
-              onClick={() => onCancel(order)}
-              disabled={busy}
-              title="Cancelar pedido"
-            >
-              Cancelar
-            </Button>
-          ) : null}
+          <details className="orders-card__more">
+            <summary>Más acciones</summary>
+            <div className="orders-card__secondary-actions">
+              {details.cleanNotes ? (
+                <p className="orders-note">Nota: {details.cleanNotes}</p>
+              ) : null}
+              {canDeliver ? (
+                <Button
+                  className="orders-secondary-action"
+                  onClick={() => void onMove(order.id, "delivered")}
+                  disabled={busy}
+                >
+                  {busy ? "Actualizando…" : "Entregado"}
+                </Button>
+              ) : null}
+              {canCancel ? (
+                <Button
+                  className="orders-danger-action"
+                  onClick={() => onCancel(order)}
+                  disabled={busy}
+                >
+                  {busy ? "Cancelando…" : "Cancelar pedido"}
+                </Button>
+              ) : null}
+            </div>
+          </details>
         </div>
-
-        {details.cleanNotes ? (
-          <p className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5 rounded-lg mt-1 font-medium">
-            📝 Nota: {details.cleanNotes}
-          </p>
-        ) : null}
       </div>
     </div>
   );
