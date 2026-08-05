@@ -204,6 +204,24 @@ const formatUpgradeExtra = (raw: string): string => {
   return `Extra ${clean.charAt(0).toUpperCase() + clean.slice(1)}`;
 };
 
+const extractModsAndUpgradesFromNote = (noteText?: string) => {
+  const mods: string[] = [];
+  const upgrades: string[] = [];
+  if (!noteText) return { mods, upgrades };
+
+  const parts = noteText.split(/[,·/\n;]+/).map((p) => p.trim()).filter(Boolean);
+  for (const part of parts) {
+    if (/^sin\s+/i.test(part) || /^no\s+/i.test(part)) {
+      const formatted = formatModIngredient(part.replace(/^no\s+/i, "sin "));
+      if (formatted) mods.push(formatted);
+    } else if (/^extras?\s+/i.test(part) || /\bextra\b/i.test(part)) {
+      const formatted = formatUpgradeExtra(part);
+      if (formatted) upgrades.push(formatted);
+    }
+  }
+  return { mods, upgrades };
+};
+
 export const getKitchenBurgerBreakdowns = (
   item: KitchenOrderItem,
 ): KitchenBurgerBreakdown[] => {
@@ -220,6 +238,12 @@ export const getKitchenBurgerBreakdowns = (
         const formatted = formatUpgradeExtra(e.name);
         if (formatted) upgradesSet.add(formatted);
       });
+
+      if (modsSet.size === 0 && upgradesSet.size === 0 && burger.burgerNote) {
+        const parsed = extractModsAndUpgradesFromNote(burger.burgerNote);
+        parsed.mods.forEach((m) => modsSet.add(m));
+        parsed.upgrades.forEach((u) => upgradesSet.add(u));
+      }
 
       const mods = Array.from(modsSet);
       const upgrades = Array.from(upgradesSet);
@@ -245,6 +269,13 @@ export const getKitchenBurgerBreakdowns = (
     const formatted = formatUpgradeExtra(e.name);
     if (formatted) upgradesSet.add(formatted);
   });
+
+  const noteToParse = item.burgerNote || (item as unknown as { note?: string }).note;
+  if (modsSet.size === 0 && upgradesSet.size === 0 && noteToParse) {
+    const parsed = extractModsAndUpgradesFromNote(noteToParse);
+    parsed.mods.forEach((m) => modsSet.add(m));
+    parsed.upgrades.forEach((u) => upgradesSet.add(u));
+  }
 
   const mods = Array.from(modsSet);
   const upgrades = Array.from(upgradesSet);
