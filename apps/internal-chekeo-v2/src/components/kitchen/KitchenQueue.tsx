@@ -394,7 +394,6 @@ const ActiveOrderContainer = ({
   const createdAtIso = group.order.createdAtIso || (group.order.createdAtMs ? new Date(group.order.createdAtMs).toISOString() : undefined);
   const details = parseOrderCustomerDetails(group.order.customer, group.order.note, createdAtIso);
   const location = details.deliveryLocation || extractKitchenLocation(group.order.note);
-
   const categoryProgress = buildCategoryProgressBadge(group);
   const quickSummary = buildKitchenOrderQueueSummary(group.order);
 
