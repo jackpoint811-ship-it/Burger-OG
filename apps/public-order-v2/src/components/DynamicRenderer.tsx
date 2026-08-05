@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { MenuCategory, MenuItem } from "@config/index";
+import type { MenuCategory, MenuItem, CatalogBanner, MenuCategoryBanner } from "@config/index";
 import type { DesignSpecification, LayoutModule } from "../types/design";
 import { LayoutEngine } from "./LayoutEngine";
 
@@ -7,6 +7,8 @@ export interface DynamicRendererProps {
   spec?: DesignSpecification | null;
   chekeoItems?: MenuItem[];
   chekeoCategories?: MenuCategory[];
+  catalogBanners?: CatalogBanner[];
+  categoryBanners?: MenuCategoryBanner[];
   isLoading?: boolean;
   onProductSelect?: (product: MenuItem) => void;
   onAction?: (action: string) => void;
@@ -19,6 +21,8 @@ export function DynamicRenderer({
   spec,
   chekeoItems = [],
   chekeoCategories = [],
+  catalogBanners = [],
+  categoryBanners = [],
   isLoading = false,
   onProductSelect,
   onAction,
@@ -117,6 +121,8 @@ export function DynamicRenderer({
           globalTheme={globalTheme}
           chekeoItems={chekeoItems}
           chekeoCategories={chekeoCategories}
+          catalogBanners={catalogBanners}
+          categoryBanners={categoryBanners}
           isLoading={isLoading}
           onProductSelect={onProductSelect}
           onAction={onAction}
