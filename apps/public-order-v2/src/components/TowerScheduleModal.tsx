@@ -32,18 +32,29 @@ function formatActiveDaysText(activeDays: number[]): string {
   return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
 }
 
+export function isPastServiceCutoffTime(date: Date = new Date()): boolean {
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  return hours > 13 || (hours === 13 && minutes >= 30);
+}
+
 export function getTowerStatus(dynamicTowers?: DynamicTowerSchedule[]) {
-  const day = new Date().getDay();
+  const now = new Date();
+  const day = now.getDay();
+  const pastCutoff = isPastServiceCutoffTime(now);
+
+  const isWeekend = day === 0 || day === 6;
 
   if (dynamicTowers && dynamicTowers.length > 0) {
     const ggaTower = dynamicTowers.find((t) => t.towerKey === "gga");
     const valcobTower = dynamicTowers.find((t) => t.towerKey === "valcob");
 
-    const ggaActive = ggaTower ? ggaTower.isActive && (ggaTower.activeDays.includes(day) || day === 0 || day === 6) : true;
-    const valcobActive = valcobTower ? valcobTower.isActive && valcobTower.activeDays.includes(day) : true;
+    const ggaActive = !isWeekend && !pastCutoff && Boolean(ggaTower ? ggaTower.isActive && ggaTower.activeDays.includes(day) : (day === 1 || day === 3 || day === 5));
+    const valcobActive = !isWeekend && !pastCutoff && Boolean(valcobTower ? valcobTower.isActive && valcobTower.activeDays.includes(day) : (day === 2 || day === 4 || day === 5));
 
     return {
       day,
+      pastCutoff,
       gga: {
         name: ggaTower?.towerName ?? "Torre GGA",
         emoji: ggaTower?.emoji ?? "🏢",
@@ -59,11 +70,12 @@ export function getTowerStatus(dynamicTowers?: DynamicTowerSchedule[]) {
     };
   }
 
-  const isGgaActive = day === 1 || day === 3 || day === 5 || day === 6 || day === 0;
-  const isValcobActive = day === 2 || day === 4 || day === 5;
+  const isGgaActive = !isWeekend && !pastCutoff && (day === 1 || day === 3 || day === 5);
+  const isValcobActive = !isWeekend && !pastCutoff && (day === 2 || day === 4 || day === 5);
 
   return {
     day,
+    pastCutoff,
     gga: {
       name: "Torre GGA",
       emoji: "🏢",
@@ -81,22 +93,25 @@ export function getTowerStatus(dynamicTowers?: DynamicTowerSchedule[]) {
 
 export function getNextAvailableDeliveryDate(location: "Torre GGA" | "Torre Valcob"): string {
   const today = new Date();
-  const result = new Date(today);
 
-  for (let offset = 1; offset <= 7; offset++) {
-    result.setDate(today.getDate() + offset);
-    const day = result.getDay();
+  for (let offset = 1; offset <= 14; offset++) {
+    const candidate = new Date(today);
+    candidate.setDate(today.getDate() + offset);
+    const day = candidate.getDay();
+
+    if (day === 0 || day === 6) continue;
+
     const isValidGga = day === 1 || day === 3 || day === 5;
     const isValidValcob = day === 2 || day === 4 || day === 5;
 
     if (location === "Torre GGA" && isValidGga) {
-      return result.toISOString().split("T")[0] ?? "";
+      return candidate.toISOString().split("T")[0] ?? "";
     }
     if (location === "Torre Valcob" && isValidValcob) {
-      return result.toISOString().split("T")[0] ?? "";
+      return candidate.toISOString().split("T")[0] ?? "";
     }
   }
-  return result.toISOString().split("T")[0] ?? "";
+  return today.toISOString().split("T")[0] ?? "";
 }
 
 export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({

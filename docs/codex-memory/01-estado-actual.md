@@ -25,12 +25,13 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 - Resumen K: debe mostrar burgers, ingredientes, extras y cantidades necesarias.
 - Sorteo: debe mostrar lo más importante sin saturar.
 
-## Última Actualización (2026-08-04)
+## Última Actualización (2026-08-05)
 
-- **Sincronización Local**: La rama local `preview` está 100% alineada con `origin/preview` (incluye PR #426, PR #427, PR #428 y PR #429).
-- **Correcciones en Checkout**:
-  - **PR #428**: Normalización de teléfonos a 10 dígitos (removiendo prefijos +52/521/044/045), persistencia de datos del cliente en `localStorage` (`pov2-customer-name`, `pov2-customer-phone`, `pov2-customer-location`) y eliminación de atributos HTML5 `required` en modal de catálogo para evitar falsos errores de validación.
-  - **PR #429**: Ampliación del límite de longitud de `customerName` en la API backend `POST /api/orders-v2` (`functions/api/orders-v2.ts`) de 80 a 300 caracteres, resolviendo el error HTTP 400 Bad Request al enviar metadatos concatenados de ubicación y horario programado.
+- **Sincronización Local & PRs Recientes**:
+  - **PR #430**: Persistencia resiliente de Banners de Catálogo en D1 con fallback seguro y cierre automático del modal al guardar.
+  - **PR #431**: Habilitada la edición completa de texto (título, subtítulo, tag, CTA, color de fondo) para banners existentes en Central V3 (`CatalogV3Panel.tsx`).
+  - **PR #432**: Bloqueada la adición al carrito de productos no disponibles (`isAvailable === false`) desde los botones de rápida adición `+` y el drawer de producto.
+  - **Restauración de Flujo WhatsApp**: Actualizado el checkbox de opt-in e incorporado el botón directo de enlace al grupo oficial de WhatsApp (`chat.whatsapp.com/GycE5zALOypGPvJVaMfbPp`) en la pantalla de éxito de checkout (`CatalogCheckoutDrawer.tsx`).
 - **Aislamiento de Entorno Preview**:
   - `burgers-exe-public-v2-preview` (App Pública) e `burgers-exe-internal-v2-preview` (Chekeo V2) están 100% conectados a D1 `burgers-exe-menu-v2-preview` y R2 `burgers-exe-assets-v2-preview`.
   - La API de Preview responde `source: "d1"` sin depender de fallbacks locales ni mocks.
