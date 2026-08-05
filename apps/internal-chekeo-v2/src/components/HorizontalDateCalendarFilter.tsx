@@ -111,7 +111,7 @@ export function HorizontalDateCalendarFilter({
   }, [orders]);
 
   return (
-    <div className="v3-calendar-filter-shell my-3">
+    <div className="v3-calendar-filter-shell my-3 w-full max-w-full overflow-hidden">
       <div className="v3-calendar-header flex items-center justify-between mb-2 px-1">
         <div className="flex items-center gap-2">
           <Calendar size={16} className="text-emerald-500" />
@@ -139,7 +139,7 @@ export function HorizontalDateCalendarFilter({
       </div>
 
       {/* Horizontal Scroll Rail */}
-      <div className="v3-calendar-rail flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none snap-x">
+      <div className="v3-calendar-rail flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none snap-x w-full max-w-full">
         {calendarOptions.dates.map((item) => {
           const isSelected =
             selectedDate === item.key ||

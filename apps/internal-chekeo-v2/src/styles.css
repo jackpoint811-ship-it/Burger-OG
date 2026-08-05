@@ -984,8 +984,29 @@ body{
   .tab__hint{
     display:none;
   }
+  .v3-calendar-filter-shell{
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+    overflow:hidden;
+  }
+  .v3-calendar-rail{
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+    overflow-x:auto;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  .v3-calendar-rail::-webkit-scrollbar{
+    display:none;
+  }
   .orders-board-shell{
     padding:12px;
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+    overflow:hidden;
   }
   .orders-board-shell__header{
     display:flex;

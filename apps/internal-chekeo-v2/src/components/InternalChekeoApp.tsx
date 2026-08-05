@@ -2857,6 +2857,18 @@ const CompactRow = ({
           </div>
         </div>
 
+        {/* Inline Items Preview */}
+        {order.items.length ? (
+          <div className="v3-order-items-preview mb-2.5 px-2.5 py-1.5 rounded-lg bg-zinc-900/60 border border-zinc-800 text-xs text-zinc-300">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 block mb-0.5">
+              Productos ({itemCount}):
+            </span>
+            <p className="line-clamp-2 font-medium text-zinc-200">
+              {order.items.map((i) => `${i.qty}x ${i.name}`).join(" · ")}
+            </p>
+          </div>
+        ) : null}
+
         <div className="orders-card__actions">
           <Button
             className="orders-primary-action"
