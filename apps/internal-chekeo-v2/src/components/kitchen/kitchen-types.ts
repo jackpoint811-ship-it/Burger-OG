@@ -53,6 +53,7 @@ export type KitchenOrder = {
   paymentState: string;
   total?: number;
   createdAtMs?: number;
+  createdAtIso?: string;
   items: KitchenOrderItem[];
 };
 

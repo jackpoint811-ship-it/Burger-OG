@@ -14,6 +14,8 @@ import type {
   OrderV2Environment,
 } from "@config/index";
 import { fetchKitchenSummaryK } from "../../lib/ingredients-v2-admin";
+import { HorizontalDateCalendarFilter } from "../HorizontalDateCalendarFilter";
+import { parseOrderCustomerDetails } from "../../lib/order-parser";
 import {
   buildKitchenLocalSummary,
   buildKitchenProductionItems,
@@ -374,7 +376,9 @@ const ActiveOrderContainer = ({
     }
   };
 
-  const location = extractKitchenLocation(group.order.note);
+  const createdAtIso = group.order.createdAtIso || (group.order.createdAtMs ? new Date(group.order.createdAtMs).toISOString() : undefined);
+  const details = parseOrderCustomerDetails(group.order.customer, group.order.note, createdAtIso);
+  const location = details.deliveryLocation || extractKitchenLocation(group.order.note);
   const hasCombo = group.items.some(
     (entry) => entry.kind === "combo" || entry.item.parentItemName,
   );
@@ -385,14 +389,19 @@ const ActiveOrderContainer = ({
     <section className="kitchen-active-order kitchen-production-card" aria-label="Orden activa">
       <div className="kitchen-active-order__header flex-col md:flex-row">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-lime-400 m-0">Pedido Activo</p>
             <span className="text-[10px] font-black bg-lime-400/20 text-lime-300 px-1.5 py-0.5 rounded uppercase tracking-[0.1em]">
               {group.doneCount}/{group.items.length}
             </span>
+            {details.scheduledDeliveryTime ? (
+              <span className="text-[10px] font-black bg-cyan-400/20 text-cyan-300 px-1.5 py-0.5 rounded uppercase tracking-[0.1em]">
+                {details.deliveryDateLabel}: {details.scheduledDeliveryTime}
+              </span>
+            ) : null}
           </div>
           <h3 className="kitchen-active-order__customer">
-            {group.order.customer}
+            {details.cleanCustomerName}
           </h3>
           {quickSummary ? (
             <p className="mt-1 mb-2 text-sm font-bold text-cyan-800 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-800/50 inline-block px-2 py-1 rounded-md">
@@ -966,15 +975,42 @@ export const KitchenQueue = ({
   onMove: MoveKitchenOrderStatus;
 }) => {
   const [view, setView] = useState<KitchenView>("preparacion");
+  const [selectedDate, setSelectedDate] = useState<string>("today");
   const [busyLineKey, setBusyLineKey] = useState<string | null>(null);
 
   const activeOrders = useMemo(
     () => orders.filter((order) => !terminalStatuses.has(order.status)),
     [orders],
   );
+
+  const filteredActiveOrders = useMemo(() => {
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+    return activeOrders.filter((order) => {
+      if (selectedDate === "all") return true;
+
+      const createdAtIso = order.createdAtIso || (order.createdAtMs ? new Date(order.createdAtMs).toISOString() : undefined);
+      const details = parseOrderCustomerDetails(order.customer, order.note, createdAtIso);
+      let orderDateStr = todayStr;
+
+      if (details.isScheduled && details.scheduledDeliveryDate) {
+        orderDateStr = details.scheduledDeliveryDate;
+      } else if (order.createdAtMs) {
+        const d = new Date(order.createdAtMs);
+        orderDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      }
+
+      if (selectedDate === "today") {
+        return orderDateStr === todayStr;
+      }
+      return orderDateStr === selectedDate;
+    });
+  }, [activeOrders, selectedDate]);
+
   const productionItems = useMemo(
-    () => buildKitchenProductionItems(activeOrders),
-    [activeOrders],
+    () => buildKitchenProductionItems(filteredActiveOrders),
+    [filteredActiveOrders],
   );
   const prepItems = useMemo(
     () => productionItems.filter((entry) => entry.lane === "prep"),
@@ -985,8 +1021,8 @@ export const KitchenQueue = ({
     [productionItems],
   );
   const localSummary = useMemo(
-    () => buildKitchenLocalSummary(activeOrders),
-    [activeOrders],
+    () => buildKitchenLocalSummary(filteredActiveOrders),
+    [filteredActiveOrders],
   );
   const fallback = runtime.source !== "d1";
   const kitchenTitle = fallback
@@ -1064,6 +1100,11 @@ export const KitchenQueue = ({
             </Button>
           </div>
         </div>
+        <HorizontalDateCalendarFilter
+          orders={activeOrders}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
         <div className="kitchen-view-tabs" role="tablist">
           {kitchenViews.map((option) => (
             <button
