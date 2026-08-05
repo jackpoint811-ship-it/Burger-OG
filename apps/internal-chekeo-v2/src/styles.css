@@ -966,8 +966,20 @@ body{
   .tabs{
     border-radius:16px;
   }
+  .app-nav{
+    display:flex;
+    overflow-x:auto;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    gap:4px;
+  }
+  .app-nav::-webkit-scrollbar{
+    display:none;
+  }
   .tab{
-    min-width:112px;
+    flex:1 0 auto;
+    min-width:max-content;
+    padding:6px 10px;
   }
   .tab__hint{
     display:none;
@@ -976,17 +988,28 @@ body{
     padding:12px;
   }
   .orders-board-shell__header{
+    display:flex;
+    flex-direction:column;
     gap:8px;
   }
   .orders-board-shell__summary{
-    display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    width:100%;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px;
+    width:auto;
   }
   .orders-summary-chip{
+    display:inline-flex;
+    align-items:center;
     justify-content:center;
-    padding-inline:8px;
-    text-align:center;
+    min-height:28px;
+    padding:4px 10px;
+    border-radius:10px;
+    font-size:.72rem;
+    font-weight:800;
+    white-space:nowrap;
+    width:auto;
   }
   .orders-filters{
     gap:10px;
