@@ -6997,6 +6997,16 @@ html {
   transform: translateY(0) scale(0.97);
 }
 
+.catalog-card__btn-add:disabled,
+.catalog-card__btn-add--disabled {
+  background: var(--color-surface-alt, #3f3f46) !important;
+  color: var(--color-text-muted, #71717a) !important;
+  cursor: not-allowed !important;
+  opacity: 0.45 !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+}
+
 .catalog-card__btn-add--hero {
   position: absolute;
   bottom: 1.1rem;
