@@ -361,8 +361,12 @@ function buildSqlStatements(): string {
   for (const order of orders) {
     const escNotes = order.notes.replace(/'/g, "''");
     const escName = order.customer_name.replace(/'/g, "''");
+    const firstItemDelivery = order.items[0]?.snapshot?.delivery;
+    const escDeliveryJson = firstItemDelivery ? JSON.stringify(firstItemDelivery).replace(/'/g, "''") : null;
+    const deliveryValueSql = escDeliveryJson ? `'${escDeliveryJson}'` : 'NULL';
+
     sqlLines.push(
-      `INSERT OR REPLACE INTO orders_v2 (id, folio, idempotency_key, customer_name, customer_phone, order_mode, payment_method, payment_status, notes, subtotal_cents, total_cents, status, source, created_at, updated_at) VALUES ('${order.id}', '${order.folio}', 'idem-${order.folio.toLowerCase()}', '${escName}', '${order.customer_phone}', '${order.order_mode}', '${order.payment_method}', '${order.payment_status}', '${escNotes}', ${order.subtotal_cents}, ${order.total_cents}, 'preparing', 'public-v2-preview', '${CREATED_AT}', '${CREATED_AT}');`
+      `INSERT OR REPLACE INTO orders_v2 (id, folio, idempotency_key, customer_name, customer_phone, delivery_json, order_mode, payment_method, payment_status, notes, subtotal_cents, total_cents, status, source, created_at, updated_at) VALUES ('${order.id}', '${order.folio}', 'idem-${order.folio.toLowerCase()}', '${escName}', '${order.customer_phone}', ${deliveryValueSql}, '${order.order_mode}', '${order.payment_method}', '${order.payment_status}', '${escNotes}', ${order.subtotal_cents}, ${order.total_cents}, 'preparing', 'public-v2-preview', '${CREATED_AT}', '${CREATED_AT}');`
     );
 
     for (const item of order.items) {

@@ -713,9 +713,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
     const orderStatements: D1PreparedStatement[] = [
       env.BOG_MENU_DB.prepare(
-        `INSERT INTO orders_v2 (id, folio, idempotency_key, customer_name, customer_phone, order_mode, payment_method, payment_status, notes, subtotal_cents, total_cents, status, source, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, 'new', ?, ?, ?)`
-      ).bind(orderId, folio, parsed.idempotencyKey, parsed.customerName, parsed.customerPhone, parsed.orderMode, parsed.paymentMethod, parsed.notes, subtotalCents, totalCents, orderSource, now, now),
+        `INSERT INTO orders_v2 (id, folio, idempotency_key, customer_name, customer_phone, delivery_json, order_mode, payment_method, payment_status, notes, subtotal_cents, total_cents, status, source, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, 'new', ?, ?, ?)`
+      ).bind(orderId, folio, parsed.idempotencyKey, parsed.customerName, parsed.customerPhone, JSON.stringify(parsed.delivery), parsed.orderMode, parsed.paymentMethod, parsed.notes, subtotalCents, totalCents, orderSource, now, now),
       ...orderItems.map((item) => env.BOG_MENU_DB!.prepare(
         `INSERT INTO order_items_v2 (id, order_id, sku, name, qty, unit_price_cents, line_total_cents, snapshot_json, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`

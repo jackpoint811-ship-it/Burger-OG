@@ -45,4 +45,8 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - Verificado el envío de pedidos reales en Preview (`POST /api/orders-v2`) con folio de prueba y persistencia en D1 Preview.
   - Se confirmó **0% de contaminación** con el entorno de Producción (`burgers-exe-menu-live`).
 - **Autenticación Local Vite**: `apps/internal-chekeo-v2/src/lib/internal-auth.ts` ajustado para admitir autenticación local dev (`1234` o `0000`) cuando el dev server corre con Vite sin Functions.
+- **Persistencia End-to-End de Entrega (`delivery_json`)**:
+  - `POST /api/orders-v2` guarda `delivery_json` directamente en `orders_v2` de D1.
+  - `mapD1OrderToOrderV2` extrae metadatos de entrega desde `items[].snapshot.delivery` si `delivery_json` viniera nulo.
+  - `InternalChekeoApp.tsx` filtra con precisión las fechas (`all`, `today`, `past`, `YYYY-MM-DD`), garantizando que órdenes programadas (ej. día 10) se muestren correctamente.
 - **Herramientas de QA**: Creado `scripts/preview-reset-orders.sql` y script `npm run db:v2:preview:reset-orders`.
