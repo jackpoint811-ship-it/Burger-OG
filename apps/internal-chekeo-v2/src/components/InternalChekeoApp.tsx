@@ -1069,16 +1069,58 @@ const mapOrderV2ItemToInternalItem = (
     !Array.isArray(item.snapshot)
       ? item.snapshot
       : {};
-  const lineKey = getOptionalString(snapshot.lineKey);
+  const rawLineKey = getOptionalString(snapshot.lineKey);
+  const lineKey = rawLineKey || item.id || `${item.orderId}-${item.sku}-${item.name}`;
   const itemKind = isOrderV2ItemKind(snapshot.itemKind)
     ? snapshot.itemKind
     : undefined;
-  const removedIngredients = Array.isArray(snapshot.removedIngredients)
+
+  let removedIngredients: string[] = Array.isArray(snapshot.removedIngredients)
     ? snapshot.removedIngredients.filter(
         (entry): entry is string =>
           typeof entry === "string" && Boolean(entry.trim()),
       )
     : [];
+  if (removedIngredients.length === 0 && Array.isArray(item.modifiers)) {
+    removedIngredients = item.modifiers
+      .filter((m) => m.type === "remove" && Boolean(m.name?.trim()))
+      .map((m) => m.name.trim());
+  }
+
+  let extras = parseSnapshotExtras(snapshot.extras);
+  if (extras.length === 0 && Array.isArray(item.modifiers)) {
+    extras = item.modifiers
+      .filter((m) => (m.type === "extra" || m.type === "upgrade") && Boolean(m.name?.trim()))
+      .map((m) => ({
+        ...(m.code ? { sku: m.code } : {}),
+        name: m.name.trim(),
+        ...(typeof m.priceCents === "number" ? { price: m.priceCents / 100 } : {}),
+      }));
+  }
+
+  let garnish = parseSnapshotGarnish(snapshot.garnish);
+  let includedDrink = parseSnapshotIncludedDrink(snapshot.includedDrink);
+  if (!garnish && Array.isArray(item.components)) {
+    const garnishComp = item.components.find((c) => c.kind === "garnish" || c.kind === "side");
+    if (garnishComp) {
+      garnish = {
+        sku: garnishComp.sku,
+        name: garnishComp.name,
+        ...(garnishComp.upchargeCents ? { upcharge: garnishComp.upchargeCents / 100 } : {}),
+      };
+    }
+  }
+  if (!includedDrink && Array.isArray(item.components)) {
+    const drinkComp = item.components.find((c) => c.kind === "drink");
+    if (drinkComp) {
+      includedDrink = {
+        sku: drinkComp.sku,
+        name: drinkComp.name,
+      };
+    }
+  }
+
+  const isDone = doneByLineKey.get(lineKey) ?? (rawLineKey ? (doneByLineKey.get(rawLineKey) ?? false) : false);
 
   return {
     name: item.name,
@@ -1089,10 +1131,10 @@ const mapOrderV2ItemToInternalItem = (
     itemDisplayIndex: getOptionalNumber(snapshot.itemDisplayIndex),
     itemKind,
     removedIngredients,
-    extras: parseSnapshotExtras(snapshot.extras),
+    extras,
     burgerNote: getOptionalString(snapshot.burgerNote),
-    garnish: parseSnapshotGarnish(snapshot.garnish),
-    includedDrink: parseSnapshotIncludedDrink(snapshot.includedDrink),
+    garnish,
+    includedDrink,
     sideQuestExtras: parseSnapshotSideQuestExtras(snapshot.sideQuestExtras),
     comboBurgers: parseSnapshotComboBurgers(snapshot.comboBurgers),
     extrasTotalCents: getOptionalNumber(snapshot.extrasTotalCents),
@@ -1101,7 +1143,7 @@ const mapOrderV2ItemToInternalItem = (
     parentLineKey: getOptionalString(snapshot.parentLineKey),
     parentItemName: getOptionalString(snapshot.parentItemName),
     sideQuestSource: getOptionalString(snapshot.sideQuestSource),
-    kitchenDone: lineKey ? (doneByLineKey.get(lineKey) ?? false) : false,
+    kitchenDone: isDone,
   };
 };
 
