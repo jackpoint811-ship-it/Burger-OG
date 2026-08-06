@@ -71,6 +71,19 @@ La autorizacion previa fue consumida. Todo nuevo despliegue requiere una nueva a
   1. `getRemovableIngredients` en `public-order-v2` requería un match de SKU muy estricto y descartaba los ingredientes quitados si el SKU del catálogo no era exacto.
   2. `mapOrderV2ItemToInternalItem` en `internal-chekeo-v2` no parseaba snapshots en formato JSON string, perdiendo `removedIngredients`, `extras` y `burgerNote`.
   3. `KitchenQueue.tsx` no contaba `burgerNote` dentro de `hasModOrUpgrade`, mostrando "Burger original" aunque tuviera notas personalizadas.
-- **Fix Aplicado**: `PublicOrderApp.tsx`, `InternalChekeoApp.tsx`, `KitchenQueue.tsx`.
+- **Fix Aplicado**: `PublicOrderApp.tsx`, `InternalChekeoApp.tsx`, `KitchenQueue.tsx`, `CatalogCheckoutDrawer.tsx`, `orders-v2.ts`, `kitchen-item.ts`.
 - **Verificación**: `typecheck` y `build` limpios (0 errores).
+
+---
+
+## Lanzamiento Exitoso a Producción - 2026-08-06
+- **Autorización Usuario**: Recibida explícitamente ("Procede").
+- **PR a Main**: [#465](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/465) mergeado a `main`.
+- **Despliegues Cloudflare Pages**:
+  - `burgers-exe`: `https://0afab63d.burgers-exe.pages.dev` (Producción `https://burgers-exe.pages.dev`).
+  - `chekeo2-0`: `https://aa73984d.chekeo2-0.pages.dev` (Producción `https://chekeo2-0.pages.dev`).
+- **Smoke Test HTTP Post-Deploy**:
+  - `GET https://burgers-exe.pages.dev/api/menu-v2` ➡️ `200 OK` (`source: "d1"`).
+  - `GET https://chekeo2-0.pages.dev/api/internal-v2-auth/status` ➡️ `200 OK` (`authenticated: false`).
+
 
