@@ -235,9 +235,19 @@ const extractModsAndUpgradesFromNote = (noteText?: string) => {
 
 export const getKitchenBurgerBreakdowns = (
   item: KitchenOrderItem,
+  targetBurgerName?: string,
 ): KitchenBurgerBreakdown[] => {
   if (item.comboBurgers && item.comboBurgers.length > 0) {
-    return item.comboBurgers.map((burger) => {
+    const matchingBurgers = targetBurgerName
+      ? item.comboBurgers.filter(
+          (b) => b.name.toLowerCase() === targetBurgerName.toLowerCase(),
+        )
+      : item.comboBurgers;
+
+    const sourceBurgers =
+      matchingBurgers.length > 0 ? matchingBurgers : item.comboBurgers;
+
+    return sourceBurgers.map((burger) => {
       const modsSet = new Set<string>();
       (burger.removedIngredients || []).forEach((ing) => {
         const formatted = formatModIngredient(ing);
@@ -302,6 +312,101 @@ export const getKitchenBurgerBreakdowns = (
   ];
 };
 
+/**
+ * Builds a category progress breakdown badge isolated by station.
+ * e.g. "🍔 2/3 Burgers" for prep mode or "🍟 1/2 Sides · 🥤 0/1 Bebidas" for sideQuest mode.
+ */
+export const buildCategoryProgressBadge = (
+  order: KitchenOrder,
+  laneMode?: "prep" | "sideQuest",
+): string => {
+  let totalBurgers = 0;
+  let doneBurgers = 0;
+  let totalSides = 0;
+  let doneSides = 0;
+  let totalDrinks = 0;
+  let doneDrinks = 0;
+
+  for (const item of order.items) {
+    const kind = getKitchenItemKind(item);
+    const isItemDone = Boolean(item.kitchenDone);
+
+    if (kind === "burger") {
+      const qty = item.qty || 1;
+      totalBurgers += qty;
+      if (isItemDone) doneBurgers += qty;
+    } else if (kind === "combo") {
+      const comboBurgerCount =
+        item.comboBurgers && item.comboBurgers.length > 0
+          ? item.comboBurgers.length
+          : 1;
+      const qty = item.qty || 1;
+      totalBurgers += comboBurgerCount * qty;
+      if (isItemDone) doneBurgers += comboBurgerCount * qty;
+
+      if (item.garnish) {
+        totalSides += qty;
+        if (isItemDone) doneSides += qty;
+      }
+      if (item.includedDrink) {
+        totalDrinks += qty;
+        if (isItemDone) doneDrinks += qty;
+      }
+      if (
+        !item.garnish &&
+        !item.includedDrink &&
+        (!item.sideQuestExtras || item.sideQuestExtras.length === 0)
+      ) {
+        totalSides += qty;
+        if (isItemDone) doneSides += qty;
+      }
+    } else if (kind === "garnish") {
+      const qty = item.qty || 1;
+      totalSides += qty;
+      if (isItemDone) doneSides += qty;
+    } else if (kind === "drink") {
+      const qty = item.qty || 1;
+      totalDrinks += qty;
+      if (isItemDone) doneDrinks += qty;
+    }
+
+    if (item.sideQuestExtras && item.sideQuestExtras.length > 0) {
+      for (const extra of item.sideQuestExtras) {
+        const qty = item.qty || 1;
+        if (extra.itemKind === "garnish") {
+          totalSides += qty;
+          if (isItemDone) doneSides += qty;
+        } else if (extra.itemKind === "drink") {
+          totalDrinks += qty;
+          if (isItemDone) doneDrinks += qty;
+        } else {
+          totalSides += qty;
+          if (isItemDone) doneSides += qty;
+        }
+      }
+    }
+  }
+
+  const parts: string[] = [];
+
+  if (laneMode === "sideQuest") {
+    if (totalSides > 0)
+      parts.push(`🍟 ${doneSides}/${totalSides} Side${totalSides !== 1 ? "s" : ""}`);
+    if (totalDrinks > 0)
+      parts.push(`🥤 ${doneDrinks}/${totalDrinks} Bebida${totalDrinks !== 1 ? "s" : ""}`);
+  } else if (laneMode === "prep") {
+    if (totalBurgers > 0) parts.push(`🍔 ${doneBurgers}/${totalBurgers} Burgers`);
+  } else {
+    if (totalBurgers > 0) parts.push(`🍔 ${doneBurgers}/${totalBurgers} Burgers`);
+    if (totalSides > 0)
+      parts.push(`🍟 ${doneSides}/${totalSides} Side${totalSides !== 1 ? "s" : ""}`);
+    if (totalDrinks > 0)
+      parts.push(`🥤 ${doneDrinks}/${totalDrinks} Bebida${totalDrinks !== 1 ? "s" : ""}`);
+  }
+
+  return parts.join(" · ");
+};
+
 const isProductionItem = (item: KitchenOrderItem) => {
   const kind = getKitchenItemKind(item);
   return kind !== "other";
@@ -357,13 +462,25 @@ export const buildKitchenProductionItems = (
           "collapsedByDefault" | "orderKitchenItemCount"
         >[] = [];
         if (hasComboBurgerWork(item)) {
-          nextEntries.push({
-            ...base,
-            id: `${order.id}-${lineKey}-prep`,
-            lane: "prep",
-            itemLabel: kind === "combo" ? "Burger del combo" : "Burger",
-            detailLabel: item.name,
-          });
+          if (kind === "combo" && item.comboBurgers && item.comboBurgers.length > 0) {
+            item.comboBurgers.forEach((burger, bIdx) => {
+              nextEntries.push({
+                ...base,
+                id: `${order.id}-${lineKey}-prep-${bIdx}`,
+                lane: "prep",
+                itemLabel: `De combo · ${item.name}`,
+                detailLabel: burger.name,
+              });
+            });
+          } else {
+            nextEntries.push({
+              ...base,
+              id: `${order.id}-${lineKey}-prep`,
+              lane: "prep",
+              itemLabel: kind === "combo" ? `De combo · ${item.name}` : "Burger",
+              detailLabel: item.name,
+            });
+          }
         }
         if (kind === "combo") {
           let hasSideQuestEntries = false;
@@ -373,8 +490,8 @@ export const buildKitchenProductionItems = (
               ...base,
               id: `${order.id}-${lineKey}-sidequest-garnish`,
               lane: "sideQuest",
-              itemLabel: item.garnish.name,
-              detailLabel: `${item.garnish.name} · De combo ${item.name}`,
+              itemLabel: "Side Quest",
+              detailLabel: item.garnish.name,
             });
           }
           if (item.includedDrink) {
@@ -383,8 +500,8 @@ export const buildKitchenProductionItems = (
               ...base,
               id: `${order.id}-${lineKey}-sidequest-drink`,
               lane: "sideQuest",
-              itemLabel: item.includedDrink.name,
-              detailLabel: `${item.includedDrink.name} · De combo ${item.name}`,
+              itemLabel: "Bebida",
+              detailLabel: item.includedDrink.name,
             });
           }
           item.sideQuestExtras.forEach((extra, sqIdx) => {
@@ -393,8 +510,8 @@ export const buildKitchenProductionItems = (
               ...base,
               id: `${order.id}-${lineKey}-sidequest-extra-${sqIdx}`,
               lane: "sideQuest",
-              itemLabel: extra.name,
-              detailLabel: `${extra.name} · De combo ${item.name}`,
+              itemLabel: extra.itemKind === "drink" ? "Bebida" : "Side Quest",
+              detailLabel: extra.name,
             });
           });
           if (!hasSideQuestEntries) {
@@ -402,21 +519,21 @@ export const buildKitchenProductionItems = (
               ...base,
               id: `${order.id}-${lineKey}-sidequest-combo-default`,
               lane: "sideQuest",
-              itemLabel: "Papas Clásicas",
-              detailLabel: `Papas Clásicas · De combo ${item.name}`,
+              itemLabel: "Side Quest",
+              detailLabel: "Papas Clásicas",
             });
           }
         } else if (hasSideQuestWork(item)) {
           const sideLabel = getSideQuestLabel(item);
+          const isDrink =
+            (getKitchenItemKind(item) as OrderV2ItemKind) === "drink" ||
+            item.sideQuestExtras.some((e) => e.itemKind === "drink");
           nextEntries.push({
             ...base,
             id: `${order.id}-${lineKey}-sidequest`,
             lane: "sideQuest",
-            itemLabel: sideLabel,
-            detailLabel:
-              item.parentItemName && item.parentItemName !== item.name
-                ? `${sideLabel} · De combo ${item.parentItemName}`
-                : sideLabel,
+            itemLabel: isDrink ? "Bebida" : "Side Quest",
+            detailLabel: sideLabel,
           });
         }
         return nextEntries;
