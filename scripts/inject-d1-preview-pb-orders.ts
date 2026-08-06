@@ -365,8 +365,12 @@ function buildSqlStatements(): string {
     const escDeliveryJson = firstItemDelivery ? JSON.stringify(firstItemDelivery).replace(/'/g, "''") : null;
     const deliveryValueSql = escDeliveryJson ? `'${escDeliveryJson}'` : 'NULL';
 
+    sqlLines.push(`DELETE FROM order_items_v2 WHERE order_id = '${order.id}';`);
+    sqlLines.push(`DELETE FROM order_events_v2 WHERE order_id = '${order.id}';`);
+    sqlLines.push(`DELETE FROM orders_v2 WHERE id = '${order.id}';`);
+
     sqlLines.push(
-      `INSERT OR REPLACE INTO orders_v2 (id, folio, idempotency_key, customer_name, customer_phone, delivery_json, order_mode, payment_method, payment_status, notes, subtotal_cents, total_cents, status, source, created_at, updated_at) VALUES ('${order.id}', '${order.folio}', 'idem-${order.folio.toLowerCase()}', '${escName}', '${order.customer_phone}', ${deliveryValueSql}, '${order.order_mode}', '${order.payment_method}', '${order.payment_status}', '${escNotes}', ${order.subtotal_cents}, ${order.total_cents}, 'preparing', 'public-v2-preview', '${CREATED_AT}', '${CREATED_AT}');`
+      `INSERT INTO orders_v2 (id, folio, idempotency_key, customer_name, customer_phone, delivery_json, order_mode, payment_method, payment_status, notes, subtotal_cents, total_cents, status, source, created_at, updated_at) VALUES ('${order.id}', '${order.folio}', 'idem-${order.folio.toLowerCase()}', '${escName}', '${order.customer_phone}', ${deliveryValueSql}, '${order.order_mode}', '${order.payment_method}', '${order.payment_status}', '${escNotes}', ${order.subtotal_cents}, ${order.total_cents}, 'preparing', 'public-v2-preview', '${CREATED_AT}', '${CREATED_AT}');`
     );
 
     for (const item of order.items) {
