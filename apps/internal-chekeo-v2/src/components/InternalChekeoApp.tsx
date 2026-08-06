@@ -27,6 +27,7 @@ import {
   Shield,
   ShoppingBag,
   Sun,
+  Trash2,
   Volume2,
   VolumeX,
   WalletCards,
@@ -110,6 +111,7 @@ type AdminViewKey =
   | "launcher"
   | "banco"
   | "historial"
+  | "basurero"
   | "cierre"
   | "catalogo"
   | "catalogo-v3"
@@ -351,6 +353,17 @@ const adminViews: AdminViewDefinition[] = [
     cta: "Ver módulo",
   },
   {
+    key: "basurero",
+    label: "Basurero",
+    hint: "Órdenes archivadas",
+    icon: Trash2,
+    category: "operacion",
+    status: "base-lista",
+    description:
+      "Consulta, filtrado por fecha y restauración de órdenes en el basurero (Soft-Delete) con selección por lote.",
+    cta: "Abrir basurero",
+  },
+  {
     key: "cierre",
     label: "Cierre",
     hint: "Corte actual",
@@ -416,6 +429,7 @@ const shouldIncludeTerminalOrders = (tab: TabKey, adminView: AdminViewKey) =>
   tab === "pagos" ||
   (tab === "admin" &&
     (adminView === "historial" ||
+      adminView === "basurero" ||
       adminView === "cierre" ||
       adminView === "reportes"));
 const shouldKeepOrdersLoaded = (tab: TabKey, adminView: AdminViewKey) =>
@@ -427,7 +441,7 @@ const shouldKeepOrdersLoaded = (tab: TabKey, adminView: AdminViewKey) =>
     adminView !== "cierre" &&
     adminView !== "reportes");
 const shouldRetainTerminalOrdersInView = (tab: TabKey, adminView: AdminViewKey) =>
-  tab === "pedidos" || (tab === "admin" && adminView === "historial");
+  tab === "pedidos" || (tab === "admin" && (adminView === "historial" || adminView === "basurero"));
 
 const isPreviewOrderSource = (source?: string) => source === "public-v2-preview";
 
@@ -2180,11 +2194,12 @@ const AdminWorkspace = ({
       <CatalogV3Panel />
     ) : view === "sorteos" ? (
       <RafflesAdminPanel runtimeEnvironment={runtimeEnvironment} />
-    ) : view === "historial" ? (
+    ) : view === "historial" || view === "basurero" ? (
       <HistoryPanel
         orders={orders}
         runtime={runtime}
         onArchiveCancelled={onArchiveCancelled}
+        initialView={view === "basurero" ? "basurero" : "historial"}
       />
     ) : view === "cierre" ? (
       <OperationalClosePanel
@@ -4896,62 +4911,352 @@ const HistoryPanel = ({
   orders,
   runtime,
   onArchiveCancelled,
+  initialView = "historial",
 }: {
   orders: InternalOrder[];
   runtime: OrdersRuntime;
   onArchiveCancelled: (order: InternalOrder) => Promise<void>;
+  initialView?: "historial" | "basurero";
 }) => {
-  const terminalOrders = orders.filter((o) => terminalStatuses.has(o.status));
+  const [activeTab, setActiveTab] = useState<"historial" | "basurero">(initialView);
+  const [search, setSearch] = useState("");
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
+
+  const [archivedOrders, setArchivedOrders] = useState<InternalOrder[]>([]);
+  const [loadingArchived, setLoadingArchived] = useState(false);
+  const [archivedDateFrom, setArchivedDateFrom] = useState("");
+  const [archivedDateTo, setArchivedDateTo] = useState("");
+  const [actionBusy, setActionBusy] = useState(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+
+  useEffect(() => {
+    setActiveTab(initialView);
+  }, [initialView]);
+
+  const loadArchivedOrders = useCallback(async () => {
+    if (runtime.source !== "d1") return;
+    setLoadingArchived(true);
+    try {
+      const rawArchived = await fetchOrdersV2Admin({
+        archived: "true",
+        environment: runtime.environment,
+        from: archivedDateFrom || undefined,
+        to: archivedDateTo || undefined,
+        search: search || undefined,
+        limit: 100,
+      });
+      setArchivedOrders(rawArchived.map(mapOrderV2ToInternalOrder));
+    } catch {
+      setArchivedOrders([]);
+    } finally {
+      setLoadingArchived(false);
+    }
+  }, [archivedDateFrom, archivedDateTo, runtime.environment, runtime.source, search]);
+
+  useEffect(() => {
+    if (activeTab === "basurero") {
+      void loadArchivedOrders();
+    }
+  }, [activeTab, loadArchivedOrders]);
+
+  const terminalOrders = useMemo(() => {
+    const term = orders.filter((o) => terminalStatuses.has(o.status));
+    if (!search.trim()) return term;
+    const normalized = search.trim().toLowerCase();
+    return term.filter(
+      (o) =>
+        o.folio.toLowerCase().includes(normalized) ||
+        o.customer.toLowerCase().includes(normalized) ||
+        (o.customerPhone && o.customerPhone.toLowerCase().includes(normalized)),
+    );
+  }, [orders, search]);
+
+  const currentDisplayList = activeTab === "historial" ? terminalOrders : archivedOrders;
+
+  const toggleSelectOrder = (orderId: string) => {
+    setSelectedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedOrderIds.size >= currentDisplayList.length && currentDisplayList.length > 0) {
+      setSelectedOrderIds(new Set());
+    } else {
+      setSelectedOrderIds(new Set(currentDisplayList.map((o) => o.id)));
+    }
+  };
+
+  const selectedList = useMemo(() => {
+    return currentDisplayList.filter((o) => selectedOrderIds.has(o.id));
+  }, [currentDisplayList, selectedOrderIds]);
+
+  const activeSelectedCount = useMemo(() => {
+    return selectedList.filter((o) => o.status !== "cancelled").length;
+  }, [selectedList]);
+
+  const cancelledSelectedCount = useMemo(() => {
+    return selectedList.filter((o) => o.status === "cancelled").length;
+  }, [selectedList]);
+
+  const handleUnarchiveSingle = async (order: InternalOrder) => {
+    if (runtime.source !== "d1") return;
+    setActionBusy(true);
+    try {
+      await unarchiveOrderV2(order.id, runtime.environment);
+      runtime.reload(true);
+      void loadArchivedOrders();
+    } catch {
+      // handled
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const executeBatchArchive = async () => {
+    if (runtime.source !== "d1" || selectedOrderIds.size === 0) return;
+    setActionBusy(true);
+    try {
+      await batchArchiveOrdersV2(Array.from(selectedOrderIds), runtime.environment, "Limpieza desde admin");
+      setSelectedOrderIds(new Set());
+      setConfirmModalOpen(false);
+      runtime.reload(true);
+      if (activeTab === "basurero") void loadArchivedOrders();
+    } catch {
+      // handled
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const executeBatchRestore = async () => {
+    if (runtime.source !== "d1" || selectedOrderIds.size === 0) return;
+    setActionBusy(true);
+    try {
+      for (const id of Array.from(selectedOrderIds)) {
+        await unarchiveOrderV2(id, runtime.environment);
+      }
+      setSelectedOrderIds(new Set());
+      runtime.reload(true);
+      void loadArchivedOrders();
+    } catch {
+      // handled
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
   return (
-    <section>
-      <Card className="p-3">
-        <h3 className="mb-2">
-          Historial {runtime.source === "d1" ? "de pedidos" : "de esta vista"}
-        </h3>
-        {runtime.source === "d1" && terminalOrders.length === 0 ? (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Aún no hay pedidos entregados o cancelados.
-          </p>
+    <section className="space-y-4">
+      <Card className="p-4 border-zinc-800 bg-zinc-950">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div>
+            <p className="home-section-label">Módulo de Administración</p>
+            <h3 className="text-xl font-black text-zinc-100">
+              {activeTab === "historial" ? "Historial Terminal" : "🗑️ Basurero de Órdenes (Soft-Delete)"}
+            </h3>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              {activeTab === "historial"
+                ? "Consulta pedidos entregados y cancelados. Puedes enviarlos al basurero para limpiar métricas."
+                : "Audita órdenes archivadas, filtra por fechas y restaura cualquier pedido a la vista operativa."}
+            </p>
+          </div>
+          <Button
+            className="btn-sm bg-zinc-900 border-zinc-700 text-xs"
+            onClick={() => {
+              if (activeTab === "basurero") void loadArchivedOrders();
+              else runtime.reload(true);
+            }}
+            disabled={runtime.loading || loadingArchived}
+          >
+            {runtime.loading || loadingArchived ? "Cargando..." : "🔄 Actualizar"}
+          </Button>
+        </div>
+
+        {/* Mode Switcher Tabs & Select All */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-800">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                activeTab === "historial"
+                  ? "bg-emerald-500 text-zinc-950 shadow-md"
+                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700"
+              }`}
+              onClick={() => {
+                setActiveTab("historial");
+                setSelectedOrderIds(new Set());
+              }}
+            >
+              📜 Historial Terminal ({terminalOrders.length})
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                activeTab === "basurero"
+                  ? "bg-rose-600 text-white shadow-md"
+                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700"
+              }`}
+              onClick={() => {
+                setActiveTab("basurero");
+                setSelectedOrderIds(new Set());
+              }}
+            >
+              🗑️ Basurero / Archivadas {loadingArchived ? "(...)" : `(${archivedOrders.length})`}
+            </button>
+          </div>
+
+          {currentDisplayList.length > 0 ? (
+            <label className="flex items-center gap-2 text-xs text-zinc-300 font-semibold cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-emerald-500"
+                checked={selectedOrderIds.size > 0 && selectedOrderIds.size >= currentDisplayList.length}
+                onChange={toggleSelectAll}
+              />
+              Seleccionar todas ({currentDisplayList.length})
+            </label>
+          ) : null}
+        </div>
+
+        {/* Date Filter for Basurero View */}
+        {activeTab === "basurero" ? (
+          <div className="flex flex-wrap items-center gap-3 mt-3 p-3 bg-zinc-900/80 border border-zinc-800 rounded-xl">
+            <span className="text-xs font-bold text-zinc-400">Filtrar por rango de fecha:</span>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-300">
+              <span>Desde:</span>
+              <input
+                type="date"
+                className="input text-xs py-1 px-2 bg-zinc-950 border-zinc-800"
+                value={archivedDateFrom}
+                onChange={(e) => setArchivedDateFrom(e.target.value)}
+              />
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-300">
+              <span>Hasta:</span>
+              <input
+                type="date"
+                className="input text-xs py-1 px-2 bg-zinc-950 border-zinc-800"
+                value={archivedDateTo}
+                onChange={(e) => setArchivedDateTo(e.target.value)}
+              />
+            </label>
+            <Button
+              className="btn-sm bg-zinc-800 hover:bg-zinc-700 text-xs py-1 px-2.5"
+              onClick={() => void loadArchivedOrders()}
+              disabled={loadingArchived}
+            >
+              {loadingArchived ? "Cargando..." : "🔍 Filtrar"}
+            </Button>
+          </div>
         ) : null}
+
+        {/* Search Bar */}
+        <div className="mt-3">
+          <input
+            className="input text-sm w-full bg-zinc-900/90 border-zinc-800 focus:border-emerald-500"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="🔍 Buscar por folio, cliente o teléfono..."
+          />
+        </div>
+      </Card>
+
+      {/* List Rendering */}
+      {currentDisplayList.length === 0 ? (
+        <Card className="p-6 text-center text-zinc-400">
+          <p className="text-sm">
+            {activeTab === "historial"
+              ? "No hay pedidos en el historial terminal con los filtros actuales."
+              : "No hay órdenes archivadas en el basurero con los filtros o fechas seleccionados."}
+          </p>
+        </Card>
+      ) : (
         <div className="space-y-2">
-          {terminalOrders.map((o) => {
-            const cancellationReason =
-              o.status === "cancelled" ? getCancellationReason(o) : undefined;
+          {currentDisplayList.map((o) => {
+            const cancellationReason = o.status === "cancelled" ? getCancellationReason(o) : undefined;
+            const isSelected = selectedOrderIds.has(o.id);
             return (
-              <div key={o.id} className="row items-start">
-                <div className="min-w-0">
-                  <p className="break-words">
-                    {o.folio} · {o.customer} · {o.createdAt}
-                  </p>
-                  {o.status === "cancelled" ? (
-                    <p className="mt-1 text-xs text-rose-700 dark:text-rose-200">
-                      Cancelado por operador
-                    </p>
-                  ) : null}
-                  {cancellationReason ? (
-                    <p className="mt-1 text-xs text-amber-700 dark:text-amber-200">
-                      Razón: {cancellationReason}
-                    </p>
-                  ) : null}
+              <Card
+                key={o.id}
+                className={`p-3 transition-all ${isSelected ? "ring-2 ring-emerald-500 bg-emerald-950/20" : ""}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 mt-1 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer shrink-0"
+                      checked={isSelected}
+                      onChange={() => toggleSelectOrder(o.id)}
+                    />
+                    <div className="min-w-0">
+                      <p className="break-words font-bold text-sm text-zinc-100">
+                        {o.folio} · {o.customer} · <span className="text-zinc-400 font-normal">{o.createdAt}</span>
+                      </p>
+                      <p className="text-xs text-emerald-400 font-bold mt-0.5">Total: {formatCurrency(o.total)}</p>
+                      {o.status === "cancelled" ? (
+                        <p className="mt-0.5 text-xs text-rose-400">Cancelado por operador</p>
+                      ) : null}
+                      {cancellationReason ? (
+                        <p className="mt-0.5 text-xs text-amber-400">Razón: {cancellationReason}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <StatusBadge status={o.status} />
+                    {activeTab === "historial" && o.status === "cancelled" && runtime.source === "d1" ? (
+                      <Button
+                        type="button"
+                        className="btn-sm border border-rose-500/40 bg-rose-950/30 text-rose-300 hover:bg-rose-900/50 text-xs px-2.5 py-1"
+                        disabled={actionBusy || runtime.actionOrderId === o.id}
+                        onClick={() => void onArchiveCancelled(o)}
+                      >
+                        {runtime.actionOrderId === o.id ? "Ocultando…" : "🗑️ Mandar a Basurero"}
+                      </Button>
+                    ) : null}
+                    {activeTab === "basurero" && runtime.source === "d1" ? (
+                      <Button
+                        type="button"
+                        className="btn-sm border border-emerald-500/40 bg-emerald-950/30 text-emerald-300 hover:bg-emerald-900/50 text-xs px-2.5 py-1"
+                        disabled={actionBusy}
+                        onClick={() => void handleUnarchiveSingle(o)}
+                      >
+                        {actionBusy ? "Restaurando…" : "↩️ Restaurar a Operaciones"}
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-2">
-                  <StatusBadge status={o.status} />
-                  {o.status === "cancelled" && runtime.source === "d1" ? (
-                    <Button
-                      type="button"
-                      className="min-h-11 border border-rose-300 dark:border-rose-500/40 px-3 py-2 text-xs text-rose-800 dark:text-rose-100 disabled:opacity-50"
-                      disabled={runtime.actionOrderId === o.id}
-                      onClick={() => void onArchiveCancelled(o)}
-                    >
-                      {runtime.actionOrderId === o.id ? "Ocultando…" : "Ocultar del historial"}
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
+              </Card>
             );
           })}
         </div>
-      </Card>
+      )}
+
+      {/* Floating Selection Bar */}
+      <BatchActionBar
+        selectedCount={selectedOrderIds.size}
+        activeCount={activeSelectedCount}
+        cancelledCount={cancelledSelectedCount}
+        onClearSelection={() => setSelectedOrderIds(new Set())}
+        onBatchArchive={activeTab === "historial" ? () => setConfirmModalOpen(true) : undefined}
+        onBatchRestore={activeTab === "basurero" ? executeBatchRestore : undefined}
+        isArchivedView={activeTab === "basurero"}
+        busy={actionBusy}
+      />
+
+      {/* Confirmation Modal */}
+      <BatchConfirmModal
+        open={confirmModalOpen}
+        activeCount={activeSelectedCount}
+        cancelledCount={cancelledSelectedCount}
+        totalCount={selectedOrderIds.size}
+        onConfirm={executeBatchArchive}
+        onCancel={() => setConfirmModalOpen(false)}
+        busy={actionBusy}
+      />
     </section>
   );
 };
