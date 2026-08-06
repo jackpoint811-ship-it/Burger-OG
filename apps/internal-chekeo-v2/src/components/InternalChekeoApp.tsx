@@ -854,6 +854,22 @@ const getOptionalString = (value: unknown) =>
 const getOptionalNumber = (value: unknown) =>
   typeof value === "number" && Number.isFinite(value) ? value : undefined;
 
+const parseSnapshotRecord = (value: unknown): Record<string, unknown> => {
+  if (!value) return {};
+  if (typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
+  if (typeof value === "string" && value.trim()) {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      return {};
+    }
+  }
+  return {};
+};
+
 const parseSnapshotExtras = (
   value: unknown,
 ): Array<{ sku?: string; name: string; price?: number }> => {
@@ -932,24 +948,14 @@ const appendKitchenSideQuestItems = (
   const existingParentLineKeys = new Set(
     items
       .map((item) => {
-        const snapshot =
-          item.snapshot &&
-          typeof item.snapshot === "object" &&
-          !Array.isArray(item.snapshot)
-            ? item.snapshot
-            : {};
+        const snapshot = parseSnapshotRecord(item.snapshot);
         return getOptionalString(snapshot.parentLineKey);
       })
       .filter((value): value is string => Boolean(value)),
   );
 
   return items.flatMap((item) => {
-    const snapshot =
-      item.snapshot &&
-      typeof item.snapshot === "object" &&
-      !Array.isArray(item.snapshot)
-        ? item.snapshot
-        : {};
+    const snapshot = parseSnapshotRecord(item.snapshot);
     const parentLineKey = getOptionalString(snapshot.lineKey) ?? item.id;
     if (existingParentLineKeys.has(parentLineKey)) return [item];
 
@@ -1024,12 +1030,7 @@ const mapOrderV2ItemToInternalItem = (
   item: OrderV2["items"][number],
   doneByLineKey: Map<string, boolean>,
 ): InternalOrderItem => {
-  const snapshot =
-    item.snapshot &&
-    typeof item.snapshot === "object" &&
-    !Array.isArray(item.snapshot)
-      ? item.snapshot
-      : {};
+  const snapshot = parseSnapshotRecord(item.snapshot);
   const lineKey = getOptionalString(snapshot.lineKey);
   const itemKind = isOrderV2ItemKind(snapshot.itemKind)
     ? snapshot.itemKind

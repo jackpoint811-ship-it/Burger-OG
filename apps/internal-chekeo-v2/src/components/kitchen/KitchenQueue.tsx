@@ -142,12 +142,12 @@ const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
         .filter(Boolean)
     : [];
 
-  const hasModOrUpgrade = mods.length > 0 || upgrades.length > 0;
-
   // Note block — unified, shown as NOTA DEL PEDIDO
   const generalNote = stripLocationFromNotes(item.order.note);
   const itemNote = isPrep ? item.item.burgerNote : null;
   const noteText = [itemNote, generalNote].filter(Boolean).join(" · ");
+
+  const hasModOrUpgrade = mods.length > 0 || upgrades.length > 0 || Boolean(itemNote?.trim());
 
   // Side Quest source indicator (De combo / Individual)
   const sideQuestSource: string | null = !isPrep
