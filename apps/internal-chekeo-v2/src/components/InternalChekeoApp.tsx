@@ -4005,7 +4005,7 @@ const PaymentNotesPanel = ({
   registerBackHandler?: (handler: BackHandler) => () => void;
 }) => {
   const [filter, setFilter] = useState<PaymentFilter>("pending");
-  const [selectedDate, setSelectedDate] = useState<string>("today");
+  const [selectedDate, setSelectedDate] = useState<string>("all");
   const [rangeFilter, setRangeFilter] = useState<OrdersRangeFilter>("today");
   const [search, setSearch] = useState("");
   const [draftNotes, setDraftNotes] = useState<Record<string, string>>({});
