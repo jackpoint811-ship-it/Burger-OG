@@ -810,7 +810,7 @@ export const KitchenQueue = ({
   onMove: MoveKitchenOrderStatus;
 }) => {
   const [view, setView] = useState<KitchenView>("preparacion");
-  const [selectedDate, setSelectedDate] = useState<string>("today");
+  const [selectedDate, setSelectedDate] = useState<string>("all");
   const [busyLineKey, setBusyLineKey] = useState<string | null>(null);
 
   const activeOrders = useMemo(
