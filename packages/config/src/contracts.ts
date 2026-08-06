@@ -477,6 +477,36 @@ export type ArchiveOrderV2Response = {
   error?: OrderV2Error;
 };
 
+export type UnarchiveOrderV2Response = {
+  ok: boolean;
+  data?: { order: OrderV2; event?: OrderV2Event };
+  error?: OrderV2Error;
+};
+
+export type BatchArchiveOrdersV2Payload = {
+  orderIds: string[];
+  cancelReason?: string;
+  environment?: OrderV2Environment;
+};
+
+export type BatchArchiveOrdersV2Response = {
+  ok: boolean;
+  data?: { archivedCount: number; cancelledCount: number; orders: OrderV2[] };
+  error?: OrderV2Error;
+};
+
+export type FetchOrdersV2AdminMode = 'false' | 'true' | 'all';
+
+export type FetchOrdersV2AdminOptions = {
+  includeTerminal?: boolean;
+  limit?: number;
+  environment?: OrderV2Environment;
+  archived?: FetchOrdersV2AdminMode;
+  search?: string;
+  from?: string;
+  to?: string;
+};
+
 export type UpdateOrderV2PaymentPayload = {
   paymentStatus: OrderV2PaymentStatus;
   notes?: string;
