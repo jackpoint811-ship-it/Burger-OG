@@ -3012,7 +3012,7 @@ const OrdersBoard = ({
   ) => void;
 }) => {
   const [statusFilter, setStatusFilter] = useState<OrdersStatusFilter>("all");
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>("today");
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>("all");
   const [search, setSearch] = useState("");
 
   const filteredOrders = useMemo(() => {
