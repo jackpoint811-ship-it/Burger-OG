@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Calendar, Filter, Clock } from "lucide-react";
+import type { OrderV2DeliveryInfo } from "@config/index";
 import { parseOrderCustomerDetails } from "../lib/order-parser";
 
 export type CalendarDateOption = {
@@ -21,6 +22,7 @@ type HorizontalDateCalendarFilterProps = {
     note?: string;
     createdAt?: string;
     createdAtMs?: number;
+    delivery?: OrderV2DeliveryInfo;
     status: string;
   }>;
   selectedDate: string; // "all" | "today" | "past" | "YYYY-MM-DD"
@@ -54,7 +56,7 @@ export function HorizontalDateCalendarFilter({
       const isPending = order.status !== "delivered" && order.status !== "cancelled";
       if (isPending) totalPendingAll++;
 
-      const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt);
+      const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
       let targetDateStr = todayStr;
 
       if (details.isScheduled && details.scheduledDeliveryDate) {
@@ -222,20 +224,22 @@ export function HorizontalDateCalendarFilter({
                   {item.dayName}
                 </span>
 
-                {/* Permanent TODAY marker badge */}
-                {item.isToday ? (
-                  <span className="px-1.5 py-0.5 text-[9px] font-black rounded-full bg-emerald-500 text-zinc-950 shadow-sm tracking-tighter">
-                    🟢 HOY
-                  </span>
-                ) : item.pendingCount > 0 ? (
-                  <span className="px-1.5 py-0.5 text-[10px] font-black rounded-full bg-emerald-500 text-zinc-950 shadow-sm animate-pulse">
-                    {item.pendingCount}
-                  </span>
-                ) : item.totalCount > 0 ? (
-                  <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-zinc-800 text-zinc-400">
-                    {item.totalCount}
-                  </span>
-                ) : null}
+                <div className="flex items-center gap-1">
+                  {item.isToday ? (
+                    <span className="px-1.5 py-0.5 text-[9px] font-black rounded-full bg-emerald-500 text-zinc-950 shadow-sm tracking-tighter">
+                      🟢 HOY
+                    </span>
+                  ) : null}
+                  {item.pendingCount > 0 ? (
+                    <span className="px-1.5 py-0.5 text-[10px] font-black rounded-full bg-emerald-500 text-zinc-950 shadow-sm animate-pulse">
+                      {item.pendingCount}
+                    </span>
+                  ) : item.totalCount > 0 ? (
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-zinc-800 text-zinc-400">
+                      {item.totalCount}
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
               <div className="mt-1 flex items-baseline gap-1">
