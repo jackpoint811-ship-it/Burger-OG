@@ -8,6 +8,10 @@ type UpdatePayload = {
   name: string;
   description: string;
   price: number;
+  promoPriceCents: number | null;
+  isPromoActive: boolean;
+  promoExpiresAt: string | null;
+  comboConfigJson: string | null;
   isAvailable: boolean;
   isFeatured: boolean;
   badge: string | null;
@@ -56,7 +60,13 @@ const parseBody = (input: unknown): UpdatePayload | null => {
   const stockRemainingRaw = body.stockRemaining == null || body.stockRemaining === '' ? null : Number(body.stockRemaining);
   const stockLimitRaw = body.stockLimit == null || body.stockLimit === '' ? stockRemainingRaw : Number(body.stockLimit);
 
-  if (!name || !description || !Number.isFinite(price) || price < 0 || !Number.isInteger(sortOrder) || typeof isAvailable !== 'boolean' || typeof isFeatured !== 'boolean' || imageUrl === undefined || imageKey === undefined || comboLinks === null) {
+  const promoPriceRaw = body.promoPrice == null || body.promoPrice === '' ? null : Number(body.promoPrice);
+  const promoPriceCents = promoPriceRaw != null && Number.isFinite(promoPriceRaw) && promoPriceRaw >= 0 ? Math.round(promoPriceRaw * 100) : null;
+  const isPromoActive = Boolean(body.isPromoActive);
+  const promoExpiresAt = normalizeOptionalString(body.promoExpiresAt);
+  const comboConfigJson = body.comboConfig ? JSON.stringify(body.comboConfig) : null;
+
+  if (!name || typeof description !== 'string' || !Number.isFinite(price) || price < 0 || !Number.isInteger(sortOrder) || typeof isAvailable !== 'boolean' || typeof isFeatured !== 'boolean' || imageUrl === undefined || imageKey === undefined || comboLinks === null) {
     return null;
   }
   if (stockManaged && (stockRemainingRaw == null || !Number.isInteger(stockRemainingRaw) || stockRemainingRaw < 0)) return null;
@@ -66,6 +76,10 @@ const parseBody = (input: unknown): UpdatePayload | null => {
     name,
     description,
     price,
+    promoPriceCents,
+    isPromoActive,
+    promoExpiresAt,
+    comboConfigJson,
     isAvailable,
     isFeatured,
     badge: normalizeOptionalString(body.badge),
@@ -86,33 +100,72 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, params, request 
   if (authError) return authError;
 
   const sku = String(params.sku ?? '').trim();
-  if (!sku) return json(400, { ok: false, error: 'Invalid payload' });
+  if (!sku) return json(400, { ok: false, error: 'Invalid SKU' });
 
-  let raw: unknown;
+  let raw: any;
   try {
     raw = await request.json();
   } catch {
     return json(400, { ok: false, error: 'Invalid payload' });
   }
 
-  const payload = parseBody(raw);
-  if (!payload) return json(400, { ok: false, error: 'Invalid payload' });
+  if (!raw || typeof raw !== 'object') return json(400, { ok: false, error: 'Invalid payload' });
 
-  const priceCents = Math.round(payload.price * 100);
-  const soldOutAt = payload.stockManaged && (payload.stockRemaining ?? 0) <= 0 ? new Date().toISOString() : null;
+  // Fetch existing item to support partial updates
+  const existing = await env.BOG_MENU_DB.prepare(
+    `SELECT sku, category_key AS category, name, description, price_cents AS priceCents, promo_price_cents AS promoPriceCents, is_promo_active AS isPromoActive, promo_expires_at AS promoExpiresAt, combo_config_json AS comboConfigJson, is_available AS isAvailable, is_featured AS isFeatured, badge, promo_label AS promoLabel, sort_order AS sortOrder, image_url AS imageUrl, image_key AS imageKey, stock_managed AS stockManaged, stock_limit AS stockLimit, stock_remaining AS stockRemaining, combo_links_json AS comboLinksJson FROM menu_items WHERE sku = ? LIMIT 1`
+  )
+    .bind(sku)
+    .first<any>();
 
-  const result = await env.BOG_MENU_DB.prepare(
+  if (!existing) return json(404, { ok: false, error: 'Item not found' });
+
+  // Merge incoming payload with existing fields
+  const name = raw.name !== undefined ? String(raw.name).trim() : String(existing.name);
+  const description = raw.description !== undefined ? String(raw.description).trim() : String(existing.description);
+  
+  const priceVal = raw.price !== undefined ? Number(raw.price) : existing.priceCents / 100;
+  const priceCents = Math.round(priceVal * 100);
+
+  const promoPriceRaw = raw.promoPrice !== undefined ? (raw.promoPrice === null || raw.promoPrice === '' ? null : Number(raw.promoPrice)) : null;
+  const promoPriceCents = raw.promoPrice !== undefined ? (promoPriceRaw != null && Number.isFinite(promoPriceRaw) && promoPriceRaw >= 0 ? Math.round(promoPriceRaw * 100) : null) : existing.promoPriceCents;
+  const isPromoActive = raw.isPromoActive !== undefined ? (raw.isPromoActive ? 1 : 0) : Boolean(existing.isPromoActive) ? 1 : 0;
+  const promoExpiresAt = raw.promoExpiresAt !== undefined ? normalizeOptionalString(raw.promoExpiresAt) : existing.promoExpiresAt;
+  const promoLabel = raw.promoLabel !== undefined ? normalizeOptionalString(raw.promoLabel) : existing.promoLabel;
+
+  const comboConfigJson = raw.comboConfig !== undefined ? (raw.comboConfig ? JSON.stringify(raw.comboConfig) : null) : existing.comboConfigJson;
+  const isAvailable = raw.isAvailable !== undefined ? (raw.isAvailable ? 1 : 0) : Boolean(existing.isAvailable) ? 1 : 0;
+  const isFeatured = raw.isFeatured !== undefined ? (raw.isFeatured ? 1 : 0) : Boolean(existing.isFeatured) ? 1 : 0;
+  const badge = raw.badge !== undefined ? normalizeOptionalString(raw.badge) : existing.badge;
+  const sortOrder = raw.sortOrder !== undefined ? Number(raw.sortOrder) : Number(existing.sortOrder);
+
+  const imageUrl = raw.imageUrl !== undefined ? validateImageUrl(raw.imageUrl) : existing.imageUrl;
+  const imageKey = raw.imageKey !== undefined ? validateAssetKey(raw.imageKey) : existing.imageKey;
+
+  const stockManaged = raw.stockManaged !== undefined ? (raw.stockManaged ? 1 : 0) : Boolean(existing.stockManaged) ? 1 : 0;
+  const stockRemaining = raw.stockRemaining !== undefined ? (raw.stockRemaining == null ? null : Number(raw.stockRemaining)) : existing.stockRemaining;
+  const stockLimit = raw.stockLimit !== undefined ? (raw.stockLimit == null ? null : Number(raw.stockLimit)) : existing.stockLimit;
+
+  let comboLinksJson = existing.comboLinksJson;
+  if (raw.comboLinks !== undefined) {
+    const links = normalizeLinkArray(raw.comboLinks);
+    comboLinksJson = JSON.stringify(links ?? []);
+  }
+
+  const soldOutAt = stockManaged && (stockRemaining ?? 0) <= 0 ? new Date().toISOString() : null;
+
+  const updateResult = await env.BOG_MENU_DB.prepare(
     `UPDATE menu_items
-     SET name = ?, description = ?, price_cents = ?, is_available = ?, is_featured = ?, badge = ?, promo_label = ?, sort_order = ?, image_url = ?, image_key = ?, combo_links_json = ?, stock_managed = ?, stock_limit = ?, stock_remaining = ?, sold_out_at = ?, updated_at = CURRENT_TIMESTAMP
+     SET name = ?, description = ?, price_cents = ?, promo_price_cents = ?, is_promo_active = ?, promo_expires_at = ?, combo_config_json = ?, is_available = ?, is_featured = ?, badge = ?, promo_label = ?, sort_order = ?, image_url = ?, image_key = ?, combo_links_json = ?, stock_managed = ?, stock_limit = ?, stock_remaining = ?, sold_out_at = ?, updated_at = CURRENT_TIMESTAMP
      WHERE sku = ?`
   )
-    .bind(payload.name, payload.description, priceCents, payload.isAvailable ? 1 : 0, payload.isFeatured ? 1 : 0, payload.badge, payload.promoLabel, payload.sortOrder, payload.imageUrl, payload.imageKey, JSON.stringify(payload.comboLinks), payload.stockManaged ? 1 : 0, payload.stockLimit, payload.stockRemaining, soldOutAt, sku)
+    .bind(name, description, priceCents, promoPriceCents, isPromoActive, promoExpiresAt, comboConfigJson, isAvailable, isFeatured, badge, promoLabel, sortOrder, imageUrl, imageKey, comboLinksJson, stockManaged, stockLimit, stockRemaining, soldOutAt, sku)
     .run();
 
-  if (!result.success || (result.meta?.changes ?? 0) < 1) return json(404, { ok: false, error: 'Invalid payload' });
+  if (!updateResult.success) return json(500, { ok: false, error: 'Database update failed' });
 
-  const itemRow = await env.BOG_MENU_DB.prepare(
-    `SELECT sku, category_key AS category, name, description, price_cents AS price, tags_json, badge, promo_label AS promoLabel, is_available AS isAvailable,
+  const updatedRow = await env.BOG_MENU_DB.prepare(
+    `SELECT sku, category_key AS category, name, description, price_cents AS price, tags_json, badge, promo_label AS promoLabel, promo_price_cents AS promoPriceCents, is_promo_active AS isPromoActive, promo_expires_at AS promoExpiresAt, combo_config_json AS comboConfig, is_available AS isAvailable,
             CASE WHEN stock_managed = 1 AND COALESCE(stock_remaining, 0) <= 0 THEN 0 ELSE is_available END AS effectiveIsAvailable,
             stock_managed AS stockManaged, stock_limit AS stockLimit, stock_remaining AS stockRemaining, sold_out_at AS soldOutAt,
             is_featured AS isFeatured, sort_order AS sortOrder, image_url AS imageUrl, image_key AS imageKey, combo_links_json, upsell_items_json, updated_at AS updatedAt FROM menu_items WHERE sku = ? LIMIT 1`
@@ -120,7 +173,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, params, request 
     .bind(sku)
     .first();
 
-  if (!itemRow) return json(404, { ok: false, error: 'Invalid payload' });
+  if (!updatedRow) return json(404, { ok: false, error: 'Item not found after update' });
 
-  return json(200, { ok: true, item: mapD1ItemToMenuItem(itemRow) });
+  return json(200, { ok: true, item: mapD1ItemToMenuItem(updatedRow) });
 };

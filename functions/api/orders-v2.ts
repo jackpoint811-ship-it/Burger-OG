@@ -1,4 +1,4 @@
-import type { OrderV2PaymentMethod, OrderV2Mode, OrderV2, OrderV2Environment } from '../../packages/config/src';
+import type { OrderV2PaymentMethod, OrderV2Mode, OrderV2, OrderV2Environment, OrderV2DeliveryInfo, OrderItemModifier, OrderItemComponent } from '../../packages/config/src';
 import {
   errorResponse,
   fetchOrderBundle,
@@ -55,6 +55,7 @@ type ItemCustomization = {
 type NormalizedPayload = {
   customerName: string;
   customerPhone: string;
+  delivery: OrderV2DeliveryInfo;
   orderMode: OrderV2Mode;
   paymentMethod: OrderV2PaymentMethod;
   notes: string | null;
@@ -150,12 +151,75 @@ const normalizeIdempotencyKey = (request: Request, body: Record<string, unknown>
   return resolved || generateId('idem');
 };
 
+const getMexicoCityDate = () => {
+  const now = new Date();
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  };
+  const parts = new Intl.DateTimeFormat('en-US', options).formatToParts(now);
+  const findPart = (type: string) => parts.find((p) => p.type === type)?.value ?? '0';
+
+  const year = parseInt(findPart('year'), 10);
+  const month = parseInt(findPart('month'), 10);
+  const day = parseInt(findPart('day'), 10);
+  let hours = parseInt(findPart('hour'), 10);
+  if (hours === 24) hours = 0;
+  const minutes = parseInt(findPart('minute'), 10);
+
+  const dateObj = new Date(Date.UTC(year, month - 1, day));
+  const dayOfWeek = dateObj.getUTCDay();
+  const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+  return { year, month, day, dayOfWeek, hours, minutes, dateStr };
+};
+
 const validatePayload = (body: Record<string, unknown>, request: Request): NormalizedPayload | Response => {
   const customer = body.customer && typeof body.customer === 'object' && !Array.isArray(body.customer) ? body.customer as Record<string, unknown> : null;
-  const customerName = normalizeString(customer?.name);
+  const rawCustomerName = normalizeString(customer?.name);
   const customerPhone = normalizePhone(customer?.phone);
-  if (customerName.length < 2 || customerName.length > 80 || customerPhone.length < 10) {
+  const cleanCustomerName = rawCustomerName.replace(/\[?ENTREGA PROGRAMADA:[^\]]+\]?/gi, '').trim();
+
+  if (cleanCustomerName.length < 2 || cleanCustomerName.length > 300 || customerPhone.length < 10) {
     return errorResponse(400, 'INVALID_CUSTOMER', 'Nombre y teléfono de cliente son requeridos.');
+  }
+
+  const deliveryRaw = body.delivery && typeof body.delivery === 'object' && !Array.isArray(body.delivery)
+    ? body.delivery as Record<string, unknown>
+    : null;
+
+  const scheduledMatch = rawCustomerName.match(/ENTREGA PROGRAMADA:\s*(\d{4}-\d{2}-\d{2})/i);
+  const scheduledDateStr = normalizeString(deliveryRaw?.scheduledDate) || scheduledMatch?.[1];
+
+  const delivery: OrderV2DeliveryInfo = {
+    location: normalizeString(deliveryRaw?.location) || cleanCustomerName,
+    isScheduled: Boolean(deliveryRaw?.isScheduled || scheduledMatch),
+    scheduledDate: scheduledDateStr || undefined,
+    scheduledTime: normalizeString(deliveryRaw?.scheduledTime) || undefined,
+    customerNotes: normalizeString(deliveryRaw?.customerNotes) || undefined
+  };
+
+  const mxNow = getMexicoCityDate();
+
+  if (delivery.scheduledDate) {
+    const [sYear, sMonth, sDay] = delivery.scheduledDate.split('-').map((v) => parseInt(v, 10));
+    const scheduledObj = new Date(Date.UTC(sYear, sMonth - 1, sDay));
+    const scheduledDayOfWeek = scheduledObj.getUTCDay();
+    if (scheduledDayOfWeek === 0 || scheduledDayOfWeek === 6) {
+      return errorResponse(400, 'WEEKEND_ORDER_NOT_ALLOWED', 'No hay entregas disponibles en fines de semana (Sábados y Domingos).');
+    }
+  } else {
+    if (mxNow.dayOfWeek === 0 || mxNow.dayOfWeek === 6) {
+      return errorResponse(400, 'WEEKEND_ORDER_NOT_ALLOWED', 'No hay servicio disponible en fines de semana (Sábados y Domingos). Por favor programa para el próximo día hábil.');
+    }
+    if (mxNow.hours > 13 || (mxNow.hours === 13 && mxNow.minutes >= 30)) {
+      return errorResponse(400, 'SERVICE_CLOSED_FOR_TODAY', 'El servicio de hoy cerró a la 1:30 PM. Por favor programa tu pedido para el próximo día hábil.');
+    }
   }
 
   const orderMode = normalizeString(body.orderMode) as OrderV2Mode;
@@ -225,8 +289,9 @@ const validatePayload = (body: Record<string, unknown>, request: Request): Norma
   normalizedItems.unshift(...[...legacyQtyBySku.entries()].map(([sku, qty]) => ({ sku, qty, removedIngredients: [], extras: [], garnish: null, includedDrink: null, sideQuestExtras: [], comboBurgers: [] })));
 
   return {
-    customerName,
+    customerName: cleanCustomerName,
     customerPhone,
+    delivery,
     orderMode,
     paymentMethod,
     notes: notesRaw || null,
@@ -560,6 +625,19 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       const sideQuestExtrasTotalCents = item.sideQuestExtras.reduce((acc, extra) => acc + Math.round((extra.price ?? 0) * 100), 0);
       const includedGarnishUpchargeCents = item.garnish?.sku ? Math.round((item.garnish.upcharge ?? 0) * 100) : 0;
       const lineTotalCents = (unitPriceCents + extrasTotalCents + sideQuestExtrasTotalCents + includedGarnishUpchargeCents) * item.qty;
+
+      const modifiers: OrderItemModifier[] = [
+        ...item.removedIngredients.map((name) => ({ type: 'remove' as const, name, priceCents: 0 })),
+        ...item.extras.map((ext) => ({ type: 'extra' as const, code: ext.sku, name: ext.name, priceCents: Math.round((ext.price ?? 0) * 100) })),
+        ...(item.burgerNote ? [{ type: 'note' as const, name: item.burgerNote, priceCents: 0 }] : []),
+        ...item.sideQuestExtras.map((sq) => ({ type: 'extra' as const, code: sq.sku, name: sq.name, priceCents: Math.round((sq.price ?? 0) * 100) })),
+      ];
+
+      const components: OrderItemComponent[] = [
+        ...(item.garnish?.name ? [{ kind: 'garnish' as const, sku: item.garnish.sku || '', name: item.garnish.name, upchargeCents: Math.round((item.garnish.upcharge ?? 0) * 100) }] : []),
+        ...(item.includedDrink?.name ? [{ kind: 'drink' as const, sku: item.includedDrink.sku || '', name: item.includedDrink.name, upchargeCents: 0 }] : []),
+      ];
+
       return {
         id: generateId('oi'),
         orderId,
@@ -588,7 +666,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
           garnish: item.garnish,
           includedDrink: item.includedDrink,
           sideQuestExtras: item.sideQuestExtras,
-          comboBurgers: item.comboBurgers
+          comboBurgers: item.comboBurgers,
+          modifiers,
+          components,
+          delivery: parsed.delivery
         })
       };
     });
@@ -633,9 +714,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
     const orderStatements: D1PreparedStatement[] = [
       env.BOG_MENU_DB.prepare(
-        `INSERT INTO orders_v2 (id, folio, idempotency_key, customer_name, customer_phone, order_mode, payment_method, payment_status, notes, subtotal_cents, total_cents, status, source, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, 'new', ?, ?, ?)`
-      ).bind(orderId, folio, parsed.idempotencyKey, parsed.customerName, parsed.customerPhone, parsed.orderMode, parsed.paymentMethod, parsed.notes, subtotalCents, totalCents, orderSource, now, now),
+        `INSERT INTO orders_v2 (id, folio, idempotency_key, customer_name, customer_phone, delivery_json, order_mode, payment_method, payment_status, notes, subtotal_cents, total_cents, status, source, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, 'new', ?, ?, ?)`
+      ).bind(orderId, folio, parsed.idempotencyKey, parsed.customerName, parsed.customerPhone, JSON.stringify(parsed.delivery), parsed.orderMode, parsed.paymentMethod, parsed.notes, subtotalCents, totalCents, orderSource, now, now),
       ...orderItems.map((item) => env.BOG_MENU_DB!.prepare(
         `INSERT INTO order_items_v2 (id, order_id, sku, name, qty, unit_price_cents, line_total_cents, snapshot_json, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`

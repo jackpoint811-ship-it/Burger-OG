@@ -10,17 +10,26 @@ import {
 import * as Tabs from "@radix-ui/react-tabs";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
+  Check,
   ChefHat,
+  Copy,
   CreditCard,
   ExternalLink,
   FileText,
   Gift,
   History,
   House,
+  Monitor,
+  Moon,
   PackageSearch,
   RefreshCw,
+  Share2,
   Shield,
   ShoppingBag,
+  Sun,
+  Trash2,
+  Volume2,
+  VolumeX,
   WalletCards,
 } from "lucide-react";
 import {
@@ -30,6 +39,7 @@ import {
   type OrdersV2SummaryResponse,
   type OrderStatus,
   type OrderV2,
+  type OrderV2DeliveryInfo,
   type OrderV2Environment,
   type OrderV2Event,
   type OrderV2ItemKind,
@@ -57,6 +67,8 @@ import {
 import { fetchKitchenSummaryK } from "../lib/ingredients-v2-admin";
 import {
   archiveCancelledOrderV2,
+  unarchiveOrderV2,
+  batchArchiveOrdersV2,
   exportOrdersV2Csv,
   fetchOrdersV2Admin,
   fetchOrdersV2Summary,
@@ -78,7 +90,10 @@ import {
 } from "../lib/order-ticket-image";
 import { CatalogAdminPanel } from "./CatalogAdminPanel";
 import { RafflesAdminPanel } from "./RafflesAdminPanel";
+import { CatalogV3Panel } from "./CatalogV3Panel";
 import { KitchenQueue } from "./kitchen/KitchenQueue";
+import { parseOrderCustomerDetails } from "../lib/order-parser";
+import { HorizontalDateCalendarFilter } from "./HorizontalDateCalendarFilter";
 import {
   extractKitchenLocation,
   getKitchenLineKey,
@@ -96,14 +111,19 @@ type AdminViewKey =
   | "launcher"
   | "banco"
   | "historial"
+  | "basurero"
   | "cierre"
   | "catalogo"
+  | "catalogo-v3"
   | "sorteos"
   | "reportes";
 type OrdersSource = "d1" | "mock" | "fallback";
 type BackHandler = () => boolean;
 type OrdersV2Summary = NonNullable<OrdersV2SummaryResponse["data"]>;
 type KitchenSummaryK = NonNullable<KitchenSummaryKResponse["data"]>;
+const formatIsoDate = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
 type KitchenItemKind = Extract<OrderV2ItemKind, "burger" | "combo" | "garnish">;
 type InternalOrderItem = MockOrder["items"][number] & {
   lineTotal?: number;
@@ -145,6 +165,7 @@ type InternalOrder = Omit<
   paymentMethod: string;
   paymentState: OrderV2PaymentStatus | string;
   customerPhone?: string;
+  delivery?: OrderV2DeliveryInfo;
   source?: string;
   updatedAt?: string;
   createdAtMs?: number;
@@ -292,19 +313,19 @@ const adminModuleStatusMeta: Record<
 > = {
   "base-lista": {
     label: "Base lista",
-    className: "border-emerald-400/40 bg-emerald-500/10 text-emerald-100",
+    className: "border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100",
   },
   "solo-lectura": {
     label: "Solo lectura",
-    className: "border-zinc-600 bg-zinc-900 text-zinc-100",
+    className: "border-zinc-600 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100",
   },
   basico: {
     label: "Básico",
-    className: "border-cyan-400/40 bg-cyan-500/10 text-cyan-100",
+    className: "border-cyan-400/40 bg-cyan-500/10 text-cyan-900 dark:text-cyan-800 dark:text-cyan-100",
   },
   pendiente: {
     label: "Pendiente",
-    className: "border-amber-400/40 bg-amber-500/10 text-amber-100",
+    className: "border-amber-400/40 bg-amber-500/10 text-amber-800 dark:text-amber-100",
   },
 };
 const adminViews: AdminViewDefinition[] = [
@@ -332,6 +353,17 @@ const adminViews: AdminViewDefinition[] = [
     cta: "Ver módulo",
   },
   {
+    key: "basurero",
+    label: "Basurero",
+    hint: "Órdenes archivadas",
+    icon: Trash2,
+    category: "operacion",
+    status: "base-lista",
+    description:
+      "Consulta, filtrado por fecha y restauración de órdenes en el basurero (Soft-Delete) con selección por lote.",
+    cta: "Abrir basurero",
+  },
+  {
     key: "cierre",
     label: "Cierre",
     hint: "Corte actual",
@@ -352,6 +384,17 @@ const adminViews: AdminViewDefinition[] = [
     description:
       "Productos, promos, banners e ingredientes con el panel existente.",
     cta: "Ver módulo",
+  },
+  {
+    key: "catalogo-v3",
+    label: "Centro de Control",
+    hint: "Catálogo V3",
+    icon: Monitor,
+    category: "configuracion",
+    status: "base-lista",
+    description:
+      "Tu catálogo público, todo en un lugar: menú, banners, horarios y sorteo.",
+    cta: "Abrir centro",
   },
   {
     key: "sorteos",
@@ -386,17 +429,19 @@ const shouldIncludeTerminalOrders = (tab: TabKey, adminView: AdminViewKey) =>
   tab === "pagos" ||
   (tab === "admin" &&
     (adminView === "historial" ||
+      adminView === "basurero" ||
       adminView === "cierre" ||
       adminView === "reportes"));
 const shouldKeepOrdersLoaded = (tab: TabKey, adminView: AdminViewKey) =>
   tab !== "admin" ||
   (adminView !== "banco" &&
     adminView !== "catalogo" &&
+    adminView !== "catalogo-v3" &&
     adminView !== "sorteos" &&
     adminView !== "cierre" &&
     adminView !== "reportes");
 const shouldRetainTerminalOrdersInView = (tab: TabKey, adminView: AdminViewKey) =>
-  tab === "pedidos" || (tab === "admin" && adminView === "historial");
+  tab === "pedidos" || (tab === "admin" && (adminView === "historial" || adminView === "basurero"));
 
 const isPreviewOrderSource = (source?: string) => source === "public-v2-preview";
 
@@ -409,10 +454,10 @@ const statusLabel: Record<OrderStatus, string> = {
 };
 const statusTone: Record<OrderStatus, string> = {
   new: "border-sky-400/40 text-sky-200",
-  preparing: "border-amber-400/40 text-amber-200",
-  ready: "border-emerald-400/40 text-emerald-200",
-  delivered: "border-zinc-500/40 text-zinc-200",
-  cancelled: "border-rose-500/40 text-rose-300",
+  preparing: "border-amber-400/40 text-amber-700 dark:text-amber-200",
+  ready: "border-emerald-400/40 text-emerald-700 dark:text-emerald-200",
+  delivered: "border-zinc-500/40 text-zinc-800 dark:text-zinc-200",
+  cancelled: "border-rose-300 dark:border-rose-500/40 text-rose-800 dark:text-rose-300",
 };
 const paymentStatusLabel: Record<OrderV2PaymentStatus, string> = {
   pending: "Pago pendiente",
@@ -420,9 +465,9 @@ const paymentStatusLabel: Record<OrderV2PaymentStatus, string> = {
   cancelled: "Cancelado",
 };
 const paymentStatusTone: Record<OrderV2PaymentStatus, string> = {
-  pending: "border-amber-400/40 text-amber-200",
-  paid: "border-emerald-400/40 text-emerald-200",
-  cancelled: "border-rose-500/40 text-rose-300",
+  pending: "border-amber-400/40 text-amber-700 dark:text-amber-200",
+  paid: "border-emerald-400/40 text-emerald-700 dark:text-emerald-200",
+  cancelled: "border-rose-300 dark:border-rose-500/40 text-rose-800 dark:text-rose-300",
 };
 const isOrderV2PaymentStatus = (value: string): value is OrderV2PaymentStatus =>
   value === "pending" || value === "paid" || value === "cancelled";
@@ -482,17 +527,15 @@ const getOperationalTruth = ({
         ? { label: "Datos", value: "Fallback", tone: "warning" }
         : { label: "Datos", value: "Mock local", tone: "warning" };
   const capability: TruthItem =
-    runtime.sessionState !== "active"
-      ? { label: "Capacidad", value: "Entrar para operar", tone: "danger" }
-      : runtime.error && runtime.source !== "d1"
-        ? { label: "Capacidad", value: "Sin backend", tone: "danger" }
-        : runtime.source === "d1"
-          ? {
-              label: "Capacidad",
-              value: runtime.environment === "preview" ? "Operable en preview" : "Operable",
-              tone: "success",
-            }
-          : { label: "Capacidad", value: "Solo revisión", tone: "warning" };
+    runtime.error && runtime.source !== "d1"
+      ? { label: "Capacidad", value: "Sin backend", tone: "danger" }
+      : runtime.source === "d1"
+        ? {
+            label: "Capacidad",
+            value: runtime.environment === "preview" ? "Operable en preview" : "Operable",
+            tone: "success",
+          }
+        : { label: "Capacidad", value: "Solo revisión", tone: "warning" };
   const activity: TruthItem = {
     label: "Carga",
     value: `${activeCount} activos`,
@@ -519,20 +562,7 @@ const getOperationalTruth = ({
   let kitchenHint = "Revisa el flujo actual antes de mover pedidos.";
   let summaryHint = "Solo referencia visual.";
 
-  if (runtime.sessionState === "expired") {
-    headline = "Sesión expirada";
-    summary = "Vuelve a entrar antes de operar.";
-    action = { label: "Entrar de nuevo", helper: "Recupera la sesión.", tone: "danger" };
-    banner = {
-      title: "Sesión vencida",
-      message: "Chekeo salió de la sesión activa. Vuelve a entrar para recuperar D1.",
-      tone: "danger",
-    };
-  } else if (runtime.sessionState !== "active") {
-    headline = "Sin sesión operativa";
-    summary = "Entra para consultar D1 y habilitar acciones.";
-    action = { label: "Entrar", helper: "Activa la sesión primero.", tone: "neutral" };
-  } else if (isLiveD1) {
+  if (isLiveD1) {
     headline = "Operando con datos reales";
     summary = "Cada acción impacta pedidos reales.";
     action = {
@@ -562,6 +592,15 @@ const getOperationalTruth = ({
     kitchenTitle = "Cocina conectada a preview";
     kitchenHint = "Valida el flujo sin tratarlo como producción.";
     summaryHint = `${activeCount} pedidos activos visibles en preview.`;
+  } else if (runtime.sessionState === "expired") {
+    headline = "Sesión admin expirada";
+    summary = "Reingresa el PIN si necesitas acceder a la pestaña Admin.";
+    action = { label: "Ingresar PIN Admin", helper: "Recupera la sesión de Admin.", tone: "danger" };
+    banner = {
+      title: "Sesión Admin vencida",
+      message: "La sesión de administrador expiró. Reingresa el PIN en la pestaña Admin si requieres cambiar configuración.",
+      tone: "danger",
+    };
   } else if (runtime.source === "fallback") {
     headline = "Chekeo está en fallback";
     summary = "Puedes revisar pedidos, pero no confiar en escritura real.";
@@ -714,9 +753,9 @@ const ordersStatusLabel: Record<Exclude<OrdersStatusFilter, "all">, string> = {
 };
 const ordersStatusTone: Record<Exclude<OrdersStatusFilter, "all">, string> = {
   received: "border-sky-400/40 text-sky-200",
-  ready: "border-emerald-400/40 text-emerald-200",
-  delivered: "border-zinc-500/40 text-zinc-200",
-  cancelled: "border-rose-500/40 text-rose-300",
+  ready: "border-emerald-400/40 text-emerald-700 dark:text-emerald-200",
+  delivered: "border-zinc-500/40 text-zinc-800 dark:text-zinc-200",
+  cancelled: "border-rose-300 dark:border-rose-500/40 text-rose-800 dark:text-rose-300",
 };
 const ordersStatusFilterOptions: Array<{
   value: OrdersStatusFilter;
@@ -808,7 +847,7 @@ const asInternalOrders = (orders: MockOrder[]): InternalOrder[] =>
     createdAtMs: parseOrderTimestamp(order.createdAt),
     items: order.items.map(normalizeMockOrderItem),
   }));
-const AUTO_REFRESH_INTERVAL_MS = 25_000;
+const AUTO_REFRESH_INTERVAL_MS = 10_000;
 const NEW_ORDER_HIGHLIGHT_MS = 12_000;
 const NEW_ORDER_NOTICE_MS = 5_000;
 const formatOrderRefreshTime = (reason?: "manual" | "auto" | "session") => {
@@ -1031,16 +1070,58 @@ const mapOrderV2ItemToInternalItem = (
   doneByLineKey: Map<string, boolean>,
 ): InternalOrderItem => {
   const snapshot = parseSnapshotRecord(item.snapshot);
-  const lineKey = getOptionalString(snapshot.lineKey);
+  const rawLineKey = getOptionalString(snapshot.lineKey);
+  const lineKey = rawLineKey || item.id || `${item.orderId}-${item.sku}-${item.name}`;
   const itemKind = isOrderV2ItemKind(snapshot.itemKind)
     ? snapshot.itemKind
     : undefined;
-  const removedIngredients = Array.isArray(snapshot.removedIngredients)
+
+  let removedIngredients: string[] = Array.isArray(snapshot.removedIngredients)
     ? snapshot.removedIngredients.filter(
         (entry): entry is string =>
           typeof entry === "string" && Boolean(entry.trim()),
       )
     : [];
+  if (removedIngredients.length === 0 && Array.isArray(item.modifiers)) {
+    removedIngredients = item.modifiers
+      .filter((m) => m.type === "remove" && Boolean(m.name?.trim()))
+      .map((m) => m.name.trim());
+  }
+
+  let extras = parseSnapshotExtras(snapshot.extras);
+  if (extras.length === 0 && Array.isArray(item.modifiers)) {
+    extras = item.modifiers
+      .filter((m) => (m.type === "extra" || m.type === "upgrade") && Boolean(m.name?.trim()))
+      .map((m) => ({
+        ...(m.code ? { sku: m.code } : {}),
+        name: m.name.trim(),
+        ...(typeof m.priceCents === "number" ? { price: m.priceCents / 100 } : {}),
+      }));
+  }
+
+  let garnish = parseSnapshotGarnish(snapshot.garnish);
+  let includedDrink = parseSnapshotIncludedDrink(snapshot.includedDrink);
+  if (!garnish && Array.isArray(item.components)) {
+    const garnishComp = item.components.find((c) => c.kind === "garnish" || c.kind === "side");
+    if (garnishComp) {
+      garnish = {
+        sku: garnishComp.sku,
+        name: garnishComp.name,
+        ...(garnishComp.upchargeCents ? { upcharge: garnishComp.upchargeCents / 100 } : {}),
+      };
+    }
+  }
+  if (!includedDrink && Array.isArray(item.components)) {
+    const drinkComp = item.components.find((c) => c.kind === "drink");
+    if (drinkComp) {
+      includedDrink = {
+        sku: drinkComp.sku,
+        name: drinkComp.name,
+      };
+    }
+  }
+
+  const isDone = doneByLineKey.get(lineKey) ?? (rawLineKey ? (doneByLineKey.get(rawLineKey) ?? false) : false);
 
   return {
     name: item.name,
@@ -1051,10 +1132,10 @@ const mapOrderV2ItemToInternalItem = (
     itemDisplayIndex: getOptionalNumber(snapshot.itemDisplayIndex),
     itemKind,
     removedIngredients,
-    extras: parseSnapshotExtras(snapshot.extras),
+    extras,
     burgerNote: getOptionalString(snapshot.burgerNote),
-    garnish: parseSnapshotGarnish(snapshot.garnish),
-    includedDrink: parseSnapshotIncludedDrink(snapshot.includedDrink),
+    garnish,
+    includedDrink,
     sideQuestExtras: parseSnapshotSideQuestExtras(snapshot.sideQuestExtras),
     comboBurgers: parseSnapshotComboBurgers(snapshot.comboBurgers),
     extrasTotalCents: getOptionalNumber(snapshot.extrasTotalCents),
@@ -1063,7 +1144,7 @@ const mapOrderV2ItemToInternalItem = (
     parentLineKey: getOptionalString(snapshot.parentLineKey),
     parentItemName: getOptionalString(snapshot.parentItemName),
     sideQuestSource: getOptionalString(snapshot.sideQuestSource),
-    kitchenDone: lineKey ? (doneByLineKey.get(lineKey) ?? false) : false,
+    kitchenDone: isDone,
   };
 };
 
@@ -1117,6 +1198,7 @@ const mapOrderV2ToInternalOrder = (order: OrderV2): InternalOrder => {
     folio: order.folio,
     customer: order.customerName,
     customerPhone: order.customerPhone,
+    delivery: order.delivery,
     channel: order.orderMode,
     createdAt: formatDateTime(order.createdAt),
     updatedAt: formatDateTime(order.updatedAt),
@@ -1128,7 +1210,7 @@ const mapOrderV2ToInternalOrder = (order: OrderV2): InternalOrder => {
     paymentMethod: order.paymentMethod,
     paymentState: order.paymentStatus,
     note: order.notes,
-    items: appendKitchenSideQuestItems(order.items).map((item) =>
+    items: order.items.map((item) =>
       mapOrderV2ItemToInternalItem(item, doneByLineKey),
     ),
     total: order.total,
@@ -1175,9 +1257,9 @@ const EmptyOrdersState = ({
   action?: ReactNode;
 }) => (
   <Card className="border-dashed border-zinc-700/90 p-5 text-center">
-    <p className="text-base font-black text-zinc-100">{title}</p>
+    <p className="text-base font-black text-zinc-900 dark:text-zinc-100">{title}</p>
     {description ? (
-      <p className="mx-auto mt-1 max-w-md text-sm text-zinc-400">{description}</p>
+      <p className="mx-auto mt-1 max-w-md text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
     ) : null}
     {action ? <div className="mt-3">{action}</div> : null}
   </Card>
@@ -1269,22 +1351,22 @@ const OrdersExportControls = ({
   };
 
   return (
-    <div className="mt-3 rounded-lg border border-zinc-800 bg-zinc-950/70 p-2">
+    <div className="mt-3 rounded-lg border border-zinc-800 bg-white dark:bg-zinc-950/70 p-2">
       <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs font-bold text-zinc-100">Descargar reporte</p>
-          <p className="text-[11px] text-zinc-400">
+          <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Descargar reporte</p>
+          <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
             Baja los pedidos filtrados para revisión o cierre.
           </p>
         </div>
         {!sessionActive ? (
-          <p className="text-[11px] text-amber-200">
+          <p className="text-[11px] text-amber-700 dark:text-amber-200">
             Sesión expirada. Vuelve a iniciar sesión.
           </p>
         ) : null}
       </div>
       <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-        <label className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs text-zinc-200 sm:col-span-2 lg:col-span-1">
+        <label className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 sm:col-span-2 lg:col-span-1">
           <input
             type="checkbox"
             checked={includeTerminal}
@@ -1292,7 +1374,7 @@ const OrdersExportControls = ({
           />
           Incluir entregados y cancelados
         </label>
-        <label className="text-[11px] text-zinc-400">
+        <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
           Estado
           <select
             className="input mt-1 text-xs"
@@ -1308,7 +1390,7 @@ const OrdersExportControls = ({
             ))}
           </select>
         </label>
-        <label className="text-[11px] text-zinc-400">
+        <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
           Máximo de registros
           <input
             className="input mt-1 text-xs"
@@ -1321,7 +1403,7 @@ const OrdersExportControls = ({
             onChange={(event) => setLimit(event.target.value)}
           />
         </label>
-        <label className="text-[11px] text-zinc-400">
+        <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
           Desde
           <input
             className="input mt-1 text-xs"
@@ -1330,7 +1412,7 @@ const OrdersExportControls = ({
             onChange={(event) => setFrom(event.target.value)}
           />
         </label>
-        <label className="text-[11px] text-zinc-400">
+        <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
           Hasta
           <input
             className="input mt-1 text-xs"
@@ -1341,17 +1423,17 @@ const OrdersExportControls = ({
         </label>
       </div>
       {invalidLimit ? (
-        <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-200">
+        <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-rose-200">
           El límite debe ser un entero entre 1 y 1000.
         </p>
       ) : null}
       {error ? (
-        <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-200">
+        <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-rose-200">
           {error}
         </p>
       ) : null}
       {success ? (
-        <p className="mt-2 rounded bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200">
+        <p className="mt-2 rounded bg-emerald-500/10 px-2 py-1 text-xs text-emerald-700 dark:text-emerald-200">
           {success}
         </p>
       ) : null}
@@ -1382,12 +1464,12 @@ const NewOrderBanner = ({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-black">{notice.message}</p>
-          <p className="mt-1 break-words text-[11px] text-cyan-100/80">
+          <p className="mt-1 break-words text-[11px] text-cyan-900 dark:text-cyan-800 dark:text-cyan-100/80">
             Folios: {notice.orderFolios.join(", ")}
           </p>
         </div>
         <Button
-          className="w-full shrink-0 border border-cyan-200/40 bg-cyan-950/50 px-3 py-1.5 text-xs text-cyan-50 sm:w-auto"
+          className="w-full shrink-0 border border-cyan-200/40 bg-cyan-50 dark:bg-cyan-950/50 px-3 py-1.5 text-xs text-cyan-50 sm:w-auto"
           onClick={onDismiss}
         >
           Entendido
@@ -1447,10 +1529,10 @@ const InternalLogin = ({
 
   return (
     <main className="shell flex items-center justify-center py-8">
-      <section className="login card w-full max-w-md border-cyan-400/20 bg-zinc-950/95 p-4 shadow-cyan-950/30">
+      <section className="login card w-full max-w-md border-cyan-400/20 bg-white dark:bg-zinc-950/95 p-4 shadow-cyan-950/30">
         <div className="mb-4 text-center">
           <p className="text-2xl font-black tracking-tight text-zinc-50">
-            Burgers<span className="text-cyan-300">.exe</span>
+            Burgers<span className="text-cyan-800 dark:text-cyan-300">.exe</span>
           </p>
           <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200">
             Chekeo
@@ -1480,7 +1562,7 @@ const InternalLogin = ({
               {sessionStateLabel[sessionState].value}
             </StatusPill>
           </div>
-          <p className="mt-2 text-xs text-zinc-300">{copy.secondary}</p>
+          <p className="mt-2 text-xs text-zinc-700 dark:text-zinc-300">{copy.secondary}</p>
           <a
             className="runtime-environment-link runtime-environment-link--muted mt-3 w-full"
             href={publicOrderUrl}
@@ -1548,7 +1630,7 @@ const SessionPinForm = ({
 
   return (
     <form className="space-y-4" onSubmit={(event) => void submit(event)}>
-      <label className="block text-sm font-bold text-zinc-100" htmlFor={inputId}>
+      <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100" htmlFor={inputId}>
         {label}
         <input
           id={inputId}
@@ -1609,6 +1691,10 @@ const OperatorHeader = ({
   onRefresh,
   onLogout,
   truth,
+  themeMode,
+  onToggleTheme,
+  soundAlerts,
+  onToggleSound,
 }: {
   runtimeEnvironment: ChekeoRuntimeEnvironment;
   runtime: OrdersRuntime;
@@ -1617,6 +1703,10 @@ const OperatorHeader = ({
   onRefresh: () => void;
   onLogout: () => void;
   truth: OperationalTruth;
+  themeMode: "light" | "dark" | "system";
+  onToggleTheme: () => void;
+  soundAlerts: boolean;
+  onToggleSound: () => void;
 }) => {
   const publicOrderUrl = getPublicOrderUrlForEnvironment(runtimeEnvironment);
   const publicOrderLabel = getPublicOrderLabelForEnvironment(runtimeEnvironment);
@@ -1661,6 +1751,28 @@ const OperatorHeader = ({
           <span className="shell-header__sync">
             {runtime.lastUpdated ? `Sync ${runtime.lastUpdated}` : "Sin sync"}
           </span>
+          <Button
+            className={`shell-icon-button ${soundAlerts ? "text-emerald-400" : "text-zinc-500"}`}
+            aria-label={soundAlerts ? "Sonido activado" : "Sonido desactivado"}
+            title={soundAlerts ? "Desactivar alertas sonoras de pedidos" : "Activar alertas sonoras de pedidos"}
+            onClick={onToggleSound}
+          >
+            {soundAlerts ? <Volume2 size={16} aria-hidden="true" /> : <VolumeX size={16} aria-hidden="true" />}
+          </Button>
+          <Button
+            className="shell-icon-button"
+            aria-label={`Tema: ${themeMode}`}
+            title={`Cambiar tema (actual: ${themeMode})`}
+            onClick={onToggleTheme}
+          >
+            {themeMode === "light" ? (
+              <Sun size={16} className="text-amber-500" aria-hidden="true" />
+            ) : themeMode === "dark" ? (
+              <Moon size={16} className="text-cyan-400" aria-hidden="true" />
+            ) : (
+              <Monitor size={16} className="text-zinc-600 dark:text-zinc-400" aria-hidden="true" />
+            )}
+          </Button>
           <Button
             className="shell-icon-button"
             aria-label="Actualizar datos"
@@ -1946,7 +2058,7 @@ const HomePanel = ({
             </span>
           </div>
         ) : (
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             {todayLoading ? "Cargando resumen..." : "Sin Resumen K disponible."}
           </p>
         )}
@@ -1963,8 +2075,8 @@ const HomePanel = ({
 
 const getAdminAuthModeHint = (authMode: InternalAuthMode) =>
   authMode === "admin-only"
-    ? "Modo admin-only preparado. Chekeo sigue pidiendo PIN global hasta que exista protección externa y una política backend compatible."
-    : "Modo seguro global activo. Toda la app sigue pidiendo PIN antes de abrir.";
+    ? "Acceso operativo directo activo. El PIN de seguridad se solicitará únicamente en la pestaña Admin."
+    : "PIN requerido exclusivamente para el área administrativa.";
 
 const AdminReportsPanel = ({
   runtime,
@@ -1975,13 +2087,13 @@ const AdminReportsPanel = ({
 }) => (
   <div className="grid gap-3 xl:grid-cols-[1.1fr_0.9fr]">
     <Card className="p-4">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-200">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700 dark:text-amber-200">
         Reportes y exportes
       </p>
       <h3 className="mt-2 text-xl font-black text-zinc-50">
         Exportes operativos
       </h3>
-      <p className="mt-2 text-sm text-zinc-400">
+      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
         Descarga cortes y listas filtradas sin volver a mezclar estos controles con Pedidos, Cocina o Pagos.
       </p>
       <OrdersExportControls
@@ -2040,10 +2152,10 @@ const AdminGate = ({
         <h2 className="mt-1 text-xl font-black text-zinc-50">
           Acceso Admin
         </h2>
-        <p className="mt-2 text-sm text-zinc-400">
-          Admin siempre requiere PIN interno. Home, Pedidos, Cocina y Pagos solo pueden abrirse sin PIN global cuando la URL ya está protegida externamente.
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+          La pestaña Admin requiere PIN de administrador. Las pestañas operativas (Home, Pedidos, Cocina, Pagos) son de acceso directo.
         </p>
-        <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-zinc-950/70 p-4">
+        <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-white dark:bg-zinc-950/70 p-4">
           <SessionPinForm
             inputId="admin-pin"
             label="PIN Admin"
@@ -2115,13 +2227,16 @@ const AdminWorkspace = ({
       <BankConfigAdminPanel />
     ) : view === "catalogo" ? (
       <CatalogAdminPanel />
+    ) : view === "catalogo-v3" ? (
+      <CatalogV3Panel />
     ) : view === "sorteos" ? (
       <RafflesAdminPanel runtimeEnvironment={runtimeEnvironment} />
-    ) : view === "historial" ? (
+    ) : view === "historial" || view === "basurero" ? (
       <HistoryPanel
         orders={orders}
         runtime={runtime}
         onArchiveCancelled={onArchiveCancelled}
+        initialView={view === "basurero" ? "basurero" : "historial"}
       />
     ) : view === "cierre" ? (
       <OperationalClosePanel
@@ -2170,7 +2285,7 @@ const AdminWorkspace = ({
                 Enlace de estado a la experiencia de clientes; este PR no la modifica.
               </p>
             </div>
-            <StatusPill className="border-emerald-400/40 bg-emerald-500/10 text-emerald-100">
+            <StatusPill className="border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100">
               Base lista
             </StatusPill>
           </div>
@@ -2184,7 +2299,7 @@ const AdminWorkspace = ({
               <span className="admin-module-card__icon">
                 <ExternalLink size={18} aria-hidden="true" />
               </span>
-              <StatusPill className="admin-module-card__status border-emerald-400/40 bg-emerald-500/10 text-emerald-100">
+              <StatusPill className="admin-module-card__status border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100">
                 Base lista
               </StatusPill>
             </span>
@@ -2213,7 +2328,7 @@ const AdminWorkspace = ({
             <h2 className="mt-1 text-xl font-black text-zinc-50">
               {view === "launcher" ? "Módulos secundarios" : activeView.label}
             </h2>
-            <p className="mt-1 max-w-3xl text-sm text-zinc-400">
+            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
               {view === "launcher"
                 ? "Datos bancarios, historial, cierre, catálogo, sorteos y reportes viven aquí para mantener la navegación principal enfocada en operación."
                 : activeView.description}
@@ -2223,7 +2338,7 @@ const AdminWorkspace = ({
             {view !== "launcher" ? (
               <Button
                 type="button"
-                className="admin-back-button border border-cyan-400/40 bg-cyan-400/10 text-cyan-100"
+                className="admin-back-button border border-cyan-400/40 bg-cyan-400/10 text-cyan-900 dark:text-cyan-800 dark:text-cyan-100"
                 onClick={() => setView("launcher")}
               >
                 Volver al hub
@@ -2270,13 +2385,13 @@ const BankConfigAdminPanel = () => {
             <h3 className="mt-1 text-xl font-black text-zinc-50">
               Datos bancarios
             </h3>
-            <p className="mt-1 max-w-3xl text-sm text-zinc-400">
+            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
               Fuente central compartida para transferencias. Pagos la consume
               para el mensaje operativo y esta vista la expone solo dentro de
               Admin.
             </p>
           </div>
-          <StatusPill className="border-zinc-700 bg-zinc-900 text-zinc-100">
+          <StatusPill className="border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
             {bankPaymentConfig.editable ? "Editable" : "Solo lectura"}
           </StatusPill>
         </div>
@@ -2285,7 +2400,7 @@ const BankConfigAdminPanel = () => {
       <div className="grid gap-3 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="p-4">
           <div className="grid gap-3 min-[520px]:grid-cols-2">
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/65 p-3">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3">
               <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
                 Banco
               </p>
@@ -2293,7 +2408,7 @@ const BankConfigAdminPanel = () => {
                 {bankPaymentConfig.bankName}
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/65 p-3">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3">
               <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
                 Titular
               </p>
@@ -2301,7 +2416,7 @@ const BankConfigAdminPanel = () => {
                 {bankPaymentConfig.accountHolder}
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/65 p-3 min-[520px]:col-span-2">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3 min-[520px]:col-span-2">
               <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
                 {primaryLabel}
               </p>
@@ -2315,24 +2430,24 @@ const BankConfigAdminPanel = () => {
         <Card className="p-4">
           <div className="space-y-3">
             <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-100">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-800 dark:text-emerald-100">
                 Alcance
               </p>
-              <p className="mt-2 text-sm text-zinc-100">
+              <p className="mt-2 text-sm text-zinc-900 dark:text-zinc-100">
                 Solo transferencia. Pedidos, ticket, Home y Cocina no deben
                 mostrar estos datos.
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/65 p-3 text-sm text-zinc-300">
-              <p className="font-black text-zinc-100">Estado de edición</p>
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3 text-sm text-zinc-700 dark:text-zinc-300">
+              <p className="font-black text-zinc-900 dark:text-zinc-100">Estado de edición</p>
               <p className="mt-2">
                 La configuración actual es de solo lectura y vive en la capa
                 compartida del proyecto. La edición persistente queda pendiente
                 hasta definir una fuente segura en backend.
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/65 p-3 text-sm text-zinc-300">
-              <p className="font-black text-zinc-100">Fuente</p>
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3 text-sm text-zinc-700 dark:text-zinc-300">
+              <p className="font-black text-zinc-900 dark:text-zinc-100">Fuente</p>
               <p className="mt-2">
                 <code>{bankPaymentConfig.source}</code> compartida por{" "}
                 <code>Pagos</code>, <code>Admin</code> y la integración de
@@ -2386,7 +2501,7 @@ const ActionButtons = ({
           <button
             key={action.status}
             type="button"
-            className={`btn-sm ${action.tone === "danger" ? "danger" : "border-cyan-500/50 bg-cyan-500/10 text-cyan-100"}`}
+            className={`btn-sm ${action.tone === "danger" ? "danger" : "border-cyan-300 dark:border-cyan-500/50 bg-cyan-500/10 text-cyan-900 dark:text-cyan-800 dark:text-cyan-100"}`}
             onClick={() =>
               isCancellation
                 ? onCancel(order)
@@ -2493,26 +2608,26 @@ const WhatsappOrderActions = ({
   return (
     <div className="mt-2 rounded-lg border border-cyan-400/20 bg-cyan-400/5 p-2">
       {!phone ? (
-        <p className="mb-2 rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200">
+        <p className="mb-2 rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-700 dark:text-amber-200">
           Teléfono inválido para WhatsApp
         </p>
       ) : null}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <Button
-          className="border border-amber-700 bg-amber-950/50 px-2 py-1.5 text-[11px] text-amber-100 disabled:opacity-40"
+          className="border border-amber-700 bg-amber-50 dark:bg-amber-950/50 px-2 py-1.5 text-[11px] text-amber-800 dark:text-amber-100 disabled:opacity-40"
           onClick={() => void downloadTicket()}
           disabled={generatingTicket}
         >
           {generatingTicket ? "Generando…" : "Descargar ticket"}
         </Button>
         <Button
-          className="border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-[11px]"
+          className="border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-2 py-1.5 text-[11px]"
           onClick={() => void copySummary()}
         >
           Copiar WhatsApp
         </Button>
         <Button
-          className="border border-emerald-700 bg-emerald-950/50 px-2 py-1.5 text-[11px] text-emerald-100 disabled:opacity-40"
+          className="border border-emerald-700 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-1.5 text-[11px] text-emerald-800 dark:text-emerald-100 disabled:opacity-40"
           onClick={openWhatsapp}
           disabled={!phone}
         >
@@ -2521,7 +2636,7 @@ const WhatsappOrderActions = ({
       </div>
       {notice ? (
         <p
-          className={`mt-2 rounded px-2 py-1 text-[11px] ${notice.tone === "success" ? "bg-emerald-500/10 text-emerald-200" : "bg-rose-500/10 text-rose-200"}`}
+          className={`mt-2 rounded px-2 py-1 text-[11px] ${notice.tone === "success" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200" : "bg-rose-500/10 text-rose-700 dark:text-rose-200"}`}
         >
           {notice.message}
         </p>
@@ -2617,25 +2732,25 @@ const CancellationReasonDialog = ({
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-rose-200">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-rose-700 dark:text-rose-200">
               Cancelación manual
             </p>
             <h2 id="cancel-title" className="text-lg font-black">
               Cancelar {order.folio}
             </h2>
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
               {order.customer} · {order.createdAt}
             </p>
           </div>
           <StatusBadge status={order.status} />
         </div>
-        <div className="mt-3 rounded-lg border border-zinc-800 bg-zinc-900/60 p-2 text-xs text-zinc-300">
+        <div className="mt-3 rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-2 text-xs text-zinc-700 dark:text-zinc-300">
           <p>
             La cancelación quedará guardada con su razón para seguimiento
             administrativo.
           </p>
           {runtime.source !== "d1" ? (
-            <p className="mt-1 rounded bg-amber-500/10 px-2 py-1 text-amber-100">
+            <p className="mt-1 rounded bg-amber-500/10 px-2 py-1 text-amber-800 dark:text-amber-100">
               Vista local: la cancelación se refleja solo en pantalla.
             </p>
           ) : null}
@@ -2645,7 +2760,7 @@ const CancellationReasonDialog = ({
             <button
               key={option}
               type="button"
-              className={`rounded-lg border px-3 py-2 text-xs font-semibold ${preset === option ? "border-rose-300 bg-rose-300 text-black" : "border-zinc-700 bg-zinc-900 text-zinc-200"}`}
+              className={`rounded-lg border px-3 py-2 text-xs font-semibold ${preset === option ? "border-rose-300 bg-rose-300 text-black" : "border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200"}`}
               onClick={() => selectPreset(option)}
               disabled={busy}
             >
@@ -2653,7 +2768,7 @@ const CancellationReasonDialog = ({
             </button>
           ))}
         </div>
-        <label className="mt-3 block text-xs font-semibold text-zinc-200">
+        <label className="mt-3 block text-xs font-semibold text-zinc-800 dark:text-zinc-200">
           Razón obligatoria
           <textarea
             className="input min-h-24 text-sm"
@@ -2676,20 +2791,20 @@ const CancellationReasonDialog = ({
           <span>{reason.length}/200</span>
         </div>
         {error || validationError ? (
-          <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-200">
+          <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-rose-200">
             {error ?? validationError}
           </p>
         ) : null}
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <Button
-            className="flex-1 border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm disabled:opacity-40"
+            className="flex-1 border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm disabled:opacity-40"
             onClick={onClose}
             disabled={busy}
           >
             Volver
           </Button>
           <Button
-            className="flex-1 border border-rose-700 bg-rose-950/70 px-3 py-2 text-sm font-bold text-rose-100 disabled:opacity-40"
+            className="flex-1 border border-rose-700 bg-rose-50 dark:bg-rose-950/70 px-3 py-2 text-sm font-bold text-rose-800 dark:text-rose-100 disabled:opacity-40"
             onClick={() => void submit()}
             disabled={disabled}
           >
@@ -2739,68 +2854,120 @@ const CompactRow = ({
   onOpen,
   onMove,
   onCancel,
+  onArchive,
+  onUnarchive,
   busy,
+  selected = false,
+  onToggleSelect,
+  isArchived = false,
 }: {
   order: InternalOrder;
   onOpen: () => void;
   onMove: MoveOrderStatus;
   onCancel: (order: InternalOrder) => void;
+  onArchive?: (order: InternalOrder) => void;
+  onUnarchive?: (order: InternalOrder) => void;
   busy: boolean;
+  selected?: boolean;
+  onToggleSelect?: (orderId: string) => void;
+  isArchived?: boolean;
 }) => {
   const previewOrder = isPreviewOrderSource(order.source);
   const itemCount = getOrderItemCount(order);
-  const location = getOrderLocationLabel(order);
+  const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
   const canDeliver = order.status === "ready";
   const canCancel = !terminalStatuses.has(order.status);
+  const canArchive = order.status === "cancelled" && !isArchived && Boolean(onArchive);
   return (
-    <div className={`orders-card orders-card--${order.status}`}>
+    <div className={`orders-card orders-card--${order.status} ${selected ? "ring-2 ring-emerald-500 bg-emerald-950/20" : ""}`}>
       <span className={`orders-status-rail orders-status-rail--${order.status}`} aria-hidden="true" />
       <div className="orders-card__body">
-        <div className="orders-card__head">
-          <div className="orders-card__identity">
-            <p className="orders-card__folio">
-              <span className="truncate">{order.folio}</span>
-              {previewOrder ? (
-                <span className="orders-preview-chip">
-                  Prueba
-                </span>
+        <div className="orders-card__head flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {onToggleSelect ? (
+              <input
+                type="checkbox"
+                className="w-5 h-5 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-zinc-950 cursor-pointer shrink-0"
+                checked={selected}
+                onChange={() => onToggleSelect(order.id)}
+                onClick={(e) => e.stopPropagation()}
+                aria-label={`Seleccionar orden ${order.folio}`}
+              />
+            ) : null}
+            <div className="orders-card__identity min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="orders-card__folio font-black">
+                  <span className="truncate">{order.folio}</span>
+                </p>
+                {previewOrder ? (
+                  <span className="orders-preview-chip">
+                    Prueba
+                  </span>
+                ) : null}
+              </div>
+              <p className="orders-card__customer font-bold text-base text-zinc-900 dark:text-zinc-100 mt-0.5">
+                {details.cleanCustomerName}
+              </p>
+              {order.customerPhone ? (
+                <p className="text-xs text-zinc-500 font-medium">📞 {order.customerPhone}</p>
               ) : null}
-            </p>
-            <p className="orders-card__customer">
-              {order.customer}
-            </p>
-            <p className="orders-card__timestamp">
-              {order.createdAt} · {channelLabel[order.channel]}
-            </p>
+            </div>
           </div>
-          <div className="orders-card__badges">
+          <div className="orders-card__badges shrink-0">
             <OrdersStatusBadge status={order.status} />
           </div>
         </div>
 
-        <div className="orders-card__facts">
-          <OrderFact label="Total" value={formatCurrency(order.total)} emphasis />
-          <OrderFact label="Entrega" value={location} />
-          <OrderFact label="Items" value={itemCount} />
+        {/* 3 Main Priority Facts: Total, Location, Scheduled Delivery Date */}
+        <div className="v3-order-facts-grid grid grid-cols-3 gap-2 my-2.5 p-2 rounded-xl bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800">
+          <div className="v3-fact-card flex flex-col justify-center">
+            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Total</span>
+            <strong className="text-base font-black text-emerald-600 dark:text-emerald-400">
+              {formatCurrency(order.total)}
+            </strong>
+          </div>
+          <div className="v3-fact-card flex flex-col justify-center">
+            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Entrega</span>
+            <strong className="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate" title={details.deliveryLocation}>
+              📍 {details.deliveryLocation}
+            </strong>
+          </div>
+          <div className="v3-fact-card flex flex-col justify-center">
+            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Fecha</span>
+            <span className={`text-xs font-bold truncate ${details.isScheduled ? "text-amber-500 font-extrabold" : "text-sky-500"}`}>
+              📅 {details.deliveryDateLabel}
+            </span>
+          </div>
         </div>
+
+        {/* Inline Items Preview */}
+        {order.items.length ? (
+          <div className="v3-order-items-preview mb-2.5 px-2.5 py-1.5 rounded-lg bg-zinc-900/60 border border-zinc-800 text-xs text-zinc-300">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 block mb-0.5">
+              Productos ({itemCount}):
+            </span>
+            <p className="line-clamp-2 font-medium text-zinc-200">
+              {order.items.map((i) => `${i.qty}x ${i.name}`).join(" · ")}
+            </p>
+          </div>
+        ) : null}
 
         <div className="orders-card__actions">
           <Button
             className="orders-primary-action"
             onClick={onOpen}
           >
-            Ver ticket
+            Ver ticket ({itemCount} {itemCount === 1 ? "item" : "items"})
           </Button>
           <details className="orders-card__more">
-            <summary>Mas acciones</summary>
-            <div className="orders-card__secondary-actions">
-              <span className="orders-card__items-pill">Items: {itemCount}</span>
-              {order.note ? (
-                <p className="orders-note">Nota: {order.note}</p>
+            <summary>Más acciones</summary>
+            <div className="orders-card__secondary-actions space-y-2 pt-2">
+              {details.cleanNotes ? (
+                <p className="orders-note">Nota: {details.cleanNotes}</p>
               ) : null}
               {canDeliver ? (
                 <Button
-                  className="orders-secondary-action"
+                  className="orders-secondary-action w-full"
                   onClick={() => void onMove(order.id, "delivered")}
                   disabled={busy}
                 >
@@ -2809,11 +2976,29 @@ const CompactRow = ({
               ) : null}
               {canCancel ? (
                 <Button
-                  className="orders-danger-action"
+                  className="orders-danger-action w-full"
                   onClick={() => onCancel(order)}
                   disabled={busy}
                 >
                   {busy ? "Cancelando…" : "Cancelar pedido"}
+                </Button>
+              ) : null}
+              {canArchive ? (
+                <Button
+                  className="orders-danger-action w-full border-rose-500/40 text-rose-300 hover:bg-rose-950/40"
+                  onClick={() => onArchive?.(order)}
+                  disabled={busy}
+                >
+                  {busy ? "Archivando…" : "🗑️ Mandar a Basurero"}
+                </Button>
+              ) : null}
+              {isArchived && onUnarchive ? (
+                <Button
+                  className="orders-secondary-action w-full border-emerald-500/40 text-emerald-300 hover:bg-emerald-950/40"
+                  onClick={() => onUnarchive(order)}
+                  disabled={busy}
+                >
+                  {busy ? "Restaurando…" : "↩️ Restaurar a Operaciones"}
                 </Button>
               ) : null}
             </div>
@@ -2838,28 +3023,29 @@ const OrderCommandPanel = ({
   busy: boolean;
 }) => {
   const itemCount = getOrderItemCount(order);
-  const location = getOrderLocationLabel(order);
+  const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
   const canDeliver = order.status === "ready";
   const canCancel = !terminalStatuses.has(order.status);
   const visibleItems = order.items.slice(0, 3);
   return (
-    <aside className="orders-command-detail" aria-label={`Detalle rapido ${order.folio}`}>
+    <aside className="orders-command-detail" aria-label={`Detalle rápido ${order.folio}`}>
       <div className="orders-command-detail__hero">
         <div className="min-w-0">
           <p className="orders-command-detail__eyebrow">Ticket abierto</p>
           <h3>{order.folio}</h3>
-          <p>{order.customer} · {location}</p>
+          <p className="font-bold text-zinc-100">{details.cleanCustomerName}</p>
+          <p className="text-xs text-zinc-400">📍 {details.deliveryLocation}</p>
         </div>
-        <strong>{formatCurrency(order.total)}</strong>
+        <strong className="text-emerald-400 text-xl font-black">{formatCurrency(order.total)}</strong>
       </div>
       <div className="orders-command-detail__facts">
         <OrderFact label="Estado" value={statusLabel[order.status]} />
-        <OrderFact label="Entrega" value={location} />
+        <OrderFact label="Fecha" value={`📅 ${details.deliveryDateLabel}`} />
         <OrderFact label="Items" value={itemCount} />
       </div>
       <div className="orders-command-detail__panel">
         <div className="orders-command-detail__panel-head">
-          <p>Resumen</p>
+          <p>Resumen ({itemCount} items)</p>
           <Button className="orders-ghost-action" onClick={onOpen}>
             Ver ticket
           </Button>
@@ -2873,10 +3059,10 @@ const OrderCommandPanel = ({
           ))}
         </div>
       </div>
-      {order.note ? (
-        <details className="orders-card__more orders-card__more--panel">
+      {details.cleanNotes ? (
+        <details className="orders-card__more orders-card__more--panel" open>
           <summary>Nota operativa</summary>
-          <p className="orders-note">{order.note}</p>
+          <p className="orders-note">{details.cleanNotes}</p>
         </details>
       ) : null}
       <div className="orders-command-detail__actions">
@@ -2907,6 +3093,142 @@ const OrderCommandPanel = ({
   );
 };
 
+const BatchActionBar = ({
+  selectedCount,
+  activeCount,
+  cancelledCount,
+  onClearSelection,
+  onBatchArchive,
+  onBatchRestore,
+  isArchivedView = false,
+  busy = false,
+}: {
+  selectedCount: number;
+  activeCount: number;
+  cancelledCount: number;
+  onClearSelection: () => void;
+  onBatchArchive?: () => void;
+  onBatchRestore?: () => void;
+  isArchivedView?: boolean;
+  busy?: boolean;
+}) => {
+  if (selectedCount === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-zinc-900/95 backdrop-blur-md border border-zinc-700 rounded-2xl shadow-2xl max-w-xl w-[90%]"
+    >
+      <div className="flex items-center gap-2">
+        <span className="flex h-3 w-3 rounded-full bg-emerald-500 animate-pulse" />
+        <p className="text-xs font-bold text-zinc-100">
+          {selectedCount} seleccionadas{" "}
+          {!isArchivedView && selectedCount > 0 ? (
+            <span className="text-zinc-400 font-normal">
+              ({cancelledCount} canceladas, {activeCount} activas)
+            </span>
+          ) : null}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="px-2.5 py-1.5 text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition-colors"
+          onClick={onClearSelection}
+          disabled={busy}
+        >
+          Desmarcar
+        </button>
+
+        {!isArchivedView && onBatchArchive ? (
+          <Button
+            className="px-3.5 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-xl shadow-md transition-transform active:scale-95 disabled:opacity-50"
+            onClick={onBatchArchive}
+            disabled={busy}
+          >
+            {busy ? "Procesando..." : `🗑️ Mandar a Basurero (${selectedCount})`}
+          </Button>
+        ) : null}
+
+        {isArchivedView && onBatchRestore ? (
+          <Button
+            className="px-3.5 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-md transition-transform active:scale-95 disabled:opacity-50"
+            onClick={onBatchRestore}
+            disabled={busy}
+          >
+            {busy ? "Procesando..." : `↩️ Restaurar seleccionadas (${selectedCount})`}
+          </Button>
+        ) : null}
+      </div>
+    </motion.div>
+  );
+};
+
+const BatchConfirmModal = ({
+  open,
+  activeCount,
+  cancelledCount,
+  totalCount,
+  onConfirm,
+  onCancel,
+  busy,
+}: {
+  open: boolean;
+  activeCount: number;
+  cancelledCount: number;
+  totalCount: number;
+  onConfirm: () => void;
+  onCancel: () => void;
+  busy: boolean;
+}) => {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-2xl space-y-4"
+      >
+        <div className="flex items-center gap-3 text-amber-400">
+          <span className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xl">⚠️</span>
+          <h3 className="text-lg font-bold text-zinc-100">Confirmar envío a Basurero</h3>
+        </div>
+
+        <p className="text-sm text-zinc-300 leading-relaxed">
+          Has seleccionado <strong className="text-amber-400">{activeCount} órdenes activas</strong> y{" "}
+          <strong className="text-zinc-200">{cancelledCount} canceladas</strong> (Total: {totalCount}).
+        </p>
+        <p className="text-xs text-zinc-400 leading-relaxed bg-zinc-950 p-3 rounded-xl border border-zinc-800">
+          🔒 <strong>Regla de negocio:</strong> Toda orden debe estar previamente cancelada para enviarse al basurero. Las órdenes activas se cancelarán automáticamente con el motivo <em className="text-zinc-200">'Limpieza de turno'</em> antes de moverlas.
+        </p>
+
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <button
+            type="button"
+            className="px-4 py-2 text-xs font-bold text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
+            onClick={onCancel}
+            disabled={busy}
+          >
+            Cancelar
+          </button>
+          <Button
+            className="px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-xl shadow-md transition-all disabled:opacity-50"
+            onClick={onConfirm}
+            disabled={busy}
+          >
+            {busy ? "Procesando..." : "Sí, cancelar activas y enviar todas al Basurero"}
+          </Button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const OrdersBoard = ({
   orders,
   setSelected,
@@ -2923,18 +3245,47 @@ const OrdersBoard = ({
     origin: "pedidos" | "detalle",
   ) => void;
 }) => {
+  const [viewMode, setViewMode] = useState<"active" | "archived">("active");
   const [statusFilter, setStatusFilter] = useState<OrdersStatusFilter>("all");
-  const [rangeFilter, setRangeFilter] = useState<OrdersRangeFilter>("today");
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
 
-  const filteredOrders = useMemo(() => {
-    const now = new Date();
-    const startOfToday = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-    ).getTime();
-    const startOfWeek = startOfToday - 6 * 24 * 60 * 60 * 1000;
+  const [archivedOrders, setArchivedOrders] = useState<InternalOrder[]>([]);
+  const [loadingArchived, setLoadingArchived] = useState(false);
+  const [archivedDateFrom, setArchivedDateFrom] = useState("");
+  const [archivedDateTo, setArchivedDateTo] = useState("");
+  const [actionBusy, setActionBusy] = useState(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+
+  const loadArchivedOrders = useCallback(async () => {
+    if (runtime.source !== "d1") return;
+    setLoadingArchived(true);
+    try {
+      const rawArchived = await fetchOrdersV2Admin({
+        archived: "true",
+        environment: runtime.environment,
+        from: archivedDateFrom || undefined,
+        to: archivedDateTo || undefined,
+        search: search || undefined,
+        limit: 100,
+      });
+      setArchivedOrders(rawArchived.map(mapOrderV2ToInternalOrder));
+    } catch {
+      setArchivedOrders([]);
+    } finally {
+      setLoadingArchived(false);
+    }
+  }, [archivedDateFrom, archivedDateTo, runtime.environment, runtime.source, search]);
+
+  useEffect(() => {
+    if (viewMode === "archived") {
+      void loadArchivedOrders();
+    }
+  }, [viewMode, loadArchivedOrders]);
+
+  const activeFilteredOrders = useMemo(() => {
+    const todayStr = formatIsoDate(new Date());
     const normalizedSearch = search.trim().toLowerCase();
 
     return [...orders]
@@ -2943,142 +3294,319 @@ const OrdersBoard = ({
         const orderStatus = getOrdersStatusFilterValue(order.status);
         if (statusFilter !== "all" && orderStatus !== statusFilter) return false;
 
-        if (rangeFilter !== "all" && order.createdAtMs) {
-          const threshold =
-            rangeFilter === "today" ? startOfToday : startOfWeek;
-          if (order.createdAtMs < threshold) return false;
+        const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
+        let orderDeliveryDate = todayStr;
+        if (details.isScheduled && details.scheduledDeliveryDate) {
+          orderDeliveryDate = details.scheduledDeliveryDate;
+        } else if (order.createdAtMs) {
+          orderDeliveryDate = formatIsoDate(new Date(order.createdAtMs));
+        }
+
+        if (selectedCalendarDate !== "all") {
+          if (selectedCalendarDate === "today" && orderDeliveryDate !== todayStr) return false;
+          if (selectedCalendarDate === "past" && orderDeliveryDate >= todayStr) return false;
+          if (selectedCalendarDate !== "today" && selectedCalendarDate !== "past" && orderDeliveryDate !== selectedCalendarDate) return false;
         }
 
         if (!normalizedSearch) return true;
         const haystack = [
           order.folio,
           order.customer,
+          details.cleanCustomerName,
           order.customerPhone,
-          getOrderLocationLabel(order),
+          details.deliveryLocation,
         ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
         return haystack.includes(normalizedSearch);
       });
-  }, [orders, rangeFilter, search, statusFilter]);
+  }, [orders, search, selectedCalendarDate, statusFilter]);
+
+  const displayedOrders = viewMode === "active" ? activeFilteredOrders : archivedOrders;
+
+  const toggleSelectOrder = (orderId: string) => {
+    setSelectedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedOrderIds.size >= displayedOrders.length && displayedOrders.length > 0) {
+      setSelectedOrderIds(new Set());
+    } else {
+      setSelectedOrderIds(new Set(displayedOrders.map((o) => o.id)));
+    }
+  };
+
+  const selectedOrdersList = useMemo(() => {
+    return displayedOrders.filter((o) => selectedOrderIds.has(o.id));
+  }, [displayedOrders, selectedOrderIds]);
+
+  const activeSelectedCount = useMemo(() => {
+    return selectedOrdersList.filter((o) => o.status !== "cancelled").length;
+  }, [selectedOrdersList]);
+
+  const cancelledSelectedCount = useMemo(() => {
+    return selectedOrdersList.filter((o) => o.status === "cancelled").length;
+  }, [selectedOrdersList]);
+
+  const handleArchiveSingle = async (order: InternalOrder) => {
+    if (runtime.source !== "d1") return;
+    setActionBusy(true);
+    try {
+      if (order.status !== "cancelled") {
+        await batchArchiveOrdersV2([order.id], runtime.environment, "Cancelado para basurero");
+      } else {
+        await archiveCancelledOrderV2(order.id, runtime.environment);
+      }
+      runtime.reload(true);
+      if (viewMode === "archived") void loadArchivedOrders();
+    } catch {
+      // handled
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const handleUnarchiveSingle = async (order: InternalOrder) => {
+    if (runtime.source !== "d1") return;
+    setActionBusy(true);
+    try {
+      await unarchiveOrderV2(order.id, runtime.environment);
+      runtime.reload(true);
+      void loadArchivedOrders();
+    } catch {
+      // handled
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const handleBatchArchiveClick = () => {
+    if (selectedOrderIds.size === 0) return;
+    if (activeSelectedCount > 0) {
+      setConfirmModalOpen(true);
+    } else {
+      void executeBatchArchive();
+    }
+  };
+
+  const executeBatchArchive = async () => {
+    if (runtime.source !== "d1" || selectedOrderIds.size === 0) return;
+    setActionBusy(true);
+    try {
+      await batchArchiveOrdersV2(Array.from(selectedOrderIds), runtime.environment, "Limpieza de turno");
+      setSelectedOrderIds(new Set());
+      setConfirmModalOpen(false);
+      runtime.reload(true);
+      if (viewMode === "archived") void loadArchivedOrders();
+    } catch {
+      // handled
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const executeBatchRestore = async () => {
+    if (runtime.source !== "d1" || selectedOrderIds.size === 0) return;
+    setActionBusy(true);
+    try {
+      for (const id of Array.from(selectedOrderIds)) {
+        await unarchiveOrderV2(id, runtime.environment);
+      }
+      setSelectedOrderIds(new Set());
+      runtime.reload(true);
+      void loadArchivedOrders();
+    } catch {
+      // handled
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
   const commandOrder =
-    filteredOrders.find((order) => order.status === "ready") ??
-    filteredOrders.find((order) => order.status === "new") ??
-    filteredOrders[0];
+    displayedOrders.find((order) => order.status === "ready") ??
+    displayedOrders.find((order) => order.status === "new") ??
+    displayedOrders[0];
 
   return (
     <section className="orders-command">
-      <Card className="orders-board-shell">
+      <Card className="orders-board-shell p-4">
         <div className="orders-board-shell__header">
           <div>
-            <p className="home-section-label">Cola compacta</p>
+            <p className="home-section-label">Cola de pedidos V3</p>
             <h2 className="mt-1 text-2xl font-black text-zinc-50">
-              Pedidos
+              {viewMode === "active" ? "Pedidos Activos" : "🗑️ Basurero / Archivadas"}
             </h2>
-            <p className="mt-1 max-w-3xl text-sm text-zinc-400">
-              Movimientos, detalle, ticket y confirmación corta del pedido.
+            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
+              {viewMode === "active"
+                ? "Gestión estandarizada con jerarquía clara: Total, Dónde entregar y Fecha de entrega."
+                : "Consulta u opera la restauración de pedidos archivados previamente en Cloudflare D1."}
             </p>
           </div>
-          <div className="orders-board-shell__summary">
-            <span className="orders-summary-chip">
-              {filteredOrders.length} visibles
+          <div className="orders-board-shell__summary flex items-center gap-2">
+            <span className="orders-summary-chip font-bold">
+              {displayedOrders.length} visibles
             </span>
-            <span className="orders-summary-chip">
-              {orders.filter((order) => order.status === "ready").length} listos
-            </span>
+            {viewMode === "active" ? (
+              <span className="orders-summary-chip bg-emerald-500/20 text-emerald-300 font-bold">
+                {orders.filter((order) => order.status === "ready").length} listos
+              </span>
+            ) : null}
           </div>
         </div>
 
-        {orders.length ? (
-          <details className="orders-filter-drawer">
-            <summary>
-              Filtros y búsqueda
-              <span>
-                {statusFilter === "all" ? "Todos" : ordersStatusLabel[statusFilter]} / {rangeFilter}
-              </span>
-            </summary>
-            <div className="orders-filters">
-              <label className="orders-search">
-                <span>Buscar por folio o cliente</span>
-                <input
-                  className="input mt-1 text-sm"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Ej. BX-102 o Andrea"
-                />
-              </label>
-              <div className="orders-filter-group">
-                <span>Estado</span>
-                <div className="orders-filter-pills">
-                  {ordersStatusFilterOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      className={`orders-filter-pill ${statusFilter === option.value ? "orders-filter-pill--active" : ""}`}
-                      onClick={() => setStatusFilter(option.value)}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="orders-filter-group">
-                <span>Rango</span>
-                <div className="orders-filter-pills">
-                  {ordersRangeFilterOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      className={`orders-filter-pill ${rangeFilter === option.value ? "orders-filter-pill--active" : ""}`}
-                      onClick={() => setRangeFilter(option.value)}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
+        {/* View Mode Switcher & Select All Toolbar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pb-3 border-b border-zinc-800">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                viewMode === "active"
+                  ? "bg-emerald-500 text-zinc-950 shadow-md"
+                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700"
+              }`}
+              onClick={() => {
+                setViewMode("active");
+                setSelectedOrderIds(new Set());
+              }}
+            >
+              ⚡ Operaciones Activas ({activeFilteredOrders.length})
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                viewMode === "archived"
+                  ? "bg-rose-600 text-white shadow-md"
+                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700"
+              }`}
+              onClick={() => {
+                setViewMode("archived");
+                setSelectedOrderIds(new Set());
+              }}
+            >
+              🗑️ Basurero / Archivadas {loadingArchived ? "(...)" : `(${archivedOrders.length})`}
+            </button>
+          </div>
+
+          {displayedOrders.length > 0 ? (
+            <label className="flex items-center gap-2 text-xs text-zinc-300 font-semibold cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-zinc-950"
+                checked={selectedOrderIds.size > 0 && selectedOrderIds.size >= displayedOrders.length}
+                onChange={toggleSelectAll}
+              />
+              Seleccionar todas ({displayedOrders.length})
+            </label>
+          ) : null}
+        </div>
+
+        {/* Date Filter Bar for Archived View */}
+        {viewMode === "archived" ? (
+          <div className="flex flex-wrap items-center gap-3 my-3 p-3 bg-zinc-900/80 border border-zinc-800 rounded-xl">
+            <span className="text-xs font-bold text-zinc-400">Filtrar Basurero por fecha:</span>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-300">
+              <span>Desde:</span>
+              <input
+                type="date"
+                className="input text-xs py-1 px-2 bg-zinc-950 border-zinc-800"
+                value={archivedDateFrom}
+                onChange={(e) => setArchivedDateFrom(e.target.value)}
+              />
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-300">
+              <span>Hasta:</span>
+              <input
+                type="date"
+                className="input text-xs py-1 px-2 bg-zinc-950 border-zinc-800"
+                value={archivedDateTo}
+                onChange={(e) => setArchivedDateTo(e.target.value)}
+              />
+            </label>
+            <Button
+              className="btn-sm bg-zinc-800 hover:bg-zinc-700 text-xs py-1 px-2.5"
+              onClick={() => void loadArchivedOrders()}
+              disabled={loadingArchived}
+            >
+              {loadingArchived ? "Cargando..." : "🔍 Filtrar"}
+            </Button>
+          </div>
+        ) : null}
+
+        {/* Horizontal Calendar Date Rail (Active view) */}
+        {viewMode === "active" ? (
+          <HorizontalDateCalendarFilter
+            orders={orders}
+            selectedDate={selectedCalendarDate}
+            onSelectDate={(dateKey) => setSelectedCalendarDate(dateKey)}
+          />
+        ) : null}
+
+        <div className="orders-filters flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-3 pt-3 border-t border-zinc-800">
+          <label className="orders-search flex-1">
+            <input
+              className="input text-sm w-full bg-zinc-900/90 border-zinc-800 focus:border-emerald-500"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="🔍 Buscar por folio, cliente o ubicación..."
+            />
+          </label>
+          {viewMode === "active" ? (
+            <div className="orders-filter-group flex items-center gap-2">
+              <span className="text-xs text-zinc-400 font-bold">Estado:</span>
+              <div className="orders-filter-pills flex items-center gap-1 overflow-x-auto">
+                {ordersStatusFilterOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`orders-filter-pill px-2.5 py-1 text-xs font-bold rounded-lg transition-colors ${
+                      statusFilter === option.value
+                        ? "orders-filter-pill--active bg-emerald-500 text-zinc-950"
+                        : "bg-zinc-800/60 text-zinc-300 hover:bg-zinc-700"
+                    }`}
+                    onClick={() => setStatusFilter(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
             </div>
-          </details>
-        ) : null}
+          ) : null}
+        </div>
       </Card>
 
-      {orders.length === 0 ? (
+      {displayedOrders.length === 0 ? (
         <EmptyOrdersState
-          title="Sin pedidos activos."
-          description="La cola está vacía en este entorno. Cuando entre un pedido nuevo, aparecerá aquí."
-          action={
-            <Button
-              className="orders-secondary-action"
-              onClick={() => runtime.reload(true)}
-              disabled={runtime.loading || !runtime.sessionActive}
-            >
-              {runtime.loading ? "Actualizando..." : "Actualizar"}
-            </Button>
+          title={viewMode === "active" ? "Sin pedidos activos." : "El basurero está vacío."}
+          description={
+            viewMode === "active"
+              ? "La cola está vacía en este entorno. Cuando entre un pedido nuevo, aparecerá aquí."
+              : "No hay órdenes archivadas con los filtros o fechas seleccionados."
           }
-        />
-      ) : !filteredOrders.length ? (
-        <EmptyOrdersState
-          title="No hay pedidos para ese filtro."
-          description="Ajusta estado, rango o búsqueda para volver a mostrar pedidos."
           action={
             <Button
               className="orders-secondary-action"
               onClick={() => {
-                setStatusFilter("all");
-                setRangeFilter("today");
-                setSearch("");
+                if (viewMode === "archived") void loadArchivedOrders();
+                else runtime.reload(true);
               }}
+              disabled={runtime.loading || loadingArchived}
             >
-              Limpiar filtros
+              {runtime.loading || loadingArchived ? "Actualizando..." : "Actualizar"}
             </Button>
           }
         />
       ) : (
-        <div className="orders-command__workspace">
+        <div className="orders-command__workspace mt-4">
           <div className="orders-command__queue">
-            {filteredOrders.map((order) => {
+            {displayedOrders.map((order) => {
               const highlighted = runtime.highlightedOrderIds.has(order.id);
+              const isSelected = selectedOrderIds.has(order.id);
               return (
                 <Card
                   key={order.id}
@@ -3089,7 +3617,12 @@ const OrdersBoard = ({
                     onOpen={() => setSelected(order)}
                     onMove={move}
                     onCancel={(nextOrder) => requestCancellation(nextOrder, "pedidos")}
-                    busy={runtime.actionOrderId === order.id}
+                    onArchive={handleArchiveSingle}
+                    onUnarchive={handleUnarchiveSingle}
+                    busy={runtime.actionOrderId === order.id || actionBusy}
+                    selected={isSelected}
+                    onToggleSelect={toggleSelectOrder}
+                    isArchived={viewMode === "archived"}
                   />
                 </Card>
               );
@@ -3106,6 +3639,29 @@ const OrdersBoard = ({
           ) : null}
         </div>
       )}
+
+      {/* Floating Selection Bar */}
+      <BatchActionBar
+        selectedCount={selectedOrderIds.size}
+        activeCount={activeSelectedCount}
+        cancelledCount={cancelledSelectedCount}
+        onClearSelection={() => setSelectedOrderIds(new Set())}
+        onBatchArchive={viewMode === "active" ? handleBatchArchiveClick : undefined}
+        onBatchRestore={viewMode === "archived" ? executeBatchRestore : undefined}
+        isArchivedView={viewMode === "archived"}
+        busy={actionBusy}
+      />
+
+      {/* Confirmation Modal */}
+      <BatchConfirmModal
+        open={confirmModalOpen}
+        activeCount={activeSelectedCount}
+        cancelledCount={cancelledSelectedCount}
+        totalCount={selectedOrderIds.size}
+        onConfirm={executeBatchArchive}
+        onCancel={() => setConfirmModalOpen(false)}
+        busy={actionBusy}
+      />
     </section>
   );
 };
@@ -3127,10 +3683,44 @@ const CloseMetricCard = ({
 );
 
 const EmptyCloseState = () => (
-  <Card className="p-3 text-sm text-zinc-400">
+  <Card className="p-3 text-sm text-zinc-600 dark:text-zinc-400">
     No hay datos de cierre para el rango seleccionado.
   </Card>
 );
+
+const formatWhatsappCorteSummary = (
+  s: OrdersV2Summary,
+  from: string,
+  to: string,
+) => {
+  const rangeStr = from === to ? from : `${from} al ${to}`;
+  const lines = [
+    `🍔 *CORTE DE CAJA — BURGERS.EXE*`,
+    `📅 *Rango:* ${rangeStr}`,
+    `───────────────`,
+    `💰 *Venta Bruta:* ${formatCurrency(s.totals.grossSales)}`,
+    `✅ *Venta Entregada:* ${formatCurrency(s.totals.deliveredSales)}`,
+    `📦 *Total Órdenes:* ${s.totals.orders} (${s.totals.deliveredOrders} entregadas, ${s.totals.cancelledOrders} canceladas)`,
+    `🎟️ *Ticket Promedio:* ${formatCurrency(s.totals.averageTicket)}`,
+    ``,
+    `💳 *DESGLOSE POR PAGO:*`,
+    ...(s.byPaymentMethod.length
+      ? s.byPaymentMethod.map(
+          (p) => `• ${p.paymentMethod}: ${p.orders} órdenes (${formatCurrency(p.total)})`,
+        )
+      : ["• Sin métodos registrados"]),
+    ``,
+    `⭐ *TOP PRODUCTOS:*`,
+    ...(s.topItems.length
+      ? s.topItems.slice(0, 5).map(
+          (item) => `• ${item.name}: ${item.qty} uds (${formatCurrency(item.total)})`,
+        )
+      : ["• Sin ventas"]),
+    `───────────────`,
+    `🤖 *Chekeo V3 Suite*`,
+  ];
+  return lines.join("\n");
+};
 
 const OperationalClosePanel = ({
   environment,
@@ -3219,10 +3809,21 @@ const OperationalClosePanel = ({
       setError(
         csvError instanceof Error
           ? csvError.message
-            : "No se pudo descargar el reporte del rango",
+          : "No se pudo descargar el reporte del rango",
       );
     } finally {
       setExporting(false);
+    }
+  };
+
+  const copyWhatsappSummary = async () => {
+    if (!summary) return;
+    const text = formatWhatsappCorteSummary(summary, from, to);
+    try {
+      await navigator.clipboard.writeText(text);
+      setNotice("Resumen para WhatsApp copiado al portapapeles 🚀");
+    } catch {
+      setError("No se pudo copiar al portapapeles automáticamente.");
     }
   };
 
@@ -3233,20 +3834,29 @@ const OperationalClosePanel = ({
           <div>
             <p className="home-section-label">Cierre de caja</p>
             <h2 className="text-xl font-black">Cierre</h2>
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
               Rango, total, órdenes y exporte sin estados repetidos.
             </p>
           </div>
-          <Button
-            className="border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm disabled:opacity-40"
-            onClick={() => void downloadRangeCsv()}
-            disabled={exporting || !sessionActive}
-          >
-            {exporting ? "Preparando…" : "Descargar reporte"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="border border-emerald-600/50 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-900/60 px-3 py-2 text-sm disabled:opacity-40 inline-flex items-center gap-1.5"
+              onClick={() => void copyWhatsappSummary()}
+              disabled={!summary || !sessionActive}
+            >
+              <Share2 size={15} /> WhatsApp
+            </Button>
+            <Button
+              className="border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm disabled:opacity-40"
+              onClick={() => void downloadRangeCsv()}
+              disabled={exporting || !sessionActive}
+            >
+              {exporting ? "Preparando…" : "Descargar reporte"}
+            </Button>
+          </div>
         </div>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="text-[11px] text-zinc-400">
+          <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
             Desde
             <input
               className="input text-xs"
@@ -3255,7 +3865,7 @@ const OperationalClosePanel = ({
               onChange={(event) => setFrom(event.target.value)}
             />
           </label>
-          <label className="text-[11px] text-zinc-400">
+          <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
             Hasta
             <input
               className="input text-xs"
@@ -3264,7 +3874,7 @@ const OperationalClosePanel = ({
               onChange={(event) => setTo(event.target.value)}
             />
           </label>
-          <label className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs text-zinc-200">
+          <label className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200">
             <input
               type="checkbox"
               checked={includeTerminal}
@@ -3281,17 +3891,17 @@ const OperationalClosePanel = ({
           </Button>
         </div>
         {!sessionActive ? (
-          <p className="mt-2 rounded bg-amber-500/10 px-2 py-1 text-xs text-amber-200">
+          <p className="mt-2 rounded bg-amber-500/10 px-2 py-1 text-xs text-amber-700 dark:text-amber-200">
             Sesión expirada. Vuelve a iniciar sesión.
           </p>
         ) : null}
         {error ? (
-          <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-200">
+          <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-rose-200">
             {error}
           </p>
         ) : null}
         {notice ? (
-          <p className="mt-2 rounded bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200">
+          <p className="mt-2 rounded bg-emerald-500/10 px-2 py-1 text-xs text-emerald-700 dark:text-emerald-200">
             {notice}
           </p>
         ) : null}
@@ -3305,7 +3915,7 @@ const OperationalClosePanel = ({
       </Card>
 
       {loading ? (
-        <Card className="p-3 text-sm text-zinc-300">
+        <Card className="p-3 text-sm text-zinc-700 dark:text-zinc-300">
           Cargando cierre operativo…
         </Card>
       ) : null}
@@ -3383,7 +3993,7 @@ const OperationalClosePanel = ({
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-zinc-400">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     Sin métodos en el rango.
                   </p>
                 )}
@@ -3402,7 +4012,7 @@ const OperationalClosePanel = ({
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-zinc-400">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     Sin modos en el rango.
                   </p>
                 )}
@@ -3417,7 +4027,7 @@ const OperationalClosePanel = ({
                 summary.topItems.map((item) => (
                   <div
                     key={item.sku}
-                    className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-2 text-xs"
+                    className="rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-2 text-xs"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <span className="font-semibold">{item.name}</span>
@@ -3431,7 +4041,7 @@ const OperationalClosePanel = ({
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-zinc-400">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
                   Sin productos no cancelados en el rango.
                 </p>
               )}
@@ -3445,7 +4055,7 @@ const OperationalClosePanel = ({
                 summary.recentOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-2 text-xs"
+                    className="rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-2 text-xs"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -3465,7 +4075,7 @@ const OperationalClosePanel = ({
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-zinc-400">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
                   Sin órdenes recientes en el rango.
                 </p>
               )}
@@ -3500,7 +4110,7 @@ const PaymentStatusBadge = ({ status }: { status: string }) => {
     : status;
   const tone = isOrderV2PaymentStatus(status)
     ? paymentStatusTone[status]
-    : "border-zinc-500/40 text-zinc-200";
+    : "border-zinc-500/40 text-zinc-800 dark:text-zinc-200";
   return <StatusPill className={tone}>{label}</StatusPill>;
 };
 
@@ -3660,10 +4270,10 @@ const PaymentDetailModal = ({
             <h2 id="payment-detail-title" className="payments-detail__title">
               {order.folio}
             </h2>
-            <p className="break-words text-sm font-semibold text-zinc-100">
+            <p className="break-words text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               {order.customer}
             </p>
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
               {order.createdAt} · {channelLabel[order.channel]} ·{" "}
               {sourceLabel(order.source)}
             </p>
@@ -3704,11 +4314,11 @@ const PaymentDetailModal = ({
         </div>
 
         <div className="mt-3 space-y-3">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/55 p-3">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/55 p-3">
             <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
               Resumen del pedido
             </p>
-            <p className="mt-2 text-sm text-zinc-300">{getPaymentItemsDigest(order)}</p>
+            <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{getPaymentItemsDigest(order)}</p>
             <OrderItems order={order} />
           </div>
 
@@ -3736,10 +4346,10 @@ const PaymentDetailModal = ({
             <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-3">
               <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-100">
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-900 dark:text-cyan-800 dark:text-cyan-100">
                     Ticket visual
                   </p>
-                  <p className="text-xs text-zinc-400">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
                     Preview compacto para validar folio, lugar, pago y total.
                   </p>
                 </div>
@@ -3754,7 +4364,7 @@ const PaymentDetailModal = ({
             </div>
           ) : null}
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/55 p-3">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/55 p-3">
             <label className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
               Nota para seguimiento
               <textarea
@@ -3766,14 +4376,14 @@ const PaymentDetailModal = ({
               />
             </label>
             {noteWithoutLocation ? (
-              <p className="mt-2 text-[11px] text-zinc-400">
+              <p className="mt-2 text-[11px] text-zinc-600 dark:text-zinc-400">
                 Nota actual: {noteWithoutLocation}
               </p>
             ) : null}
           </div>
 
           <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-3">
-            <label className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-100">
+            <label className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-900 dark:text-cyan-800 dark:text-cyan-100">
               Mensaje listo para WhatsApp
               <textarea
                 className="input mt-2 min-h-48 text-xs leading-5"
@@ -3782,7 +4392,7 @@ const PaymentDetailModal = ({
               />
             </label>
             {!phone ? (
-              <p className="mt-2 rounded-lg bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+              <p className="mt-2 rounded-lg bg-amber-400/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-100">
                 Telefono invalido para abrir WhatsApp desde esta vista.
               </p>
             ) : null}
@@ -3845,16 +4455,9 @@ const PaymentDetailModal = ({
 
         {notice ? (
           <p
-            className={`mt-3 rounded-xl px-3 py-2 text-xs ${notice.tone === "error" ? "bg-rose-500/10 text-rose-200" : "bg-emerald-500/10 text-emerald-200"}`}
+            className={`mt-3 rounded-xl px-3 py-2 text-xs ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-200" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"}`}
           >
             {notice.message}
-          </p>
-        ) : null}
-        {ticketNotice ? (
-          <p
-            className={`mt-3 rounded-xl px-3 py-2 text-xs ${ticketNotice.tone === "error" ? "bg-rose-500/10 text-rose-200" : "bg-emerald-500/10 text-emerald-200"}`}
-          >
-            {ticketNotice.message}
           </p>
         ) : null}
       </section>
@@ -3879,6 +4482,7 @@ const PaymentNotesPanel = ({
   registerBackHandler?: (handler: BackHandler) => () => void;
 }) => {
   const [filter, setFilter] = useState<PaymentFilter>("pending");
+  const [selectedDate, setSelectedDate] = useState<string>("all");
   const [rangeFilter, setRangeFilter] = useState<OrdersRangeFilter>("today");
   const [search, setSearch] = useState("");
   const [draftNotes, setDraftNotes] = useState<Record<string, string>>({});
@@ -3928,6 +4532,7 @@ const PaymentNotesPanel = ({
 
 
   const filteredOrders = useMemo(() => {
+    const todayStr = formatIsoDate(new Date());
     const now = new Date();
     const startOfToday = new Date(
       now.getFullYear(),
@@ -3940,6 +4545,19 @@ const PaymentNotesPanel = ({
     return [...orders]
       .sort((a, b) => (b.createdAtMs ?? 0) - (a.createdAtMs ?? 0))
       .filter((order) => {
+        if (selectedDate !== "all") {
+          const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
+          let orderDateStr = todayStr;
+          if (details.isScheduled && details.scheduledDeliveryDate) {
+            orderDateStr = details.scheduledDeliveryDate;
+          } else if (order.createdAtMs) {
+            orderDateStr = formatIsoDate(new Date(order.createdAtMs));
+          }
+          if (selectedDate === "today" && orderDateStr !== todayStr) return false;
+          if (selectedDate === "past" && orderDateStr >= todayStr) return false;
+          if (selectedDate !== "today" && selectedDate !== "past" && selectedDate !== "all" && orderDateStr !== selectedDate) return false;
+        }
+
         if (rangeFilter !== "all" && order.createdAtMs) {
           const threshold =
             rangeFilter === "today" ? startOfToday : startOfWeek;
@@ -3948,12 +4566,14 @@ const PaymentNotesPanel = ({
 
         if (!normalizedSearch) return true;
 
+        const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
         return (
           order.folio.toLowerCase().includes(normalizedSearch) ||
+          details.cleanCustomerName.toLowerCase().includes(normalizedSearch) ||
           order.customer.toLowerCase().includes(normalizedSearch)
         );
       });
-  }, [orders, rangeFilter, search]);
+  }, [orders, rangeFilter, search, selectedDate]);
 
   const paymentOrders = useMemo(
     () =>
@@ -4018,7 +4638,7 @@ const PaymentNotesPanel = ({
               : "No se pudo actualizar el pago. Revisa la sesión e inténtalo de nuevo.",
         },
       }));
-      }
+    }
   };
 
   const copyPaymentMessage = async (order: InternalOrder) => {
@@ -4088,13 +4708,19 @@ const PaymentNotesPanel = ({
             </p>
           </div>
           <Button
-            className="border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs disabled:opacity-40"
+            className="border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-1.5 text-xs disabled:opacity-40"
             onClick={() => runtime.reload(true)}
             disabled={runtime.loading || !runtime.sessionActive}
           >
             {runtime.loading ? "Actualizando…" : "Actualizar lista"}
           </Button>
         </div>
+
+        <HorizontalDateCalendarFilter
+          orders={orders}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
 
         {filteredOrders.length ? (
           <div className="payments-summary-grid">
@@ -4162,7 +4788,7 @@ const PaymentNotesPanel = ({
         </div>
 
         {!runtime.sessionActive ? (
-          <p className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+          <p className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-100">
             Inicia sesión para operar pagos y guardar seguimiento.
           </p>
         ) : null}
@@ -4180,11 +4806,12 @@ const PaymentNotesPanel = ({
               : "Ajusta rango, estado o busqueda para recuperar registros."
           }
           action={
-            filter !== "all" || search.trim() || rangeFilter !== "today" ? (
+            filter !== "all" || search.trim() || rangeFilter !== "today" || selectedDate !== "today" ? (
               <Button
-                className="border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs"
+                className="border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-xs"
                 onClick={() => {
                   setFilter("all");
+                  setSelectedDate("today");
                   setSearch("");
                   setRangeFilter("today");
                 }}
@@ -4198,7 +4825,8 @@ const PaymentNotesPanel = ({
       <div className="grid gap-2">
         {paymentOrders.map((order) => {
           const notice = inlineNotice[order.id];
-          const location = getOrderLocationLabel(order);
+          const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
+          const location = details.deliveryLocation || getOrderLocationLabel(order);
           return (
             <Card
               key={order.id}
@@ -4207,31 +4835,59 @@ const PaymentNotesPanel = ({
               <div className="payments-card__head">
                 <div className="min-w-0">
                   <p className="payments-card__folio">{order.folio}</p>
-                  <p className="break-words text-sm font-semibold text-zinc-100">
-                    {order.customer}
+                  <p className="break-words text-base font-black text-zinc-900 dark:text-zinc-100">
+                    {details.cleanCustomerName}
                   </p>
+                  {details.scheduledDeliveryTime ? (
+                    <p className="text-xs font-bold text-cyan-600 dark:text-cyan-400 mt-0.5">
+                      {details.deliveryDateLabel}: {details.scheduledDeliveryTime}
+                    </p>
+                  ) : null}
                 </div>
-                <div className="payments-card__amount">
-                  <span>Total</span>
-                  <strong>{formatCurrency(order.total)}</strong>
+                <div className="payments-card__amount text-right">
+                  <span className="text-xs text-zinc-500 uppercase tracking-wider block">Total</span>
+                  <strong className="text-xl font-black text-emerald-600 dark:text-emerald-400">{formatCurrency(order.total)}</strong>
                 </div>
               </div>
 
-              <div className="payments-card__status">
-                <div className="flex flex-wrap gap-1">
+              <div className="payments-card__status mt-2">
+                <div className="flex flex-wrap gap-1.5 items-center">
                   <PaymentStatusBadge status={order.paymentState} />
-                  <span className="orders-location-chip">Entrega: {location}</span>
+                  <span className="orders-location-chip font-bold">📍 {location}</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                    {getPaymentMethodLabel(order.paymentMethod)}
+                  </span>
                 </div>
               </div>
 
-              <div className="payments-card__meta payments-card__meta--compact">
-                <span>Metodo: {getPaymentMethodLabel(order.paymentMethod)}</span>
-                <span>Pago: {getPaymentStatusLabel(order.paymentState)}</span>
-                <span>Lugar: {location}</span>
-              </div>
-              <div className="payments-card__actions">
+              <div className="payments-card__actions mt-3 flex flex-wrap gap-2 items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {order.paymentState === "pending" ? (
+                    <Button
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 h-auto"
+                      onClick={() => runPaymentAction(order, "paid")}
+                    >
+                      Marcar Pagado
+                    </Button>
+                  ) : (
+                    <Button
+                      className="bg-amber-600/20 text-amber-300 border border-amber-500/40 hover:bg-amber-600/30 text-xs font-bold px-3 py-1.5 h-auto"
+                      onClick={() => runPaymentAction(order, "pending")}
+                    >
+                      Regresar a Pendiente
+                    </Button>
+                  )}
+                  {order.customerPhone ? (
+                    <Button
+                      className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-2.5 py-1.5 h-auto flex items-center gap-1"
+                      onClick={() => openPaymentWhatsapp(order)}
+                    >
+                      WhatsApp
+                    </Button>
+                  ) : null}
+                </div>
                 <Button
-                  className="payments-secondary-action"
+                  className="payments-secondary-action text-xs"
                   onClick={() => setSelectedOrderId(order.id)}
                 >
                   Abrir pago
@@ -4239,7 +4895,7 @@ const PaymentNotesPanel = ({
               </div>
               {notice ? (
                 <p
-                  className={`mt-2 rounded px-2 py-1 text-xs ${notice.tone === "error" ? "bg-rose-500/10 text-rose-200" : "bg-emerald-500/10 text-emerald-200"}`}
+                  className={`mt-2 rounded px-2 py-1 text-xs ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-200" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"}`}
                 >
                   {notice.message}
                 </p>
@@ -4294,62 +4950,352 @@ const HistoryPanel = ({
   orders,
   runtime,
   onArchiveCancelled,
+  initialView = "historial",
 }: {
   orders: InternalOrder[];
   runtime: OrdersRuntime;
   onArchiveCancelled: (order: InternalOrder) => Promise<void>;
+  initialView?: "historial" | "basurero";
 }) => {
-  const terminalOrders = orders.filter((o) => terminalStatuses.has(o.status));
+  const [activeTab, setActiveTab] = useState<"historial" | "basurero">(initialView);
+  const [search, setSearch] = useState("");
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
+
+  const [archivedOrders, setArchivedOrders] = useState<InternalOrder[]>([]);
+  const [loadingArchived, setLoadingArchived] = useState(false);
+  const [archivedDateFrom, setArchivedDateFrom] = useState("");
+  const [archivedDateTo, setArchivedDateTo] = useState("");
+  const [actionBusy, setActionBusy] = useState(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+
+  useEffect(() => {
+    setActiveTab(initialView);
+  }, [initialView]);
+
+  const loadArchivedOrders = useCallback(async () => {
+    if (runtime.source !== "d1") return;
+    setLoadingArchived(true);
+    try {
+      const rawArchived = await fetchOrdersV2Admin({
+        archived: "true",
+        environment: runtime.environment,
+        from: archivedDateFrom || undefined,
+        to: archivedDateTo || undefined,
+        search: search || undefined,
+        limit: 100,
+      });
+      setArchivedOrders(rawArchived.map(mapOrderV2ToInternalOrder));
+    } catch {
+      setArchivedOrders([]);
+    } finally {
+      setLoadingArchived(false);
+    }
+  }, [archivedDateFrom, archivedDateTo, runtime.environment, runtime.source, search]);
+
+  useEffect(() => {
+    if (activeTab === "basurero") {
+      void loadArchivedOrders();
+    }
+  }, [activeTab, loadArchivedOrders]);
+
+  const terminalOrders = useMemo(() => {
+    const term = orders.filter((o) => terminalStatuses.has(o.status));
+    if (!search.trim()) return term;
+    const normalized = search.trim().toLowerCase();
+    return term.filter(
+      (o) =>
+        o.folio.toLowerCase().includes(normalized) ||
+        o.customer.toLowerCase().includes(normalized) ||
+        (o.customerPhone && o.customerPhone.toLowerCase().includes(normalized)),
+    );
+  }, [orders, search]);
+
+  const currentDisplayList = activeTab === "historial" ? terminalOrders : archivedOrders;
+
+  const toggleSelectOrder = (orderId: string) => {
+    setSelectedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedOrderIds.size >= currentDisplayList.length && currentDisplayList.length > 0) {
+      setSelectedOrderIds(new Set());
+    } else {
+      setSelectedOrderIds(new Set(currentDisplayList.map((o) => o.id)));
+    }
+  };
+
+  const selectedList = useMemo(() => {
+    return currentDisplayList.filter((o) => selectedOrderIds.has(o.id));
+  }, [currentDisplayList, selectedOrderIds]);
+
+  const activeSelectedCount = useMemo(() => {
+    return selectedList.filter((o) => o.status !== "cancelled").length;
+  }, [selectedList]);
+
+  const cancelledSelectedCount = useMemo(() => {
+    return selectedList.filter((o) => o.status === "cancelled").length;
+  }, [selectedList]);
+
+  const handleUnarchiveSingle = async (order: InternalOrder) => {
+    if (runtime.source !== "d1") return;
+    setActionBusy(true);
+    try {
+      await unarchiveOrderV2(order.id, runtime.environment);
+      runtime.reload(true);
+      void loadArchivedOrders();
+    } catch {
+      // handled
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const executeBatchArchive = async () => {
+    if (runtime.source !== "d1" || selectedOrderIds.size === 0) return;
+    setActionBusy(true);
+    try {
+      await batchArchiveOrdersV2(Array.from(selectedOrderIds), runtime.environment, "Limpieza desde admin");
+      setSelectedOrderIds(new Set());
+      setConfirmModalOpen(false);
+      runtime.reload(true);
+      if (activeTab === "basurero") void loadArchivedOrders();
+    } catch {
+      // handled
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const executeBatchRestore = async () => {
+    if (runtime.source !== "d1" || selectedOrderIds.size === 0) return;
+    setActionBusy(true);
+    try {
+      for (const id of Array.from(selectedOrderIds)) {
+        await unarchiveOrderV2(id, runtime.environment);
+      }
+      setSelectedOrderIds(new Set());
+      runtime.reload(true);
+      void loadArchivedOrders();
+    } catch {
+      // handled
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
   return (
-    <section>
-      <Card className="p-3">
-        <h3 className="mb-2">
-          Historial {runtime.source === "d1" ? "de pedidos" : "de esta vista"}
-        </h3>
-        {runtime.source === "d1" && terminalOrders.length === 0 ? (
-          <p className="text-sm text-zinc-400">
-            Aún no hay pedidos entregados o cancelados.
-          </p>
+    <section className="space-y-4">
+      <Card className="p-4 border-zinc-800 bg-zinc-950">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div>
+            <p className="home-section-label">Módulo de Administración</p>
+            <h3 className="text-xl font-black text-zinc-100">
+              {activeTab === "historial" ? "Historial Terminal" : "🗑️ Basurero de Órdenes (Soft-Delete)"}
+            </h3>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              {activeTab === "historial"
+                ? "Consulta pedidos entregados y cancelados. Puedes enviarlos al basurero para limpiar métricas."
+                : "Audita órdenes archivadas, filtra por fechas y restaura cualquier pedido a la vista operativa."}
+            </p>
+          </div>
+          <Button
+            className="btn-sm bg-zinc-900 border-zinc-700 text-xs"
+            onClick={() => {
+              if (activeTab === "basurero") void loadArchivedOrders();
+              else runtime.reload(true);
+            }}
+            disabled={runtime.loading || loadingArchived}
+          >
+            {runtime.loading || loadingArchived ? "Cargando..." : "🔄 Actualizar"}
+          </Button>
+        </div>
+
+        {/* Mode Switcher Tabs & Select All */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-800">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                activeTab === "historial"
+                  ? "bg-emerald-500 text-zinc-950 shadow-md"
+                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700"
+              }`}
+              onClick={() => {
+                setActiveTab("historial");
+                setSelectedOrderIds(new Set());
+              }}
+            >
+              📜 Historial Terminal ({terminalOrders.length})
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                activeTab === "basurero"
+                  ? "bg-rose-600 text-white shadow-md"
+                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700"
+              }`}
+              onClick={() => {
+                setActiveTab("basurero");
+                setSelectedOrderIds(new Set());
+              }}
+            >
+              🗑️ Basurero / Archivadas {loadingArchived ? "(...)" : `(${archivedOrders.length})`}
+            </button>
+          </div>
+
+          {currentDisplayList.length > 0 ? (
+            <label className="flex items-center gap-2 text-xs text-zinc-300 font-semibold cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-emerald-500"
+                checked={selectedOrderIds.size > 0 && selectedOrderIds.size >= currentDisplayList.length}
+                onChange={toggleSelectAll}
+              />
+              Seleccionar todas ({currentDisplayList.length})
+            </label>
+          ) : null}
+        </div>
+
+        {/* Date Filter for Basurero View */}
+        {activeTab === "basurero" ? (
+          <div className="flex flex-wrap items-center gap-3 mt-3 p-3 bg-zinc-900/80 border border-zinc-800 rounded-xl">
+            <span className="text-xs font-bold text-zinc-400">Filtrar por rango de fecha:</span>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-300">
+              <span>Desde:</span>
+              <input
+                type="date"
+                className="input text-xs py-1 px-2 bg-zinc-950 border-zinc-800"
+                value={archivedDateFrom}
+                onChange={(e) => setArchivedDateFrom(e.target.value)}
+              />
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-300">
+              <span>Hasta:</span>
+              <input
+                type="date"
+                className="input text-xs py-1 px-2 bg-zinc-950 border-zinc-800"
+                value={archivedDateTo}
+                onChange={(e) => setArchivedDateTo(e.target.value)}
+              />
+            </label>
+            <Button
+              className="btn-sm bg-zinc-800 hover:bg-zinc-700 text-xs py-1 px-2.5"
+              onClick={() => void loadArchivedOrders()}
+              disabled={loadingArchived}
+            >
+              {loadingArchived ? "Cargando..." : "🔍 Filtrar"}
+            </Button>
+          </div>
         ) : null}
+
+        {/* Search Bar */}
+        <div className="mt-3">
+          <input
+            className="input text-sm w-full bg-zinc-900/90 border-zinc-800 focus:border-emerald-500"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="🔍 Buscar por folio, cliente o teléfono..."
+          />
+        </div>
+      </Card>
+
+      {/* List Rendering */}
+      {currentDisplayList.length === 0 ? (
+        <Card className="p-6 text-center text-zinc-400">
+          <p className="text-sm">
+            {activeTab === "historial"
+              ? "No hay pedidos en el historial terminal con los filtros actuales."
+              : "No hay órdenes archivadas en el basurero con los filtros o fechas seleccionados."}
+          </p>
+        </Card>
+      ) : (
         <div className="space-y-2">
-          {terminalOrders.map((o) => {
-            const cancellationReason =
-              o.status === "cancelled" ? getCancellationReason(o) : undefined;
+          {currentDisplayList.map((o) => {
+            const cancellationReason = o.status === "cancelled" ? getCancellationReason(o) : undefined;
+            const isSelected = selectedOrderIds.has(o.id);
             return (
-              <div key={o.id} className="row items-start">
-                <div className="min-w-0">
-                  <p className="break-words">
-                    {o.folio} · {o.customer} · {o.createdAt}
-                  </p>
-                  {o.status === "cancelled" ? (
-                    <p className="mt-1 text-xs text-rose-200">
-                      Cancelado por operador
-                    </p>
-                  ) : null}
-                  {cancellationReason ? (
-                    <p className="mt-1 text-xs text-amber-200">
-                      Razón: {cancellationReason}
-                    </p>
-                  ) : null}
+              <Card
+                key={o.id}
+                className={`p-3 transition-all ${isSelected ? "ring-2 ring-emerald-500 bg-emerald-950/20" : ""}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 mt-1 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer shrink-0"
+                      checked={isSelected}
+                      onChange={() => toggleSelectOrder(o.id)}
+                    />
+                    <div className="min-w-0">
+                      <p className="break-words font-bold text-sm text-zinc-100">
+                        {o.folio} · {o.customer} · <span className="text-zinc-400 font-normal">{o.createdAt}</span>
+                      </p>
+                      <p className="text-xs text-emerald-400 font-bold mt-0.5">Total: {formatCurrency(o.total)}</p>
+                      {o.status === "cancelled" ? (
+                        <p className="mt-0.5 text-xs text-rose-400">Cancelado por operador</p>
+                      ) : null}
+                      {cancellationReason ? (
+                        <p className="mt-0.5 text-xs text-amber-400">Razón: {cancellationReason}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <StatusBadge status={o.status} />
+                    {activeTab === "historial" && o.status === "cancelled" && runtime.source === "d1" ? (
+                      <Button
+                        type="button"
+                        className="btn-sm border border-rose-500/40 bg-rose-950/30 text-rose-300 hover:bg-rose-900/50 text-xs px-2.5 py-1"
+                        disabled={actionBusy || runtime.actionOrderId === o.id}
+                        onClick={() => void onArchiveCancelled(o)}
+                      >
+                        {runtime.actionOrderId === o.id ? "Ocultando…" : "🗑️ Mandar a Basurero"}
+                      </Button>
+                    ) : null}
+                    {activeTab === "basurero" && runtime.source === "d1" ? (
+                      <Button
+                        type="button"
+                        className="btn-sm border border-emerald-500/40 bg-emerald-950/30 text-emerald-300 hover:bg-emerald-900/50 text-xs px-2.5 py-1"
+                        disabled={actionBusy}
+                        onClick={() => void handleUnarchiveSingle(o)}
+                      >
+                        {actionBusy ? "Restaurando…" : "↩️ Restaurar a Operaciones"}
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-2">
-                  <StatusBadge status={o.status} />
-                  {o.status === "cancelled" && runtime.source === "d1" ? (
-                    <Button
-                      type="button"
-                      className="min-h-11 border border-rose-500/40 px-3 py-2 text-xs text-rose-100 disabled:opacity-50"
-                      disabled={runtime.actionOrderId === o.id}
-                      onClick={() => void onArchiveCancelled(o)}
-                    >
-                      {runtime.actionOrderId === o.id ? "Ocultando…" : "Ocultar del historial"}
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
+              </Card>
             );
           })}
         </div>
-      </Card>
+      )}
+
+      {/* Floating Selection Bar */}
+      <BatchActionBar
+        selectedCount={selectedOrderIds.size}
+        activeCount={activeSelectedCount}
+        cancelledCount={cancelledSelectedCount}
+        onClearSelection={() => setSelectedOrderIds(new Set())}
+        onBatchArchive={activeTab === "historial" ? () => setConfirmModalOpen(true) : undefined}
+        onBatchRestore={activeTab === "basurero" ? executeBatchRestore : undefined}
+        isArchivedView={activeTab === "basurero"}
+        busy={actionBusy}
+      />
+
+      {/* Confirmation Modal */}
+      <BatchConfirmModal
+        open={confirmModalOpen}
+        activeCount={activeSelectedCount}
+        cancelledCount={cancelledSelectedCount}
+        totalCount={selectedOrderIds.size}
+        onConfirm={executeBatchArchive}
+        onCancel={() => setConfirmModalOpen(false)}
+        busy={actionBusy}
+      />
     </section>
   );
 };
@@ -4389,7 +5335,7 @@ const TicketPreviewItems = ({ order }: { order: InternalOrder }) => (
               {item.qty}x {item.name}
             </p>
             {notes.length ? (
-              <p className="mt-1 break-words text-xs text-zinc-400">
+              <p className="mt-1 break-words text-xs text-zinc-600 dark:text-zinc-400">
                 {notes.join(" · ")}
               </p>
             ) : null}
@@ -4462,7 +5408,7 @@ const OrderTicketPreview = ({
 
       <div className="orders-ticket-preview__body">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-200">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700 dark:text-amber-200">
             Resumen del pedido
           </p>
           <TicketPreviewItems order={order} />
@@ -4680,6 +5626,57 @@ export function InternalChekeoApp() {
   const [sessionState, setSessionState] = useState<SessionState>("checking");
   const [tab, setTab] = useState<TabKey>("home");
   const [adminView, setAdminView] = useState<AdminViewKey>("launcher");
+  const [themeMode, setThemeMode] = useState<"light" | "dark" | "system">(() => {
+    try {
+      return (localStorage.getItem("chekeo-v3-theme") as "light" | "dark" | "system") || "system";
+    } catch {
+      return "system";
+    }
+  });
+  const [soundAlerts, setSoundAlerts] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("chekeo-v3-sound") !== "false";
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chekeo-v3-theme", themeMode);
+      const root = document.documentElement;
+      const isDark =
+        themeMode === "dark" ||
+        (themeMode === "system" &&
+          typeof window !== "undefined" &&
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches);
+      if (isDark) {
+        root.classList.add("theme-dark");
+      } else {
+        root.classList.remove("theme-dark");
+      }
+    } catch {
+      /* noop */
+    }
+  }, [themeMode]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chekeo-v3-sound", String(soundAlerts));
+    } catch {
+      /* noop */
+    }
+  }, [soundAlerts]);
+
+  const toggleTheme = useCallback(() => {
+    setThemeMode((prev) => (prev === "system" ? "light" : prev === "light" ? "dark" : "system"));
+  }, []);
+
+  const toggleSound = useCallback(() => {
+    setSoundAlerts((prev) => !prev);
+  }, []);
+
   const [orders, setOrders] = useState<InternalOrder[]>(
     asInternalOrders(mockOrders),
   );
@@ -4840,8 +5837,7 @@ export function InternalChekeoApp() {
       Boolean(
         actionOrderIdRef.current ||
           cancellationRequestRef.current ||
-          checkingSessionRef.current ||
-          !loggedRef.current,
+          checkingSessionRef.current,
       ),
     [],
   );
@@ -4910,7 +5906,6 @@ export function InternalChekeoApp() {
 
         const mappedOrders = liveOrders.map(mapOrderV2ToInternalOrder);
         setOrders(mappedOrders);
-        setSessionState("active");
         setSelected((current) => {
           if (!current) return current;
           return (
@@ -4936,7 +5931,9 @@ export function InternalChekeoApp() {
             ? error.message
             : "No se pudieron cargar pedidos. Actualiza la lista e inténtalo de nuevo.";
         if (/UNAUTHORIZED|401/i.test(message)) {
-          expireSession();
+          setLogged(false);
+          setSessionState("inactive");
+          setOrdersError("Sin autorización backend.");
           return;
         }
         if (isAutoRefresh) {
@@ -4954,7 +5951,6 @@ export function InternalChekeoApp() {
     },
     [
       adminView,
-      expireSession,
       isRefreshBlocked,
       orderEnvironment,
       registerLoadedOrders,
@@ -4979,12 +5975,12 @@ export function InternalChekeoApp() {
         if (cancelled) return;
         setLogged(authenticated);
         setSessionState(authenticated ? "active" : "inactive");
-        if (authenticated)
-          void loadLiveOrders(shouldIncludeTerminalOrders(tab, adminView));
+        void loadLiveOrders(shouldIncludeTerminalOrders(tab, adminView));
       } catch {
         if (!cancelled) {
           setLogged(false);
           setSessionState("inactive");
+          void loadLiveOrders(shouldIncludeTerminalOrders(tab, adminView));
         }
       } finally {
         if (!cancelled) setCheckingSession(false);
@@ -4997,12 +5993,12 @@ export function InternalChekeoApp() {
   }, []);
 
   useEffect(() => {
-    if (logged && shouldKeepOrdersLoaded(tab, adminView))
+    if (shouldKeepOrdersLoaded(tab, adminView))
       void loadLiveOrders(shouldIncludeTerminalOrders(tab, adminView));
-  }, [adminView, logged, tab, loadLiveOrders]);
+  }, [adminView, tab, loadLiveOrders]);
 
   useEffect(() => {
-    if (!logged || !shouldKeepOrdersLoaded(tab, adminView)) return;
+    if (!shouldKeepOrdersLoaded(tab, adminView)) return;
 
     const refresh = () => {
       void loadLiveOrders(shouldIncludeTerminalOrders(tab, adminView), "auto");
@@ -5010,7 +6006,7 @@ export function InternalChekeoApp() {
     const interval = window.setInterval(refresh, AUTO_REFRESH_INTERVAL_MS);
 
     return () => window.clearInterval(interval);
-  }, [adminView, logged, loadLiveOrders, tab]);
+  }, [adminView, loadLiveOrders, tab]);
 
   useEffect(() => {
     if (!newOrderNotice) return;
@@ -5104,7 +6100,10 @@ export function InternalChekeoApp() {
           ? error.message
           : "No se pudo actualizar el pedido. Revisa la sesión e inténtalo de nuevo.";
       setOrdersError(message);
-      if (/UNAUTHORIZED|401/i.test(message)) expireSession();
+      if (/UNAUTHORIZED|401/i.test(message)) {
+        setLogged(false);
+        setSessionState("inactive");
+      }
       throw error instanceof Error ? error : new Error(message);
     } finally {
       actionOrderIdRef.current = null;
@@ -5152,7 +6151,10 @@ export function InternalChekeoApp() {
           ? error.message
           : "No se pudo actualizar el pago. Revisa la sesión e inténtalo de nuevo.";
       setOrdersError(message);
-      if (/UNAUTHORIZED|401/i.test(message)) expireSession();
+      if (/UNAUTHORIZED|401/i.test(message)) {
+        setLogged(false);
+        setSessionState("inactive");
+      }
       throw error instanceof Error ? error : new Error(message);
     } finally {
       actionOrderIdRef.current = null;
@@ -5202,7 +6204,10 @@ export function InternalChekeoApp() {
           ? error.message
           : "No se pudo ocultar el pedido cancelado.";
       setOrdersError(message);
-      if (/UNAUTHORIZED|401/i.test(message)) expireSession();
+      if (/UNAUTHORIZED|401/i.test(message)) {
+        setLogged(false);
+        setSessionState("inactive");
+      }
       throw error instanceof Error ? error : new Error(message);
     } finally {
       actionOrderIdRef.current = null;
@@ -5258,7 +6263,10 @@ export function InternalChekeoApp() {
           ? error.message
           : "No se pudo actualizar el checklist de cocina";
       setOrdersError(message);
-      if (/UNAUTHORIZED|401/i.test(message)) expireSession();
+      if (/UNAUTHORIZED|401/i.test(message)) {
+        setLogged(false);
+        setSessionState("inactive");
+      }
       throw error instanceof Error ? error : new Error(message);
     } finally {
       actionOrderIdRef.current = null;
@@ -5371,6 +6379,10 @@ export function InternalChekeoApp() {
         activeTab={tab}
         onOpenTab={openPrimaryTab}
         truth={shellTruth}
+        themeMode={themeMode}
+        onToggleTheme={toggleTheme}
+        soundAlerts={soundAlerts}
+        onToggleSound={toggleSound}
         onRefresh={() => {
           if (runtime.sessionState !== "active") return;
           void runtime.reload(shouldIncludeTerminalOrders(tab, adminView));

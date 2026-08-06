@@ -1,5 +1,6 @@
 import type {
   OrderV2,
+  OrderV2DeliveryInfo,
   OrderV2Environment,
   OrderV2Event,
   OrderV2Item,
@@ -103,18 +104,20 @@ const randomFolioSuffix = () => {
 
 export const generateId = (prefix: 'ord' | 'oi' | 'evt' | string) => `${prefix}_${crypto.randomUUID()}`;
 
-export const generateFolio = (now = new Date()) => {
-  // Visible operational folio only. Keep order.id as the durable internal identifier.
-  const dayCode = Math.max(0, Math.floor((now.getTime() - FOLIO_EPOCH_UTC_MS) / MS_PER_DAY))
-    .toString(36)
-    .padStart(3, '0')
-    .toUpperCase();
-  const secondsSinceMidnight = now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds();
-  const timeCode = secondsSinceMidnight.toString(36).padStart(4, '0').toUpperCase();
-  return `BX-${dayCode}${timeCode}${randomFolioSuffix()}`;
+export const generateFolio = (now = new Date(), customLetter?: string) => {
+  // Format: PB-[A-Z][0-9]{4} (e.g. PB-C0005)
+  const letterCode = customLetter
+    ? customLetter.toUpperCase()
+    : String.fromCharCode(65 + (Math.floor(now.getTime() / (24 * 60 * 60 * 1000)) % 26));
+
+  const randomBytes = new Uint16Array(1);
+  crypto.getRandomValues(randomBytes);
+  const numberCode = String(randomBytes[0] % 10000).padStart(4, '0');
+
+  return `PB-${letterCode}${numberCode}`;
 };
 
-export const generatePreviewFolio = (now = new Date()) => `PVW-${generateFolio(now).replace(/^BX-/, '')}`;
+export const generatePreviewFolio = (now = new Date(), customLetter?: string) => generateFolio(now, customLetter);
 
 export const normalizePhone = (value: unknown) => {
   const digits = String(value ?? '').replace(/\D/g, '');
@@ -136,17 +139,141 @@ export const parseJsonDetail = (value: unknown): Record<string, unknown> | undef
 
 export const parseJsonSnapshot = (value: unknown): Record<string, unknown> | undefined => parseJsonDetail(value);
 
-export const mapD1OrderItemToOrderV2Item = (row: any): OrderV2Item => ({
-  id: String(row.id),
-  orderId: String(row.order_id ?? row.orderId),
-  sku: String(row.sku),
-  name: String(row.name),
-  qty: Number(row.qty),
-  unitPrice: centsToPrice(row.unit_price_cents ?? row.unitPriceCents),
-  lineTotal: centsToPrice(row.line_total_cents ?? row.lineTotalCents),
-  snapshot: parseJsonSnapshot(row.snapshot_json ?? row.snapshotJson),
-  createdAt: row.created_at ?? row.createdAt ? String(row.created_at ?? row.createdAt) : undefined
-});
+export type FormattedCustomizationSummary = {
+  lines: string[];
+  summaryText: string;
+  hasCustomizations: boolean;
+};
+
+export const buildFormattedCustomizationSummary = (snapshot: Record<string, unknown> | undefined): FormattedCustomizationSummary => {
+  if (!snapshot) return { lines: [], summaryText: '', hasCustomizations: false };
+
+  const lines: string[] = [];
+
+  // 1. Single burger / item removed ingredients
+  if (Array.isArray(snapshot.removedIngredients) && snapshot.removedIngredients.length > 0) {
+    for (const ing of snapshot.removedIngredients) {
+      if (typeof ing === 'string' && ing.trim()) {
+        lines.push(`❌ SIN ${ing.trim()}`);
+      }
+    }
+  }
+
+  // 2. Single burger / item extras
+  if (Array.isArray(snapshot.extras) && snapshot.extras.length > 0) {
+    for (const ext of snapshot.extras) {
+      if (ext && typeof ext === 'object') {
+        const rawExt = ext as Record<string, unknown>;
+        const name = typeof rawExt.name === 'string' ? rawExt.name.trim() : '';
+        const price = Number(rawExt.price);
+        if (name) {
+          lines.push(`➕ EXTRA ${name}${Number.isFinite(price) && price > 0 ? ` (+$${price})` : ''}`);
+        }
+      }
+    }
+  }
+
+  // 3. Single burger note
+  if (typeof snapshot.burgerNote === 'string' && snapshot.burgerNote.trim()) {
+    lines.push(`📝 NOTA: ${snapshot.burgerNote.trim()}`);
+  }
+
+  // 4. Combo burgers breakdown
+  if (Array.isArray(snapshot.comboBurgers) && snapshot.comboBurgers.length > 0) {
+    snapshot.comboBurgers.forEach((cb: unknown, idx: number) => {
+      if (!cb || typeof cb !== 'object') return;
+      const rawCb = cb as Record<string, unknown>;
+      const bName = typeof rawCb.name === 'string' && rawCb.name.trim() ? rawCb.name.trim() : `Hamburguesa ${idx + 1}`;
+      lines.push(`🍔 Burger ${idx + 1}: ${bName}`);
+      if (Array.isArray(rawCb.removedIngredients) && rawCb.removedIngredients.length > 0) {
+        rawCb.removedIngredients.forEach((ing: unknown) => {
+          if (typeof ing === 'string' && ing.trim()) lines.push(`   • ❌ SIN ${ing.trim()}`);
+        });
+      }
+      if (Array.isArray(rawCb.extras) && rawCb.extras.length > 0) {
+        rawCb.extras.forEach((ext: unknown) => {
+          if (!ext || typeof ext !== 'object') return;
+          const rawExt = ext as Record<string, unknown>;
+          const name = typeof rawExt.name === 'string' ? rawExt.name.trim() : '';
+          const price = Number(rawExt.price);
+          if (name) lines.push(`   • ➕ EXTRA ${name}${Number.isFinite(price) && price > 0 ? ` (+$${price})` : ''}`);
+        });
+      }
+      if (typeof rawCb.burgerNote === 'string' && rawCb.burgerNote.trim()) {
+        lines.push(`   • 📝 NOTA: ${rawCb.burgerNote.trim()}`);
+      }
+    });
+  }
+
+  // 5. Garnish
+  if (snapshot.garnish && typeof snapshot.garnish === 'object') {
+    const g = snapshot.garnish as Record<string, unknown>;
+    const gName = typeof g.name === 'string' ? g.name.trim() : '';
+    const upcharge = Number(g.upcharge);
+    if (gName) {
+      lines.push(`🍟 Acompañamiento: ${gName}${Number.isFinite(upcharge) && upcharge > 0 ? ` (+$${upcharge})` : ''}`);
+    }
+  }
+
+  // 6. Included drink
+  if (snapshot.includedDrink && typeof snapshot.includedDrink === 'object') {
+    const d = snapshot.includedDrink as Record<string, unknown>;
+    const dName = typeof d.name === 'string' ? d.name.trim() : '';
+    if (dName) {
+      lines.push(`🥤 Bebida: ${dName}`);
+    }
+  }
+
+  // 7. SideQuest Extras
+  if (Array.isArray(snapshot.sideQuestExtras) && snapshot.sideQuestExtras.length > 0) {
+    for (const sq of snapshot.sideQuestExtras) {
+      if (sq && typeof sq === 'object') {
+        const rawSq = sq as Record<string, unknown>;
+        const name = typeof rawSq.name === 'string' ? rawSq.name.trim() : '';
+        const price = Number(rawSq.price);
+        if (name) {
+          lines.push(`➕ EXTRA ${name}${Number.isFinite(price) && price > 0 ? ` (+$${price})` : ''}`);
+        }
+      }
+    }
+  }
+
+  return {
+    lines,
+    summaryText: lines.join(' | '),
+    hasCustomizations: lines.length > 0
+  };
+};
+
+export const mapD1OrderItemToOrderV2Item = (row: any): OrderV2Item => {
+  const snapshot = parseJsonSnapshot(row.snapshot_json ?? row.snapshotJson);
+  const formatted = buildFormattedCustomizationSummary(snapshot);
+  const enrichedSnapshot = snapshot
+    ? {
+        ...snapshot,
+        formattedCustomizationLines: formatted.lines,
+        formattedSummaryText: formatted.summaryText,
+        hasCustomizations: formatted.hasCustomizations
+      }
+    : undefined;
+
+  const modifiers = Array.isArray(snapshot?.modifiers) ? (snapshot.modifiers as OrderV2Item['modifiers']) : undefined;
+  const components = Array.isArray(snapshot?.components) ? (snapshot.components as OrderV2Item['components']) : undefined;
+
+  return {
+    id: String(row.id),
+    orderId: String(row.order_id ?? row.orderId),
+    sku: String(row.sku),
+    name: String(row.name),
+    qty: Number(row.qty),
+    unitPrice: centsToPrice(row.unit_price_cents ?? row.unitPriceCents),
+    lineTotal: centsToPrice(row.line_total_cents ?? row.lineTotalCents),
+    modifiers,
+    components,
+    snapshot: enrichedSnapshot,
+    createdAt: row.created_at ?? row.createdAt ? String(row.created_at ?? row.createdAt) : undefined
+  };
+};
 
 export const mapD1OrderEventToOrderV2Event = (row: any): OrderV2Event => ({
   id: String(row.id),
@@ -159,25 +286,58 @@ export const mapD1OrderEventToOrderV2Event = (row: any): OrderV2Event => ({
   createdAt: String(row.created_at ?? row.createdAt)
 });
 
-export const mapD1OrderToOrderV2 = (row: any, items: OrderV2Item[] = [], events?: OrderV2Event[]): OrderV2 => ({
-  id: String(row.id),
-  folio: String(row.folio),
-  customerName: String(row.customer_name ?? row.customerName),
-  customerPhone: String(row.customer_phone ?? row.customerPhone),
-  orderMode: String(row.order_mode ?? row.orderMode) as OrderV2['orderMode'],
-  paymentMethod: String(row.payment_method ?? row.paymentMethod) as OrderV2['paymentMethod'],
-  paymentStatus: String(row.payment_status ?? row.paymentStatus) as OrderV2['paymentStatus'],
-  notes: row.notes ? String(row.notes) : undefined,
-  subtotal: centsToPrice(row.subtotal_cents ?? row.subtotalCents),
-  total: centsToPrice(row.total_cents ?? row.totalCents),
-  status: String(row.status) as OrderV2Status,
-  source: String(row.source) as OrderV2['source'],
-  createdAt: String(row.created_at ?? row.createdAt),
-  updatedAt: String(row.updated_at ?? row.updatedAt),
-  archivedAt: row.archived_at ?? row.archivedAt ? String(row.archived_at ?? row.archivedAt) : undefined,
-  items,
-  events
-});
+export const mapD1OrderToOrderV2 = (row: any, items: OrderV2Item[] = [], events?: OrderV2Event[]): OrderV2 => {
+  let delivery: OrderV2DeliveryInfo | undefined;
+  if (row.delivery_json || row.deliveryJson) {
+    try {
+      delivery = JSON.parse(row.delivery_json ?? row.deliveryJson);
+    } catch {}
+  }
+  const rawCustomerName = String(row.customer_name ?? row.customerName);
+  if (!delivery && rawCustomerName) {
+    const scheduledMatch = rawCustomerName.match(/ENTREGA PROGRAMADA:\s*(\d{4}-\d{2}-\d{2})/i);
+    if (scheduledMatch) {
+      delivery = {
+        location: rawCustomerName.replace(/\[?ENTREGA PROGRAMADA:[^\]]+\]?/gi, '').trim(),
+        isScheduled: true,
+        scheduledDate: scheduledMatch[1],
+      };
+    }
+  }
+
+  if (!delivery && items.length > 0) {
+    for (const item of items) {
+      const itemDelivery = (item.snapshot as any)?.delivery as OrderV2DeliveryInfo | undefined;
+      if (itemDelivery && (itemDelivery.location || itemDelivery.scheduledDate || itemDelivery.isScheduled)) {
+        delivery = itemDelivery;
+        break;
+      }
+    }
+  }
+
+  const cleanName = rawCustomerName.replace(/\[?ENTREGA PROGRAMADA:[^\]]+\]?/gi, '').trim();
+
+  return {
+    id: String(row.id),
+    folio: String(row.folio),
+    customerName: cleanName,
+    customerPhone: String(row.customer_phone ?? row.customerPhone),
+    delivery,
+    orderMode: String(row.order_mode ?? row.orderMode) as OrderV2['orderMode'],
+    paymentMethod: String(row.payment_method ?? row.paymentMethod) as OrderV2['paymentMethod'],
+    paymentStatus: String(row.payment_status ?? row.paymentStatus) as OrderV2['paymentStatus'],
+    notes: row.notes ? String(row.notes) : undefined,
+    subtotal: centsToPrice(row.subtotal_cents ?? row.subtotalCents),
+    total: centsToPrice(row.total_cents ?? row.totalCents),
+    status: String(row.status) as OrderV2Status,
+    source: String(row.source) as OrderV2['source'],
+    createdAt: String(row.created_at ?? row.createdAt),
+    updatedAt: String(row.updated_at ?? row.updatedAt),
+    archivedAt: row.archived_at ?? row.archivedAt ? String(row.archived_at ?? row.archivedAt) : undefined,
+    items,
+    events
+  };
+};
 
 export const validateStatusTransition = (current: OrderV2Status, next: OrderV2Status): boolean => {
   if (TERMINAL_STATUSES.has(current)) return false;
@@ -292,6 +452,11 @@ export const requireAdminToken = async (request: Request, env: AdminEnv): Promis
   if (!isSameOriginRequest(request)) return errorResponse(401, 'UNAUTHORIZED', 'Unauthorized.');
   if (await hasValidInternalSession(request, env)) return null;
   return errorResponse(401, 'UNAUTHORIZED', 'Unauthorized.');
+};
+
+export const requireInternalOrigin = async (request: Request): Promise<Response | null> => {
+  if (!isSameOriginRequest(request)) return errorResponse(401, 'UNAUTHORIZED', 'Unauthorized.');
+  return null;
 };
 
 export const fetchOrderBundle = async (db: D1Database, orderId: string): Promise<OrderV2 | null> => {

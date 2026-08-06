@@ -48,6 +48,12 @@ const parseBody = (input: unknown) => {
   const stockRemainingRaw = body.stockRemaining == null || body.stockRemaining === '' ? null : Number(body.stockRemaining);
   const stockLimitRaw = body.stockLimit == null || body.stockLimit === '' ? stockRemainingRaw : Number(body.stockLimit);
 
+  const promoPriceRaw = body.promoPrice == null || body.promoPrice === '' ? null : Number(body.promoPrice);
+  const promoPriceCents = promoPriceRaw != null && Number.isFinite(promoPriceRaw) && promoPriceRaw >= 0 ? Math.round(promoPriceRaw * 100) : null;
+  const isPromoActive = Boolean(body.isPromoActive);
+  const promoExpiresAt = normalizeOptionalString(body.promoExpiresAt);
+  const comboConfigJson = body.comboConfig ? JSON.stringify(body.comboConfig) : null;
+
   if (!SKU_PATTERN.test(sku) || !name || !Number.isFinite(price) || price < 0 || !CATEGORIES.has(category as MenuCategory['key']) || !Number.isInteger(sortOrder) || typeof isAvailable !== 'boolean' || typeof isFeatured !== 'boolean' || imageUrl === undefined || imageKey === undefined || comboLinks === null) return null;
   if (stockManaged && (stockRemainingRaw == null || !Number.isInteger(stockRemainingRaw) || stockRemainingRaw < 0)) return null;
   if (stockLimitRaw != null && (!Number.isInteger(stockLimitRaw) || stockLimitRaw < 0)) return null;
@@ -57,6 +63,10 @@ const parseBody = (input: unknown) => {
     name,
     description,
     price,
+    promoPriceCents,
+    isPromoActive,
+    promoExpiresAt,
+    comboConfigJson,
     category: category as MenuCategory['key'],
     isAvailable,
     isFeatured,
@@ -88,14 +98,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const priceCents = Math.round(payload.price * 100);
   const soldOutAt = payload.stockManaged && (payload.stockRemaining ?? 0) <= 0 ? new Date().toISOString() : null;
   const result = await env.BOG_MENU_DB.prepare(
-    `INSERT INTO menu_items (id, sku, category_key, name, description, price_cents, tags_json, badge, promo_label, is_available, is_featured, sort_order, image_url, image_key, combo_links_json, upsell_items_json, stock_managed, stock_limit, stock_remaining, sold_out_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, '[]', ?, ?, ?, ?, ?, ?, ?, ?, '[]', ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-  ).bind(generateId('mi'), payload.sku, payload.category, payload.name, payload.description, priceCents, payload.badge, payload.promoLabel, payload.isAvailable ? 1 : 0, payload.isFeatured ? 1 : 0, payload.sortOrder, payload.imageUrl, payload.imageKey, JSON.stringify(payload.comboLinks), payload.stockManaged ? 1 : 0, payload.stockLimit, payload.stockRemaining, soldOutAt).run();
+    `INSERT INTO menu_items (id, sku, category_key, name, description, price_cents, tags_json, badge, promo_label, promo_price_cents, is_promo_active, promo_expires_at, combo_config_json, is_available, is_featured, sort_order, image_url, image_key, combo_links_json, upsell_items_json, stock_managed, stock_limit, stock_remaining, sold_out_at, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, '[]', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+  ).bind(generateId('mi'), payload.sku, payload.category, payload.name, payload.description, priceCents, payload.badge, payload.promoLabel, payload.promoPriceCents, payload.isPromoActive ? 1 : 0, payload.promoExpiresAt, payload.comboConfigJson, payload.isAvailable ? 1 : 0, payload.isFeatured ? 1 : 0, payload.sortOrder, payload.imageUrl, payload.imageKey, JSON.stringify(payload.comboLinks), payload.stockManaged ? 1 : 0, payload.stockLimit, payload.stockRemaining, soldOutAt).run();
 
   if (!result.success) return json(500, { ok: false, error: 'No se pudo crear producto' });
 
   const itemRow = await env.BOG_MENU_DB.prepare(
-    `SELECT sku, category_key AS category, name, description, price_cents AS price, tags_json, badge, promo_label AS promoLabel, is_available AS isAvailable,
+    `SELECT sku, category_key AS category, name, description, price_cents AS price, tags_json, badge, promo_label AS promoLabel, promo_price_cents AS promoPriceCents, is_promo_active AS isPromoActive, promo_expires_at AS promoExpiresAt, combo_config_json AS comboConfig, is_available AS isAvailable,
             CASE WHEN stock_managed = 1 AND COALESCE(stock_remaining, 0) <= 0 THEN 0 ELSE is_available END AS effectiveIsAvailable,
             stock_managed AS stockManaged, stock_limit AS stockLimit, stock_remaining AS stockRemaining, sold_out_at AS soldOutAt,
             is_featured AS isFeatured, sort_order AS sortOrder, image_url AS imageUrl, image_key AS imageKey, combo_links_json, upsell_items_json, updated_at AS updatedAt

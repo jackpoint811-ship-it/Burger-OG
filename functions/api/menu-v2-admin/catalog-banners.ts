@@ -20,7 +20,8 @@ const parseBody = (input: unknown) => {
   const title = typeof body.title === 'string' ? body.title.trim() : '';
   const imageUrl = validateImageUrl(body.imageUrl);
   const imageKey = validateAssetKey(body.imageKey);
-  if (!title || imageUrl === undefined || imageKey === undefined) return null;
+  // A banner is valid with a title (text mode), an image (image mode), or both
+  if (imageUrl === undefined || imageKey === undefined) return null;
   if (body.sortOrder !== undefined && (typeof body.sortOrder !== 'number' || !Number.isInteger(body.sortOrder))) return null;
 
   return {
@@ -29,6 +30,11 @@ const parseBody = (input: unknown) => {
     ctaLabel: normalizeOptionalString(body.ctaLabel),
     imageUrl,
     imageKey,
+    bgPreset: normalizeOptionalString(body.bgPreset),
+    badgeText: normalizeOptionalString(body.badgeText),
+    badgeColor: normalizeOptionalString(body.badgeColor),
+    ctaActionType: normalizeOptionalString(body.ctaActionType),
+    ctaTarget: normalizeOptionalString(body.ctaTarget),
     isActive: typeof body.isActive === 'boolean' ? body.isActive : true,
     sortOrder: body.sortOrder ?? 0,
   };
@@ -47,8 +53,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const id = `cb-${crypto.randomUUID()}`;
 
   const result = await env.BOG_MENU_DB.prepare(
-    `INSERT INTO catalog_banners (id, title, subtitle, cta_label, image_key, image_url, is_active, sort_order, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+    `INSERT INTO catalog_banners (id, title, subtitle, cta_label, image_key, image_url, bg_preset, badge_text, badge_color, cta_action_type, cta_target, is_active, sort_order, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
   ).bind(
     id,
     payload.title,
@@ -56,15 +62,68 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     payload.ctaLabel,
     payload.imageKey,
     payload.imageUrl,
+    payload.bgPreset,
+    payload.badgeText,
+    payload.badgeColor,
+    payload.ctaActionType,
+    payload.ctaTarget,
     payload.isActive ? 1 : 0,
     payload.sortOrder
   ).run();
 
   if (!result.success) return json(500, { ok: false, error: 'No se pudo crear el banner' });
 
-  const row = await env.BOG_MENU_DB.prepare('SELECT id, title, subtitle, cta_label, image_key, image_url, is_active, sort_order, updated_at FROM catalog_banners WHERE id = ? LIMIT 1').bind(id).first();
+  const row = await env.BOG_MENU_DB.prepare('SELECT * FROM catalog_banners WHERE id = ? LIMIT 1').bind(id).first();
   return row ? json(201, { ok: true, banner: mapD1CatalogBanner(row) }) : json(500, { ok: false, error: 'No se pudo recuperar el banner creado' });
 };
+
+const DEFAULT_BANNERS = [
+  {
+    id: 'cb-default-1',
+    title: '🔥 COMBO OVERCLOCK 2x1',
+    subtitle: 'Lleva 2 combos seleccionados por el precio de 1',
+    cta_label: 'Ver combo',
+    image_key: null,
+    image_url: null,
+    bg_preset: 'green',
+    badge_text: '🔥 PROMO 2X1',
+    badge_color: null,
+    cta_action_type: null,
+    cta_target: null,
+    is_active: 1,
+    sort_order: 1,
+  },
+  {
+    id: 'cb-default-2',
+    title: '🎮 BUNDLE GAMER NIGHT',
+    subtitle: 'Smash Burger + Papas Overclock + Bebida Cyber',
+    cta_label: 'Pedir bundle',
+    image_key: null,
+    image_url: null,
+    bg_preset: 'purple',
+    badge_text: '🎮 DESTACADO',
+    badge_color: null,
+    cta_action_type: null,
+    cta_target: null,
+    is_active: 1,
+    sort_order: 2,
+  },
+  {
+    id: 'cb-default-3',
+    title: '⚡ ENVÍO GRATIS $0',
+    subtitle: 'En entregas programadas a tu oficina',
+    cta_label: 'Ordenar ahora',
+    image_key: null,
+    image_url: null,
+    bg_preset: 'orange',
+    badge_text: '⚡ ENVÍO $0',
+    badge_color: null,
+    cta_action_type: null,
+    cta_target: null,
+    is_active: 1,
+    sort_order: 3,
+  },
+];
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   if (!env.BOG_MENU_DB) return json(503, { ok: false, error: 'Database disabled' });
@@ -73,8 +132,34 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 
   try {
     const { results } = await env.BOG_MENU_DB.prepare(
-      'SELECT id, title, subtitle, cta_label, image_key, image_url, is_active, sort_order, updated_at FROM catalog_banners ORDER BY sort_order ASC'
+      'SELECT * FROM catalog_banners ORDER BY sort_order ASC'
     ).all();
+
+    if (!results || results.length === 0) {
+      // Auto seed default 1, 2, 3 banners if D1 table is empty
+      for (const b of DEFAULT_BANNERS) {
+        try {
+          await env.BOG_MENU_DB.prepare(
+            `INSERT OR IGNORE INTO catalog_banners (id, title, subtitle, cta_label, bg_preset, badge_text, is_active, sort_order, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+          ).bind(b.id, b.title, b.subtitle, b.cta_label, b.bg_preset, b.badge_text, b.is_active, b.sort_order).run();
+        } catch {
+          try {
+            await env.BOG_MENU_DB.prepare(
+              `INSERT OR IGNORE INTO catalog_banners (id, title, subtitle, cta_label, is_active, sort_order, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+            ).bind(b.id, b.title, b.subtitle, b.cta_label, b.is_active, b.sort_order).run();
+          } catch {
+            /* table might not exist yet */
+          }
+        }
+      }
+      const seeded = await env.BOG_MENU_DB.prepare(
+        'SELECT * FROM catalog_banners ORDER BY sort_order ASC'
+      ).all();
+      const mappedSeeded = (seeded.results ?? []).map((row: any) => mapD1CatalogBanner(row));
+      return json(200, { ok: true, banners: mappedSeeded });
+    }
 
     const banners = (results ?? []).map((row: any) => {
       const mapped = mapD1CatalogBanner(row);
@@ -83,6 +168,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
         cta_label: row.cta_label ?? null,
         image_key: row.image_key ?? null,
         image_url: row.image_url ?? null,
+        bg_preset: row.bg_preset ?? null,
+        badge_text: row.badge_text ?? null,
+        badge_color: row.badge_color ?? null,
+        cta_action_type: row.cta_action_type ?? null,
+        cta_target: row.cta_target ?? null,
         is_active: row.is_active ?? 0,
         sort_order: row.sort_order ?? 0,
         updated_at: row.updated_at ?? null,
@@ -90,7 +180,15 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     });
 
     return json(200, { ok: true, banners });
-  } catch (error) {
-    return json(500, { ok: false, error: 'Database query failed' });
+  } catch (err) {
+    // Graceful fallback if table doesn't exist or DB is offline
+    const mappedDefault = DEFAULT_BANNERS.map((row: any) => mapD1CatalogBanner(row));
+    return json(200, { ok: true, banners: mappedDefault, fallback: true });
   }
+};
+
+export const onRequest: PagesFunction<Env> = async (context) => {
+  if (context.request.method === 'GET') return onRequestGet(context);
+  if (context.request.method === 'POST') return onRequestPost(context);
+  return json(405, { ok: false, error: 'Method Not Allowed' });
 };
