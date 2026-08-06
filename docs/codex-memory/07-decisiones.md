@@ -53,20 +53,20 @@ Permitir probar todo el flujo de pedido y Chekeo en Preview de forma idéntica a
 - Producción (`burgers-exe-menu-live`) queda totalmente intacta y aislada.
 - Dev local Vite admite PIN `1234` o `0000` en desarrollo.
 
-## Formato para nuevas decisiones
-
 ### Fecha
 
-YYYY-MM-DD
+2026-08-06
 
-### Decision
+### Decisión
 
-Descripcion corta.
+PIN exclusivo para la pestaña Admin en Chekeo V2. El acceso a las pantallas operativas (Home, Pedidos, Cocina, Pagos) es directo con datos D1 en vivo. Los endpoints operativos backend (`orders-v2-admin`, `summary`, `status`, `payment`, `kitchen-item`, `summary-k`) utilizan validación Same-Origin (`requireInternalOrigin`) sin requerir cookie de sesión activa.
 
 ### Motivo
 
-Por que se decidio.
+Eliminar la barrera de login global y prevenir la degradación a modo fallback en las operaciones diarias del restaurante (cocina, empacado y cobro). El PIN queda reservado estrictamente para la gestión administrativa y endpoints destructivos.
 
 ### Impacto
 
-Que cambia para Codex, UX o desarrollo.
+- Operadores de cocina y empaque cargan pedidos reales en vivo directamente sin ingresar PIN.
+- `<AdminGate>` protege únicamente la pestaña Admin y endpoints administrativos (`batch-archive`, `export.csv`, etc.).
+- CSRF Same-Origin protege los endpoints operativos del backend.

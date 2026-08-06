@@ -527,17 +527,15 @@ const getOperationalTruth = ({
         ? { label: "Datos", value: "Fallback", tone: "warning" }
         : { label: "Datos", value: "Mock local", tone: "warning" };
   const capability: TruthItem =
-    runtime.sessionState !== "active"
-      ? { label: "Capacidad", value: "Entrar para operar", tone: "danger" }
-      : runtime.error && runtime.source !== "d1"
-        ? { label: "Capacidad", value: "Sin backend", tone: "danger" }
-        : runtime.source === "d1"
-          ? {
-              label: "Capacidad",
-              value: runtime.environment === "preview" ? "Operable en preview" : "Operable",
-              tone: "success",
-            }
-          : { label: "Capacidad", value: "Solo revisión", tone: "warning" };
+    runtime.error && runtime.source !== "d1"
+      ? { label: "Capacidad", value: "Sin backend", tone: "danger" }
+      : runtime.source === "d1"
+        ? {
+            label: "Capacidad",
+            value: runtime.environment === "preview" ? "Operable en preview" : "Operable",
+            tone: "success",
+          }
+        : { label: "Capacidad", value: "Solo revisión", tone: "warning" };
   const activity: TruthItem = {
     label: "Carga",
     value: `${activeCount} activos`,
@@ -564,20 +562,7 @@ const getOperationalTruth = ({
   let kitchenHint = "Revisa el flujo actual antes de mover pedidos.";
   let summaryHint = "Solo referencia visual.";
 
-  if (runtime.sessionState === "expired") {
-    headline = "Sesión expirada";
-    summary = "Vuelve a entrar antes de operar.";
-    action = { label: "Entrar de nuevo", helper: "Recupera la sesión.", tone: "danger" };
-    banner = {
-      title: "Sesión vencida",
-      message: "Chekeo salió de la sesión activa. Vuelve a entrar para recuperar D1.",
-      tone: "danger",
-    };
-  } else if (runtime.sessionState !== "active") {
-    headline = "Sin sesión operativa";
-    summary = "Entra para consultar D1 y habilitar acciones.";
-    action = { label: "Entrar", helper: "Activa la sesión primero.", tone: "neutral" };
-  } else if (isLiveD1) {
+  if (isLiveD1) {
     headline = "Operando con datos reales";
     summary = "Cada acción impacta pedidos reales.";
     action = {
@@ -607,6 +592,15 @@ const getOperationalTruth = ({
     kitchenTitle = "Cocina conectada a preview";
     kitchenHint = "Valida el flujo sin tratarlo como producción.";
     summaryHint = `${activeCount} pedidos activos visibles en preview.`;
+  } else if (runtime.sessionState === "expired") {
+    headline = "Sesión admin expirada";
+    summary = "Reingresa el PIN si necesitas acceder a la pestaña Admin.";
+    action = { label: "Ingresar PIN Admin", helper: "Recupera la sesión de Admin.", tone: "danger" };
+    banner = {
+      title: "Sesión Admin vencida",
+      message: "La sesión de administrador expiró. Reingresa el PIN en la pestaña Admin si requieres cambiar configuración.",
+      tone: "danger",
+    };
   } else if (runtime.source === "fallback") {
     headline = "Chekeo está en fallback";
     summary = "Puedes revisar pedidos, pero no confiar en escritura real.";
@@ -2038,8 +2032,8 @@ const HomePanel = ({
 
 const getAdminAuthModeHint = (authMode: InternalAuthMode) =>
   authMode === "admin-only"
-    ? "Modo admin-only preparado. Chekeo sigue pidiendo PIN global hasta que exista protección externa y una política backend compatible."
-    : "Modo seguro global activo. Toda la app sigue pidiendo PIN antes de abrir.";
+    ? "Acceso operativo directo activo. El PIN de seguridad se solicitará únicamente en la pestaña Admin."
+    : "PIN requerido exclusivamente para el área administrativa.";
 
 const AdminReportsPanel = ({
   runtime,
@@ -2116,7 +2110,7 @@ const AdminGate = ({
           Acceso Admin
         </h2>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-          Admin siempre requiere PIN interno. Home, Pedidos, Cocina y Pagos solo pueden abrirse sin PIN global cuando la URL ya está protegida externamente.
+          La pestaña Admin requiere PIN de administrador. Las pestañas operativas (Home, Pedidos, Cocina, Pagos) son de acceso directo.
         </p>
         <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-white dark:bg-zinc-950/70 p-4">
           <SessionPinForm
@@ -5798,8 +5792,7 @@ export function InternalChekeoApp() {
       Boolean(
         actionOrderIdRef.current ||
           cancellationRequestRef.current ||
-          checkingSessionRef.current ||
-          !loggedRef.current,
+          checkingSessionRef.current,
       ),
     [],
   );
@@ -5868,7 +5861,6 @@ export function InternalChekeoApp() {
 
         const mappedOrders = liveOrders.map(mapOrderV2ToInternalOrder);
         setOrders(mappedOrders);
-        setSessionState("active");
         setSelected((current) => {
           if (!current) return current;
           return (
@@ -5894,7 +5886,9 @@ export function InternalChekeoApp() {
             ? error.message
             : "No se pudieron cargar pedidos. Actualiza la lista e inténtalo de nuevo.";
         if (/UNAUTHORIZED|401/i.test(message)) {
-          expireSession();
+          setLogged(false);
+          setSessionState("inactive");
+          setOrdersError("Sin autorización backend.");
           return;
         }
         if (isAutoRefresh) {
@@ -5912,7 +5906,6 @@ export function InternalChekeoApp() {
     },
     [
       adminView,
-      expireSession,
       isRefreshBlocked,
       orderEnvironment,
       registerLoadedOrders,
@@ -5937,12 +5930,12 @@ export function InternalChekeoApp() {
         if (cancelled) return;
         setLogged(authenticated);
         setSessionState(authenticated ? "active" : "inactive");
-        if (authenticated)
-          void loadLiveOrders(shouldIncludeTerminalOrders(tab, adminView));
+        void loadLiveOrders(shouldIncludeTerminalOrders(tab, adminView));
       } catch {
         if (!cancelled) {
           setLogged(false);
           setSessionState("inactive");
+          void loadLiveOrders(shouldIncludeTerminalOrders(tab, adminView));
         }
       } finally {
         if (!cancelled) setCheckingSession(false);
@@ -5955,12 +5948,12 @@ export function InternalChekeoApp() {
   }, []);
 
   useEffect(() => {
-    if (logged && shouldKeepOrdersLoaded(tab, adminView))
+    if (shouldKeepOrdersLoaded(tab, adminView))
       void loadLiveOrders(shouldIncludeTerminalOrders(tab, adminView));
-  }, [adminView, logged, tab, loadLiveOrders]);
+  }, [adminView, tab, loadLiveOrders]);
 
   useEffect(() => {
-    if (!logged || !shouldKeepOrdersLoaded(tab, adminView)) return;
+    if (!shouldKeepOrdersLoaded(tab, adminView)) return;
 
     const refresh = () => {
       void loadLiveOrders(shouldIncludeTerminalOrders(tab, adminView), "auto");
@@ -5968,7 +5961,7 @@ export function InternalChekeoApp() {
     const interval = window.setInterval(refresh, AUTO_REFRESH_INTERVAL_MS);
 
     return () => window.clearInterval(interval);
-  }, [adminView, logged, loadLiveOrders, tab]);
+  }, [adminView, loadLiveOrders, tab]);
 
   useEffect(() => {
     if (!newOrderNotice) return;
@@ -6062,7 +6055,10 @@ export function InternalChekeoApp() {
           ? error.message
           : "No se pudo actualizar el pedido. Revisa la sesión e inténtalo de nuevo.";
       setOrdersError(message);
-      if (/UNAUTHORIZED|401/i.test(message)) expireSession();
+      if (/UNAUTHORIZED|401/i.test(message)) {
+        setLogged(false);
+        setSessionState("inactive");
+      }
       throw error instanceof Error ? error : new Error(message);
     } finally {
       actionOrderIdRef.current = null;
@@ -6110,7 +6106,10 @@ export function InternalChekeoApp() {
           ? error.message
           : "No se pudo actualizar el pago. Revisa la sesión e inténtalo de nuevo.";
       setOrdersError(message);
-      if (/UNAUTHORIZED|401/i.test(message)) expireSession();
+      if (/UNAUTHORIZED|401/i.test(message)) {
+        setLogged(false);
+        setSessionState("inactive");
+      }
       throw error instanceof Error ? error : new Error(message);
     } finally {
       actionOrderIdRef.current = null;
@@ -6160,7 +6159,10 @@ export function InternalChekeoApp() {
           ? error.message
           : "No se pudo ocultar el pedido cancelado.";
       setOrdersError(message);
-      if (/UNAUTHORIZED|401/i.test(message)) expireSession();
+      if (/UNAUTHORIZED|401/i.test(message)) {
+        setLogged(false);
+        setSessionState("inactive");
+      }
       throw error instanceof Error ? error : new Error(message);
     } finally {
       actionOrderIdRef.current = null;
@@ -6216,7 +6218,10 @@ export function InternalChekeoApp() {
           ? error.message
           : "No se pudo actualizar el checklist de cocina";
       setOrdersError(message);
-      if (/UNAUTHORIZED|401/i.test(message)) expireSession();
+      if (/UNAUTHORIZED|401/i.test(message)) {
+        setLogged(false);
+        setSessionState("inactive");
+      }
       throw error instanceof Error ? error : new Error(message);
     } finally {
       actionOrderIdRef.current = null;
