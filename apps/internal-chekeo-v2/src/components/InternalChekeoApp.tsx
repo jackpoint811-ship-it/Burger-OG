@@ -66,6 +66,8 @@ import {
 import { fetchKitchenSummaryK } from "../lib/ingredients-v2-admin";
 import {
   archiveCancelledOrderV2,
+  unarchiveOrderV2,
+  batchArchiveOrdersV2,
   exportOrdersV2Csv,
   fetchOrdersV2Admin,
   fetchOrdersV2Summary,
@@ -2800,43 +2802,66 @@ const CompactRow = ({
   onOpen,
   onMove,
   onCancel,
+  onArchive,
+  onUnarchive,
   busy,
+  selected = false,
+  onToggleSelect,
+  isArchived = false,
 }: {
   order: InternalOrder;
   onOpen: () => void;
   onMove: MoveOrderStatus;
   onCancel: (order: InternalOrder) => void;
+  onArchive?: (order: InternalOrder) => void;
+  onUnarchive?: (order: InternalOrder) => void;
   busy: boolean;
+  selected?: boolean;
+  onToggleSelect?: (orderId: string) => void;
+  isArchived?: boolean;
 }) => {
   const previewOrder = isPreviewOrderSource(order.source);
   const itemCount = getOrderItemCount(order);
   const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
   const canDeliver = order.status === "ready";
   const canCancel = !terminalStatuses.has(order.status);
+  const canArchive = order.status === "cancelled" && !isArchived && Boolean(onArchive);
   return (
-    <div className={`orders-card orders-card--${order.status}`}>
+    <div className={`orders-card orders-card--${order.status} ${selected ? "ring-2 ring-emerald-500 bg-emerald-950/20" : ""}`}>
       <span className={`orders-status-rail orders-status-rail--${order.status}`} aria-hidden="true" />
       <div className="orders-card__body">
-        <div className="orders-card__head">
-          <div className="orders-card__identity min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="orders-card__folio font-black">
-                <span className="truncate">{order.folio}</span>
+        <div className="orders-card__head flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {onToggleSelect ? (
+              <input
+                type="checkbox"
+                className="w-5 h-5 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-zinc-950 cursor-pointer shrink-0"
+                checked={selected}
+                onChange={() => onToggleSelect(order.id)}
+                onClick={(e) => e.stopPropagation()}
+                aria-label={`Seleccionar orden ${order.folio}`}
+              />
+            ) : null}
+            <div className="orders-card__identity min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="orders-card__folio font-black">
+                  <span className="truncate">{order.folio}</span>
+                </p>
+                {previewOrder ? (
+                  <span className="orders-preview-chip">
+                    Prueba
+                  </span>
+                ) : null}
+              </div>
+              <p className="orders-card__customer font-bold text-base text-zinc-900 dark:text-zinc-100 mt-0.5">
+                {details.cleanCustomerName}
               </p>
-              {previewOrder ? (
-                <span className="orders-preview-chip">
-                  Prueba
-                </span>
+              {order.customerPhone ? (
+                <p className="text-xs text-zinc-500 font-medium">📞 {order.customerPhone}</p>
               ) : null}
             </div>
-            <p className="orders-card__customer font-bold text-base text-zinc-900 dark:text-zinc-100 mt-0.5">
-              {details.cleanCustomerName}
-            </p>
-            {order.customerPhone ? (
-              <p className="text-xs text-zinc-500 font-medium">📞 {order.customerPhone}</p>
-            ) : null}
           </div>
-          <div className="orders-card__badges">
+          <div className="orders-card__badges shrink-0">
             <OrdersStatusBadge status={order.status} />
           </div>
         </div>
@@ -2884,13 +2909,13 @@ const CompactRow = ({
           </Button>
           <details className="orders-card__more">
             <summary>Más acciones</summary>
-            <div className="orders-card__secondary-actions">
+            <div className="orders-card__secondary-actions space-y-2 pt-2">
               {details.cleanNotes ? (
                 <p className="orders-note">Nota: {details.cleanNotes}</p>
               ) : null}
               {canDeliver ? (
                 <Button
-                  className="orders-secondary-action"
+                  className="orders-secondary-action w-full"
                   onClick={() => void onMove(order.id, "delivered")}
                   disabled={busy}
                 >
@@ -2899,11 +2924,29 @@ const CompactRow = ({
               ) : null}
               {canCancel ? (
                 <Button
-                  className="orders-danger-action"
+                  className="orders-danger-action w-full"
                   onClick={() => onCancel(order)}
                   disabled={busy}
                 >
                   {busy ? "Cancelando…" : "Cancelar pedido"}
+                </Button>
+              ) : null}
+              {canArchive ? (
+                <Button
+                  className="orders-danger-action w-full border-rose-500/40 text-rose-300 hover:bg-rose-950/40"
+                  onClick={() => onArchive?.(order)}
+                  disabled={busy}
+                >
+                  {busy ? "Archivando…" : "🗑️ Mandar a Basurero"}
+                </Button>
+              ) : null}
+              {isArchived && onUnarchive ? (
+                <Button
+                  className="orders-secondary-action w-full border-emerald-500/40 text-emerald-300 hover:bg-emerald-950/40"
+                  onClick={() => onUnarchive(order)}
+                  disabled={busy}
+                >
+                  {busy ? "Restaurando…" : "↩️ Restaurar a Operaciones"}
                 </Button>
               ) : null}
             </div>
@@ -2998,6 +3041,142 @@ const OrderCommandPanel = ({
   );
 };
 
+const BatchActionBar = ({
+  selectedCount,
+  activeCount,
+  cancelledCount,
+  onClearSelection,
+  onBatchArchive,
+  onBatchRestore,
+  isArchivedView = false,
+  busy = false,
+}: {
+  selectedCount: number;
+  activeCount: number;
+  cancelledCount: number;
+  onClearSelection: () => void;
+  onBatchArchive?: () => void;
+  onBatchRestore?: () => void;
+  isArchivedView?: boolean;
+  busy?: boolean;
+}) => {
+  if (selectedCount === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-zinc-900/95 backdrop-blur-md border border-zinc-700 rounded-2xl shadow-2xl max-w-xl w-[90%]"
+    >
+      <div className="flex items-center gap-2">
+        <span className="flex h-3 w-3 rounded-full bg-emerald-500 animate-pulse" />
+        <p className="text-xs font-bold text-zinc-100">
+          {selectedCount} seleccionadas{" "}
+          {!isArchivedView && selectedCount > 0 ? (
+            <span className="text-zinc-400 font-normal">
+              ({cancelledCount} canceladas, {activeCount} activas)
+            </span>
+          ) : null}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="px-2.5 py-1.5 text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition-colors"
+          onClick={onClearSelection}
+          disabled={busy}
+        >
+          Desmarcar
+        </button>
+
+        {!isArchivedView && onBatchArchive ? (
+          <Button
+            className="px-3.5 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-xl shadow-md transition-transform active:scale-95 disabled:opacity-50"
+            onClick={onBatchArchive}
+            disabled={busy}
+          >
+            {busy ? "Procesando..." : `🗑️ Mandar a Basurero (${selectedCount})`}
+          </Button>
+        ) : null}
+
+        {isArchivedView && onBatchRestore ? (
+          <Button
+            className="px-3.5 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-md transition-transform active:scale-95 disabled:opacity-50"
+            onClick={onBatchRestore}
+            disabled={busy}
+          >
+            {busy ? "Procesando..." : `↩️ Restaurar seleccionadas (${selectedCount})`}
+          </Button>
+        ) : null}
+      </div>
+    </motion.div>
+  );
+};
+
+const BatchConfirmModal = ({
+  open,
+  activeCount,
+  cancelledCount,
+  totalCount,
+  onConfirm,
+  onCancel,
+  busy,
+}: {
+  open: boolean;
+  activeCount: number;
+  cancelledCount: number;
+  totalCount: number;
+  onConfirm: () => void;
+  onCancel: () => void;
+  busy: boolean;
+}) => {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-2xl space-y-4"
+      >
+        <div className="flex items-center gap-3 text-amber-400">
+          <span className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xl">⚠️</span>
+          <h3 className="text-lg font-bold text-zinc-100">Confirmar envío a Basurero</h3>
+        </div>
+
+        <p className="text-sm text-zinc-300 leading-relaxed">
+          Has seleccionado <strong className="text-amber-400">{activeCount} órdenes activas</strong> y{" "}
+          <strong className="text-zinc-200">{cancelledCount} canceladas</strong> (Total: {totalCount}).
+        </p>
+        <p className="text-xs text-zinc-400 leading-relaxed bg-zinc-950 p-3 rounded-xl border border-zinc-800">
+          🔒 <strong>Regla de negocio:</strong> Toda orden debe estar previamente cancelada para enviarse al basurero. Las órdenes activas se cancelarán automáticamente con el motivo <em className="text-zinc-200">'Limpieza de turno'</em> antes de moverlas.
+        </p>
+
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <button
+            type="button"
+            className="px-4 py-2 text-xs font-bold text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
+            onClick={onCancel}
+            disabled={busy}
+          >
+            Cancelar
+          </button>
+          <Button
+            className="px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-xl shadow-md transition-all disabled:opacity-50"
+            onClick={onConfirm}
+            disabled={busy}
+          >
+            {busy ? "Procesando..." : "Sí, cancelar activas y enviar todas al Basurero"}
+          </Button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const OrdersBoard = ({
   orders,
   setSelected,
@@ -3014,11 +3193,46 @@ const OrdersBoard = ({
     origin: "pedidos" | "detalle",
   ) => void;
 }) => {
+  const [viewMode, setViewMode] = useState<"active" | "archived">("active");
   const [statusFilter, setStatusFilter] = useState<OrdersStatusFilter>("all");
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
 
-  const filteredOrders = useMemo(() => {
+  const [archivedOrders, setArchivedOrders] = useState<InternalOrder[]>([]);
+  const [loadingArchived, setLoadingArchived] = useState(false);
+  const [archivedDateFrom, setArchivedDateFrom] = useState("");
+  const [archivedDateTo, setArchivedDateTo] = useState("");
+  const [actionBusy, setActionBusy] = useState(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+
+  const loadArchivedOrders = useCallback(async () => {
+    if (runtime.source !== "d1") return;
+    setLoadingArchived(true);
+    try {
+      const rawArchived = await fetchOrdersV2Admin({
+        archived: "true",
+        environment: runtime.environment,
+        from: archivedDateFrom || undefined,
+        to: archivedDateTo || undefined,
+        search: search || undefined,
+        limit: 100,
+      });
+      setArchivedOrders(rawArchived.map(mapOrderV2ToInternalOrder));
+    } catch {
+      setArchivedOrders([]);
+    } finally {
+      setLoadingArchived(false);
+    }
+  }, [archivedDateFrom, archivedDateTo, runtime.environment, runtime.source, search]);
+
+  useEffect(() => {
+    if (viewMode === "archived") {
+      void loadArchivedOrders();
+    }
+  }, [viewMode, loadArchivedOrders]);
+
+  const activeFilteredOrders = useMemo(() => {
     const todayStr = formatIsoDate(new Date());
     const normalizedSearch = search.trim().toLowerCase();
 
@@ -3056,10 +3270,115 @@ const OrdersBoard = ({
       });
   }, [orders, search, selectedCalendarDate, statusFilter]);
 
+  const displayedOrders = viewMode === "active" ? activeFilteredOrders : archivedOrders;
+
+  const toggleSelectOrder = (orderId: string) => {
+    setSelectedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedOrderIds.size >= displayedOrders.length && displayedOrders.length > 0) {
+      setSelectedOrderIds(new Set());
+    } else {
+      setSelectedOrderIds(new Set(displayedOrders.map((o) => o.id)));
+    }
+  };
+
+  const selectedOrdersList = useMemo(() => {
+    return displayedOrders.filter((o) => selectedOrderIds.has(o.id));
+  }, [displayedOrders, selectedOrderIds]);
+
+  const activeSelectedCount = useMemo(() => {
+    return selectedOrdersList.filter((o) => o.status !== "cancelled").length;
+  }, [selectedOrdersList]);
+
+  const cancelledSelectedCount = useMemo(() => {
+    return selectedOrdersList.filter((o) => o.status === "cancelled").length;
+  }, [selectedOrdersList]);
+
+  const handleArchiveSingle = async (order: InternalOrder) => {
+    if (runtime.source !== "d1") return;
+    setActionBusy(true);
+    try {
+      if (order.status !== "cancelled") {
+        await batchArchiveOrdersV2([order.id], runtime.environment, "Cancelado para basurero");
+      } else {
+        await archiveCancelledOrderV2(order.id, runtime.environment);
+      }
+      runtime.reload(true);
+      if (viewMode === "archived") void loadArchivedOrders();
+    } catch {
+      // handled
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const handleUnarchiveSingle = async (order: InternalOrder) => {
+    if (runtime.source !== "d1") return;
+    setActionBusy(true);
+    try {
+      await unarchiveOrderV2(order.id, runtime.environment);
+      runtime.reload(true);
+      void loadArchivedOrders();
+    } catch {
+      // handled
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const handleBatchArchiveClick = () => {
+    if (selectedOrderIds.size === 0) return;
+    if (activeSelectedCount > 0) {
+      setConfirmModalOpen(true);
+    } else {
+      void executeBatchArchive();
+    }
+  };
+
+  const executeBatchArchive = async () => {
+    if (runtime.source !== "d1" || selectedOrderIds.size === 0) return;
+    setActionBusy(true);
+    try {
+      await batchArchiveOrdersV2(Array.from(selectedOrderIds), runtime.environment, "Limpieza de turno");
+      setSelectedOrderIds(new Set());
+      setConfirmModalOpen(false);
+      runtime.reload(true);
+      if (viewMode === "archived") void loadArchivedOrders();
+    } catch {
+      // handled
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const executeBatchRestore = async () => {
+    if (runtime.source !== "d1" || selectedOrderIds.size === 0) return;
+    setActionBusy(true);
+    try {
+      for (const id of Array.from(selectedOrderIds)) {
+        await unarchiveOrderV2(id, runtime.environment);
+      }
+      setSelectedOrderIds(new Set());
+      runtime.reload(true);
+      void loadArchivedOrders();
+    } catch {
+      // handled
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
   const commandOrder =
-    filteredOrders.find((order) => order.status === "ready") ??
-    filteredOrders.find((order) => order.status === "new") ??
-    filteredOrders[0];
+    displayedOrders.find((order) => order.status === "ready") ??
+    displayedOrders.find((order) => order.status === "new") ??
+    displayedOrders[0];
 
   return (
     <section className="orders-command">
@@ -3068,39 +3387,123 @@ const OrdersBoard = ({
           <div>
             <p className="home-section-label">Cola de pedidos V3</p>
             <h2 className="mt-1 text-2xl font-black text-zinc-50">
-              Pedidos
+              {viewMode === "active" ? "Pedidos Activos" : "🗑️ Basurero / Archivadas"}
             </h2>
             <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
-              Gestión estandarizada con jerarquía clara: Total, Dónde entregar y Fecha de entrega.
+              {viewMode === "active"
+                ? "Gestión estandarizada con jerarquía clara: Total, Dónde entregar y Fecha de entrega."
+                : "Consulta u opera la restauración de pedidos archivados previamente en Cloudflare D1."}
             </p>
           </div>
           <div className="orders-board-shell__summary flex items-center gap-2">
             <span className="orders-summary-chip font-bold">
-              {filteredOrders.length} visibles
+              {displayedOrders.length} visibles
             </span>
-            <span className="orders-summary-chip bg-emerald-500/20 text-emerald-300 font-bold">
-              {orders.filter((order) => order.status === "ready").length} listos
-            </span>
+            {viewMode === "active" ? (
+              <span className="orders-summary-chip bg-emerald-500/20 text-emerald-300 font-bold">
+                {orders.filter((order) => order.status === "ready").length} listos
+              </span>
+            ) : null}
           </div>
         </div>
 
-        {/* Horizontal Calendar Date Rail */}
-        <HorizontalDateCalendarFilter
-          orders={orders}
-          selectedDate={selectedCalendarDate}
-          onSelectDate={(dateKey) => setSelectedCalendarDate(dateKey)}
-        />
+        {/* View Mode Switcher & Select All Toolbar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pb-3 border-b border-zinc-800">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                viewMode === "active"
+                  ? "bg-emerald-500 text-zinc-950 shadow-md"
+                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700"
+              }`}
+              onClick={() => {
+                setViewMode("active");
+                setSelectedOrderIds(new Set());
+              }}
+            >
+              ⚡ Operaciones Activas ({activeFilteredOrders.length})
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                viewMode === "archived"
+                  ? "bg-rose-600 text-white shadow-md"
+                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700"
+              }`}
+              onClick={() => {
+                setViewMode("archived");
+                setSelectedOrderIds(new Set());
+              }}
+            >
+              🗑️ Basurero / Archivadas {loadingArchived ? "(...)" : `(${archivedOrders.length})`}
+            </button>
+          </div>
 
-        {orders.length ? (
-          <div className="orders-filters flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-3 pt-3 border-t border-zinc-800">
-            <label className="orders-search flex-1">
+          {displayedOrders.length > 0 ? (
+            <label className="flex items-center gap-2 text-xs text-zinc-300 font-semibold cursor-pointer select-none">
               <input
-                className="input text-sm w-full bg-zinc-900/90 border-zinc-800 focus:border-emerald-500"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="🔍 Buscar por folio, cliente o ubicación..."
+                type="checkbox"
+                className="w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-zinc-950"
+                checked={selectedOrderIds.size > 0 && selectedOrderIds.size >= displayedOrders.length}
+                onChange={toggleSelectAll}
+              />
+              Seleccionar todas ({displayedOrders.length})
+            </label>
+          ) : null}
+        </div>
+
+        {/* Date Filter Bar for Archived View */}
+        {viewMode === "archived" ? (
+          <div className="flex flex-wrap items-center gap-3 my-3 p-3 bg-zinc-900/80 border border-zinc-800 rounded-xl">
+            <span className="text-xs font-bold text-zinc-400">Filtrar Basurero por fecha:</span>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-300">
+              <span>Desde:</span>
+              <input
+                type="date"
+                className="input text-xs py-1 px-2 bg-zinc-950 border-zinc-800"
+                value={archivedDateFrom}
+                onChange={(e) => setArchivedDateFrom(e.target.value)}
               />
             </label>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-300">
+              <span>Hasta:</span>
+              <input
+                type="date"
+                className="input text-xs py-1 px-2 bg-zinc-950 border-zinc-800"
+                value={archivedDateTo}
+                onChange={(e) => setArchivedDateTo(e.target.value)}
+              />
+            </label>
+            <Button
+              className="btn-sm bg-zinc-800 hover:bg-zinc-700 text-xs py-1 px-2.5"
+              onClick={() => void loadArchivedOrders()}
+              disabled={loadingArchived}
+            >
+              {loadingArchived ? "Cargando..." : "🔍 Filtrar"}
+            </Button>
+          </div>
+        ) : null}
+
+        {/* Horizontal Calendar Date Rail (Active view) */}
+        {viewMode === "active" ? (
+          <HorizontalDateCalendarFilter
+            orders={orders}
+            selectedDate={selectedCalendarDate}
+            onSelectDate={(dateKey) => setSelectedCalendarDate(dateKey)}
+          />
+        ) : null}
+
+        <div className="orders-filters flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-3 pt-3 border-t border-zinc-800">
+          <label className="orders-search flex-1">
+            <input
+              className="input text-sm w-full bg-zinc-900/90 border-zinc-800 focus:border-emerald-500"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="🔍 Buscar por folio, cliente o ubicación..."
+            />
+          </label>
+          {viewMode === "active" ? (
             <div className="orders-filter-group flex items-center gap-2">
               <span className="text-xs text-zinc-400 font-bold">Estado:</span>
               <div className="orders-filter-pills flex items-center gap-1 overflow-x-auto">
@@ -3120,46 +3523,37 @@ const OrdersBoard = ({
                 ))}
               </div>
             </div>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
       </Card>
 
-      {orders.length === 0 ? (
+      {displayedOrders.length === 0 ? (
         <EmptyOrdersState
-          title="Sin pedidos activos."
-          description="La cola está vacía en este entorno. Cuando entre un pedido nuevo, aparecerá aquí."
-          action={
-            <Button
-              className="orders-secondary-action"
-              onClick={() => runtime.reload(true)}
-              disabled={runtime.loading || !runtime.sessionActive}
-            >
-              {runtime.loading ? "Actualizando..." : "Actualizar"}
-            </Button>
+          title={viewMode === "active" ? "Sin pedidos activos." : "El basurero está vacío."}
+          description={
+            viewMode === "active"
+              ? "La cola está vacía en este entorno. Cuando entre un pedido nuevo, aparecerá aquí."
+              : "No hay órdenes archivadas con los filtros o fechas seleccionados."
           }
-        />
-      ) : !filteredOrders.length ? (
-        <EmptyOrdersState
-          title="No hay pedidos para este filtro."
-          description="Prueba seleccionando otra fecha en el calendario o ajustando el estado y la búsqueda."
           action={
             <Button
               className="orders-secondary-action"
               onClick={() => {
-                setStatusFilter("all");
-                setSelectedCalendarDate("all");
-                setSearch("");
+                if (viewMode === "archived") void loadArchivedOrders();
+                else runtime.reload(true);
               }}
+              disabled={runtime.loading || loadingArchived}
             >
-              Ver todos los pedidos
+              {runtime.loading || loadingArchived ? "Actualizando..." : "Actualizar"}
             </Button>
           }
         />
       ) : (
         <div className="orders-command__workspace mt-4">
           <div className="orders-command__queue">
-            {filteredOrders.map((order) => {
+            {displayedOrders.map((order) => {
               const highlighted = runtime.highlightedOrderIds.has(order.id);
+              const isSelected = selectedOrderIds.has(order.id);
               return (
                 <Card
                   key={order.id}
@@ -3170,7 +3564,12 @@ const OrdersBoard = ({
                     onOpen={() => setSelected(order)}
                     onMove={move}
                     onCancel={(nextOrder) => requestCancellation(nextOrder, "pedidos")}
-                    busy={runtime.actionOrderId === order.id}
+                    onArchive={handleArchiveSingle}
+                    onUnarchive={handleUnarchiveSingle}
+                    busy={runtime.actionOrderId === order.id || actionBusy}
+                    selected={isSelected}
+                    onToggleSelect={toggleSelectOrder}
+                    isArchived={viewMode === "archived"}
                   />
                 </Card>
               );
@@ -3187,6 +3586,29 @@ const OrdersBoard = ({
           ) : null}
         </div>
       )}
+
+      {/* Floating Selection Bar */}
+      <BatchActionBar
+        selectedCount={selectedOrderIds.size}
+        activeCount={activeSelectedCount}
+        cancelledCount={cancelledSelectedCount}
+        onClearSelection={() => setSelectedOrderIds(new Set())}
+        onBatchArchive={viewMode === "active" ? handleBatchArchiveClick : undefined}
+        onBatchRestore={viewMode === "archived" ? executeBatchRestore : undefined}
+        isArchivedView={viewMode === "archived"}
+        busy={actionBusy}
+      />
+
+      {/* Confirmation Modal */}
+      <BatchConfirmModal
+        open={confirmModalOpen}
+        activeCount={activeSelectedCount}
+        cancelledCount={cancelledSelectedCount}
+        totalCount={selectedOrderIds.size}
+        onConfirm={executeBatchArchive}
+        onCancel={() => setConfirmModalOpen(false)}
+        busy={actionBusy}
+      />
     </section>
   );
 };
