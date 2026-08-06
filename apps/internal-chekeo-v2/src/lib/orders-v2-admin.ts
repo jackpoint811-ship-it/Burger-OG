@@ -1,6 +1,9 @@
 import type {
   OrdersV2AdminResponse,
   ArchiveOrderV2Response,
+  UnarchiveOrderV2Response,
+  BatchArchiveOrdersV2Response,
+  FetchOrdersV2AdminOptions,
   OrdersV2SummaryResponse,
   OrderV2Environment,
   OrderV2PaymentStatus,
@@ -12,11 +15,7 @@ import type {
   UpdateOrderV2StatusResponse,
 } from "@config/index";
 
-type FetchOrdersV2AdminOptions = {
-  includeTerminal?: boolean;
-  limit?: number;
-  environment?: OrderV2Environment;
-};
+export type { FetchOrdersV2AdminOptions };
 
 export type FetchOrdersV2SummaryOptions = {
   from?: string;
@@ -78,6 +77,10 @@ export const fetchOrdersV2Admin = async (
   params.set("environment", options.environment ?? "production");
   params.set("includeTerminal", String(Boolean(options.includeTerminal)));
   if (options.limit) params.set("limit", String(options.limit));
+  if (options.archived) params.set("archived", options.archived);
+  if (options.search?.trim()) params.set("search", options.search.trim());
+  if (options.from?.trim()) params.set("from", options.from.trim());
+  if (options.to?.trim()) params.set("to", options.to.trim());
 
   const res = await fetch(`/api/orders-v2-admin?${params.toString()}`, buildSessionFetchInit());
   const envelope = await parseJsonEnvelope<OrdersV2AdminResponse>(res);
@@ -193,6 +196,40 @@ export const archiveCancelledOrderV2 = async (
   if (!envelope.data?.order)
     throw new Error("No se pudo ocultar el pedido. Actualiza la lista e inténtalo de nuevo.");
   return envelope.data.order;
+};
+
+export const unarchiveOrderV2 = async (
+  orderId: string,
+  environment: OrderV2Environment,
+) => {
+  const params = new URLSearchParams({ environment });
+  const res = await fetch(
+    `/api/orders-v2-admin/${encodeURIComponent(orderId)}/unarchive?${params.toString()}`,
+    buildSessionFetchInit({ method: "PATCH" }),
+  );
+  const envelope = await parseJsonEnvelope<UnarchiveOrderV2Response>(res);
+  if (!envelope.data?.order)
+    throw new Error("No se pudo restaurar el pedido. Actualiza la lista e inténtalo de nuevo.");
+  return envelope.data.order;
+};
+
+export const batchArchiveOrdersV2 = async (
+  orderIds: string[],
+  environment: OrderV2Environment,
+  cancelReason?: string,
+) => {
+  const res = await fetch(
+    `/api/orders-v2-admin/batch-archive`,
+    buildSessionFetchInit({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderIds, environment, cancelReason }),
+    }),
+  );
+  const envelope = await parseJsonEnvelope<BatchArchiveOrdersV2Response>(res);
+  if (!envelope.data)
+    throw new Error("No se pudieron enviar las órdenes al basurero. Inténtalo de nuevo.");
+  return envelope.data;
 };
 
 export const exportOrdersV2Csv = async (

@@ -2,6 +2,9 @@ node_modules/
 dist/
 test-results/
 playwright-report/
+.env
+.env.*
+.dev.vars
 .wrangler/
 .wrangler/tmp/
 .dev.vars
@@ -14,3 +17,13 @@ playwright-report/
 *.log
 .DS_Store
 Thumbs.db
+
+# Agent temporary workspace logs & states
+.agents/*
+!.agents/skills/
+..agents/
+agents/
+
+# Python cache
+__pycache__/
+*.pyc

@@ -15,10 +15,32 @@ export type AssetRef = {
   placeholder: string;
 };
 
+export type ComboItemOption = {
+  sku: string;
+  isDefault?: boolean;
+  upchargeCents: number;
+};
+
+export type ComboOptionGroup = {
+  id: string;
+  name: string;
+  isRequired: boolean;
+  minSelections: number;
+  maxSelections: number;
+  options: ComboItemOption[];
+};
+
+export type MenuItemComboConfig = {
+  isCombo: boolean;
+  bundlePriceCents: number;
+  optionGroups: ComboOptionGroup[];
+};
+
 export type MenuCategory = {
   id: string;
-  key: "burgers" | "combos" | "extras" | "guarniciones" | "drinks";
+  key: "burgers" | "combos" | "extras" | "guarniciones" | "drinks" | string;
   name: string;
+  emoji?: string;
   sortOrder: number;
   updatedAt?: string;
 };
@@ -29,6 +51,10 @@ export type MenuItem = {
   name: string;
   description: string;
   price: number;
+  promoPrice?: number;
+  isPromoActive?: boolean;
+  promoExpiresAt?: string;
+  comboConfig?: MenuItemComboConfig;
   imageUrl?: string;
   imageKey?: string;
   badge?: string;
@@ -191,6 +217,11 @@ export type CatalogBanner = {
   ctaLabel?: string;
   imageKey?: string;
   imageUrl?: string;
+  bgPreset?: string;
+  badgeText?: string;
+  badgeColor?: string;
+  ctaActionType?: 'category' | 'product' | 'raffle' | 'url' | string;
+  ctaTarget?: string;
   isActive: boolean;
   sortOrder: number;
   updatedAt?: string;
@@ -200,6 +231,7 @@ export type MenuV2Response = {
   categories: MenuCategory[];
   items: MenuItem[];
   promos: PromoCard[];
+  recipes?: Record<string, string[]>;
   categoryBanners?: MenuCategoryBanner[];
   catalogBanners?: CatalogBanner[];
   siteConfig: SiteConfig;
@@ -265,6 +297,28 @@ export type OrderV2Source =
   | "seed"
   | "import";
 
+export type OrderV2DeliveryInfo = {
+  location?: string;
+  isScheduled?: boolean;
+  scheduledDate?: string;
+  scheduledTime?: string;
+  customerNotes?: string;
+};
+
+export type OrderItemModifier = {
+  type: 'remove' | 'extra' | 'upgrade' | 'note';
+  code?: string;
+  name: string;
+  priceCents: number;
+};
+
+export type OrderItemComponent = {
+  kind: 'garnish' | 'drink' | 'side';
+  sku: string;
+  name: string;
+  upchargeCents: number;
+};
+
 export type OrderV2ItemKind =
   | "burger"
   | "combo"
@@ -302,6 +356,8 @@ export type OrderV2Item = {
   qty: number;
   unitPrice: number;
   lineTotal: number;
+  modifiers?: OrderItemModifier[];
+  components?: OrderItemComponent[];
   snapshot?: Record<string, unknown>;
   createdAt?: string;
 };
@@ -322,6 +378,7 @@ export type OrderV2 = {
   folio: string;
   customerName: string;
   customerPhone: string;
+  delivery?: OrderV2DeliveryInfo;
   orderMode: OrderV2Mode;
   paymentMethod: OrderV2PaymentMethod;
   paymentStatus: OrderV2PaymentStatus;
@@ -341,10 +398,11 @@ export type OrderV2Error = { code: string; message: string };
 
 export type CreateOrderV2Payload = {
   customer: { name: string; phone: string };
+  delivery?: OrderV2DeliveryInfo;
   orderMode: OrderV2Mode;
   paymentMethod?: OrderV2PaymentMethod;
   notes?: string;
-  items: Array<{ sku: string; qty: number } & OrderV2ItemCustomization>;
+  items: Array<{ sku: string; qty: number; modifiers?: OrderItemModifier[]; components?: OrderItemComponent[] } & OrderV2ItemCustomization>;
   idempotencyKey?: string;
   referralCode?: string;
   environment?: OrderV2Environment;
@@ -444,6 +502,36 @@ export type ArchiveOrderV2Response = {
   ok: boolean;
   data?: { order: OrderV2; event?: OrderV2Event };
   error?: OrderV2Error;
+};
+
+export type UnarchiveOrderV2Response = {
+  ok: boolean;
+  data?: { order: OrderV2; event?: OrderV2Event };
+  error?: OrderV2Error;
+};
+
+export type BatchArchiveOrdersV2Payload = {
+  orderIds: string[];
+  cancelReason?: string;
+  environment?: OrderV2Environment;
+};
+
+export type BatchArchiveOrdersV2Response = {
+  ok: boolean;
+  data?: { archivedCount: number; cancelledCount: number; orders: OrderV2[] };
+  error?: OrderV2Error;
+};
+
+export type FetchOrdersV2AdminMode = 'false' | 'true' | 'all';
+
+export type FetchOrdersV2AdminOptions = {
+  includeTerminal?: boolean;
+  limit?: number;
+  environment?: OrderV2Environment;
+  archived?: FetchOrdersV2AdminMode;
+  search?: string;
+  from?: string;
+  to?: string;
 };
 
 export type UpdateOrderV2PaymentPayload = {

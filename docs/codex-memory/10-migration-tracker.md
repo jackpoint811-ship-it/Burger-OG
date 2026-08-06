@@ -20,7 +20,11 @@
 
 ### En revision
 
-- [ ] Documentacion de lanzamiento controlado completado
+- [ ] PR `feat/orders-dto-pr1`: Contratos DTO en `packages/config` y especificación `21-order-communication-and-recipe-spec.md`.
+- [ ] PR `feat/orders-dto-pr2`: Backend Endpoints Cloudflare Pages (`orders-v2` & `orders-v2-admin`).
+- [ ] PR `feat/orders-dto-pr3`: Public Order V2 Frontend (`PublicOrderApp` & `CatalogCheckoutDrawer`).
+- [ ] PR `feat/orders-dto-pr4`: Chekeo V2 Frontend (`InternalChekeoApp`, `KitchenQueue`, `order-parser`).
+
 
 ### Bloqueado
 

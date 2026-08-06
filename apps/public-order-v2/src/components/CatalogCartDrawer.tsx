@@ -1,7 +1,7 @@
-import { useEffect, useId, useRef, type MouseEvent } from "react";
+import { useEffect, useId, useRef, useState, type MouseEvent } from "react";
 import { formatCurrency } from "../lib/order";
-import { resolveCatalogAssetUrl, type CatalogProduct } from "../lib/catalog-mode";
-import { CATALOG_CART_MAX_QTY } from "../lib/catalog-cart";
+import { resolveCatalogAssetUrl } from "../lib/catalog-mode";
+import { CATALOG_CART_MAX_QTY, type CatalogCartItem } from "../lib/catalog-cart";
 import { useCatalogCart } from "./CatalogCartContext";
 import { motion, useReducedMotion } from "framer-motion";
 
@@ -9,7 +9,7 @@ type CatalogCartDrawerProps = {
   isOpen: boolean;
   onClose: () => void;
   onCheckout: () => void;
-  sides?: CatalogProduct[];
+  onEditItem?: (item: CatalogCartItem) => void;
 };
 
 const focusableSelector = [
@@ -21,16 +21,28 @@ const focusableSelector = [
   "[tabindex]:not([tabindex='-1'])",
 ].join(",");
 
-export function CatalogCartDrawer({ isOpen, onClose, onCheckout, sides = [] }: CatalogCartDrawerProps) {
-  const { items, total, setQty, removeItem, addItem } = useCatalogCart();
+export function CatalogCartDrawer({ isOpen, onClose, onCheckout, onEditItem }: CatalogCartDrawerProps) {
+  const { items, total, setQty, removeItem, setItems } = useCatalogCart();
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
   const shouldReduceMotion = useReducedMotion();
 
-  const hasBurger = items.some((item) => item.type === "burger");
-  const hasSide = items.some((item) => item.type === "side");
-  const showUpsell = hasBurger && !hasSide && sides.length > 0;
+  const [lastOrder, setLastOrder] = useState<CatalogCartItem[] | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("pov2-last-order");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setLastOrder(parsed);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -47,10 +59,11 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout, sides = [] }: C
       }
       if (event.key !== "Tab") return;
 
-      const focusableElements = Array.from(
-        dialogRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? []
-      );
-      if (!focusableElements.length) { event.preventDefault(); return; }
+      const focusableElements = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? []);
+      if (!focusableElements.length) {
+        event.preventDefault();
+        return;
+      }
 
       const first = focusableElements[0];
       const last = focusableElements[focusableElements.length - 1];
@@ -80,6 +93,12 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout, sides = [] }: C
     if (event.target === event.currentTarget) onClose();
   };
 
+  const handleReorderLast = () => {
+    if (lastOrder && lastOrder.length > 0) {
+      setItems(lastOrder);
+    }
+  };
+
   return (
     <motion.div
       className="catalog-drawer-backdrop"
@@ -101,49 +120,123 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout, sides = [] }: C
         exit={shouldReduceMotion ? { opacity: 0 } : { y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
       >
+        <div className="catalog-drawer__handle" aria-hidden="true" />
+
         <header className="catalog-drawer__header catalog-cart-drawer__header">
-          <h2 id={titleId} className="catalog-cart-drawer__title">Tu carrito</h2>
-          <button
-            ref={closeRef}
-            type="button"
-            className="catalog-drawer__close"
-            onClick={onClose}
-            aria-label="Cerrar carrito"
-          >
+          <div className="catalog-cart-drawer__title-row">
+            <h2 id={titleId} className="catalog-cart-drawer__title">
+              <span className="catalog-cart-drawer__title-icon" aria-hidden="true">
+                🛒
+              </span>
+              Tu carrito
+            </h2>
+            {items.length > 0 && (
+              <span className="catalog-cart-drawer__item-count">
+                {items.reduce((acc, i) => acc + i.qty, 0)} {items.reduce((acc, i) => acc + i.qty, 0) === 1 ? "producto" : "productos"}
+              </span>
+            )}
+          </div>
+          <button ref={closeRef} type="button" className="catalog-drawer__close" onClick={onClose} aria-label="Cerrar carrito">
             <span aria-hidden="true">×</span>
           </button>
         </header>
 
         {items.length === 0 ? (
           <div className="catalog-cart-drawer__empty">
-            <p>Tu carrito está vacío.</p>
+            <svg viewBox="0 0 120 120" fill="none" className="catalog-cart-drawer__empty-svg" aria-hidden="true">
+              <circle cx="60" cy="60" r="58" fill="currentColor" fillOpacity="0.04" stroke="var(--color-accent)" strokeWidth="1" strokeOpacity="0.2" />
+              <path d="M30 40H38L46 82H88" stroke="var(--color-accent)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.5" />
+              <circle cx="52" cy="92" r="6" fill="var(--color-accent)" fillOpacity="0.3" stroke="var(--color-accent)" strokeWidth="2" />
+              <circle cx="80" cy="92" r="6" fill="var(--color-accent)" fillOpacity="0.3" stroke="var(--color-accent)" strokeWidth="2" />
+              <path d="M46 50H90L86 74H50L46 50Z" fill="var(--color-accent)" fillOpacity="0.08" stroke="var(--color-accent)" strokeWidth="2" strokeLinejoin="round" />
+            </svg>
+            <p className="catalog-cart-drawer__empty-text">Tu carrito está vacío</p>
+            <p className="catalog-cart-drawer__empty-hint">Agrega productos del menú para empezar</p>
+
+            {/* Tarjeta 1-Tap Reorder si existe pedido anterior */}
+            {lastOrder && (
+              <div className="catalog-cart-reorder-card">
+                <p className="catalog-cart-reorder-title">🔄 ¿Repetir tu último pedido?</p>
+                <p className="catalog-cart-reorder-sub">
+                  {lastOrder.map((i) => `${i.qty}x ${i.name}`).join(", ")}
+                </p>
+                <button type="button" className="catalog-cart-reorder-btn" onClick={handleReorderLast}>
+                  ⚡ Repetir Pedido Anterior
+                </button>
+              </div>
+            )}
+
             <button type="button" className="catalog-cart-drawer__empty-cta" onClick={onClose}>
-              Seguir explorando
+              ← Explorar menú
             </button>
           </div>
         ) : (
           <>
+            {/* Tarjeta 1-Tap Reorder cuando hay items si se desea cambiar */}
+            {lastOrder && (
+              <div className="catalog-cart-reorder-card-compact">
+                <span>🔄 Tu último pedido anterior guardado</span>
+                <button type="button" className="catalog-cart-reorder-btn-sm" onClick={handleReorderLast}>
+                  Cargar Último Pedido
+                </button>
+              </div>
+            )}
+
             <ul className="catalog-cart-drawer__list" aria-label="Productos en el carrito">
               {items.map((item) => {
                 const src = resolveCatalogAssetUrl(item.imageUrl, item.imageKey);
+                const canEdit = item.type === "burger" || item.type === "combo";
+
                 return (
-                  <li key={item.productId} className="catalog-cart-item">
+                  <li key={item.cartItemId} className="catalog-cart-item">
                     <div className="catalog-cart-item__image" aria-hidden="true">
-                      {src
-                        ? <img src={src} alt="" decoding="async" loading="lazy" />
-                        : <span className="catalog-cart-item__image-placeholder" />
-                      }
+                      {src ? <img src={src} alt="" decoding="async" loading="lazy" /> : <span className="catalog-cart-item__image-placeholder" />}
                     </div>
                     <div className="catalog-cart-item__info">
-                      <p className="catalog-cart-item__name">{item.name}</p>
-                      <p className="catalog-cart-item__price">{formatCurrency(item.price)}</p>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
+                        <p className="catalog-cart-item__name">{item.name}</p>
+                        {canEdit && onEditItem && (
+                          <button
+                            type="button"
+                            className="catalog-cart-item__edit-btn"
+                            onClick={() => onEditItem(item)}
+                            title="Editar receta de esta burger"
+                          >
+                            ✏️ Editar
+                          </button>
+                        )}
+                      </div>
+                      <div className="catalog-cart-item__price-row">
+                        <span className="catalog-cart-item__price">
+                          {formatCurrency(item.price + (item.upgrades?.reduce((sum, u) => sum + u.price * u.qty, 0) || 0))}
+                        </span>
+                        {item.qty > 1 && (
+                          <span className="catalog-cart-item__subtotal">
+                            × {item.qty} = {formatCurrency((item.price + (item.upgrades?.reduce((sum, u) => sum + u.price * u.qty, 0) || 0)) * item.qty)}
+                          </span>
+                        )}
+                      </div>
+                      {item.mods && item.mods.length > 0 && (
+                        <div style={{ fontSize: "11px", color: "var(--color-danger)", marginTop: "4px" }}>
+                          {item.mods.join(", ")}
+                        </div>
+                      )}
+                      {item.upgrades && item.upgrades.length > 0 && (
+                        <div style={{ fontSize: "11px", color: "var(--color-accent)", marginTop: "2px", display: "flex", flexDirection: "column", gap: "2px" }}>
+                          {item.upgrades.map((u) => (
+                            <span key={u.id}>
+                              + {u.qty}x {u.name} ({formatCurrency(u.price)})
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="catalog-cart-item__controls">
                       <button
                         type="button"
                         className="catalog-cart-item__qty-btn"
                         aria-label={`Reducir cantidad de ${item.name}`}
-                        onClick={() => setQty(item.productId, item.qty - 1)}
+                        onClick={() => setQty(item.cartItemId, item.qty - 1)}
                       >
                         −
                       </button>
@@ -155,7 +248,7 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout, sides = [] }: C
                         className="catalog-cart-item__qty-btn"
                         aria-label={`Aumentar cantidad de ${item.name}`}
                         disabled={item.qty >= CATALOG_CART_MAX_QTY}
-                        onClick={() => setQty(item.productId, item.qty + 1)}
+                        onClick={() => setQty(item.cartItemId, item.qty + 1)}
                       >
                         +
                       </button>
@@ -164,7 +257,7 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout, sides = [] }: C
                       type="button"
                       className="catalog-cart-item__remove"
                       aria-label={`Eliminar ${item.name} del carrito`}
-                      onClick={() => removeItem(item.productId)}
+                      onClick={() => removeItem(item.cartItemId)}
                     >
                       <span aria-hidden="true">×</span>
                     </button>
@@ -173,46 +266,19 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout, sides = [] }: C
               })}
             </ul>
 
-            {showUpsell && (
-              <div className="catalog-cart-upsell">
-                <h4 className="catalog-cart-upsell__title">¿Te gustaría acompañar tu hamburguesa?</h4>
-                <div className="catalog-cart-upsell__carousel">
-                  {sides.map((side) => {
-                    const sideSrc = resolveCatalogAssetUrl(side.imageUrl, side.imageKey);
-                    return (
-                      <div key={side.id} className="catalog-cart-upsell-item">
-                        <div className="catalog-cart-upsell-item__image">
-                          {sideSrc ? (
-                            <img src={sideSrc} alt="" decoding="async" loading="lazy" />
-                          ) : (
-                            <span className="catalog-cart-upsell-item__image-placeholder" />
-                          )}
-                        </div>
-                        <div className="catalog-cart-upsell-item__info">
-                          <p className="catalog-cart-upsell-item__name">{side.name}</p>
-                          <p className="catalog-cart-upsell-item__price">{formatCurrency(side.price)}</p>
-                        </div>
-                        <button
-                          type="button"
-                          className="catalog-cart-upsell-item__add"
-                          onClick={() => addItem(side)}
-                        >
-                          + Agregar
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
             <div className="catalog-cart-drawer__footer">
               <div className="catalog-cart-drawer__total">
-                <span>Total</span>
+                <div className="catalog-cart-drawer__total-label">
+                  <span>Total</span>
+                  <span className="catalog-cart-drawer__iva-note">IVA incluido</span>
+                </div>
                 <strong>{formatCurrency(total)}</strong>
               </div>
               <button type="button" className="catalog-cart-drawer__checkout" onClick={onCheckout}>
-                Ir a Checkout
+                <span className="catalog-cart-drawer__checkout-icon" aria-hidden="true">
+                  →
+                </span>
+                <span>Ir a Checkout</span>
               </button>
             </div>
           </>

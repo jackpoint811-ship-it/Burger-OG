@@ -102,22 +102,41 @@ const paymentTimingLabels: Record<Exclude<PaymentTiming, "">, string> = {
 };
 const CHECKOUT_NOTES_MAX_LENGTH = 500;
 
-const createEmptyCustomer = (): CustomerDraft => ({
-  name: "",
-  phone: "",
-  notes: "",
-  referralCode: "",
-  location: "",
-  paymentMethod: "unknown",
-  paymentTiming: "",
-  wantsWhatsappGroup: true,
-});
-const normalizePhoneDigits = (phone: string) => {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length === 12 && digits.startsWith("52")) {
-    return digits.slice(2);
+const createInitialCustomer = (): CustomerDraft => {
+  let storedName = "";
+  let storedPhone = "";
+  let storedLocation = "";
+  try {
+    storedName = localStorage.getItem("pov2-customer-name") || "";
+    storedPhone = localStorage.getItem("pov2-customer-phone") || "";
+    const loc = localStorage.getItem("pov2-customer-location");
+    if (loc === "Torre GGA" || loc === "Torre Valcob") storedLocation = loc;
+  } catch {
+    /* noop */
   }
-  return digits;
+  return {
+    name: storedName,
+    phone: storedPhone ? formatPhoneForDisplay(storedPhone) : "",
+    notes: "",
+    referralCode: "",
+    location: (storedLocation as "" | "Torre GGA" | "Torre Valcob"),
+    paymentMethod: "unknown",
+    paymentTiming: "",
+    wantsWhatsappGroup: true,
+  };
+};
+const normalizePhoneDigits = (phone: string) => {
+  let digits = String(phone || "").replace(/\D/g, "");
+  if (digits.length === 13 && digits.startsWith("521")) {
+    digits = digits.slice(3);
+  } else if (digits.length === 12 && digits.startsWith("52")) {
+    digits = digits.slice(2);
+  } else if (digits.length === 11 && (digits.startsWith("0") || digits.startsWith("1"))) {
+    digits = digits.slice(1);
+  } else if (digits.length > 10 && digits.startsWith("52")) {
+    digits = digits.slice(2);
+  }
+  return digits.slice(0, 10);
 };
 const formatPhoneForDisplay = (phone: string) => {
   const digits = normalizePhoneDigits(phone);
@@ -125,10 +144,11 @@ const formatPhoneForDisplay = (phone: string) => {
   return parts.join(" ");
 };
 const getPhoneError = (phone: string) => {
-  const digitCount = normalizePhoneDigits(phone).length;
-  if (digitCount === 10) return null;
-  if (digitCount < 10) return `Faltan ${10 - digitCount} dígito${10 - digitCount === 1 ? "" : "s"}. Escribe 10 dígitos, ej. 2221234567.`;
-  return `Sobran ${digitCount - 10} dígito${digitCount - 10 === 1 ? "" : "s"}. El teléfono debe tener exactamente 10 dígitos.`;
+  const digits = normalizePhoneDigits(phone);
+  if (!digits) return "El teléfono es obligatorio. Escribe 10 dígitos, ej. 2221234567.";
+  if (digits.length === 10) return null;
+  if (digits.length < 10) return `Faltan ${10 - digits.length} dígito${10 - digits.length === 1 ? "" : "s"}. Escribe 10 dígitos, ej. 2221234567.`;
+  return `El teléfono debe tener exactamente 10 dígitos.`;
 };
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: "auto" });
 const createId = (prefix: string) => {
@@ -190,6 +210,7 @@ const toggleTicketExtra = (extras: TicketExtra[], item: MenuItem, source: Ticket
   return [...extras, { sku: item.sku, name: item.name, price: item.price, source }];
 };
 const OG_REMOVABLE_INGREDIENTS = [
+  "Carne smash",
   "Tocino",
   "Queso americano",
   "Queso manchego",
@@ -201,6 +222,7 @@ const OG_REMOVABLE_INGREDIENTS = [
   "Mayonesa",
 ] as const;
 const BBQ_REMOVABLE_INGREDIENTS = [
+  "Carne smash",
   "Tocino",
   "Queso americano",
   "Queso manchego",
@@ -243,12 +265,14 @@ const REMOVABLE_INGREDIENTS_BY_SKU: Record<string, readonly string[]> = {
 };
 const normalizeCatalogKey = (value: string) => value.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "");
 const getRemovableIngredients = (item: MenuItem): string[] => {
-  const skuIngredients = REMOVABLE_INGREDIENTS_BY_SKU[normalizeCatalogKey(item.sku)];
+  const skuKey = normalizeCatalogKey(item.sku);
+  const skuIngredients = REMOVABLE_INGREDIENTS_BY_SKU[skuKey];
   if (skuIngredients) return [...skuIngredients];
 
   const nameKey = normalizeCatalogKey(item.name);
-  if (/^(?:BURGER-|HAMBURGUESA-|COMBO-)?OG$/.test(nameKey)) return [...OG_REMOVABLE_INGREDIENTS];
-  if (/^(?:BURGER-|HAMBURGUESA-|COMBO-)?BBQ$/.test(nameKey)) return [...BBQ_REMOVABLE_INGREDIENTS];
+  if (/(^|-)OG($|-)/.test(skuKey) || /(^|-)OG($|-)/.test(nameKey)) return [...OG_REMOVABLE_INGREDIENTS];
+  if (/(^|-)BBQ($|-)/.test(skuKey) || /(^|-)BBQ($|-)/.test(nameKey)) return [...BBQ_REMOVABLE_INGREDIENTS];
+  if (item.category === "burgers" || inferItemKind(item) === "burger") return [...OG_REMOVABLE_INGREDIENTS];
   return [];
 };
 const getKnownProductIngredients = (item: MenuItem): readonly string[] | null => {
@@ -1937,7 +1961,17 @@ export function PublicOrderApp() {
   const [raffleCampaign, setRaffleCampaign] = useState<RaffleCampaignPublicV2 | null>(null);
   const [loadingMenu, setLoadingMenu] = useState(true);
   const [showBoot, setShowBoot] = useState(true);
-  const [customer, setCustomer] = useState<CustomerDraft>(() => createEmptyCustomer());
+  const [customer, setCustomer] = useState<CustomerDraft>(() => createInitialCustomer());
+
+  useEffect(() => {
+    try {
+      if (customer.name) localStorage.setItem("pov2-customer-name", customer.name);
+      if (customer.phone) localStorage.setItem("pov2-customer-phone", normalizePhoneDigits(customer.phone));
+      if (customer.location) localStorage.setItem("pov2-customer-location", customer.location);
+    } catch {
+      /* noop */
+    }
+  }, [customer.name, customer.phone, customer.location]);
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [checkoutFieldErrors, setCheckoutFieldErrors] = useState<CheckoutErrors>({});
@@ -2226,12 +2260,25 @@ export function PublicOrderApp() {
     setSubmitting(true);
     try {
       const referralCode = customer.referralCode.trim().toUpperCase();
-      const response = await createOrderV2({ customer: { name: customer.name.trim(), phone: normalizePhoneDigits(customer.phone) }, orderMode: orderModeForBackend, paymentMethod: customer.paymentMethod, notes, items: payloadItems, ...(referralCode ? { referralCode } : {}), ...(isPreviewMode ? { environment: orderEnvironment } : {}) }, idempotencyKey);
+      const response = await createOrderV2({
+        customer: { name: customer.name.trim(), phone: normalizePhoneDigits(customer.phone) },
+        delivery: {
+          location: customer.location,
+          isScheduled: false,
+          customerNotes: customer.notes.trim() || undefined,
+        },
+        orderMode: orderModeForBackend,
+        paymentMethod: customer.paymentMethod,
+        notes,
+        items: payloadItems,
+        ...(referralCode ? { referralCode } : {}),
+        ...(isPreviewMode ? { environment: orderEnvironment } : {})
+      }, idempotencyKey);
       const order = response.data?.order;
       if (!order) throw new Error("No pudimos confirmar el folio del pedido. Intenta de nuevo.");
       setOrderConfirmation({ ...order, paymentMethod: customer.paymentMethod, location: customer.location, environment: orderEnvironment, referralAccepted: response.data?.referralAccepted, customerReferralCode: response.data?.customerReferralCode, activeRaffleTitle: response.data?.activeRaffleTitle, earnedTickets: response.data?.earnedTickets });
       setCart([]);
-      setCustomer(createEmptyCustomer());
+      setCustomer(createInitialCustomer());
       clearDraftIdempotencyKey();
       navigate("success");
     } catch (error) {
@@ -2241,7 +2288,7 @@ export function PublicOrderApp() {
       setSubmitting(false);
     }
   };
-  const handleCreateAnother = () => { setOrderConfirmation(null); setCheckoutError(null); setCheckoutFieldErrors({}); setCheckoutStep(0); setCart([]); setCustomer(createEmptyCustomer()); clearDraftIdempotencyKey(); setBuilder(null); setExtraGarnishQuantities({}); setSideQuestError(null); setSideQuestEntryMode("builder"); navigate("menu"); };
+  const handleCreateAnother = () => { setOrderConfirmation(null); setCheckoutError(null); setCheckoutFieldErrors({}); setCheckoutStep(0); setCart([]); setCustomer(createInitialCustomer()); clearDraftIdempotencyKey(); setBuilder(null); setExtraGarnishQuantities({}); setSideQuestError(null); setSideQuestEntryMode("builder"); navigate("menu"); };
   const openInfoDialog = (item: MenuItem) => {
     setInfoItem(item);
     window.history.pushState({ burgersExePublicSection: sectionRef.current, modal: "menu-info" }, "", `${window.location.pathname}${window.location.search}#${sectionRef.current}-info`);
@@ -2278,6 +2325,7 @@ export function PublicOrderApp() {
         items={menuData.items}
         categories={menuData.categories}
         siteConfig={menuData.siteConfig}
+        recipes={menuData.recipes}
         catalogBanners={menuData.catalogBanners}
         source={menuData.source}
       />

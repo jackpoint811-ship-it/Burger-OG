@@ -1,4 +1,4 @@
-import type { MenuCategory, MenuItem } from "@config/index";
+import type { MenuCategory, MenuItem, MenuItemComboConfig } from "@config/index";
 
 export type CatalogProductType = "burger" | "combo" | "side" | "topping" | "drink";
 
@@ -11,10 +11,15 @@ export type CatalogProduct = {
   name: string;
   description?: string;
   price: number;
+  promoPrice?: number;
+  isPromoActive?: boolean;
+  promoLabel?: string;
+  comboConfig?: MenuItemComboConfig;
   imageUrl?: string;
   imageKey?: string;
   badge?: string;
   isAvailable: boolean;
+  isFeatured: boolean;
   sortOrder: number;
 };
 
@@ -86,12 +91,28 @@ export function mapMenuItemsToCatalogProducts(items: MenuItem[], categories: Men
         name: item.name,
         description: item.description,
         price: item.price,
+        promoPrice: item.promoPrice,
+        isPromoActive: item.isPromoActive,
+        promoLabel: item.promoLabel,
+        comboConfig: item.comboConfig,
         imageUrl: item.imageUrl,
         imageKey: item.imageKey,
-        badge: item.badge ?? item.promoLabel,
+        badge: item.badge ?? (item.isPromoActive ? (item.promoLabel || "⚡ PRECIO ESPECIAL") : item.promoLabel),
         isAvailable: item.isAvailable,
+        isFeatured: item.isFeatured,
         sortOrder: item.sortOrder
       };
     })
     .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+}
+
+export function getCategoryEmoji(key: string, name: string): string {
+  const k = key.toLowerCase();
+  const n = name.toLowerCase();
+  if (k.includes("burg") || n.includes("burg")) return "🍔";
+  if (k.includes("combo") || n.includes("combo")) return "🔥";
+  if (k.includes("entr") || k.includes("side") || n.includes("papas") || n.includes("entr")) return "🍟";
+  if (k.includes("beb") || k.includes("drink") || n.includes("beb")) return "🥤";
+  if (k.includes("postre") || n.includes("postre")) return "🍦";
+  return "🏷️";
 }

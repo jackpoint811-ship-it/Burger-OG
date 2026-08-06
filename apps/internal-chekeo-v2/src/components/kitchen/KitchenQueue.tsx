@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card } from "@ui/index";
 import {
   CheckCircle2,
@@ -8,21 +8,23 @@ import {
   RefreshCw,
 } from "lucide-react";
 import type {
-  KitchenSummaryKResponse,
   OrderStatus,
   OrderV2Environment,
 } from "@config/index";
-import { fetchKitchenSummaryK } from "../../lib/ingredients-v2-admin";
+import { HorizontalDateCalendarFilter } from "../HorizontalDateCalendarFilter";
+import { parseOrderCustomerDetails } from "../../lib/order-parser";
 import {
+  buildCategoryProgressBadge,
   buildKitchenLocalSummary,
   buildKitchenProductionItems,
   buildKitchenOrderQueueSummary,
   extractKitchenLocation,
   getComboBurgerNotes,
+  getKitchenBurgerBreakdowns,
   getKitchenItemActionKind,
   getKitchenItemImage,
+  getKitchenItemKind,
   getKitchenItemLabel,
-  getKitchenItemNotes,
   stripLocationFromNotes,
 } from "./kitchen-helpers";
 import type {
@@ -34,8 +36,10 @@ import type {
   MoveKitchenOrderStatus,
   ToggleKitchenItemDone,
 } from "./kitchen-types";
+import { KitchenSummaryK } from "./KitchenSummaryK";
 
-type KitchenSummaryK = NonNullable<KitchenSummaryKResponse["data"]>;
+const formatIsoDate = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 const aggregateSummaryRows = <T extends { name: string; quantity: number }>(items: T[]): T[] => {
   const map = new Map<string, T>();
@@ -113,113 +117,107 @@ const buildOrderGroups = (items: KitchenProductionItem[]): OrderGroup[] => {
 
 const KitchenEmptyState = ({ title }: { title: string }) => (
   <Card className="border-dashed border-zinc-700/90 p-5 text-center">
-    <p className="text-base font-black text-zinc-100">{title}</p>
+    <p className="text-base font-black text-zinc-900 dark:text-zinc-100">{title}</p>
   </Card>
 );
 
 /* ------------------------------------------------------------------ */
-/*  Item detail list (unchanged from previous, filters by lane)       */
+/*  Item detail list (structured MOD and UPGRADE per burger)          */
 /* ------------------------------------------------------------------ */
 
 const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
   const isPrep = item.lane === "prep";
 
-  // BURGER block (Combo burgers)
-  const comboNotes = isPrep ? getComboBurgerNotes(item.item) : [];
+  let sideQuestSource: React.ReactNode | null = null;
+  if (!isPrep) {
+    const isFromCombo =
+      item.item.itemKind === "combo" ||
+      Boolean(item.item.parentItemName) ||
+      (item.itemLabel && item.itemLabel.includes("De combo"));
 
-  // MOD block
-  const mods = isPrep ? item.item.removedIngredients.map((ing) => `Sin ${ing}`) : [];
+    const comboName =
+      item.item.parentItemName ||
+      (item.itemLabel?.includes("De combo")
+        ? item.itemLabel.replace(/.*De combo\s*·?\s*/i, "")
+        : item.item.name);
 
-  // UPGRADE block
-  const upgrades = isPrep
-    ? item.item.extras
-        .map((e) =>
-          e.name
-            .replace(/\bextras?\b/gi, "")
-            .replace(/\s+/g, " ")
-            .trim(),
-        )
-        .filter(Boolean)
+    if (isFromCombo && comboName) {
+      sideQuestSource = (
+        <span className="kitchen-note-chip text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 inline-flex">
+          De combo &middot; {comboName}
+        </span>
+      );
+    } else {
+      sideQuestSource = (
+        <span className="kitchen-note-chip text-[11px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 inline-flex">
+          Individual
+        </span>
+      );
+    }
+  }
+
+  const breakdowns = isPrep
+    ? getKitchenBurgerBreakdowns(item.item, item.detailLabel)
     : [];
 
-  const hasModOrUpgrade = mods.length > 0 || upgrades.length > 0;
-
-  // Note block — unified, shown as NOTA DEL PEDIDO
-  const generalNote = stripLocationFromNotes(item.order.note);
-  const itemNote = isPrep ? item.item.burgerNote : null;
-  const noteText = [itemNote, generalNote].filter(Boolean).join(" · ");
-
-  // Side Quest source indicator (De combo / Individual)
-  const sideQuestSource: string | null = !isPrep
-    ? item.item.parentItemName
-      ? "De combo"
-      : "Individual"
-    : null;
-
   return (
-    <div className="kitchen-item-details">
-      {comboNotes.length ? (
-        <div className="kitchen-detail-block kitchen-detail-block--burger">
-          <p className="kitchen-detail-label">Burgers del combo</p>
-          <div className="mt-2 grid gap-2">
-            {comboNotes.map((note) => (
-              <span key={note} className="kitchen-note-chip kitchen-note-chip--combo">
-                {note}
-              </span>
-            ))}
-          </div>
-        </div>
-      ) : null}
+    <div className="kitchen-item-details space-y-2">
+      {isPrep && breakdowns.length ? (
+        <div className="space-y-3 mt-2">
+          {breakdowns.map((b, idx) => (
+            <div key={`${b.burgerName}-${idx}`} className="kitchen-detail-block border-t border-zinc-800/40 pt-2 first:border-0 first:pt-0">
+              {breakdowns.length > 1 && b.burgerName !== item.detailLabel ? (
+                <p className="text-xs font-black uppercase text-lime-400 mb-1">
+                  🍔 {b.burgerName}
+                </p>
+              ) : null}
 
-      {isPrep && hasModOrUpgrade ? (
-        <div className="kitchen-detail-block kitchen-detail-block--mod-upgrade grid gap-3 grid-cols-2">
-          {/* MOD column — always shown when hasModOrUpgrade */}
-          <div className="kitchen-detail-block h-full">
-            <p className="kitchen-detail-label text-rose-300">MOD</p>
-            {mods.length ? (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {mods.map((note) => (
-                  <span key={note} className="kitchen-note-chip kitchen-note-chip--mod">
-                    {note}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-2 text-xs text-zinc-600 italic">—</p>
-            )}
-          </div>
-          {/* UPGRADE column — always shown when hasModOrUpgrade */}
-          <div className="kitchen-detail-block h-full">
-            <p className="kitchen-detail-label text-lime-300">UPGRADE</p>
-            {upgrades.length ? (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {upgrades.map((note) => (
-                  <span key={note} className="kitchen-note-chip kitchen-note-chip--upgrade">
-                    {note}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-2 text-xs text-zinc-600 italic">—</p>
-            )}
-          </div>
-        </div>
-      ) : null}
+              {!b.isOriginal ? (
+                <div className="kitchen-detail-block--mod-upgrade grid gap-3 grid-cols-2">
+                  <div className="kitchen-detail-block h-full">
+                    <p className="kitchen-detail-label text-rose-400">MOD</p>
+                    {b.mods.length ? (
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {b.mods.map((mod) => (
+                          <span key={mod} className="kitchen-note-chip kitchen-note-chip--mod font-bold text-rose-300">
+                            ❌ {mod.startsWith("Sin ") ? mod : `Sin ${mod}`}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-1.5 text-xs text-zinc-500 italic">—</p>
+                    )}
+                  </div>
+                  <div className="kitchen-detail-block h-full">
+                    <p className="kitchen-detail-label text-lime-300">UPGRADE</p>
+                    {b.upgrades.length ? (
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {b.upgrades.map((up) => (
+                          <span key={up} className="kitchen-note-chip kitchen-note-chip--upgrade font-bold text-lime-300">
+                            ➕ {up.startsWith("Extra ") ? up : `Extra ${up}`}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-1.5 text-xs text-zinc-500 italic">—</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="kitchen-no-changes">Burger original · Sin cambios</p>
+              )}
 
-      {isPrep && !hasModOrUpgrade && !comboNotes.length ? (
-        <p className="kitchen-no-changes">Burger original · Sin cambios</p>
+              {b.note ? (
+                <p className="mt-1 text-xs text-amber-300 italic">Nota burger: {b.note}</p>
+              ) : null}
+            </div>
+          ))}
+        </div>
       ) : null}
 
       {sideQuestSource ? (
         <div className="mt-2">
-          <span className="kitchen-note-chip text-xs">{sideQuestSource}</span>
-        </div>
-      ) : null}
-
-      {noteText ? (
-        <div className="kitchen-order-note">
-          <p className="kitchen-order-note__label">NOTA DEL PEDIDO</p>
-          <p className="kitchen-order-note__text">{noteText}</p>
+          {sideQuestSource}
         </div>
       ) : null}
     </div>
@@ -257,7 +255,7 @@ const AccordionItemRow = ({
       onClick={onExpand}
     >
       {itemImage ? (
-        <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden bg-zinc-900 border border-zinc-800">
+        <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden bg-zinc-50 dark:bg-zinc-900 border border-zinc-800">
           <img src={itemImage} alt={entry.detailLabel || entry.item.name} className="w-full h-full object-cover opacity-90" loading="lazy" />
         </div>
       ) : null}
@@ -322,10 +320,12 @@ const AccordionItemRow = ({
 const ActiveOrderContainer = ({
   group,
   busyLineKey,
+  laneMode,
   onToggle,
 }: {
   group: OrderGroup;
   busyLineKey: string | null;
+  laneMode: "prep" | "sideQuest";
   onToggle: (entry: KitchenProductionItem, done: boolean) => void;
 }) => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -349,45 +349,47 @@ const ActiveOrderContainer = ({
     }
   };
 
-  const location = extractKitchenLocation(group.order.note);
-  const hasCombo = group.items.some(
-    (entry) => entry.kind === "combo" || entry.item.parentItemName,
-  );
-  
-  const quickSummary = buildKitchenOrderQueueSummary(group.order);
+  const createdAtIso = group.order.createdAtIso || (group.order.createdAtMs ? new Date(group.order.createdAtMs).toISOString() : undefined);
+  const details = parseOrderCustomerDetails(group.order.customer, group.order.note, createdAtIso, group.order.delivery);
+  const location = details.deliveryLocation || extractKitchenLocation(group.order.note);
+  const categoryProgress = buildCategoryProgressBadge(group.order, laneMode);
+  const orderNoteText = stripLocationFromNotes(group.order.note);
 
   return (
     <section className="kitchen-active-order kitchen-production-card" aria-label="Orden activa">
       <div className="kitchen-active-order__header flex-col md:flex-row">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-lime-400 m-0">Pedido Activo</p>
-            <span className="text-[10px] font-black bg-lime-400/20 text-lime-300 px-1.5 py-0.5 rounded uppercase tracking-[0.1em]">
-              {group.doneCount}/{group.items.length}
-            </span>
+            {categoryProgress ? (
+              <span className="text-xs font-black bg-lime-400/20 text-lime-300 px-2 py-0.5 rounded tracking-[0.05em]">
+                {categoryProgress}
+              </span>
+            ) : (
+              <span className="text-[10px] font-black bg-lime-400/20 text-lime-300 px-1.5 py-0.5 rounded uppercase tracking-[0.1em]">
+                {group.doneCount}/{group.items.length}
+              </span>
+            )}
           </div>
           <h3 className="kitchen-active-order__customer">
-            {group.order.customer}
+            {details.cleanCustomerName}
           </h3>
-          {quickSummary ? (
-            <p className="mt-1 mb-2 text-sm font-bold text-cyan-300 bg-cyan-950/30 border border-cyan-800/50 inline-block px-2 py-1 rounded-md">
-              {quickSummary}
-            </p>
-          ) : null}
           <p className="kitchen-active-order__folio kitchen-production-card__folio">{group.order.folio}</p>
         </div>
-        <div className="flex flex-wrap md:justify-end gap-1.5 self-start w-full md:w-auto mt-2 md:mt-0">
+        <div className="flex flex-wrap md:justify-end gap-1.5 self-start w-full md:w-auto mt-2 md:mt-0 items-center">
           <span className="kitchen-location-chip">
             <MapPin size={14} aria-hidden="true" />
             {location}
           </span>
-          {hasCombo ? (
-            <span className="kitchen-location-chip kitchen-location-chip--combo">
-              Combo
-            </span>
-          ) : null}
         </div>
       </div>
+
+      {orderNoteText ? (
+        <div className="kitchen-order-note mb-4 mx-4">
+          <p className="kitchen-order-note__label">NOTA DEL PEDIDO</p>
+          <p className="kitchen-order-note__text">{orderNoteText}</p>
+        </div>
+      ) : null}
 
       <div className="kitchen-active-order__items">
         {group.items.length === 1 ? (
@@ -438,7 +440,7 @@ const PendingOrdersQueue = ({
       {expanded ? (
         <button
           type="button"
-          className="kitchen-following-orders__toggle w-full flex items-center justify-between px-4 py-3 text-left font-black text-cyan-400 hover:bg-zinc-800/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime-300 transition-colors"
+          className="kitchen-following-orders__toggle w-full flex items-center justify-between px-4 py-3 text-left font-black text-cyan-400 hover:bg-zinc-100 dark:bg-zinc-800/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime-300 transition-colors"
           onClick={() => setExpanded(false)}
           aria-expanded={true}
         >
@@ -452,20 +454,18 @@ const PendingOrdersQueue = ({
       {expanded ? (
         <div className="kitchen-following-orders__list border-t border-zinc-800/40 p-3 space-y-3">
           {groups.map((group) => {
-            const shortSummary = isSideQuest
-              ? buildKitchenOrderQueueSummary(group.order)
-              : null;
+            const shortSummary = buildKitchenOrderQueueSummary(group.order, laneMode);
             return (
-              <div key={group.orderId} className="kitchen-production-card bg-zinc-950/60 border border-zinc-800/80 p-3 rounded-xl text-left">
+              <div key={group.orderId} className="kitchen-production-card bg-white dark:bg-zinc-950/60 border border-zinc-800/80 p-3 rounded-xl text-left">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-black text-zinc-100 text-lg">{group.order.customer}</p>
+                    <p className="font-black text-zinc-900 dark:text-zinc-100 text-lg">{group.order.customer}</p>
                     {shortSummary ? (
-                      <p className="text-xs text-zinc-400 mt-0.5">{shortSummary}</p>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">{shortSummary}</p>
                     ) : null}
                   </div>
                   <Button
-                    className="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-xs px-3 py-1.5 h-auto min-h-0 whitespace-nowrap"
+                    className="bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 text-xs px-3 py-1.5 h-auto min-h-0 whitespace-nowrap"
                     onClick={() => onSelect(group.orderId)}
                   >
                     Abrir
@@ -477,7 +477,7 @@ const PendingOrdersQueue = ({
         </div>
       ) : (
         <div
-          className="kitchen-following-orders__list p-3 grid gap-2 cursor-pointer hover:bg-zinc-900/20"
+          className="kitchen-following-orders__list p-3 grid gap-2 cursor-pointer hover:bg-zinc-50 dark:bg-zinc-900/20"
           onClick={() => setExpanded(true)}
           role="button"
           tabIndex={0}
@@ -496,27 +496,42 @@ const PendingOrdersQueue = ({
           </div>
           {visible.map((group, idx) => {
             const isFirst = idx === 0;
-            const opacityValue = isFirst ? 1 : idx === 1 ? 0.75 : idx === 2 ? 0.55 : 0.4;
-            const shortSummary = isSideQuest
-              ? buildKitchenOrderQueueSummary(group.order)
-              : null;
+            const shortSummary = buildKitchenOrderQueueSummary(group.order, laneMode);
+            const timeElapsed = group.order.createdAtMs ? Math.floor((Date.now() - group.order.createdAtMs) / 60000) : null;
+
             return (
               <div
                 key={group.orderId}
-                className={`kitchen-production-card flex justify-between items-center px-3 py-2.5 rounded-lg border transition-all ${
-                  isFirst ? "border-cyan-500/30 bg-cyan-950/20" : "border-zinc-800/40 bg-zinc-950/20"
+                className={`kitchen-production-card flex justify-between items-center px-3 py-3 rounded-lg border transition-all cursor-pointer ${
+                  isFirst ? "border-lime-500/40 bg-lime-50 dark:bg-lime-950/20" : "border-zinc-800/80 bg-white dark:bg-zinc-950/40 hover:border-lime-500/30 hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
                 }`}
-                style={{ opacity: opacityValue }}
+                onClick={() => onSelect(group.orderId)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelect(group.orderId);
+                  }
+                }}
               >
                 <div className="text-left min-w-0 flex-1">
-                  <p className={`text-[10px] font-black uppercase tracking-[0.16em] mb-0.5 ${isFirst ? "text-cyan-300" : "text-zinc-500"}`}>
-                    {isFirst ? "Siguiente" : "Después"}
-                  </p>
-                  <p className={`font-black ${isFirst ? "text-zinc-100 text-base" : "text-zinc-300 text-sm"}`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-[10px] font-black uppercase tracking-[0.1em] px-1.5 py-0.5 rounded ${isFirst ? "bg-lime-400 text-lime-950" : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"}`}>
+                      #{idx + 1} {isFirst ? "Próximo" : "En cola"}
+                    </span>
+                    <span className="text-xs font-bold text-zinc-500">{group.order.folio}</span>
+                    {timeElapsed !== null ? (
+                      <span className="text-xs font-bold text-amber-600 dark:text-amber-400 ml-auto">
+                        {timeElapsed} min
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="font-black text-zinc-900 dark:text-zinc-100 text-base">
                     {group.order.customer}
                   </p>
                   {shortSummary ? (
-                    <p className="truncate text-xs text-zinc-500 mt-0.5">{shortSummary}</p>
+                    <p className="truncate text-xs font-bold text-zinc-600 dark:text-zinc-400 mt-1">{shortSummary}</p>
                   ) : null}
                 </div>
               </div>
@@ -541,11 +556,13 @@ const DoneOrdersList = ({
   groups,
   label,
   busyLineKey,
+  laneMode,
   onToggle,
 }: {
   groups: OrderGroup[];
   label: string;
   busyLineKey: string | null;
+  laneMode: "prep" | "sideQuest";
   onToggle: (entry: KitchenProductionItem, done: boolean) => void;
 }) => {
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
@@ -560,15 +577,15 @@ const DoneOrdersList = ({
     <section className="kitchen-done-list">
       <button
         type="button"
-        className="kitchen-done-list__toggle flex flex-col items-start gap-1 p-3 w-full border-t border-zinc-800/40 hover:bg-zinc-800/20 transition-colors mt-4"
+        className="kitchen-done-list__toggle flex flex-col items-start gap-1 p-3 w-full border-t border-zinc-800/40 hover:bg-zinc-100 dark:bg-zinc-800/20 transition-colors mt-4"
         onClick={() => setExpanded((prev) => !prev)}
         aria-expanded={expanded}
       >
         <div className="flex w-full items-center justify-between">
-          <span className="text-[11px] font-black tracking-[0.2em] uppercase text-zinc-300">
+          <span className="text-[11px] font-black tracking-[0.2em] uppercase text-zinc-700 dark:text-zinc-300">
             {label} · {groups.length} {groups.length === 1 ? "pedido" : "pedidos"}
           </span>
-          {expanded ? <ChevronUp size={16} className="text-zinc-400" /> : <ChevronDown size={16} className="text-zinc-400" />}
+          {expanded ? <ChevronUp size={16} className="text-zinc-600 dark:text-zinc-400" /> : <ChevronDown size={16} className="text-zinc-600 dark:text-zinc-400" />}
         </div>
         {!expanded ? (
           <span className="text-xs text-zinc-500">Toca para revisar o revertir</span>
@@ -591,11 +608,11 @@ const DoneOrdersList = ({
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="font-black text-zinc-100">{group.order.customer}</p>
+                      <p className="font-black text-zinc-900 dark:text-zinc-100">{group.order.customer}</p>
                       <span className="kitchen-dot kitchen-dot--done">Hecha</span>
                     </div>
                     <p className="mt-0.5 text-sm text-zinc-500">{group.order.folio}</p>
-                    <p className="mt-1 text-xs text-zinc-400 font-bold">{buildKitchenOrderQueueSummary(group.order)}</p>
+                    <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400 font-bold">{buildKitchenOrderQueueSummary(group.order, laneMode)}</p>
                   </div>
                   {isGroupExpanded ? (
                     <ChevronUp size={16} className="text-zinc-500 flex-shrink-0" />
@@ -688,7 +705,7 @@ const ProductionLanePanel = ({
           >
             {laneName}
           </p>
-          <p className="mt-1 text-sm text-zinc-400">{laneDescription}</p>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{laneDescription}</p>
         </div>
         <span className="kitchen-note-chip">
           {pendingGroups.reduce((acc, g) => acc + g.pendingCount, 0)} pendientes
@@ -700,6 +717,7 @@ const ProductionLanePanel = ({
         <ActiveOrderContainer
           group={activeGroup}
           busyLineKey={busyLineKey}
+          laneMode={laneMode}
           onToggle={onToggle}
         />
       ) : null}
@@ -718,208 +736,9 @@ const ProductionLanePanel = ({
         groups={doneGroups}
         label="Listas"
         busyLineKey={busyLineKey}
+        laneMode={laneMode}
         onToggle={onToggle}
       />
-    </section>
-  );
-};
-
-/* ------------------------------------------------------------------ */
-/*  Summary metrics (unchanged)                                       */
-/* ------------------------------------------------------------------ */
-
-const SummaryMetric = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) => (
-  <Card className="border-cyan-500/20 bg-zinc-950 p-4">
-    <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400">
-      {label}
-    </p>
-    <p className="mt-2 text-3xl font-black text-cyan-100">{value}</p>
-  </Card>
-);
-
-/* ------------------------------------------------------------------ */
-/*  Resumen K panel (unchanged)                                       */
-/* ------------------------------------------------------------------ */
-
-const KitchenSummaryKPanel = ({
-  environment,
-  localSummary,
-}: {
-  environment: OrderV2Environment;
-  localSummary: KitchenLocalSummary;
-}) => {
-  const [summary, setSummary] = useState<KitchenSummaryK | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setSummary(await fetchKitchenSummaryK(environment));
-    } catch {
-      setError("No se pudo cargar Resumen K. Cocina sigue funcionando normalmente.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void load();
-  }, [environment]);
-
-  const burgerRows =
-    summary?.hasRecipes && summary.burgers?.length
-      ? aggregateSummaryRows(summary.burgers)
-      : localSummary.burgersList;
-
-  const garnishRows =
-    summary?.hasRecipes && summary.garnishes?.length
-      ? aggregateSummaryRows(summary.garnishes)
-      : localSummary.garnishesList;
-
-  const totalBurgers =
-    summary?.hasRecipes && summary.totals?.burgers
-      ? summary.totals.burgers
-      : localSummary.burgers;
-
-  const totalGarnishes =
-    summary?.hasRecipes && summary.totals?.garnishes
-      ? summary.totals.garnishes
-      : localSummary.garnishes;
-
-  const costText =
-    summary?.totals?.estimatedCostCents == null
-      ? "—"
-      : formatCurrency(summary.totals.estimatedCostCents / 100);
-  const estimatedProfitText =
-    summary?.totals?.estimatedCostCents == null
-      ? "—"
-      : formatCurrency(localSummary.estimatedSales - summary.totals.estimatedCostCents / 100);
-
-  return (
-    <section className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryMetric label="Total burgers" value={totalBurgers} />
-        <SummaryMetric label="Total guarniciones" value={totalGarnishes} />
-        <SummaryMetric label="Combos desglosados" value={localSummary.comboBurgers} />
-        <SummaryMetric label="Side Quest" value={localSummary.sideQuests} />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryMetric label="Por hacer" value={localSummary.pendingItems} />
-        <SummaryMetric label="Hechas" value={localSummary.doneItems} />
-        <SummaryMetric label="Extras" value={localSummary.extras} />
-        <SummaryMetric label="Ventas visibles" value={formatCurrency(localSummary.estimatedSales)} />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <SummaryMetric label="Costo producción" value={costText} />
-        <SummaryMetric label="Ganancia estimada" value={estimatedProfitText} />
-        <SummaryMetric label="Insumos" value={summary?.totals?.ingredients ?? 0} />
-      </div>
-
-      {loading ? (
-        <Card className="border-cyan-500/20 bg-zinc-950 p-4">
-          <p className="text-sm font-semibold text-cyan-100">Cargando Resumen K...</p>
-        </Card>
-      ) : null}
-
-      {error ? (
-        <Card className="border-rose-400/30 bg-rose-950/30 p-4">
-          <p className="text-sm font-bold text-rose-100">{error}</p>
-          <Button className="mt-3 border border-rose-300/30 bg-zinc-950" onClick={load}>
-            Reintentar
-          </Button>
-        </Card>
-      ) : null}
-
-      {summary && !summary.hasRecipes ? (
-        <Card className="border-amber-400/30 bg-amber-950/20 p-4">
-          <p className="text-sm font-bold text-amber-100">
-            Configura recetas aproximadas en Chekeo para desbloquear el cálculo de ingredientes.
-          </p>
-        </Card>
-      ) : null}
-
-      {summary ? (
-        <>
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card className="border-emerald-500/20 bg-zinc-950 p-4">
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-emerald-200">
-                {orderEnvironmentLabel[environment]} · burgers
-              </h3>
-              <div className="mt-3 space-y-2">
-                {burgerRows.length ? (
-                  burgerRows.map((item) => (
-                    <div key={item.sku || item.name} className="kitchen-summary-row">
-                      <span>{item.name}</span>
-                      <strong>{item.quantity}</strong>
-                    </div>
-                  ))
-                ) : (
-                  <KitchenEmptyState title="Sin burgers del día." />
-                )}
-              </div>
-            </Card>
-            <Card className="border-amber-500/20 bg-zinc-950 p-4">
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-amber-200">
-                {orderEnvironmentLabel[environment]} · guarniciones
-              </h3>
-              <div className="mt-3 space-y-2">
-                {garnishRows.length ? (
-                  garnishRows.map((item) => (
-                    <div key={item.sku || item.name} className="kitchen-summary-row">
-                      <span>{item.name}</span>
-                      <strong>{item.quantity}</strong>
-                    </div>
-                  ))
-                ) : (
-                  <KitchenEmptyState title="Sin guarniciones del día." />
-                )}
-              </div>
-            </Card>
-          </div>
-          <Card className="border-cyan-500/20 bg-zinc-950 p-4">
-            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-cyan-200">
-              Ingredientes estimados
-            </h3>
-            <div className="mt-3 space-y-2">
-              {summary.ingredients?.length ? (
-                summary.ingredients.map((ingredient) => (
-                  <div key={ingredient.ingredientId} className="kitchen-ingredient-row">
-                    <div>
-                      <p className="font-bold text-zinc-100">{ingredient.name}</p>
-                      <p className="text-xs text-zinc-400">
-                        Precio unitario:{" "}
-                        {ingredient.unitPriceCents == null
-                          ? "—"
-                          : formatCurrency(ingredient.unitPriceCents / 100)}
-                      </p>
-                    </div>
-                    <p className="font-black text-cyan-100">
-                      {ingredient.quantity.toFixed(2)} {ingredient.unit}
-                    </p>
-                    <p className="font-black text-emerald-200">
-                      {ingredient.estimatedCostCents == null
-                        ? "—"
-                        : formatCurrency(ingredient.estimatedCostCents / 100)}
-                    </p>
-                  </div>
-                ))
-              ) : !summary.hasRecipes ? (
-                <KitchenEmptyState title="Ingredientes estimados no disponibles porque faltan recetas configuradas." />
-              ) : (
-                <KitchenEmptyState title="Sin ingredientes estimados." />
-              )}
-            </div>
-          </Card>
-        </>
-      ) : null}
     </section>
   );
 };
@@ -940,15 +759,43 @@ export const KitchenQueue = ({
   onMove: MoveKitchenOrderStatus;
 }) => {
   const [view, setView] = useState<KitchenView>("preparacion");
+  const [selectedDate, setSelectedDate] = useState<string>("all");
   const [busyLineKey, setBusyLineKey] = useState<string | null>(null);
 
   const activeOrders = useMemo(
     () => orders.filter((order) => !terminalStatuses.has(order.status)),
     [orders],
   );
+
+  const filteredActiveOrders = useMemo(() => {
+    const todayStr = formatIsoDate(new Date());
+
+    return activeOrders.filter((order) => {
+      if (selectedDate === "all") return true;
+
+      const createdAtIso = order.createdAtIso || (order.createdAtMs ? new Date(order.createdAtMs).toISOString() : undefined);
+      const details = parseOrderCustomerDetails(order.customer, order.note, createdAtIso, order.delivery);
+      let orderDateStr = todayStr;
+
+      if (details.isScheduled && details.scheduledDeliveryDate) {
+        orderDateStr = details.scheduledDeliveryDate;
+      } else if (order.createdAtMs) {
+        orderDateStr = formatIsoDate(new Date(order.createdAtMs));
+      }
+
+      if (selectedDate === "today") {
+        return orderDateStr === todayStr;
+      }
+      if (selectedDate === "past") {
+        return orderDateStr < todayStr;
+      }
+      return orderDateStr === selectedDate;
+    });
+  }, [activeOrders, selectedDate]);
+
   const productionItems = useMemo(
-    () => buildKitchenProductionItems(activeOrders),
-    [activeOrders],
+    () => buildKitchenProductionItems(filteredActiveOrders),
+    [filteredActiveOrders],
   );
   const prepItems = useMemo(
     () => productionItems.filter((entry) => entry.lane === "prep"),
@@ -959,8 +806,8 @@ export const KitchenQueue = ({
     [productionItems],
   );
   const localSummary = useMemo(
-    () => buildKitchenLocalSummary(activeOrders),
-    [activeOrders],
+    () => buildKitchenLocalSummary(filteredActiveOrders),
+    [filteredActiveOrders],
   );
   const fallback = runtime.source !== "d1";
   const kitchenTitle = fallback
@@ -974,8 +821,9 @@ export const KitchenQueue = ({
 
   const toggleKitchenItem = useCallback(
     async (entry: KitchenProductionItem, done: boolean) => {
-      if (!entry.item.lineKey) return;
-      setBusyLineKey(entry.lineKey);
+      const targetLineKey = entry.item.lineKey || entry.lineKey;
+      if (!targetLineKey) return;
+      setBusyLineKey(targetLineKey);
       try {
         if (done && entry.order.status === "new") {
           await onMove(entry.order.id, "preparing", "Cocina: preparación actual");
@@ -985,7 +833,7 @@ export const KitchenQueue = ({
         }
         await onToggleKitchenItem(
           entry.order.id,
-          entry.lineKey,
+          targetLineKey,
           getKitchenItemActionKind(entry.item),
           done,
         );
@@ -1018,7 +866,7 @@ export const KitchenQueue = ({
             <h2 className="mt-1 text-2xl font-black text-zinc-50 md:text-3xl">
               Cocina
             </h2>
-            <p className="mt-1 max-w-3xl text-sm text-zinc-400">
+            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
               {kitchenTitle}. {kitchenHint}
             </p>
           </div>
@@ -1038,6 +886,11 @@ export const KitchenQueue = ({
             </Button>
           </div>
         </div>
+        <HorizontalDateCalendarFilter
+          orders={activeOrders}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
         <div className="kitchen-view-tabs" role="tablist">
           {kitchenViews.map((option) => (
             <button
@@ -1105,7 +958,7 @@ export const KitchenQueue = ({
       ) : null}
 
       {view === "summaryK" ? (
-        <KitchenSummaryKPanel
+        <KitchenSummaryK
           environment={runtime.environment}
           localSummary={localSummary}
         />

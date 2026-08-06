@@ -63,6 +63,7 @@ Esta carpeta funciona como memoria viva del proyecto.
 | `18-daily-ops-qa-routine.md` | Fase 8: rutina diaria para Codex, modelos, skills, QA, prompts y PRs. |
 | `19-risk-hardening-plan.md` | Fase 9: auditoria de riesgos pendientes, hardening y criterios go/no-go antes de produccion. |
 | `20-production-launch-readiness.md` | Readiness de lanzamiento productivo, estado de deploy, smoke, riesgos y rollback. |
+| `21-order-communication-and-recipe-spec.md` | Especificación de comunicación DTO estructurada, pestañas operativas (Pedidos, Cocina, Pagos) y catálogo de ingredientes/extras. |
 
 ## Nota
 

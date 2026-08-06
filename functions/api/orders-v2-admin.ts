@@ -7,7 +7,7 @@ import {
   mapD1OrderItemToOrderV2Item,
   mapD1OrderToOrderV2,
   parseOrderEnvironmentFromRequest,
-  requireAdminToken,
+  requireInternalOrigin,
   type AdminEnv
 } from './_orders-v2-utils';
 
@@ -135,7 +135,7 @@ const appendKitchenSideQuestItems = (items: OrderV2Item[]) =>
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   if (!env.BOG_MENU_DB) return errorResponse(503, 'MISSING_DB', 'BOG_MENU_DB no está configurado.');
-  const authError = await requireAdminToken(request, env);
+  const authError = await requireInternalOrigin(request);
   if (authError) return authError;
 
   const url = new URL(request.url);
@@ -150,17 +150,37 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const to = params.get('to')?.trim() ?? '';
   if ((from && !isDateOnly(from)) || (to && !isDateOnly(to))) return errorResponse(400, 'INVALID_DATE', 'Fechas inválidas.');
 
-  const conditions: string[] = ['archived_at IS NULL'];
+  const archivedParam = (params.get('archived') ?? params.get('archivedMode'))?.trim().toLowerCase() ?? 'false';
+  const searchParam = params.get('search')?.trim() ?? '';
+
+  const conditions: string[] = [];
   const bindings: Array<string | number> = [];
+
+  if (archivedParam === 'true' || archivedParam === '1') {
+    conditions.push('archived_at IS NOT NULL');
+  } else if (archivedParam === 'all') {
+    // No archived_at restriction
+  } else {
+    conditions.push('archived_at IS NULL');
+  }
+
   const environmentCondition = buildOrderEnvironmentCondition(environment);
   conditions.push(environmentCondition.condition);
   bindings.push(environmentCondition.binding);
+
   if (status) {
     conditions.push('status = ?');
     bindings.push(status);
-  } else if (!includeTerminal) {
+  } else if (!includeTerminal && archivedParam !== 'true' && archivedParam !== 'all') {
     conditions.push("status NOT IN ('delivered', 'cancelled')");
   }
+
+  if (searchParam) {
+    conditions.push('(LOWER(id) LIKE ? OR LOWER(folio) LIKE ? OR LOWER(customer_name) LIKE ? OR LOWER(customer_phone) LIKE ? OR LOWER(notes) LIKE ?)');
+    const term = `%${searchParam.toLowerCase()}%`;
+    bindings.push(term, term, term, term, term);
+  }
+
   if (from) {
     conditions.push('created_at >= ?');
     bindings.push(`${from}T00:00:00.000Z`);
@@ -202,9 +222,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     });
 
     const orders = orderRows
-      .filter((row: any) => includeTerminal || status || !TERMINAL_STATUSES.has(String(row.status) as OrderV2Status))
+      .filter((row: any) => includeTerminal || archivedParam === 'true' || archivedParam === 'all' || status || !TERMINAL_STATUSES.has(String(row.status) as OrderV2Status))
       .map((row: any) => {
-        const items = appendKitchenSideQuestItems(itemsByOrder.get(String(row.id)) ?? []);
+        const items = itemsByOrder.get(String(row.id)) ?? [];
         return mapD1OrderToOrderV2(row, items, eventsByOrder.get(String(row.id)) ?? []);
       });
 

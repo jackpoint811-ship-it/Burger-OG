@@ -13,7 +13,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, params }) => {
 
   const headers = new Headers();
   headers.set('content-type', object.httpMetadata?.contentType ?? inferImageContentType(key));
-  headers.set('cache-control', 'public, max-age=3600');
+  headers.set('cache-control', 'public, max-age=86400, s-maxage=31536000, immutable');
+  headers.set('vary', 'Accept');
   headers.set('x-content-type-options', 'nosniff');
   if (object.httpEtag) headers.set('etag', object.httpEtag);
 

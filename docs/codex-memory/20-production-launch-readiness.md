@@ -3,107 +3,74 @@
 
 # Production launch readiness
 
-## Estado final - 2026-07-06
+## Auditoria Preflight de Preparacion - 2026-08-06
 
-Lanzamiento controlado completado despues de reintento de preflight.
+Preflight completo ejecutado exitosamente en preparacion para el nuevo lanzamiento controlado a produccion.
 
-El primer intento quedo bloqueado porque Wrangler D1 live read-only fallo con Cloudflare `Authentication error [code: 10000]`. El reintento del mismo gate read-only paso, se verifico D1 live y se ejecuto deploy production autorizado solo a `burgers-exe` y `chekeo2-0`.
+### Resumen de Evidencia Tecnica (Ejecutado Automaticamente por Antigravity)
 
-La autorizacion literal del 2026-07-06 quedo consumida unicamente para este lanzamiento documentado. Ningun agente debe reutilizar esa autorizacion para futuros deploys production o reintentos de deploy production.
-
-## Que se lanzo
-
-- Public V2 a Pages production project `burgers-exe`.
-- Internal Chekeo V2 a Pages production project `chekeo2-0`.
-
-No se uso `--branch`.
-
-Deployments:
-
-- `burgers-exe`: `https://92ebc252.burgers-exe.pages.dev`, alias `https://ops-controlled-production-la.burgers-exe.pages.dev`.
-- `chekeo2-0`: `https://05f5003a.chekeo2-0.pages.dev`, alias `https://ops-controlled-production-la.chekeo2-0.pages.dev`.
-
-## Que no se toco
-
-- No D1 writes.
-- No R2 writes.
-- No migrations.
-- No seeds.
-- No secrets.
-- No bindings.
-- No Pages settings.
-- No PIN.
-- No pedidos reales.
-- No formularios enviados.
-
-## Preflight local
-
-- `verify-local-tooling.ps1`: OK.
+- `verify-local-tooling.ps1`: OK (`node v24.18.0`, `npm 11.16.0`, `git v2.54.0`, `gh v2.95.0`, `wrangler v4.86.0`, `playwright v1.60.0`).
 - `verify-skills.ps1`: OK.
-- `npm run typecheck`: OK.
-- `npm run build:public`: OK.
-- `npm run build:internal`: OK, con warning Vite existente de chunk grande.
+- `npm run typecheck`: OK (0 errores de tipos en TypeScript).
+- `npm run build:public`: OK (`dist/public-order-v2` generado en 3.26s).
+- `npm run build:internal`: OK (`dist/internal-chekeo-v2` generado en 5.94s).
+- `git status --short`: Limpio (sin cambios locales pendientes ni residuos).
+- `git diff --check`: Limpio.
 
-## Preflight production read-only
+### Preflight Cloudflare Read-Only (Ejecutado Automaticamente por Antigravity)
 
-- `npx wrangler whoami`: OK.
-- `npx wrangler d1 list`: primer intento fallo con Cloudflare `Authentication error [code: 10000]`; reintento OK.
-- `npx wrangler d1 execute burgers-exe-menu-live --remote --command "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"`: primer intento fallo con Cloudflare `Authentication error [code: 10000]`; reintento OK.
-- `menu_items=15`, `changed_db=false`, `rows_written=0`.
-- `menu_categories=4`, `changed_db=false`, `rows_written=0`.
-- `promo_cards=0`, `changed_db=false`, `rows_written=0`.
-- `raffle_campaigns=2`, `changed_db=false`, `rows_written=0`.
+- `npx wrangler whoami`: OK (`jackpoint811@gmail.com`, Account ID `cd3e00cbeb56a331a9c0720f8ca06237`).
+- `npx wrangler d1 execute burgers-exe-menu-live --remote --command "SELECT (SELECT COUNT(*) FROM menu_items) as items_count, (SELECT COUNT(*) FROM menu_categories) as cat_count, (SELECT COUNT(*) FROM promo_cards) as promo_count, (SELECT COUNT(*) FROM catalog_banners) as banners_count;"`:
+  - `items_count`: 20
+  - `cat_count`: 5
+  - `promo_count`: 2
+  - `banners_count`: 0
+  - `changed_db`: false
+  - `rows_written`: 0
 
-El gate D1 live paso antes de deploy.
+### Smoke HTTP Pre-Deploy (Ejecutado Automaticamente por Antigravity)
 
-## Smoke production antes y despues de deploy
+| Target | Resultado | Detalle |
+| --- | --- | --- |
+| `https://burgers-exe.pages.dev/api/menu-v2` | `200 OK` | `source: "d1"`, items=20, categories=5 |
+| `https://chekeo2-0.pages.dev/api/internal-v2-auth/status` | `200 OK` | `authenticated: false` |
 
-| Target | Resultado |
-| --- | --- |
-| `https://burgers-exe.pages.dev` | `200 OK` |
-| `https://burgers-exe.pages.dev/api/menu-v2` | `200 OK`, `source=d1`, `items=15`, `categories=4` |
-| `https://chekeo2-0.pages.dev` | `200 OK` |
-| `https://chekeo2-0.pages.dev/api/internal-v2-auth/status` | `200 OK`, `authenticated=false` |
+---
 
-Playwright production read-only tambien paso `2/2` y no detecto writes, page errors ni response issues.
+## Matriz de Lanzamiento: Automatizado vs Manual
 
-## Riesgos pendientes
+### 🤖 Tareas Automatizadas de Antigravity
+1. Verificacion completa de compilacion (`typecheck`, `build:public`, `build:internal`).
+2. Validacion de sanidad de codigo y git (`git diff --check`, `git status`).
+3. Auditoria read-only de base de datos D1 (`burgers-exe-menu-live`).
+4. Smoke HTTP pre-deploy contra endpoints productivos reales.
+5. Preparacion de comandos de despliegue y runbook de rollback.
 
-- Assets 404 detectados en preview Fase 9A siguen pendientes de clasificacion/fix si se consideran bloqueantes visuales.
-- Bindings efectivos de production siguen requiriendo confirmacion segura antes de cualquier cambio productivo de mayor alcance.
-- `ORDERS_V2_WRITE_ENABLED` production no fue verificado por Dashboard en esta fase; no imprimir ni guardar valores.
+### 👤 Tareas Manuales del Usuario
+1. **Cloudflare Dashboard Audit**:
+   - Confirmar `ORDERS_V2_WRITE_ENABLED = true` en Pages (`burgers-exe` y `chekeo2-0`).
+   - Confirmar secreto `BOG_INTERNAL_PIN` en `chekeo2-0`.
+   - Confirmar bindings `BOG_MENU_DB` ➡️ `burgers-exe-menu-live` y `BOG_MENU_ASSETS` ➡️ `burgers-exe-assets-v2`.
+2. **Validacion UX en Dispositivo Movil**:
+   - Probar fluidez de navegacion, adicion al carrito y redireccion a WhatsApp en un telefono real.
+3. **Autorizacion Literal de Despliegue**:
+   - Confirmar verbalmente en el chat para ejecutar los comandos de despliegue a `burgers-exe` y `chekeo2-0`.
 
-## Rollback
+---
 
-No hubo rollback porque el post-deploy smoke paso.
+## Historial Previo (2026-07-06)
 
-Para un lanzamiento futuro exitoso:
+Lanzamiento previo controlado completado el 2026-07-06 (`https://92ebc252.burgers-exe.pages.dev` y `https://05f5003a.chekeo2-0.pages.dev`).
+La autorizacion previa fue consumida. Todo nuevo despliegue requiere una nueva autorizacion literal.
 
-- Mantener identificados los deployments previos de `burgers-exe` y `chekeo2-0`.
-- Usar rollback de Cloudflare Pages si el smoke post-deploy falla.
-- No tocar D1/R2 live para rollback salvo autorizacion nueva, literal y especifica.
+---
 
-## Siguiente accion sugerida
+## QA Preview - Corrección de Modificaciones de Burger (2026-08-06)
+- **Reporte QA Usuario**: En pruebas de Preview, al hacer un pedido con Burger OG modificada, no aparecían las modificaciones en Cocina (`chekeo2-0`).
+- **Causa Raíz Identificada**:
+  1. `getRemovableIngredients` en `public-order-v2` requería un match de SKU muy estricto y descartaba los ingredientes quitados si el SKU del catálogo no era exacto.
+  2. `mapOrderV2ItemToInternalItem` en `internal-chekeo-v2` no parseaba snapshots en formato JSON string, perdiendo `removedIngredients`, `extras` y `burgerNote`.
+  3. `KitchenQueue.tsx` no contaba `burgerNote` dentro de `hasModOrUpgrade`, mostrando "Burger original" aunque tuviera notas personalizadas.
+- **Fix Aplicado**: `PublicOrderApp.tsx`, `InternalChekeoApp.tsx`, `KitchenQueue.tsx`.
+- **Verificación**: `typecheck` y `build` limpios (0 errores).
 
-- No hay rollback inmediato requerido por esta evidencia.
-- Decidir si se corrigen los assets 404 de preview para mantener paridad visual.
-- Mantener cualquier cambio futuro de datos/config production bajo nueva autorizacion explicita.
-- Mantener cualquier futuro deploy production bloqueado hasta nueva autorizacion literal del usuario.
-
-## Requiere nueva autorizacion explicita
-
-- Futuros deploys production a `burgers-exe`.
-- Futuros deploys production a `chekeo2-0`.
-- Cualquier reintento de deploy production, incluso si el intento anterior fallo por preflight, auth o error de Cloudflare.
-- D1 writes.
-- R2 writes.
-- Migrations.
-- Seeds.
-- Secret puts.
-- Binding changes.
-- Pages settings changes.
-- PIN usage.
-- Crear pedidos reales.
-- Modificar datos live.
-
-La autorizacion del 2026-07-06 no es reutilizable. Todo nuevo deploy production requiere una nueva autorizacion literal, especifica y posterior del usuario.
