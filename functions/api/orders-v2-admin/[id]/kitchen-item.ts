@@ -228,14 +228,31 @@ export const onRequestPatch: PagesFunction<Env> = async ({
     if (environmentError) return environmentError;
 
     const itemsResult = await env.BOG_MENU_DB.prepare(
-      "SELECT id, snapshot_json FROM order_items_v2 WHERE order_id = ?",
+      "SELECT id, sku, name, snapshot_json FROM order_items_v2 WHERE order_id = ?",
     )
       .bind(id)
-      .all<ItemRow>();
-    const snapshots = (itemsResult.results ?? [])
-      .map((row) => parseJsonSnapshot(getSnapshotString(row)))
-      .filter((snapshot): snapshot is SnapshotRecord => Boolean(snapshot));
-    const exactSnapshot = snapshots.find((snapshot) => snapshot.lineKey === payload.lineKey);
+      .all<ItemRow & { sku?: string; name?: string }>();
+    const itemRows = itemsResult.results ?? [];
+    const snapshots = itemRows
+      .map((row) => {
+        const parsed = parseJsonSnapshot(getSnapshotString(row));
+        if (!parsed) return null;
+        const fallbackKey = typeof parsed.lineKey === 'string' && parsed.lineKey ? parsed.lineKey : row.id || `${id}-${row.sku || ''}-${row.name || ''}`;
+        return {
+          ...parsed,
+          lineKey: fallbackKey,
+          rowId: row.id,
+          sku: row.sku,
+        } as SnapshotRecord & { rowId: string; sku?: string };
+      })
+      .filter((snapshot): snapshot is SnapshotRecord & { rowId: string; sku?: string } => Boolean(snapshot));
+
+    const exactSnapshot = snapshots.find(
+      (snapshot) =>
+        snapshot.lineKey === payload.lineKey ||
+        snapshot.rowId === payload.lineKey ||
+        (payload.lineKey && (payload.lineKey.includes(snapshot.rowId) || (Boolean(snapshot.sku) && payload.lineKey.includes(snapshot.sku!))))
+    );
     const nestedSideQuestSnapshot = exactSnapshot
       ? undefined
       : snapshots.find((snapshot) => isValidNestedSideQuestLineKey(snapshot, payload));

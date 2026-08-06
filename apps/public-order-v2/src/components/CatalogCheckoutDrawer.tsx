@@ -245,7 +245,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
     setCheckoutState({ status: "submitting" });
 
     try {
-      const payloadItems = items.map((item) => {
+      const payloadItems = items.map((item, index) => {
         const removedIngredients = (item.mods || [])
           .filter((m) => /^Sin\s+/i.test(m))
           .map((m) => m.replace(/^Sin\s+/i, "").trim());
@@ -265,7 +265,10 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
         if (notes.trim()) notesParts.push(notes.trim());
         const burgerNote = notesParts.length ? notesParts.join(" · ") : undefined;
 
+        const lineKey = item.cartItemId || `line-${item.productId}-${index + 1}`;
+
         return {
+          lineKey,
           sku: item.productId,
           qty: item.qty,
           itemKind: catalogTypeToItemKind[item.type] ?? ("other" as OrderV2ItemKind),
