@@ -12,7 +12,7 @@ import {
   parseJsonObject,
   parseJsonSnapshot,
   parseOrderEnvironment,
-  requireAdminToken,
+  requireInternalOrigin,
   type AdminEnv,
 } from "../../_orders-v2-utils";
 
@@ -205,7 +205,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({
 }) => {
   if (!env.BOG_MENU_DB)
     return errorResponse(503, "MISSING_DB", "BOG_MENU_DB no está configurado.");
-  const authError = await requireAdminToken(request, env);
+  const authError = await requireInternalOrigin(request);
   if (authError) return authError;
 
   const id = String(params.id ?? "").trim();

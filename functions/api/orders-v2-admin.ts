@@ -7,7 +7,7 @@ import {
   mapD1OrderItemToOrderV2Item,
   mapD1OrderToOrderV2,
   parseOrderEnvironmentFromRequest,
-  requireAdminToken,
+  requireInternalOrigin,
   type AdminEnv
 } from './_orders-v2-utils';
 
@@ -135,7 +135,7 @@ const appendKitchenSideQuestItems = (items: OrderV2Item[]) =>
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   if (!env.BOG_MENU_DB) return errorResponse(503, 'MISSING_DB', 'BOG_MENU_DB no está configurado.');
-  const authError = await requireAdminToken(request, env);
+  const authError = await requireInternalOrigin(request);
   if (authError) return authError;
 
   const url = new URL(request.url);

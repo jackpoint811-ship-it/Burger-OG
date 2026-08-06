@@ -442,6 +442,11 @@ export const requireAdminToken = async (request: Request, env: AdminEnv): Promis
   return errorResponse(401, 'UNAUTHORIZED', 'Unauthorized.');
 };
 
+export const requireInternalOrigin = async (request: Request): Promise<Response | null> => {
+  if (!isSameOriginRequest(request)) return errorResponse(401, 'UNAUTHORIZED', 'Unauthorized.');
+  return null;
+};
+
 export const fetchOrderBundle = async (db: D1Database, orderId: string): Promise<OrderV2 | null> => {
   const orderRow = await db.prepare('SELECT * FROM orders_v2 WHERE id = ? LIMIT 1').bind(orderId).first();
   if (!orderRow) return null;
