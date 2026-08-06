@@ -698,16 +698,27 @@ export function LayoutEngine({
                       borderTop: "1px solid var(--color-line-soft)",
                     }}
                   >
-                    <span
-                      style={{
-                        fontSize: "13px",
-                        fontFamily: "'Inter', sans-serif",
-                        fontWeight: 800,
-                        color: "var(--color-accent)",
-                      }}
-                    >
-                      {formatCurrency(item.price)}
-                    </span>
+                    {item.isPromoActive && item.promoPrice != null && item.promoPrice < item.price ? (
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span style={{ fontSize: "10px", textDecoration: "line-through", opacity: 0.6, color: "var(--color-text-secondary)" }}>
+                          {formatCurrency(item.price)}
+                        </span>
+                        <span style={{ fontSize: "13px", fontFamily: "'Inter', sans-serif", fontWeight: 800, color: "var(--color-accent)" }}>
+                          {formatCurrency(item.promoPrice)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: "13px",
+                          fontFamily: "'Inter', sans-serif",
+                          fontWeight: 800,
+                          color: "var(--color-accent)",
+                        }}
+                      >
+                        {formatCurrency(item.price)}
+                      </span>
+                    )}
                     <button
                       type="button"
                       disabled={item.isAvailable === false}
@@ -933,16 +944,27 @@ export function LayoutEngine({
                       borderTop: "1px solid var(--color-line-soft)",
                     }}
                   >
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        fontFamily: "'Inter', sans-serif",
-                        fontWeight: 800,
-                        color: "var(--color-accent)",
-                      }}
-                    >
-                      {formatCurrency(item.price)}
-                    </span>
+                    {item.isPromoActive && item.promoPrice != null && item.promoPrice < item.price ? (
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span style={{ fontSize: "10px", textDecoration: "line-through", opacity: 0.6, color: "var(--color-text-secondary)" }}>
+                          {formatCurrency(item.price)}
+                        </span>
+                        <span style={{ fontSize: "14px", fontFamily: "'Inter', sans-serif", fontWeight: 800, color: "var(--color-accent)" }}>
+                          {formatCurrency(item.promoPrice)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: "14px",
+                          fontFamily: "'Inter', sans-serif",
+                          fontWeight: 800,
+                          color: "var(--color-accent)",
+                        }}
+                      >
+                        {formatCurrency(item.price)}
+                      </span>
+                    )}
                     <button
                       type="button"
                       disabled={item.isAvailable === false}

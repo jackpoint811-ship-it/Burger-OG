@@ -21,6 +21,7 @@ type CatalogModeAppProps = {
   items: MenuItem[];
   categories: MenuCategory[];
   siteConfig: SiteConfig;
+  recipes?: Record<string, string[]>;
   catalogBanners?: CatalogBanner[];
   categoryBanners?: any[];
   source?: string;
@@ -99,7 +100,7 @@ function useSystemTheme() {
 
 
 
-function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [], categoryBanners = [], source, designSpec }: CatalogModeAppProps) {
+function CatalogModeAppInner({ items, categories, siteConfig, recipes, catalogBanners = [], categoryBanners = [], source, designSpec }: CatalogModeAppProps) {
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
   const [editingCartItem, setEditingCartItem] = useState<any>(null);
   const [activeCategoryKey, setActiveCategoryKey] = useState<string>("all");
@@ -283,6 +284,7 @@ function CatalogModeAppInner({ items, categories, siteConfig, catalogBanners = [
             key="product-drawer"
             product={selectedProduct}
             initialCartItem={editingCartItem}
+            recipeIngredients={recipes?.[selectedProduct.id]}
             onClose={closeProductDrawer}
           />
         )}

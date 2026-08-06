@@ -10,12 +10,27 @@ export const parseJsonArray = (value: unknown): string[] => {
   }
 };
 
+export const parseJsonObject = <T = Record<string, unknown>>(value: unknown): T | undefined => {
+  if (typeof value === 'object' && value !== null) return value as T;
+  if (typeof value !== 'string') return undefined;
+  try {
+    const parsed = JSON.parse(value);
+    return typeof parsed === 'object' && parsed !== null ? (parsed as T) : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export const mapD1ItemToMenuItem = (row: any): MenuItem => ({
   sku: row.sku,
   category: row.category,
   name: row.name,
   description: row.description,
   price: Number(row.price) / 100,
+  promoPrice: (row.promo_price_cents != null || row.promoPriceCents != null) && row.promo_price_cents !== '' && row.promoPriceCents !== '' ? Number(row.promo_price_cents ?? row.promoPriceCents) / 100 : undefined,
+  isPromoActive: Boolean(row.is_promo_active ?? row.isPromoActive ?? false),
+  promoExpiresAt: row.promo_expires_at ?? row.promoExpiresAt ?? undefined,
+  comboConfig: parseJsonObject(row.combo_config_json ?? row.comboConfig),
   tags: parseJsonArray(row.tags_json),
   badge: row.badge ?? undefined,
   promoLabel: row.promoLabel ?? undefined,

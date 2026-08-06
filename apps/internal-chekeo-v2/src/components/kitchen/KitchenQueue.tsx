@@ -179,8 +179,8 @@ const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
                     {b.mods.length ? (
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
                         {b.mods.map((mod) => (
-                          <span key={mod} className="kitchen-note-chip kitchen-note-chip--mod">
-                            {mod}
+                          <span key={mod} className="kitchen-note-chip kitchen-note-chip--mod font-bold text-rose-300">
+                            ❌ {mod.startsWith("Sin ") ? mod : `Sin ${mod}`}
                           </span>
                         ))}
                       </div>
@@ -193,8 +193,8 @@ const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
                     {b.upgrades.length ? (
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
                         {b.upgrades.map((up) => (
-                          <span key={up} className="kitchen-note-chip kitchen-note-chip--upgrade">
-                            {up}
+                          <span key={up} className="kitchen-note-chip kitchen-note-chip--upgrade font-bold text-lime-300">
+                            ➕ {up.startsWith("Extra ") ? up : `Extra ${up}`}
                           </span>
                         ))}
                       </div>
