@@ -104,18 +104,20 @@ const randomFolioSuffix = () => {
 
 export const generateId = (prefix: 'ord' | 'oi' | 'evt' | string) => `${prefix}_${crypto.randomUUID()}`;
 
-export const generateFolio = (now = new Date()) => {
-  // Visible operational folio only. Keep order.id as the durable internal identifier.
-  const dayCode = Math.max(0, Math.floor((now.getTime() - FOLIO_EPOCH_UTC_MS) / MS_PER_DAY))
-    .toString(36)
-    .padStart(3, '0')
-    .toUpperCase();
-  const secondsSinceMidnight = now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds();
-  const timeCode = secondsSinceMidnight.toString(36).padStart(4, '0').toUpperCase();
-  return `BX-${dayCode}${timeCode}${randomFolioSuffix()}`;
+export const generateFolio = (now = new Date(), customLetter?: string) => {
+  // Format: PB-[A-Z][0-9]{4} (e.g. PB-C0005)
+  const letterCode = customLetter
+    ? customLetter.toUpperCase()
+    : String.fromCharCode(65 + (Math.floor(now.getTime() / (24 * 60 * 60 * 1000)) % 26));
+
+  const randomBytes = new Uint16Array(1);
+  crypto.getRandomValues(randomBytes);
+  const numberCode = String(randomBytes[0] % 10000).padStart(4, '0');
+
+  return `PB-${letterCode}${numberCode}`;
 };
 
-export const generatePreviewFolio = (now = new Date()) => `PVW-${generateFolio(now).replace(/^BX-/, '')}`;
+export const generatePreviewFolio = (now = new Date(), customLetter?: string) => generateFolio(now, customLetter);
 
 export const normalizePhone = (value: unknown) => {
   const digits = String(value ?? '').replace(/\D/g, '');
