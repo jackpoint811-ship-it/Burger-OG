@@ -244,10 +244,10 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
   }, [recipeIngredients]);
 
   const AVAILABLE_UPGRADES = [
-    { id: "u1", name: "Extra Queso Americano", price: 15 },
-    { id: "u2", name: "Extra Tocino Crujiente", price: 25 },
-    { id: "u3", name: "Carne Smash Adicional", price: 45 },
-    { id: "u4", name: "Salsa de la casa extra", price: 10 },
+    { id: "EXTRA_QUESO_AMERICANO", name: "Extra Queso Americano", price: 15 },
+    { id: "EXTRA_TOCINO", name: "Extra Tocino Crujiente", price: 25 },
+    { id: "EXT-BACON", name: "Extra Bacon Classic", price: 29 },
+    { id: "EXTRA_PEPINILLOS", name: "Pepinillos Extra", price: 10 },
   ];
 
   const handleModToggle = (mod: string) => {
