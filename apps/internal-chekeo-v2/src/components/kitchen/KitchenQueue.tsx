@@ -14,6 +14,7 @@ import type {
 import { HorizontalDateCalendarFilter } from "../HorizontalDateCalendarFilter";
 import { parseOrderCustomerDetails } from "../../lib/order-parser";
 import {
+  buildCategoryProgressBadge,
   buildKitchenLocalSummary,
   buildKitchenProductionItems,
   buildKitchenOrderQueueSummary,
@@ -127,16 +128,23 @@ const KitchenEmptyState = ({ title }: { title: string }) => (
 const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
   const isPrep = item.lane === "prep";
 
-  // BURGER block (Combo burgers)
-  const comboNotes = isPrep ? getComboBurgerNotes(item.item) : [];
-
   let sideQuestSource: React.ReactNode | null = null;
   if (!isPrep) {
-    const parentName = item.item.parentItemName || (item.detailLabel?.includes("De combo") ? item.detailLabel.replace(/.*De combo\s*/i, "") : null);
-    if (parentName) {
+    const isFromCombo =
+      item.item.itemKind === "combo" ||
+      Boolean(item.item.parentItemName) ||
+      (item.itemLabel && item.itemLabel.includes("De combo"));
+
+    const comboName =
+      item.item.parentItemName ||
+      (item.itemLabel?.includes("De combo")
+        ? item.itemLabel.replace(/.*De combo\s*·?\s*/i, "")
+        : item.item.name);
+
+    if (isFromCombo && comboName) {
       sideQuestSource = (
         <span className="kitchen-note-chip text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 inline-flex">
-          De combo &middot; {parentName}
+          De combo &middot; {comboName}
         </span>
       );
     } else {
@@ -148,28 +156,17 @@ const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
     }
   }
 
-  const breakdowns = isPrep ? getKitchenBurgerBreakdowns(item.item) : [];
+  const breakdowns = isPrep
+    ? getKitchenBurgerBreakdowns(item.item, item.detailLabel)
+    : [];
 
   return (
     <div className="kitchen-item-details space-y-2">
-      {comboNotes.length ? (
-        <div className="kitchen-detail-block kitchen-detail-block--burger">
-          <p className="kitchen-detail-label">Burgers del combo</p>
-          <div className="mt-2 grid gap-2">
-            {comboNotes.map((note: string) => (
-              <span key={note} className="kitchen-note-chip kitchen-note-chip--combo">
-                {note}
-              </span>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
       {isPrep && breakdowns.length ? (
         <div className="space-y-3 mt-2">
           {breakdowns.map((b, idx) => (
             <div key={`${b.burgerName}-${idx}`} className="kitchen-detail-block border-t border-zinc-800/40 pt-2 first:border-0 first:pt-0">
-              {breakdowns.length > 1 ? (
+              {breakdowns.length > 1 && b.burgerName !== item.detailLabel ? (
                 <p className="text-xs font-black uppercase text-lime-400 mb-1">
                   🍔 {b.burgerName}
                 </p>
@@ -206,11 +203,11 @@ const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
                     )}
                   </div>
                 </div>
-              ) : !comboNotes.length ? (
+              ) : (
                 <p className="kitchen-no-changes">Burger original · Sin cambios</p>
-              ) : null}
+              )}
 
-              {b.note && !comboNotes.length ? (
+              {b.note ? (
                 <p className="mt-1 text-xs text-amber-300 italic">Nota burger: {b.note}</p>
               ) : null}
             </div>
@@ -314,83 +311,6 @@ const AccordionItemRow = ({
     ) : null}
   </div>
   );
-};
-
-/* ------------------------------------------------------------------ */
-/*  Category progress breakdown helper                                */
-/* ------------------------------------------------------------------ */
-
-const buildCategoryProgressBadge = (order: KitchenOrder, laneMode?: "prep" | "sideQuest") => {
-  let totalBurgers = 0;
-  let doneBurgers = 0;
-  let totalSides = 0;
-  let doneSides = 0;
-  let totalDrinks = 0;
-  let doneDrinks = 0;
-
-  for (const item of order.items) {
-    const kind = getKitchenItemKind(item);
-    const isItemDone = Boolean(item.kitchenDone);
-
-    if (kind === "burger") {
-      const qty = item.qty || 1;
-      totalBurgers += qty;
-      if (isItemDone) doneBurgers += qty;
-    } else if (kind === "combo") {
-      const comboBurgerCount = item.comboBurgers && item.comboBurgers.length > 0 ? item.comboBurgers.length : 1;
-      const qty = item.qty || 1;
-      totalBurgers += comboBurgerCount * qty;
-      if (isItemDone) doneBurgers += comboBurgerCount * qty;
-
-      if (item.garnish) {
-        totalSides += qty;
-        if (isItemDone) doneSides += qty;
-      }
-      if (item.includedDrink) {
-        totalDrinks += qty;
-        if (isItemDone) doneDrinks += qty;
-      }
-    } else if (kind === "garnish") {
-      const qty = item.qty || 1;
-      totalSides += qty;
-      if (isItemDone) doneSides += qty;
-    } else if (kind === "drink") {
-      const qty = item.qty || 1;
-      totalDrinks += qty;
-      if (isItemDone) doneDrinks += qty;
-    }
-
-    if (item.sideQuestExtras && item.sideQuestExtras.length > 0) {
-      for (const extra of item.sideQuestExtras) {
-        const qty = item.qty || 1;
-        if (extra.itemKind === "garnish") {
-          totalSides += qty;
-          if (isItemDone) doneSides += qty;
-        } else if (extra.itemKind === "drink") {
-          totalDrinks += qty;
-          if (isItemDone) doneDrinks += qty;
-        } else {
-          totalSides += qty;
-          if (isItemDone) doneSides += qty;
-        }
-      }
-    }
-  }
-
-  const parts: string[] = [];
-
-  if (laneMode === "sideQuest") {
-    if (totalSides > 0) parts.push(`🍟 ${doneSides}/${totalSides} Side${totalSides !== 1 ? 's' : ''}`);
-    if (totalDrinks > 0) parts.push(`🥤 ${doneDrinks}/${totalDrinks} Bebida${totalDrinks !== 1 ? 's' : ''}`);
-  } else if (laneMode === "prep") {
-    if (totalBurgers > 0) parts.push(`🍔 ${doneBurgers}/${totalBurgers} Burgers`);
-  } else {
-    if (totalBurgers > 0) parts.push(`🍔 ${doneBurgers}/${totalBurgers} Burgers`);
-    if (totalSides > 0) parts.push(`🍟 ${doneSides}/${totalSides} Side${totalSides !== 1 ? 's' : ''}`);
-    if (totalDrinks > 0) parts.push(`🥤 ${doneDrinks}/${totalDrinks} Bebida${totalDrinks !== 1 ? 's' : ''}`);
-  }
-
-  return parts.join(" · ");
 };
 
 /* ------------------------------------------------------------------ */
