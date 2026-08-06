@@ -581,6 +581,7 @@ export const getKitchenItemActionKind = (
  */
 export const buildKitchenOrderQueueSummary = (
   order: KitchenOrder,
+  laneMode?: "prep" | "sideQuest"
 ): string => {
   let burgers = 0;
   let sides = 0;
@@ -621,9 +622,17 @@ export const buildKitchenOrderQueueSummary = (
   }
 
   const parts: string[] = [];
-  if (burgers > 0) parts.push(`🍔 ${burgers} Burger${burgers !== 1 ? 's' : ''}`);
-  if (sides > 0) parts.push(`🍟 ${sides} Side${sides !== 1 ? 's' : ''}`);
-  if (drinks > 0) parts.push(`🥤 ${drinks} Bebida${drinks !== 1 ? 's' : ''}`);
+
+  if (laneMode === "sideQuest") {
+    if (sides > 0) parts.push(`🍟 ${sides} Side${sides !== 1 ? 's' : ''}`);
+    if (drinks > 0) parts.push(`🥤 ${drinks} Bebida${drinks !== 1 ? 's' : ''}`);
+  } else if (laneMode === "prep") {
+    if (burgers > 0) parts.push(`🍔 ${burgers} Burger${burgers !== 1 ? 's' : ''}`);
+  } else {
+    if (burgers > 0) parts.push(`🍔 ${burgers} Burger${burgers !== 1 ? 's' : ''}`);
+    if (sides > 0) parts.push(`🍟 ${sides} Side${sides !== 1 ? 's' : ''}`);
+    if (drinks > 0) parts.push(`🥤 ${drinks} Bebida${drinks !== 1 ? 's' : ''}`);
+  }
 
   return parts.join(" · ");
 };

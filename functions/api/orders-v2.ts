@@ -668,7 +668,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
           sideQuestExtras: item.sideQuestExtras,
           comboBurgers: item.comboBurgers,
           modifiers,
-          components
+          components,
+          delivery: parsed.delivery
         })
       };
     });

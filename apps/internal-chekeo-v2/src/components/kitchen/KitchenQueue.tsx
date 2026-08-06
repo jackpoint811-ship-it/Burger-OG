@@ -130,19 +130,23 @@ const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
   // BURGER block (Combo burgers)
   const comboNotes = isPrep ? getComboBurgerNotes(item.item) : [];
 
-  // Note block — unified, shown as NOTA DEL PEDIDO
-  const generalNote = stripLocationFromNotes(item.order.note);
-  const itemNote = isPrep ? item.item.burgerNote : null;
-  const noteText = [itemNote, generalNote].filter(Boolean).join(" · ");
-
-  // Side Quest source indicator (De combo / Individual)
-  const sideQuestSource: string | null = !isPrep
-    ? item.item.parentItemName
-      ? `De combo ${item.item.parentItemName}`
-      : item.detailLabel?.includes("De combo")
-        ? item.detailLabel.substring(item.detailLabel.indexOf("De combo"))
-        : "Individual"
-    : null;
+  let sideQuestSource: React.ReactNode | null = null;
+  if (!isPrep) {
+    const parentName = item.item.parentItemName || (item.detailLabel?.includes("De combo") ? item.detailLabel.replace(/.*De combo\s*/i, "") : null);
+    if (parentName) {
+      sideQuestSource = (
+        <span className="kitchen-note-chip text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 inline-flex">
+          De combo &middot; {parentName}
+        </span>
+      );
+    } else {
+      sideQuestSource = (
+        <span className="kitchen-note-chip text-[11px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 inline-flex">
+          Individual
+        </span>
+      );
+    }
+  }
 
   const breakdowns = isPrep ? getKitchenBurgerBreakdowns(item.item) : [];
 
@@ -216,14 +220,7 @@ const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
 
       {sideQuestSource ? (
         <div className="mt-2">
-          <span className="kitchen-note-chip text-xs">{sideQuestSource}</span>
-        </div>
-      ) : null}
-
-      {noteText ? (
-        <div className="kitchen-order-note mt-3">
-          <p className="kitchen-order-note__label">NOTA DEL PEDIDO</p>
-          <p className="kitchen-order-note__text">{noteText}</p>
+          {sideQuestSource}
         </div>
       ) : null}
     </div>
@@ -323,7 +320,7 @@ const AccordionItemRow = ({
 /*  Category progress breakdown helper                                */
 /* ------------------------------------------------------------------ */
 
-const buildCategoryProgressBadge = (order: KitchenOrder) => {
+const buildCategoryProgressBadge = (order: KitchenOrder, laneMode?: "prep" | "sideQuest") => {
   let totalBurgers = 0;
   let doneBurgers = 0;
   let totalSides = 0;
@@ -381,9 +378,17 @@ const buildCategoryProgressBadge = (order: KitchenOrder) => {
   }
 
   const parts: string[] = [];
-  if (totalBurgers > 0) parts.push(`🍔 ${doneBurgers}/${totalBurgers} Burgers`);
-  if (totalSides > 0) parts.push(`🍟 ${doneSides}/${totalSides} Side${totalSides !== 1 ? 's' : ''}`);
-  if (totalDrinks > 0) parts.push(`🥤 ${doneDrinks}/${totalDrinks} Bebida${totalDrinks !== 1 ? 's' : ''}`);
+
+  if (laneMode === "sideQuest") {
+    if (totalSides > 0) parts.push(`🍟 ${doneSides}/${totalSides} Side${totalSides !== 1 ? 's' : ''}`);
+    if (totalDrinks > 0) parts.push(`🥤 ${doneDrinks}/${totalDrinks} Bebida${totalDrinks !== 1 ? 's' : ''}`);
+  } else if (laneMode === "prep") {
+    if (totalBurgers > 0) parts.push(`🍔 ${doneBurgers}/${totalBurgers} Burgers`);
+  } else {
+    if (totalBurgers > 0) parts.push(`🍔 ${doneBurgers}/${totalBurgers} Burgers`);
+    if (totalSides > 0) parts.push(`🍟 ${doneSides}/${totalSides} Side${totalSides !== 1 ? 's' : ''}`);
+    if (totalDrinks > 0) parts.push(`🥤 ${doneDrinks}/${totalDrinks} Bebida${totalDrinks !== 1 ? 's' : ''}`);
+  }
 
   return parts.join(" · ");
 };
@@ -395,10 +400,12 @@ const buildCategoryProgressBadge = (order: KitchenOrder) => {
 const ActiveOrderContainer = ({
   group,
   busyLineKey,
+  laneMode,
   onToggle,
 }: {
   group: OrderGroup;
   busyLineKey: string | null;
+  laneMode: "prep" | "sideQuest";
   onToggle: (entry: KitchenProductionItem, done: boolean) => void;
 }) => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -425,8 +432,8 @@ const ActiveOrderContainer = ({
   const createdAtIso = group.order.createdAtIso || (group.order.createdAtMs ? new Date(group.order.createdAtMs).toISOString() : undefined);
   const details = parseOrderCustomerDetails(group.order.customer, group.order.note, createdAtIso, group.order.delivery);
   const location = details.deliveryLocation || extractKitchenLocation(group.order.note);
-  const categoryProgress = buildCategoryProgressBadge(group.order);
-  const quickSummary = buildKitchenOrderQueueSummary(group.order);
+  const categoryProgress = buildCategoryProgressBadge(group.order, laneMode);
+  const orderNoteText = stripLocationFromNotes(group.order.note);
 
   return (
     <section className="kitchen-active-order kitchen-production-card" aria-label="Orden activa">
@@ -447,11 +454,6 @@ const ActiveOrderContainer = ({
           <h3 className="kitchen-active-order__customer">
             {details.cleanCustomerName}
           </h3>
-          {quickSummary ? (
-            <p className="mt-1 mb-2 text-sm font-bold text-cyan-800 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-800/50 inline-block px-2 py-1 rounded-md">
-              {quickSummary}
-            </p>
-          ) : null}
           <p className="kitchen-active-order__folio kitchen-production-card__folio">{group.order.folio}</p>
         </div>
         <div className="flex flex-wrap md:justify-end gap-1.5 self-start w-full md:w-auto mt-2 md:mt-0 items-center">
@@ -461,6 +463,13 @@ const ActiveOrderContainer = ({
           </span>
         </div>
       </div>
+
+      {orderNoteText ? (
+        <div className="kitchen-order-note mb-4 mx-4">
+          <p className="kitchen-order-note__label">NOTA DEL PEDIDO</p>
+          <p className="kitchen-order-note__text">{orderNoteText}</p>
+        </div>
+      ) : null}
 
       <div className="kitchen-active-order__items">
         {group.items.length === 1 ? (
@@ -525,9 +534,7 @@ const PendingOrdersQueue = ({
       {expanded ? (
         <div className="kitchen-following-orders__list border-t border-zinc-800/40 p-3 space-y-3">
           {groups.map((group) => {
-            const shortSummary = isSideQuest
-              ? buildKitchenOrderQueueSummary(group.order)
-              : null;
+            const shortSummary = buildKitchenOrderQueueSummary(group.order, laneMode);
             return (
               <div key={group.orderId} className="kitchen-production-card bg-white dark:bg-zinc-950/60 border border-zinc-800/80 p-3 rounded-xl text-left">
                 <div className="flex justify-between items-start">
@@ -569,27 +576,42 @@ const PendingOrdersQueue = ({
           </div>
           {visible.map((group, idx) => {
             const isFirst = idx === 0;
-            const opacityValue = isFirst ? 1 : idx === 1 ? 0.75 : idx === 2 ? 0.55 : 0.4;
-            const shortSummary = isSideQuest
-              ? buildKitchenOrderQueueSummary(group.order)
-              : null;
+            const shortSummary = buildKitchenOrderQueueSummary(group.order, laneMode);
+            const timeElapsed = group.order.createdAtMs ? Math.floor((Date.now() - group.order.createdAtMs) / 60000) : null;
+
             return (
               <div
                 key={group.orderId}
-                className={`kitchen-production-card flex justify-between items-center px-3 py-2.5 rounded-lg border transition-all ${
-                  isFirst ? "border-cyan-300 dark:border-cyan-500/30 bg-cyan-50 dark:bg-cyan-950/20" : "border-zinc-800/40 bg-white dark:bg-zinc-950/20"
+                className={`kitchen-production-card flex justify-between items-center px-3 py-3 rounded-lg border transition-all cursor-pointer ${
+                  isFirst ? "border-lime-500/40 bg-lime-50 dark:bg-lime-950/20" : "border-zinc-800/80 bg-white dark:bg-zinc-950/40 hover:border-lime-500/30 hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
                 }`}
-                style={{ opacity: opacityValue }}
+                onClick={() => onSelect(group.orderId)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelect(group.orderId);
+                  }
+                }}
               >
                 <div className="text-left min-w-0 flex-1">
-                  <p className={`text-[10px] font-black uppercase tracking-[0.16em] mb-0.5 ${isFirst ? "text-cyan-800 dark:text-cyan-300" : "text-zinc-500"}`}>
-                    {isFirst ? "Siguiente" : "Después"}
-                  </p>
-                  <p className={`font-black ${isFirst ? "text-zinc-900 dark:text-zinc-100 text-base" : "text-zinc-700 dark:text-zinc-300 text-sm"}`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-[10px] font-black uppercase tracking-[0.1em] px-1.5 py-0.5 rounded ${isFirst ? "bg-lime-400 text-lime-950" : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"}`}>
+                      #{idx + 1} {isFirst ? "Próximo" : "En cola"}
+                    </span>
+                    <span className="text-xs font-bold text-zinc-500">{group.order.folio}</span>
+                    {timeElapsed !== null ? (
+                      <span className="text-xs font-bold text-amber-600 dark:text-amber-400 ml-auto">
+                        {timeElapsed} min
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="font-black text-zinc-900 dark:text-zinc-100 text-base">
                     {group.order.customer}
                   </p>
                   {shortSummary ? (
-                    <p className="truncate text-xs text-zinc-500 mt-0.5">{shortSummary}</p>
+                    <p className="truncate text-xs font-bold text-zinc-600 dark:text-zinc-400 mt-1">{shortSummary}</p>
                   ) : null}
                 </div>
               </div>
@@ -614,11 +636,13 @@ const DoneOrdersList = ({
   groups,
   label,
   busyLineKey,
+  laneMode,
   onToggle,
 }: {
   groups: OrderGroup[];
   label: string;
   busyLineKey: string | null;
+  laneMode: "prep" | "sideQuest";
   onToggle: (entry: KitchenProductionItem, done: boolean) => void;
 }) => {
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
@@ -668,7 +692,7 @@ const DoneOrdersList = ({
                       <span className="kitchen-dot kitchen-dot--done">Hecha</span>
                     </div>
                     <p className="mt-0.5 text-sm text-zinc-500">{group.order.folio}</p>
-                    <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400 font-bold">{buildKitchenOrderQueueSummary(group.order)}</p>
+                    <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400 font-bold">{buildKitchenOrderQueueSummary(group.order, laneMode)}</p>
                   </div>
                   {isGroupExpanded ? (
                     <ChevronUp size={16} className="text-zinc-500 flex-shrink-0" />
@@ -773,6 +797,7 @@ const ProductionLanePanel = ({
         <ActiveOrderContainer
           group={activeGroup}
           busyLineKey={busyLineKey}
+          laneMode={laneMode}
           onToggle={onToggle}
         />
       ) : null}
@@ -791,6 +816,7 @@ const ProductionLanePanel = ({
         groups={doneGroups}
         label="Listas"
         busyLineKey={busyLineKey}
+        laneMode={laneMode}
         onToggle={onToggle}
       />
     </section>

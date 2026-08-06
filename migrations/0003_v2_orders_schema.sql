@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS orders_v2 (
   idempotency_key TEXT UNIQUE,
   customer_name TEXT NOT NULL,
   customer_phone TEXT NOT NULL,
+  delivery_json TEXT,
   order_mode TEXT NOT NULL CHECK (order_mode IN ('pickup', 'delivery')),
   payment_method TEXT NOT NULL CHECK (payment_method IN ('cash', 'transfer', 'card', 'unknown')),
   payment_status TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'cancelled')),
