@@ -305,6 +305,16 @@ export const mapD1OrderToOrderV2 = (row: any, items: OrderV2Item[] = [], events?
     }
   }
 
+  if (!delivery && items.length > 0) {
+    for (const item of items) {
+      const itemDelivery = (item.snapshot as any)?.delivery as OrderV2DeliveryInfo | undefined;
+      if (itemDelivery && (itemDelivery.location || itemDelivery.scheduledDate || itemDelivery.isScheduled)) {
+        delivery = itemDelivery;
+        break;
+      }
+    }
+  }
+
   const cleanName = rawCustomerName.replace(/\[?ENTREGA PROGRAMADA:[^\]]+\]?/gi, '').trim();
 
   return {

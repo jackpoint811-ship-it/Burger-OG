@@ -70,3 +70,21 @@ Eliminar la barrera de login global y prevenir la degradación a modo fallback e
 - Operadores de cocina y empaque cargan pedidos reales en vivo directamente sin ingresar PIN.
 - `<AdminGate>` protege únicamente la pestaña Admin y endpoints administrativos (`batch-archive`, `export.csv`, etc.).
 - CSRF Same-Origin protege los endpoints operativos del backend.
+
+### Fecha
+
+2026-08-06
+
+### Decisión
+
+Garantizar la persistencia y resolución end-to-end del objeto `delivery_json` en Cloudflare D1. El backend público `POST /api/orders-v2` persiste `delivery_json` en `orders_v2`, el backend admin `mapD1OrderToOrderV2` utiliza fallback a `items[].snapshot.delivery` si `delivery_json` viniera nulo, y la UI de Chekeo V2 soporta filtrado dinámico por fechas completas (`all`, `today`, `past`, `YYYY-MM-DD`).
+
+### Motivo
+
+Evitar la pérdida de fechas de entrega programadas y ubicaciones en pedidos creados desde la app pública o scripts de prueba, asegurando que las órdenes para fechas futuras (ej. día 10) se muestren correctamente en la pantalla de pedidos y cocina en producción.
+
+### Impacto
+
+- `POST /api/orders-v2` incluye la columna `delivery_json` al insertar en `orders_v2`.
+- `mapD1OrderToOrderV2` recupera metadatos de entrega desde el snapshot de items si `delivery_json` no está presente.
+- Chekeo V2 filtra y muestra con 100% de precisión las órdenes según la fecha programada.

@@ -3303,7 +3303,8 @@ const OrdersBoard = ({
 
         if (selectedCalendarDate !== "all") {
           if (selectedCalendarDate === "today" && orderDeliveryDate !== todayStr) return false;
-          if (selectedCalendarDate !== "today" && orderDeliveryDate !== selectedCalendarDate) return false;
+          if (selectedCalendarDate === "past" && orderDeliveryDate >= todayStr) return false;
+          if (selectedCalendarDate !== "today" && selectedCalendarDate !== "past" && orderDeliveryDate !== selectedCalendarDate) return false;
         }
 
         if (!normalizedSearch) return true;
@@ -4552,7 +4553,8 @@ const PaymentNotesPanel = ({
             orderDateStr = formatIsoDate(new Date(order.createdAtMs));
           }
           if (selectedDate === "today" && orderDateStr !== todayStr) return false;
-          if (selectedDate !== "today" && selectedDate !== "all" && orderDateStr !== selectedDate) return false;
+          if (selectedDate === "past" && orderDateStr >= todayStr) return false;
+          if (selectedDate !== "today" && selectedDate !== "past" && selectedDate !== "all" && orderDateStr !== selectedDate) return false;
         }
 
         if (rangeFilter !== "all" && order.createdAtMs) {
