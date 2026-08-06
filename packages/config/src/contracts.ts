@@ -15,10 +15,32 @@ export type AssetRef = {
   placeholder: string;
 };
 
+export type ComboItemOption = {
+  sku: string;
+  isDefault?: boolean;
+  upchargeCents: number;
+};
+
+export type ComboOptionGroup = {
+  id: string;
+  name: string;
+  isRequired: boolean;
+  minSelections: number;
+  maxSelections: number;
+  options: ComboItemOption[];
+};
+
+export type MenuItemComboConfig = {
+  isCombo: boolean;
+  bundlePriceCents: number;
+  optionGroups: ComboOptionGroup[];
+};
+
 export type MenuCategory = {
   id: string;
-  key: "burgers" | "combos" | "extras" | "guarniciones" | "drinks";
+  key: "burgers" | "combos" | "extras" | "guarniciones" | "drinks" | string;
   name: string;
+  emoji?: string;
   sortOrder: number;
   updatedAt?: string;
 };
@@ -29,6 +51,10 @@ export type MenuItem = {
   name: string;
   description: string;
   price: number;
+  promoPrice?: number;
+  isPromoActive?: boolean;
+  promoExpiresAt?: string;
+  comboConfig?: MenuItemComboConfig;
   imageUrl?: string;
   imageKey?: string;
   badge?: string;
@@ -205,6 +231,7 @@ export type MenuV2Response = {
   categories: MenuCategory[];
   items: MenuItem[];
   promos: PromoCard[];
+  recipes?: Record<string, string[]>;
   categoryBanners?: MenuCategoryBanner[];
   catalogBanners?: CatalogBanner[];
   siteConfig: SiteConfig;

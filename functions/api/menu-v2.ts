@@ -59,11 +59,11 @@ const deriveCategoriesFromItems = (items: MenuItem[]): MenuCategory[] => {
 
 const resolveCategories = (rows: any[], items: MenuItem[]): MenuCategory[] => {
   const categories = rows
-    .filter((row) => isMenuCategoryKey(row.key))
     .map((row) => ({
       id: String(row.id ?? `cat-${row.key}`),
       key: row.key as MenuCategory['key'],
-      name: String(row.name ?? CATEGORY_LABELS[row.key as MenuCategory['key']]),
+      name: String(row.name ?? CATEGORY_LABELS[row.key as MenuCategory['key']] ?? row.key),
+      emoji: row.emoji ? String(row.emoji) : undefined,
       sortOrder: Number(row.sortOrder ?? row.sort_order ?? 0),
       updatedAt: row.updatedAt ?? row.updated_at ?? undefined
     }))
@@ -98,7 +98,7 @@ const resolvePublicConfigFromRow = (row: any | null): PublicConfig => {
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
   if (!env.BOG_MENU_DB) return json(fallbackPayload('fallback'), 'no-store');
   try {
-    const itemsResult = await env.BOG_MENU_DB.prepare(`
+    const itemsResult = await optionalAll<any>(env.BOG_MENU_DB.prepare(`
       SELECT
         sku,
         category_key AS category,
@@ -120,21 +120,32 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
         upsell_items_json,
         badge,
         promo_label AS promoLabel,
+        promo_price_cents AS promoPriceCents,
+        is_promo_active AS isPromoActive,
+        promo_expires_at AS promoExpiresAt,
+        combo_config_json AS comboConfig,
         updated_at AS updatedAt
       FROM menu_items
       ORDER BY category_key ASC, sort_order ASC, sku ASC
-    `).all();
+    `));
 
-    const items: MenuItem[] = ((itemsResult as D1Result<any>).results ?? [])
+    const items: MenuItem[] = (itemsResult ?? [])
       .map((row: any) => mapD1ItemToMenuItem(row))
       .sort((a, b) => a.sortOrder - b.sortOrder);
 
-    const [categoryRows, promoRows, bannerRows, catalogBannerRows, configRow] = await Promise.all([
-      optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT id, key, name, sort_order AS sortOrder, updated_at AS updatedAt FROM menu_categories ORDER BY sort_order ASC')),
+    const [categoryRows, promoRows, bannerRows, catalogBannerRows, configRow, recipeRows] = await Promise.all([
+      optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT id, key, name, emoji, sort_order AS sortOrder, updated_at AS updatedAt FROM menu_categories ORDER BY sort_order ASC')),
       optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT id, title, description, badge, promo_label AS promoLabel, is_featured AS isFeatured, is_available AS isAvailable, sort_order AS sortOrder, tags_json, combo_links_json, asset_alt, asset_placeholder, asset_image_url, asset_image_key, updated_at AS updatedAt FROM promo_cards ORDER BY sort_order ASC')),
       optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT category_key AS categoryKey, title, subtitle, image_key AS imageKey, image_url AS imageUrl, updated_at AS updatedAt FROM menu_category_banners ORDER BY category_key ASC')),
       optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT id, title, subtitle, cta_label, image_key, image_url, bg_preset, badge_text, badge_color, cta_action_type, cta_target, is_active, sort_order, updated_at FROM catalog_banners WHERE is_active = 1 ORDER BY sort_order ASC')),
-      optionalFirst<any>(env.BOG_MENU_DB.prepare('SELECT brand_name, currency, order_modes_json, support_phone, hero_cta, notice, public_mode, catalog_enabled, updated_at AS updatedAt FROM site_config ORDER BY updated_at DESC LIMIT 1'))
+      optionalFirst<any>(env.BOG_MENU_DB.prepare('SELECT brand_name, currency, order_modes_json, support_phone, hero_cta, notice, public_mode, catalog_enabled, updated_at AS updatedAt FROM site_config ORDER BY updated_at DESC LIMIT 1')),
+      optionalAll<any>(env.BOG_MENU_DB.prepare(`
+        SELECT r.product_sku AS sku, i.name AS ingredientName
+        FROM product_ingredient_recipes_v2 r
+        JOIN ingredients_v2 i ON r.ingredient_id = i.id
+        WHERE i.is_active = 1
+        ORDER BY i.sort_order ASC, i.name ASC
+      `))
     ]);
 
     const categories = resolveCategories(categoryRows, items);
@@ -143,6 +154,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
     const catalogBanners = catalogBannerRows.map((row: any) => mapD1CatalogBanner(row));
     const resolvedSiteConfig = resolveSiteConfig(configRow);
     const resolvedPublicConfig = resolvePublicConfigFromRow(configRow);
+
+    const recipes: Record<string, string[]> = {};
+    for (const rRow of recipeRows) {
+      if (rRow.sku && rRow.ingredientName) {
+        if (!recipes[rRow.sku]) recipes[rRow.sku] = [];
+        recipes[rRow.sku].push(String(rRow.ingredientName));
+      }
+    }
 
     const updatedAt = [
       ...items.map((item) => item.updatedAt ?? ''),
@@ -153,7 +172,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
       resolvedPublicConfig.updatedAt ?? ''
     ].filter(Boolean).sort().at(-1) ?? new Date().toISOString();
 
-    return json({ categories, items, promos, categoryBanners, catalogBanners, siteConfig: resolvedSiteConfig, publicConfig: resolvedPublicConfig, updatedAt, source: 'd1' });
+    return json({ categories, items, promos, recipes, categoryBanners, catalogBanners, siteConfig: resolvedSiteConfig, publicConfig: resolvedPublicConfig, updatedAt, source: 'd1' });
   } catch {
     return json(fallbackPayload('fallback'), 'no-store');
   }

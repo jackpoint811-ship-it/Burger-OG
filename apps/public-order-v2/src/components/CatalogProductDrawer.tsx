@@ -55,6 +55,7 @@ const DrawerFallbackSvg = ({ type }: { type: CatalogProductType }) => {
 type CatalogProductDrawerProps = {
   product: CatalogProduct;
   initialCartItem?: CatalogCartItem | null;
+  recipeIngredients?: string[];
   onClose: () => void;
 };
 
@@ -69,11 +70,12 @@ const focusableSelector = [
 
 const COMBO_SIDES = [
   { label: "Papas a la francesa tradicionales", extraPrice: 0 },
-  { label: "Papas sazonadas especial", extraPrice: 0 },
+  { label: "Papas sazonadas especial (+ $5)", extraPrice: 5 },
+  { label: "Papas Lemon & Pepper (+ $5)", extraPrice: 5 },
   { label: "Aros de Cebolla crujientes (+ $5)", extraPrice: 5 },
 ];
 
-export function CatalogProductDrawer({ product, initialCartItem, onClose }: CatalogProductDrawerProps) {
+export function CatalogProductDrawer({ product, initialCartItem, recipeIngredients, onClose }: CatalogProductDrawerProps) {
   const { items, addItem, updateItem } = useCatalogCart();
   const [justAdded, setJustAdded] = useState(false);
   const [removedMods, setRemovedMods] = useState<string[]>([]);
@@ -186,10 +188,17 @@ export function CatalogProductDrawer({ product, initialCartItem, onClose }: Cata
     return sideObj ? sideObj.extraPrice : 0;
   }, [product.type, comboSide]);
 
+  const effectiveBasePrice = useMemo(() => {
+    if (product.isPromoActive && product.promoPrice != null && product.promoPrice < product.price) {
+      return product.promoPrice;
+    }
+    return product.price;
+  }, [product.isPromoActive, product.promoPrice, product.price]);
+
   const currentTotal = useMemo(() => {
     const upgradesTotal = upgrades.reduce((sum, u) => sum + u.price * u.qty, 0);
-    return product.price + comboExtraPrice + (itemMode === "customize" ? upgradesTotal : 0);
-  }, [product.price, comboExtraPrice, upgrades, itemMode]);
+    return effectiveBasePrice + comboExtraPrice + (itemMode === "customize" ? upgradesTotal : 0);
+  }, [effectiveBasePrice, comboExtraPrice, upgrades, itemMode]);
 
   const handleAddToCart = () => {
     if (justAdded) {
@@ -208,10 +217,15 @@ export function CatalogProductDrawer({ product, initialCartItem, onClose }: Cata
     }
     const activeUpgrades = itemMode === "customize" ? upgrades.filter((u) => u.qty > 0) : [];
 
+    const effectiveProductToCart = {
+      ...product,
+      price: effectiveBasePrice
+    };
+
     if (isEditing && initialCartItem) {
-      updateItem(initialCartItem.cartItemId, product, modsList, activeUpgrades);
+      updateItem(initialCartItem.cartItemId, effectiveProductToCart, modsList, activeUpgrades);
     } else {
-      addItem(product, modsList, activeUpgrades);
+      addItem(effectiveProductToCart, modsList, activeUpgrades);
     }
 
     setJustAdded(true);
@@ -222,7 +236,13 @@ export function CatalogProductDrawer({ product, initialCartItem, onClose }: Cata
     }, 1200);
   };
 
-  const AVAILABLE_MODS = ["Cebolla", "Pepinillos", "Tomate", "Lechuga", "Mostaza", "Ketchup"];
+  const AVAILABLE_MODS = useMemo(() => {
+    if (recipeIngredients && recipeIngredients.length > 0) {
+      return recipeIngredients;
+    }
+    return ["Cebolla", "Pepinillos", "Jitomate", "Lechuga", "Mostaza", "Catsup"];
+  }, [recipeIngredients]);
+
   const AVAILABLE_UPGRADES = [
     { id: "u1", name: "Extra Queso Americano", price: 15 },
     { id: "u2", name: "Extra Tocino Crujiente", price: 25 },
@@ -312,7 +332,14 @@ export function CatalogProductDrawer({ product, initialCartItem, onClose }: Cata
 
           <div className="catalog-drawer__details">
             <div className="catalog-drawer__price-row">
-              <strong className="catalog-drawer__price">{formatCurrency(currentTotal)}</strong>
+              {product.isPromoActive && product.promoPrice != null && product.promoPrice < product.price ? (
+                <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+                  <span style={{ fontSize: "14px", textDecoration: "line-through", opacity: 0.6 }}>{formatCurrency(product.price)}</span>
+                  <strong className="catalog-drawer__price" style={{ color: "var(--color-accent)" }}>{formatCurrency(currentTotal)}</strong>
+                </div>
+              ) : (
+                <strong className="catalog-drawer__price">{formatCurrency(currentTotal)}</strong>
+              )}
               {currentItem && currentItem.qty > 0 && !isEditing && (
                 <span className="catalog-drawer__qty-badge">{currentItem.qty} en carrito</span>
               )}
@@ -327,12 +354,16 @@ export function CatalogProductDrawer({ product, initialCartItem, onClose }: Cata
             <div className="catalog-drawer__section-card">
               <span className="catalog-drawer__section-title">🥗 INGREDIENTES INCLUIDOS</span>
               <ul className="catalog-drawer__ingredients-list">
-                <li>• Pan Brioche artesanal horneado</li>
-                <li>• 100% Carne Smash de res seleccionada</li>
-                <li>• Doble Queso Americano / Manchego</li>
-                <li>• Tocino crujiente dorado</li>
-                <li>• Pepinillos artesanales & Jitomate fresco</li>
-                <li>• Aderezo especial de la casa</li>
+                {(recipeIngredients && recipeIngredients.length > 0 ? recipeIngredients : [
+                  "Pan Brioche artesanal horneado",
+                  "100% Carne Smash de res seleccionada",
+                  "Doble Queso Americano / Manchego",
+                  "Tocino crujiente dorado",
+                  "Pepinillos artesanales & Jitomate fresco",
+                  "Aderezo especial de la casa"
+                ]).map((ing, idx) => (
+                  <li key={idx}>• {ing}</li>
+                ))}
               </ul>
 
               {/* Botones Receta Original vs Personalizar */}

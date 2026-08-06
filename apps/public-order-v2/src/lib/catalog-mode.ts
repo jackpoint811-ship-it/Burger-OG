@@ -1,4 +1,4 @@
-import type { MenuCategory, MenuItem } from "@config/index";
+import type { MenuCategory, MenuItem, MenuItemComboConfig } from "@config/index";
 
 export type CatalogProductType = "burger" | "combo" | "side" | "topping" | "drink";
 
@@ -11,6 +11,10 @@ export type CatalogProduct = {
   name: string;
   description?: string;
   price: number;
+  promoPrice?: number;
+  isPromoActive?: boolean;
+  promoLabel?: string;
+  comboConfig?: MenuItemComboConfig;
   imageUrl?: string;
   imageKey?: string;
   badge?: string;
@@ -87,9 +91,13 @@ export function mapMenuItemsToCatalogProducts(items: MenuItem[], categories: Men
         name: item.name,
         description: item.description,
         price: item.price,
+        promoPrice: item.promoPrice,
+        isPromoActive: item.isPromoActive,
+        promoLabel: item.promoLabel,
+        comboConfig: item.comboConfig,
         imageUrl: item.imageUrl,
         imageKey: item.imageKey,
-        badge: item.badge ?? item.promoLabel,
+        badge: item.badge ?? (item.isPromoActive ? (item.promoLabel || "⚡ PRECIO ESPECIAL") : item.promoLabel),
         isAvailable: item.isAvailable,
         isFeatured: item.isFeatured,
         sortOrder: item.sortOrder
