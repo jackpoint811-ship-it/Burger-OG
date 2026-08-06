@@ -245,12 +245,36 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
     setCheckoutState({ status: "submitting" });
 
     try {
-      const payloadItems = items.map((item) => ({
-        sku: item.productId,
-        qty: item.qty,
-        itemKind: catalogTypeToItemKind[item.type] ?? ("other" as OrderV2ItemKind),
-        name: item.name,
-      }));
+      const payloadItems = items.map((item) => {
+        const removedIngredients = (item.mods || [])
+          .filter((m) => /^Sin\s+/i.test(m))
+          .map((m) => m.replace(/^Sin\s+/i, "").trim());
+
+        const sideMods = (item.mods || []).filter((m) => !/^Sin\s+/i.test(m));
+
+        const extras = (item.upgrades || []).flatMap((u) =>
+          Array.from({ length: u.qty }, () => ({
+            sku: u.id,
+            name: u.name,
+            price: u.price,
+          }))
+        );
+
+        const notesParts = [];
+        if (sideMods.length) notesParts.push(sideMods.join(", "));
+        if (notes.trim()) notesParts.push(notes.trim());
+        const burgerNote = notesParts.length ? notesParts.join(" · ") : undefined;
+
+        return {
+          sku: item.productId,
+          qty: item.qty,
+          itemKind: catalogTypeToItemKind[item.type] ?? ("other" as OrderV2ItemKind),
+          name: item.name,
+          removedIngredients,
+          extras,
+          burgerNote,
+        };
+      });
 
       const response = await createOrderV2(
         {
