@@ -4,6 +4,7 @@ export type CatalogProductType = "burger" | "combo" | "side" | "topping" | "drin
 
 export type CatalogProduct = {
   id: string;
+  sku?: string;
   type: CatalogProductType;
   categoryId: string;
   categoryKey: MenuCategory["key"];
@@ -84,6 +85,7 @@ export function mapMenuItemsToCatalogProducts(items: MenuItem[], categories: Men
 
       return {
         id: item.sku,
+        sku: item.sku,
         type: mapMenuCategoryToCatalogProductType(item.category),
         categoryId: category?.id ?? item.category,
         categoryKey: item.category,
