@@ -284,7 +284,7 @@ function CatalogModeAppInner({ items, categories, siteConfig, recipes, catalogBa
             key="product-drawer"
             product={selectedProduct}
             initialCartItem={editingCartItem}
-            recipeIngredients={recipes?.[selectedProduct.id]}
+            recipeIngredients={(selectedProduct.sku && recipes?.[selectedProduct.sku]) || recipes?.[selectedProduct.id]}
             onClose={closeProductDrawer}
           />
         )}
