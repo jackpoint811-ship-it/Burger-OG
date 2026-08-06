@@ -25,8 +25,8 @@ export const getInternalAuthMode = (): InternalAuthMode =>
   normalizeInternalAuthMode(readInternalAuthModeEnv());
 
 export const shouldUseGlobalInternalAuthGate = (
-  mode: InternalAuthMode,
-): boolean => mode === 'global';
+  _mode: InternalAuthMode,
+): boolean => false;
 
 export const shouldGateAdminInternally = (mode: InternalAuthMode): boolean =>
   mode === 'admin-only' || mode === 'global';
