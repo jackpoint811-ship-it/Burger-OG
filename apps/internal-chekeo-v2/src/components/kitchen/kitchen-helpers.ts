@@ -55,10 +55,21 @@ export const getKitchenItemKind = (
   }
 
   if (
-    nameLower.includes("extra") ||
-    nameLower.includes("queso") ||
-    nameLower.includes("tocino") ||
+    nameLower.includes("burger") ||
+    nameLower.includes("hamburguesa") ||
+    nameLower.includes("smash") ||
+    nameLower.includes("doble") ||
+    nameLower.includes("sencilla") ||
+    nameLower.includes("classic") ||
+    nameLower.includes("clásica")
+  ) {
+    return "burger";
+  }
+
+  if (
     nameLower.includes("aderezo") ||
+    nameLower.includes("dip") ||
+    nameLower.includes("salsa") ||
     nameLower.includes("topping")
   ) {
     return "other";

@@ -875,8 +875,9 @@ export const KitchenQueue = ({
 
   const toggleKitchenItem = useCallback(
     async (entry: KitchenProductionItem, done: boolean) => {
-      if (!entry.item.lineKey) return;
-      setBusyLineKey(entry.lineKey);
+      const targetLineKey = entry.item.lineKey || entry.lineKey;
+      if (!targetLineKey) return;
+      setBusyLineKey(targetLineKey);
       try {
         if (done && entry.order.status === "new") {
           await onMove(entry.order.id, "preparing", "Cocina: preparación actual");
@@ -886,7 +887,7 @@ export const KitchenQueue = ({
         }
         await onToggleKitchenItem(
           entry.order.id,
-          entry.lineKey,
+          targetLineKey,
           getKitchenItemActionKind(entry.item),
           done,
         );
