@@ -274,7 +274,7 @@ const validatePayload = (body: Record<string, unknown>, request: Request): Norma
       sku,
       qty,
       name: normalizeString(item.name) || undefined,
-      lineKey: normalizeString(item.lineKey) || undefined,
+      lineKey: normalizeString(item.lineKey) || generateId('line'),
       itemDisplayIndex: Number.isInteger(Number(item.itemDisplayIndex)) ? Number(item.itemDisplayIndex) : undefined,
       itemKind: ITEM_KINDS.has(itemKind) ? itemKind as ItemCustomization['itemKind'] : 'other',
       removedIngredients: normalizeStringArray(item.removedIngredients),
