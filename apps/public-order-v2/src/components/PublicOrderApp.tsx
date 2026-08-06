@@ -265,12 +265,14 @@ const REMOVABLE_INGREDIENTS_BY_SKU: Record<string, readonly string[]> = {
 };
 const normalizeCatalogKey = (value: string) => value.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "");
 const getRemovableIngredients = (item: MenuItem): string[] => {
-  const skuIngredients = REMOVABLE_INGREDIENTS_BY_SKU[normalizeCatalogKey(item.sku)];
+  const skuKey = normalizeCatalogKey(item.sku);
+  const skuIngredients = REMOVABLE_INGREDIENTS_BY_SKU[skuKey];
   if (skuIngredients) return [...skuIngredients];
 
   const nameKey = normalizeCatalogKey(item.name);
-  if (/^(?:BURGER-|HAMBURGUESA-|COMBO-)?OG$/.test(nameKey)) return [...OG_REMOVABLE_INGREDIENTS];
-  if (/^(?:BURGER-|HAMBURGUESA-|COMBO-)?BBQ$/.test(nameKey)) return [...BBQ_REMOVABLE_INGREDIENTS];
+  if (/(^|-)OG($|-)/.test(skuKey) || /(^|-)OG($|-)/.test(nameKey)) return [...OG_REMOVABLE_INGREDIENTS];
+  if (/(^|-)BBQ($|-)/.test(skuKey) || /(^|-)BBQ($|-)/.test(nameKey)) return [...BBQ_REMOVABLE_INGREDIENTS];
+  if (item.category === "burgers" || inferItemKind(item) === "burger") return [...OG_REMOVABLE_INGREDIENTS];
   return [];
 };
 const getKnownProductIngredients = (item: MenuItem): readonly string[] | null => {

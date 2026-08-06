@@ -274,7 +274,7 @@ export const getKitchenBurgerBreakdowns = (
         mods,
         upgrades,
         note: burger.burgerNote,
-        isOriginal: mods.length === 0 && upgrades.length === 0,
+        isOriginal: mods.length === 0 && upgrades.length === 0 && !burger.burgerNote?.trim(),
       };
     });
   }
@@ -307,7 +307,7 @@ export const getKitchenBurgerBreakdowns = (
       mods,
       upgrades,
       note: item.burgerNote,
-      isOriginal: mods.length === 0 && upgrades.length === 0,
+      isOriginal: mods.length === 0 && upgrades.length === 0 && !item.burgerNote?.trim(),
     },
   ];
 };
