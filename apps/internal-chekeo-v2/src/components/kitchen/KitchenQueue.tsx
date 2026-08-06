@@ -534,9 +534,7 @@ const PendingOrdersQueue = ({
       {expanded ? (
         <div className="kitchen-following-orders__list border-t border-zinc-800/40 p-3 space-y-3">
           {groups.map((group) => {
-            const shortSummary = isSideQuest
-              ? buildKitchenOrderQueueSummary(group.order)
-              : null;
+            const shortSummary = buildKitchenOrderQueueSummary(group.order, laneMode);
             return (
               <div key={group.orderId} className="kitchen-production-card bg-white dark:bg-zinc-950/60 border border-zinc-800/80 p-3 rounded-xl text-left">
                 <div className="flex justify-between items-start">
