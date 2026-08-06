@@ -117,6 +117,9 @@ type OrdersSource = "d1" | "mock" | "fallback";
 type BackHandler = () => boolean;
 type OrdersV2Summary = NonNullable<OrdersV2SummaryResponse["data"]>;
 type KitchenSummaryK = NonNullable<KitchenSummaryKResponse["data"]>;
+const formatIsoDate = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
 type KitchenItemKind = Extract<OrderV2ItemKind, "burger" | "combo" | "garnish">;
 type InternalOrderItem = MockOrder["items"][number] & {
   lineTotal?: number;
@@ -3016,7 +3019,7 @@ const OrdersBoard = ({
   const [search, setSearch] = useState("");
 
   const filteredOrders = useMemo(() => {
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = formatIsoDate(new Date());
     const normalizedSearch = search.trim().toLowerCase();
 
     return [...orders]
@@ -3030,8 +3033,7 @@ const OrdersBoard = ({
         if (details.isScheduled && details.scheduledDeliveryDate) {
           orderDeliveryDate = details.scheduledDeliveryDate;
         } else if (order.createdAtMs) {
-          const d = new Date(order.createdAtMs);
-          orderDeliveryDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          orderDeliveryDate = formatIsoDate(new Date(order.createdAtMs));
         }
 
         if (selectedCalendarDate !== "all") {
@@ -4055,8 +4057,8 @@ const PaymentNotesPanel = ({
 
 
   const filteredOrders = useMemo(() => {
+    const todayStr = formatIsoDate(new Date());
     const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const startOfToday = new Date(
       now.getFullYear(),
       now.getMonth(),
@@ -4074,8 +4076,7 @@ const PaymentNotesPanel = ({
           if (details.isScheduled && details.scheduledDeliveryDate) {
             orderDateStr = details.scheduledDeliveryDate;
           } else if (order.createdAtMs) {
-            const d = new Date(order.createdAtMs);
-            orderDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+            orderDateStr = formatIsoDate(new Date(order.createdAtMs));
           }
           if (selectedDate === "today" && orderDateStr !== todayStr) return false;
           if (selectedDate !== "today" && selectedDate !== "all" && orderDateStr !== selectedDate) return false;

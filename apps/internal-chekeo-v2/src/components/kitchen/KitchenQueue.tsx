@@ -37,6 +37,9 @@ import type {
 } from "./kitchen-types";
 import { KitchenSummaryK } from "./KitchenSummaryK";
 
+const formatIsoDate = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
 const aggregateSummaryRows = <T extends { name: string; quantity: number }>(items: T[]): T[] => {
   const map = new Map<string, T>();
   for (const item of items) {
@@ -819,21 +822,19 @@ export const KitchenQueue = ({
   );
 
   const filteredActiveOrders = useMemo(() => {
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    const todayStr = formatIsoDate(new Date());
 
     return activeOrders.filter((order) => {
       if (selectedDate === "all") return true;
 
       const createdAtIso = order.createdAtIso || (order.createdAtMs ? new Date(order.createdAtMs).toISOString() : undefined);
-      const details = parseOrderCustomerDetails(order.customer, order.note, createdAtIso);
+      const details = parseOrderCustomerDetails(order.customer, order.note, createdAtIso, order.delivery);
       let orderDateStr = todayStr;
 
       if (details.isScheduled && details.scheduledDeliveryDate) {
         orderDateStr = details.scheduledDeliveryDate;
       } else if (order.createdAtMs) {
-        const d = new Date(order.createdAtMs);
-        orderDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        orderDateStr = formatIsoDate(new Date(order.createdAtMs));
       }
 
       if (selectedDate === "today") {
