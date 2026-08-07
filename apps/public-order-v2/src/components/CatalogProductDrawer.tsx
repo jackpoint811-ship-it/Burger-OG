@@ -56,6 +56,7 @@ type CatalogProductDrawerProps = {
   product: CatalogProduct;
   initialCartItem?: CatalogCartItem | null;
   recipeIngredients?: string[];
+  allProducts?: CatalogProduct[];
   onClose: () => void;
 };
 
@@ -68,28 +69,12 @@ const focusableSelector = [
   "[tabindex]:not([tabindex='-1'])",
 ].join(",");
 
-const COMBO_SIDES = [
-  { label: "Papas a la francesa tradicionales", extraPrice: 0 },
-  { label: "Papas sazonadas especial (+ $5)", extraPrice: 5 },
-  { label: "Papas Lemon & Pepper (+ $5)", extraPrice: 5 },
-  { label: "Aros de Cebolla crujientes (+ $5)", extraPrice: 5 },
-];
-
-const AVAILABLE_UPGRADES = [
-  { id: "EXT-CARNE-SMASH", name: "Extra Carne Smash 100g", price: 35 },
-  { id: "EXTRA_QUESO_AMERICANO", name: "Extra Queso Americano", price: 15 },
-  { id: "EXTRA_TOCINO", name: "Extra Tocino Crujiente", price: 25 },
-  { id: "EXT-DIP-CHEDDAR", name: "Dip de Queso Cheddar Melt", price: 20 },
-  { id: "EXT-ADEREZO-CASA", name: "Aderezo Especial de la Casa", price: 15 },
-  { id: "EXTRA_PEPINILLOS", name: "Pepinillos Artesanales Extra", price: 10 },
-];
-
-export function CatalogProductDrawer({ product, initialCartItem, recipeIngredients, onClose }: CatalogProductDrawerProps) {
+export function CatalogProductDrawer({ product, initialCartItem, recipeIngredients, allProducts, onClose }: CatalogProductDrawerProps) {
   const { items, addItem, updateItem } = useCatalogCart();
   const [justAdded, setJustAdded] = useState(false);
   const [removedMods, setRemovedMods] = useState<string[]>([]);
   const [upgrades, setUpgrades] = useState<{ id: string; name: string; price: number; qty: number }[]>([]);
-  const [comboSide, setComboSide] = useState<string>(COMBO_SIDES[0].label);
+  const [comboSide, setComboSide] = useState<string>("");
   const [itemMode, setItemMode] = useState<"original" | "customize">("original");
 
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -102,8 +87,45 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
 
   const isEditing = Boolean(initialCartItem);
 
+  /* ── 1. Extras/Upgrades dinámicos desde Chekeo D1 (0 fallbacks) ── */
+  const availableUpgrades = useMemo(() => {
+    if (!allProducts || !allProducts.length) return [];
+    return allProducts
+      .filter((p) => (p.categoryKey === "extras" || p.type === "topping") && p.isAvailable)
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: p.isPromoActive && p.promoPrice != null && p.promoPrice < p.price ? p.promoPrice : p.price,
+      }));
+  }, [allProducts]);
+
+  /* ── 2. Guarniciones de combos dinámicas desde Chekeo D1 (0 fallbacks) ── */
+  const comboSideOptions = useMemo(() => {
+    if (!allProducts || !allProducts.length) return [];
+    const sides = allProducts.filter((p) => (p.categoryKey === "guarniciones" || p.type === "side") && p.isAvailable);
+    if (!sides.length) return [];
+    const basePrice = sides[0]?.price ?? 0;
+    return sides.map((p) => {
+      const effectivePrice = p.isPromoActive && p.promoPrice != null && p.promoPrice < p.price ? p.promoPrice : p.price;
+      const diff = Math.max(0, effectivePrice - basePrice);
+      return {
+        id: p.id,
+        label: diff > 0 ? `${p.name} (+ ${formatCurrency(diff)})` : p.name,
+        rawLabel: p.name,
+        extraPrice: diff,
+      };
+    });
+  }, [allProducts]);
+
+  /* ── 3. Ingredientes de receta dinámicos (0 fallbacks) ───── */
+  const AVAILABLE_MODS = useMemo(() => {
+    return recipeIngredients && recipeIngredients.length > 0 ? recipeIngredients : [];
+  }, [recipeIngredients]);
+
   useEffect(() => {
     setJustAdded(false);
+    const defaultSide = comboSideOptions.length > 0 ? comboSideOptions[0].label : "";
+
     if (initialCartItem) {
       const parsedRemoved = (initialCartItem.mods || [])
         .filter((m) => m.startsWith("Sin "))
@@ -115,7 +137,7 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
       if (sideMod) {
         setComboSide(sideMod.replace("Guarnición: ", ""));
       } else {
-        setComboSide(COMBO_SIDES[0].label);
+        setComboSide(defaultSide);
       }
 
       if (parsedRemoved.length > 0 || (initialCartItem.upgrades && initialCartItem.upgrades.length > 0)) {
@@ -126,11 +148,11 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
     } else {
       setRemovedMods([]);
       setUpgrades([]);
-      setComboSide(COMBO_SIDES[0].label);
+      setComboSide(defaultSide);
       setItemMode("original");
     }
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
-  }, [product?.id, initialCartItem]);
+  }, [product?.id, initialCartItem, comboSideOptions]);
 
   useEffect(() => {
     return () => {
@@ -192,10 +214,10 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
   };
 
   const comboExtraPrice = useMemo(() => {
-    if (product.type !== "combo") return 0;
-    const sideObj = COMBO_SIDES.find((s) => s.label === comboSide);
+    if (product.type !== "combo" || !comboSide) return 0;
+    const sideObj = comboSideOptions.find((s) => s.label === comboSide || s.rawLabel === comboSide);
     return sideObj ? sideObj.extraPrice : 0;
-  }, [product.type, comboSide]);
+  }, [product.type, comboSide, comboSideOptions]);
 
   const effectiveBasePrice = useMemo(() => {
     if (product.isPromoActive && product.promoPrice != null && product.promoPrice < product.price) {
@@ -221,7 +243,7 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
     if (itemMode === "customize") {
       modsList.push(...removedMods.map((m) => `Sin ${m}`));
     }
-    if (product.type === "combo") {
+    if (product.type === "combo" && comboSide) {
       modsList.push(`Guarnición: ${comboSide}`);
     }
     const activeUpgrades = itemMode === "customize" ? upgrades.filter((u) => u.qty > 0) : [];
@@ -244,16 +266,6 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
       onClose();
     }, 1200);
   };
-
-  const AVAILABLE_MODS = useMemo(() => {
-    if (recipeIngredients && recipeIngredients.length > 0) {
-      return recipeIngredients;
-    }
-    if (product.type === "burger" || product.type === "combo") {
-      return ["Cebolla", "Pepinillos", "Jitomate", "Lechuga", "Mostaza", "Catsup"];
-    }
-    return [];
-  }, [recipeIngredients, product.type]);
 
   const handleModToggle = (mod: string) => {
     setRemovedMods((prev) => (prev.includes(mod) ? prev.filter((m) => m !== mod) : [...prev, mod]));
@@ -320,20 +332,12 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
             </button>
           </header>
 
-          {/* ── Copi de Descripción oficial ── */}
+          {/* ── Descripción oficial desde D1 ── */}
           {product.description ? (
             <p id={descriptionId} className="catalog-drawer__description">
               {product.description}
             </p>
-          ) : (
-            <p id={descriptionId} className="catalog-drawer__description">
-              {product.type === "burger"
-                ? "Receta artesanal con 100% carne smash de res seleccionada, sazón especial y pan brioche horneado."
-                : product.type === "combo"
-                ? "Combo completo con tu hamburguesa especial, guarnición y bebida bien fría."
-                : "Preparado al momento con ingredientes frescos de primera calidad."}
-            </p>
-          )}
+          ) : null}
 
           <div className="catalog-drawer__details">
             <div className="catalog-drawer__price-row">
@@ -354,18 +358,22 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
             </span>
           </div>
 
-          {/* ── BURGERS Y COMBOS: Botones de Modo & Ingredientes ── */}
+          {/* ── BURGERS Y COMBOS: Botones de Modo e Ingredientes ── */}
           {(product.type === "burger" || product.type === "combo") && (
             <div className="catalog-drawer__section-card" style={{ marginTop: "12px" }}>
-              <span className="catalog-drawer__section-title">🥗 INGREDIENTES DE LA RECETA</span>
-              <ul className="catalog-drawer__ingredients-list" style={{ marginTop: "6px", fontSize: "13px", color: "var(--color-text-secondary)" }}>
-                {AVAILABLE_MODS.map((ing, idx) => (
-                  <li key={idx}>• {ing}</li>
-                ))}
-              </ul>
+              {AVAILABLE_MODS.length > 0 ? (
+                <>
+                  <span className="catalog-drawer__section-title">🥗 INGREDIENTES DE LA RECETA</span>
+                  <ul className="catalog-drawer__ingredients-list" style={{ marginTop: "6px", fontSize: "13px", color: "var(--color-text-secondary)" }}>
+                    {AVAILABLE_MODS.map((ing, idx) => (
+                      <li key={idx}>• {ing}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
 
               {/* Botones Receta Original vs Personalizar */}
-              <div className="catalog-drawer__mode-toggle-grid" style={{ marginTop: "14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <div className="catalog-drawer__mode-toggle-grid" style={{ marginTop: AVAILABLE_MODS.length > 0 ? "14px" : "0px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                 <button
                   type="button"
                   className={`catalog-drawer__mode-btn ${itemMode === "original" ? "catalog-drawer__mode-btn--active" : ""}`}
@@ -404,13 +412,13 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
             </div>
           )}
 
-          {/* ── OPCIONES DE COMBO: Guarnición ── */}
-          {product.type === "combo" && (
+          {/* ── OPCIONES DE COMBO: Guarnición Dinámica desde Chekeo ── */}
+          {product.type === "combo" && comboSideOptions.length > 0 && (
             <div className="catalog-drawer__section-card" style={{ marginTop: "12px" }}>
               <span className="catalog-drawer__section-title">🍟 ELIGE TU GUARNICIÓN</span>
               <div className="catalog-drawer__radio-group" style={{ display: "grid", gap: "8px", marginTop: "8px" }}>
-                {COMBO_SIDES.map((side) => (
-                  <label key={side.label} className="catalog-drawer__radio-label" style={{
+                {comboSideOptions.map((side) => (
+                  <label key={side.id} className="catalog-drawer__radio-label" style={{
                     display: "flex",
                     alignItems: "center",
                     gap: "10px",
@@ -458,41 +466,43 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
                 </div>
               )}
 
-              {/* Upgrades & Extras */}
-              <div className="catalog-drawer__mods" style={{ marginTop: "16px" }}>
-                <p className="catalog-drawer__mods-title">Agrega extras adicionales</p>
-                <div className="catalog-drawer__upgrades-grid">
-                  {AVAILABLE_UPGRADES.map((upgrade) => {
-                    const currentQty = upgrades.find((u) => u.id === upgrade.id)?.qty || 0;
-                    return (
-                      <div key={upgrade.id} className="catalog-drawer__upgrade-card">
-                        <div className="catalog-drawer__upgrade-info">
-                          <span className="catalog-drawer__upgrade-name">{upgrade.name}</span>
-                          <span className="catalog-drawer__upgrade-price">+{formatCurrency(upgrade.price)}</span>
+              {/* Upgrades & Extras Dinámicos desde Chekeo */}
+              {availableUpgrades.length > 0 && (
+                <div className="catalog-drawer__mods" style={{ marginTop: "16px" }}>
+                  <p className="catalog-drawer__mods-title">Agrega extras adicionales</p>
+                  <div className="catalog-drawer__upgrades-grid">
+                    {availableUpgrades.map((upgrade) => {
+                      const currentQty = upgrades.find((u) => u.id === upgrade.id)?.qty || 0;
+                      return (
+                        <div key={upgrade.id} className="catalog-drawer__upgrade-card">
+                          <div className="catalog-drawer__upgrade-info">
+                            <span className="catalog-drawer__upgrade-name">{upgrade.name}</span>
+                            <span className="catalog-drawer__upgrade-price">+{formatCurrency(upgrade.price)}</span>
+                          </div>
+                          <div className="catalog-drawer__upgrade-actions">
+                            <button
+                              type="button"
+                              className={`catalog-drawer__upgrade-btn ${currentQty === 0 ? "catalog-drawer__upgrade-btn--disabled" : ""}`}
+                              onClick={() => handleUpgradeChange(upgrade.id, upgrade.name, upgrade.price, -1)}
+                              disabled={currentQty === 0}
+                            >
+                              −
+                            </button>
+                            <span className="catalog-drawer__upgrade-qty">{currentQty}</span>
+                            <button
+                              type="button"
+                              className="catalog-drawer__upgrade-btn"
+                              onClick={() => handleUpgradeChange(upgrade.id, upgrade.name, upgrade.price, 1)}
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
-                        <div className="catalog-drawer__upgrade-actions">
-                          <button
-                            type="button"
-                            className={`catalog-drawer__upgrade-btn ${currentQty === 0 ? "catalog-drawer__upgrade-btn--disabled" : ""}`}
-                            onClick={() => handleUpgradeChange(upgrade.id, upgrade.name, upgrade.price, -1)}
-                            disabled={currentQty === 0}
-                          >
-                            −
-                          </button>
-                          <span className="catalog-drawer__upgrade-qty">{currentQty}</span>
-                          <button
-                            type="button"
-                            className="catalog-drawer__upgrade-btn"
-                            onClick={() => handleUpgradeChange(upgrade.id, upgrade.name, upgrade.price, 1)}
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
