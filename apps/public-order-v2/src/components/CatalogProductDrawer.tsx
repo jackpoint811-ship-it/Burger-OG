@@ -99,9 +99,31 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
       }));
   }, [allProducts]);
 
-  /* ── 2. Guarniciones de combos dinámicas desde Chekeo D1 (0 fallbacks) ── */
+  /* ── 2. Guarniciones de combos dinámicas (priorizando configuración de Chekeo D1) ── */
   const comboSideOptions = useMemo(() => {
     if (!allProducts || !allProducts.length) return [];
+
+    if (product.type === "combo" && product.comboConfig?.optionGroups) {
+      const sideGroup = product.comboConfig.optionGroups.find(
+        (g) => g.name.toLowerCase().includes("guarnici") || g.name.toLowerCase().includes("side")
+      );
+      if (sideGroup && sideGroup.options.length > 0) {
+        return sideGroup.options
+          .map((opt) => {
+            const sideItem = allProducts.find((p) => p.sku === opt.sku);
+            if (!sideItem || !sideItem.isAvailable) return null;
+            const extraPrice = (opt.upchargeCents || 0) / 100;
+            return {
+              id: sideItem.id,
+              label: extraPrice > 0 ? `${sideItem.name} (+ ${formatCurrency(extraPrice)})` : sideItem.name,
+              rawLabel: sideItem.name,
+              extraPrice: extraPrice,
+            };
+          })
+          .filter(Boolean) as { id: string; label: string; rawLabel: string; extraPrice: number }[];
+      }
+    }
+
     const sides = allProducts.filter((p) => (p.categoryKey === "guarniciones" || p.type === "side") && p.isAvailable);
     if (!sides.length) return [];
     const basePrice = sides[0]?.price ?? 0;
@@ -115,7 +137,7 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
         extraPrice: diff,
       };
     });
-  }, [allProducts]);
+  }, [allProducts, product]);
 
   /* ── 3. Ingredientes de receta dinámicos (0 fallbacks) ───── */
   const AVAILABLE_MODS = useMemo(() => {
