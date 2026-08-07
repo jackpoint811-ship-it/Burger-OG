@@ -64,6 +64,7 @@ Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más especí
 - No cambiar payloads enviados desde `orders-v2`, lectura de menú, tickets, promociones, precios ni ubicación sin autorización explícita.
 - Validar visualmente en viewport móvil cuando el cambio sea perceptible en la UI.
 - Priorizar cambios locales en componentes/estilos existentes antes de crear abstracciones nuevas.
+- **Consumo estricto del Payload de Chekeo (Single Source of Truth):** El Frontend público NUNCA debe simular lógicas de negocio, calcular diferencias de precios al vuelo ni depender de fallbacks. Si existe una configuración dinámica administrada en Chekeo (ej. `comboConfig.optionGroups`, `upchargeCents`, `isDefault`), el componente UI debe mapear y respetar obligatoriamente esas reglas directamente desde la base de datos.
 
 ## Checks esperados
 - Ejecutar `git diff --check` en todo PR.
