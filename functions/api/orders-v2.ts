@@ -747,8 +747,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     if (!createdOrder) return errorResponse(500, 'INTERNAL_ERROR', 'No se pudo recuperar la orden creada.');
     const raffleData = isPreviewOrder ? {} : await buildRaffleSuccessData(env.BOG_MENU_DB, { order: createdOrder, orderId, ownerName: parsed.customerName, ownerPhone: parsed.customerPhone, now });
     return json(201, { ok: true, data: { order: buildOrderSummary(createdOrder, parsed.idempotencyKey), ...(referralAccepted === undefined ? {} : { referralAccepted }), ...raffleData } });
-  } catch {
-    return errorResponse(500, 'INTERNAL_ERROR', 'No se pudo crear la orden.');
+  } catch (err: any) {
+    const errorDetail = err instanceof Error ? err.message : String(err);
+    return errorResponse(500, 'INTERNAL_ERROR', `No se pudo crear la orden. Detalle: ${errorDetail}`);
   }
 };
 
