@@ -87,7 +87,7 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
 
   const isEditing = Boolean(initialCartItem);
 
-  /* ── 1. Extras/Upgrades dinámicos desde Chekeo D1 ──────── */
+  /* ── 1. Extras/Upgrades dinámicos desde Chekeo D1 (0 fallbacks) ── */
   const availableUpgrades = useMemo(() => {
     if (!allProducts || !allProducts.length) return [];
     return allProducts
@@ -99,7 +99,7 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
       }));
   }, [allProducts]);
 
-  /* ── 2. Guarniciones de combos dinámicas desde Chekeo D1 ── */
+  /* ── 2. Guarniciones de combos dinámicas desde Chekeo D1 (0 fallbacks) ── */
   const comboSideOptions = useMemo(() => {
     if (!allProducts || !allProducts.length) return [];
     const sides = allProducts.filter((p) => (p.categoryKey === "guarniciones" || p.type === "side") && p.isAvailable);
