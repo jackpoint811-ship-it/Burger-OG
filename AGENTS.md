@@ -1,3 +1,5 @@
+Test
+
 # AGENTS.md — Reglas permanentes para Codex en Burgers.exe
 
 Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más específico indique algo distinto.
