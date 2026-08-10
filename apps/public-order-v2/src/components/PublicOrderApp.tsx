@@ -870,7 +870,7 @@ const QuantityControl = ({ value, onChange, min = 1, max = 3, label = "Cantidad 
 const UnitEditor = ({ unit, index, item, extras, garnishes, onChange }: { unit: CartEntry; index: number; item: MenuItem; extras: MenuItem[]; garnishes: MenuItem[]; onChange: (unit: CartEntry) => void }) => {
   const ingredients = getRemovableIngredients(item);
   const isBurgerLike = unit.itemKind === "burger" || unit.itemKind === "combo";
-  const [openPanels, setOpenPanels] = useState({ mod: true, upgrades: true, combo: true });
+  const [openPanels, setOpenPanels] = useState({ mod: false, upgrades: false, combo: true });
   const changeSummary = getUnitChangeSummary(unit);
   const removedSummary = changeSummary.removed.length ? `Quitado: ${changeSummary.removed.join(", ")}` : "Burger original";
   const extrasSummaryText = changeSummary.extras.length ? changeSummary.extras.map((entry) => `${entry.name} x${entry.quantity}`).join(", ") : "Sin upgrades";
