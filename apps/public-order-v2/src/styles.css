@@ -3176,6 +3176,12 @@ body {
   display: grid;
   gap: 10px;
   padding: 0 12px 12px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.custom-accordion-panel[aria-expanded="true"] {
+  max-height: 500px; /* adjust as needed */
 }
 
 .custom-accordion-trigger {
