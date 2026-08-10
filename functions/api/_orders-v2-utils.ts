@@ -206,14 +206,16 @@ export const buildFormattedCustomizationSummary = (snapshot: Record<string, unkn
   }
 
   // 5. Garnish
-  if (snapshot.garnish && typeof snapshot.garnish === 'object') {
-    const g = snapshot.garnish as Record<string, unknown>;
-    const gName = typeof g.name === 'string' ? g.name.trim() : '';
-    const upcharge = Number(g.upcharge);
-    if (gName) {
-      lines.push(`🍟 Acompañamiento: ${gName}${Number.isFinite(upcharge) && upcharge > 0 ? ` (+$${upcharge})` : ''}`);
-    }
+if (snapshot.garnish && typeof snapshot.garnish === 'object') {
+  const g = snapshot.garnish as Record<string, unknown>;
+  const gName = typeof g.name === 'string' ? g.name.trim() : '';
+  const upcharge = Number(g.upcharge);
+  if (gName) {
+    lines.push(`🍟 Acompañamiento: ${gName}${Number.isFinite(upcharge) && upcharge > 0 ? ` (+$${upcharge})` : ''}`);
+    // Also show as an extra for Kitchen UI consistency
+    lines.push(`➕ EXTRA ${gName}${Number.isFinite(upcharge) && upcharge > 0 ? ` (+$${upcharge})` : ''}`);
   }
+}
 
   // 6. Included drink
   if (snapshot.includedDrink && typeof snapshot.includedDrink === 'object') {

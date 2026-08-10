@@ -267,6 +267,15 @@ const validatePayload = (body: Record<string, unknown>, request: Request): Norma
     const sideQuestExtras = normalizeSideQuestExtras(item.sideQuestExtras);
     const comboBurgers = normalizeComboBurgers(item.comboBurgers);
     const comboBurgerExtras = comboBurgers.flatMap((burger) => burger.extras);
+    // If this is a combo with a garnish, map it to sideQuestExtras for Kitchen UI consistency
+    if (itemKind === 'combo' && garnish && garnish.name) {
+      sideQuestExtras.push({
+        sku: garnish.sku,
+        name: garnish.name,
+        price: garnish.upcharge,
+        itemKind: 'garnish'
+      });
+    }
     if (extras.some((extra) => !extra.sku) || garnish && !garnish.sku || includedDrink && !includedDrink.sku || sideQuestExtras.some((extra) => !extra.sku) || comboBurgerExtras.some((extra) => !extra.sku)) {
       return errorResponse(400, 'INVALID_CUSTOMIZATIONS', 'Extras, guarniciones y bebidas deben incluir SKU válido.');
     }
@@ -747,8 +756,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     if (!createdOrder) return errorResponse(500, 'INTERNAL_ERROR', 'No se pudo recuperar la orden creada.');
     const raffleData = isPreviewOrder ? {} : await buildRaffleSuccessData(env.BOG_MENU_DB, { order: createdOrder, orderId, ownerName: parsed.customerName, ownerPhone: parsed.customerPhone, now });
     return json(201, { ok: true, data: { order: buildOrderSummary(createdOrder, parsed.idempotencyKey), ...(referralAccepted === undefined ? {} : { referralAccepted }), ...raffleData } });
-  } catch {
-    return errorResponse(500, 'INTERNAL_ERROR', 'No se pudo crear la orden.');
+  } catch (err: any) {
+    const errorDetail = err instanceof Error ? err.message : String(err);
+    return errorResponse(500, 'INTERNAL_ERROR', `No se pudo crear la orden. Detalle: ${errorDetail}`);
   }
 };
 
