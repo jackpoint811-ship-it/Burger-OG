@@ -54,15 +54,15 @@ const BG_PRESETS: Array<{ key: string; label: string; style: string; border: str
   { key: 'gradient-amber', label: '🟧 Fuego Ámbar', style: 'linear-gradient(135deg, #C2410C 0%, #EA580C 100%)', border: 'border-amber-400' },
   { key: 'gradient-indigo', label: '🍇 Índigo Místico', style: 'linear-gradient(135deg, #4338CA 0%, #6366F1 100%)', border: 'border-indigo-400' },
   { key: 'gradient-rose', label: '🩷 Smash Rose', style: 'linear-gradient(135deg, #BE185D 0%, #E11D48 100%)', border: 'border-rose-400' },
-  { key: 'gradient-dark', label: '🖤 Carbón Premium', style: 'linear-gradient(135deg, #18181B 0%, #27272A 100%)', border: 'border-zinc-700' },
+  { key: 'gradient-dark', label: '🖤 Carbón Premium', style: 'linear-gradient(135deg, #18181B 0%, #27272A 100%)', border: 'border-neutral-600' },
 ];
 
 const BADGE_COLORS: Array<{ key: string; label: string; badgeStyle: string }> = [
-  { key: 'cyan', label: '🩵 Cyan', badgeStyle: 'bg-cyan-400 text-zinc-950 font-black' },
-  { key: 'amber', label: '💛 Ámbar', badgeStyle: 'bg-amber-400 text-zinc-950 font-black' },
-  { key: 'rose', label: '🩷 Rose', badgeStyle: 'bg-rose-500 text-white font-black' },
-  { key: 'emerald', label: '💚 Verde', badgeStyle: 'bg-emerald-400 text-zinc-950 font-black' },
-  { key: 'purple', label: '💜 Morado', badgeStyle: 'bg-indigo-400 text-white font-black' },
+  { key: 'cyan', label: '🩵 Cyan', badgeStyle: 'bg-cyan-100 text-cyan-800 font-bold' },
+  { key: 'amber', label: '💛 Ámbar', badgeStyle: 'bg-amber-100 text-amber-800 font-bold' },
+  { key: 'rose', label: '🩷 Rose', badgeStyle: 'bg-rose-100 text-rose-800 font-bold' },
+  { key: 'emerald', label: '💚 Verde', badgeStyle: 'bg-emerald-100 text-emerald-800 font-bold' },
+  { key: 'purple', label: '💜 Morado', badgeStyle: 'bg-indigo-100 text-indigo-800 font-bold' },
 ];
 
 const validateSelectedFile = (file: File | null): string | null => {
@@ -95,11 +95,9 @@ const getBadgeStyle = (colorKey?: string | null) => {
 export function StoreBannersTool() {
   const [activeTab, setActiveTab] = useState<'banners' | 'schedules' | 'status' | 'sorteos'>('banners');
 
-  // Banners List State
   const [banners, setBanners] = useState<CatalogBanner[]>([]);
   const [loadingBanners, setLoadingBanners] = useState(true);
 
-  // Banner Modal State
   const [bannerModalForm, setBannerModalForm] = useState<CatalogBannerForm | null>(null);
   const [bannerModalSaving, setBannerModalSaving] = useState(false);
   const [bannerModalUploading, setBannerModalUploading] = useState(false);
@@ -108,16 +106,13 @@ export function StoreBannersTool() {
   const [bannerModalError, setBannerModalError] = useState<string | null>(null);
   const bannerFileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Schedules State
   const [schedules, setSchedules] = useState<TowerSchedule[]>([]);
   const [loadingSchedules, setLoadingSchedules] = useState(true);
   const [savingScheduleId, setSavingScheduleId] = useState<string | null>(null);
 
-  // Store Status State
   const [catalogEnabled, setCatalogEnabled] = useState(true);
   const [savingConfig, setSavingConfig] = useState(false);
 
-  // Raffle State
   const [raffleActive, setRaffleActive] = useState(false);
   const [raffleCampaignId, setRaffleCampaignId] = useState<string | null>(null);
   const [raffleTitle, setRaffleTitle] = useState('');
@@ -126,7 +121,6 @@ export function StoreBannersTool() {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Load Store Banners
   const loadBanners = useCallback(async () => {
     setLoadingBanners(true);
     try {
@@ -140,7 +134,6 @@ export function StoreBannersTool() {
     }
   }, []);
 
-  // Load Schedules
   const loadSchedules = useCallback(async () => {
     setLoadingSchedules(true);
     try {
@@ -154,7 +147,6 @@ export function StoreBannersTool() {
     }
   }, []);
 
-  // Load Config & Raffle
   const loadConfigAndRaffles = useCallback(async () => {
     try {
       const [menuRes, raffles] = await Promise.all([
@@ -183,7 +175,6 @@ export function StoreBannersTool() {
     loadConfigAndRaffles();
   }, [loadBanners, loadSchedules, loadConfigAndRaffles]);
 
-  // Modal Triggers
   const beginCreateBannerModal = () => {
     setBannerModalForm({
       title: '',
@@ -201,87 +192,72 @@ export function StoreBannersTool() {
     });
     setSelectedBannerFile(null);
     setBannerModalError(null);
+    if (bannerFileInputRef.current) bannerFileInputRef.current.value = '';
   };
 
-  const beginEditBannerModal = (b: CatalogBanner) => {
+  const beginEditBannerModal = (banner: CatalogBanner) => {
     setBannerModalForm({
-      id: b.id,
-      title: b.title,
-      subtitle: b.subtitle || '',
-      ctaLabel: b.ctaLabel || '',
-      isActive: b.isActive,
-      sortOrder: String(b.sortOrder),
-      imageUrl: b.imageUrl || '',
-      imageKey: b.imageKey || '',
-      bgPreset: b.bgPreset || 'gradient-cyan',
-      badgeText: b.badgeText || '',
-      badgeColor: b.badgeColor || 'cyan',
-      ctaActionType: b.ctaActionType || 'none',
-      ctaTarget: b.ctaTarget || ''
+      id: banner.id,
+      title: banner.title,
+      subtitle: banner.subtitle || '',
+      ctaLabel: banner.ctaLabel || '',
+      isActive: banner.isActive,
+      sortOrder: String(banner.sortOrder),
+      imageUrl: banner.imageUrl || '',
+      imageKey: banner.imageKey || '',
+      bgPreset: banner.bgPreset || 'gradient-cyan',
+      badgeText: banner.badgeText || '',
+      badgeColor: banner.badgeColor || 'cyan',
+      ctaActionType: banner.ctaActionType || 'none',
+      ctaTarget: banner.ctaTarget || ''
     });
     setSelectedBannerFile(null);
     setBannerModalError(null);
+    if (bannerFileInputRef.current) bannerFileInputRef.current.value = '';
   };
 
   const closeBannerModal = () => {
     setBannerModalForm(null);
     setSelectedBannerFile(null);
     setBannerModalError(null);
+    if (bannerFileInputRef.current) bannerFileInputRef.current.value = '';
   };
 
-  // Save Banner Modal Handler
   const handleSaveBannerModal = async () => {
     if (!bannerModalForm) return;
-    const { id, title, subtitle, ctaLabel, isActive, sortOrder, bgPreset, badgeText, badgeColor, ctaActionType, ctaTarget } = bannerModalForm;
-    if (!title.trim()) { setBannerModalError('El título es requerido'); return; }
-    if (!Number.isInteger(Number(sortOrder))) { setBannerModalError('Orden debe ser un número entero'); return; }
-
+    if (!bannerModalForm.title.trim()) {
+      setBannerModalError('El título del banner es requerido.');
+      return;
+    }
     setBannerModalSaving(true);
     setBannerModalError(null);
     try {
-      const endpoint = id ? `/api/menu-v2-admin/catalog-banners/${encodeURIComponent(id)}` : '/api/menu-v2-admin/catalog-banners';
-      const method = id ? 'PATCH' : 'POST';
-      const res = await fetch(endpoint, {
+      const url = bannerModalForm.id
+        ? `/api/menu-v2-admin/catalog-banners/${encodeURIComponent(bannerModalForm.id)}`
+        : '/api/menu-v2-admin/catalog-banners';
+      const method = bannerModalForm.id ? 'PATCH' : 'POST';
+      const res = await fetch(url, {
         method,
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          title: title.trim(),
-          subtitle: subtitle.trim() || null,
-          ctaLabel: ctaLabel.trim() || null,
-          bgPreset: bgPreset || null,
-          badgeText: badgeText.trim() || null,
-          badgeColor: badgeColor || null,
-          ctaActionType: ctaActionType || null,
-          ctaTarget: ctaTarget.trim() || null,
-          isActive,
-          sortOrder: Number(sortOrder)
-        })
+          title: bannerModalForm.title.trim(),
+          subtitle: bannerModalForm.subtitle.trim(),
+          ctaLabel: bannerModalForm.ctaLabel.trim(),
+          isActive: bannerModalForm.isActive,
+          sortOrder: Number(bannerModalForm.sortOrder) || 0,
+          bgPreset: bannerModalForm.bgPreset,
+          badgeText: bannerModalForm.badgeText.trim(),
+          badgeColor: bannerModalForm.badgeColor,
+          ctaActionType: bannerModalForm.ctaActionType,
+          ctaTarget: bannerModalForm.ctaTarget.trim(),
+        }),
       });
       const data = (await res.json()) as CatalogBannerMutationResponse;
-      if (!res.ok || !data.ok || !data.banner) throw new Error(data.error ?? 'Error al guardar banner del catálogo');
-
-      setNotice(id ? 'Banner actualizado' : 'Banner creado');
+      if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al guardar banner');
+      setNotice('Banner guardado correctamente');
       setTimeout(() => setNotice(null), 3000);
-      if (!id && data.banner) {
-        setBannerModalForm({
-          id: data.banner.id,
-          title: data.banner.title,
-          subtitle: data.banner.subtitle || '',
-          ctaLabel: data.banner.ctaLabel || '',
-          isActive: data.banner.isActive,
-          sortOrder: String(data.banner.sortOrder),
-          imageUrl: data.banner.imageUrl || '',
-          imageKey: data.banner.imageKey || '',
-          bgPreset: data.banner.bgPreset || 'gradient-cyan',
-          badgeText: data.banner.badgeText || '',
-          badgeColor: data.banner.badgeColor || 'cyan',
-          ctaActionType: data.banner.ctaActionType || 'none',
-          ctaTarget: data.banner.ctaTarget || ''
-        });
-      } else {
-        closeBannerModal();
-      }
+      closeBannerModal();
       loadBanners();
     } catch (e) {
       setBannerModalError(e instanceof Error ? e.message : 'Error al guardar banner');
@@ -290,20 +266,19 @@ export function StoreBannersTool() {
     }
   };
 
-  // Delete Banner Handler
   const handleDeleteBannerModal = async () => {
     if (!bannerModalForm?.id) return;
-    if (!confirm('¿Seguro que deseas eliminar este banner permanentemente?')) return;
+    if (!confirm('¿Eliminar este banner permanentemente?')) return;
     setBannerModalSaving(true);
     setBannerModalError(null);
     try {
       const res = await fetch(`/api/menu-v2-admin/catalog-banners/${encodeURIComponent(bannerModalForm.id)}`, {
         method: 'DELETE',
-        credentials: 'include'
+        credentials: 'include',
       });
-      const data = (await res.json()) as { ok: boolean; error?: string };
+      const data = (await res.json()) as CatalogBannerMutationResponse;
       if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al eliminar banner');
-      setNotice('Banner eliminado');
+      setNotice('Banner eliminado correctamente');
       setTimeout(() => setNotice(null), 3000);
       closeBannerModal();
       loadBanners();
@@ -314,47 +289,41 @@ export function StoreBannersTool() {
     }
   };
 
-  // Upload Image Handler
   const handleUploadImageModal = async () => {
     if (!bannerModalForm?.id || !selectedBannerFile) return;
-    const fileErr = validateSelectedFile(selectedBannerFile);
-    if (fileErr) { setBannerModalError(fileErr); return; }
-
+    const fileError = validateSelectedFile(selectedBannerFile);
+    if (fileError) {
+      setBannerModalError(fileError);
+      return;
+    }
     setBannerModalUploading(true);
     setBannerModalError(null);
     try {
-      const body = new FormData();
-      body.append('file', selectedBannerFile);
+      const formData = new FormData();
+      formData.append('file', selectedBannerFile);
       const res = await fetch(`/api/menu-v2-admin/catalog-banners/${encodeURIComponent(bannerModalForm.id)}/image`, {
         method: 'POST',
         credentials: 'include',
-        body
+        body: formData,
       });
       const data = (await res.json()) as CatalogBannerMutationResponse;
-      if (!res.ok || !data.ok || !data.banner) throw new Error(data.error ?? 'No se pudo subir la imagen');
-
-      setBannerModalForm((prev) =>
-        prev
-          ? {
-              ...prev,
-              imageUrl: data.banner?.imageUrl || '',
-              imageKey: data.banner?.imageKey || ''
-            }
-          : null
-      );
+      if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al subir imagen');
+      setBannerModalForm({
+        ...bannerModalForm,
+        imageKey: data.imageKey ?? bannerModalForm.imageKey,
+        imageUrl: data.assetUrl ?? bannerModalForm.imageUrl,
+      });
       setSelectedBannerFile(null);
       if (bannerFileInputRef.current) bannerFileInputRef.current.value = '';
-      setNotice(data.warning ? `Imagen actualizada (${data.warning})` : 'Imagen de banner actualizada');
+      setNotice('Imagen subida correctamente');
       setTimeout(() => setNotice(null), 3000);
-      loadBanners();
     } catch (e) {
-      setBannerModalError(e instanceof Error ? e.message : 'No se pudo subir la imagen');
+      setBannerModalError(e instanceof Error ? e.message : 'Error al subir imagen');
     } finally {
       setBannerModalUploading(false);
     }
   };
 
-  // Remove Image Handler
   const handleRemoveImageModal = async () => {
     if (!bannerModalForm?.id) return;
     setBannerModalRemovingImage(true);
@@ -362,79 +331,73 @@ export function StoreBannersTool() {
     try {
       const res = await fetch(`/api/menu-v2-admin/catalog-banners/${encodeURIComponent(bannerModalForm.id)}/image`, {
         method: 'DELETE',
-        credentials: 'include'
+        credentials: 'include',
       });
       const data = (await res.json()) as CatalogBannerMutationResponse;
-      if (!res.ok || !data.ok || !data.banner) throw new Error(data.error ?? 'No se pudo quitar la imagen');
-
-      setBannerModalForm((prev) => (prev ? { ...prev, imageUrl: '', imageKey: '' } : null));
-      setSelectedBannerFile(null);
-      if (bannerFileInputRef.current) bannerFileInputRef.current.value = '';
-      setNotice('Imagen quitada. El banner ahora se mostrará en modo texto estilizado.');
+      if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al quitar imagen');
+      setBannerModalForm({
+        ...bannerModalForm,
+        imageKey: '',
+        imageUrl: '',
+      });
+      setNotice('Imagen eliminada correctamente');
       setTimeout(() => setNotice(null), 3000);
-      loadBanners();
     } catch (e) {
-      setBannerModalError(e instanceof Error ? e.message : 'No se pudo quitar la imagen');
+      setBannerModalError(e instanceof Error ? e.message : 'Error al quitar imagen');
     } finally {
       setBannerModalRemovingImage(false);
     }
   };
 
-  // Toggle Schedule Active
-  const handleToggleSchedule = async (sch: TowerSchedule) => {
-    setSavingScheduleId(sch.id);
-    setError(null);
+  const handleToggleSchedule = async (schedule: TowerSchedule) => {
+    setSavingScheduleId(schedule.id);
+    setNotice(null);
     try {
-      const nextActive = !sch.isActive;
-      const res = await fetch(`/api/menu-v2-admin/tower-schedules/${encodeURIComponent(sch.id)}`, {
+      const res = await fetch(`/api/menu-v2-admin/tower-schedules/${encodeURIComponent(schedule.id)}`, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ isActive: nextActive })
+        body: JSON.stringify({ isActive: !schedule.isActive }),
       });
-      const data = (await res.json()) as { ok: boolean; error?: string };
-      if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al cambiar horario');
-
-      setSchedules((prev) => prev.map((s) => (s.id === sch.id ? { ...s, isActive: nextActive } : s)));
-      setNotice(`Horario de ${sch.towerName} ${nextActive ? 'activado' : 'pausado'}`);
+      const data = await res.json() as { ok: boolean; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al actualizar horario');
+      setSchedules((prev) => prev.map((s) => s.id === schedule.id ? { ...s, isActive: !s.isActive } : s));
+      setNotice(`Horario de ${schedule.towerName} ${schedule.isActive ? 'pausado' : 'activado'}`);
       setTimeout(() => setNotice(null), 3000);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al cambiar horario');
+      setError(e instanceof Error ? e.message : 'Error al actualizar horario');
     } finally {
       setSavingScheduleId(null);
     }
   };
 
-  // Toggle Store Catalog Mode
   const handleToggleStoreMode = async () => {
     setSavingConfig(true);
-    setError(null);
+    setNotice(null);
     try {
-      const nextState = !catalogEnabled;
+      const next = !catalogEnabled;
       const res = await fetch('/api/menu-v2-admin/site-config', {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ catalogEnabled: nextState })
+        body: JSON.stringify({ publicMode: 'catalog', catalogEnabled: next }),
       });
-      const data = (await res.json()) as { ok: boolean; error?: string };
-      if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al cambiar modo de tienda');
-
-      setCatalogEnabled(nextState);
-      setNotice(`Modo Catálogo ${nextState ? 'ENCENDIDO' : 'APAGADO'}`);
+      const data = await res.json() as { ok: boolean; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al cambiar estado de tienda');
+      setCatalogEnabled(next);
+      setNotice(next ? 'Tienda abierta al público' : 'Tienda cerrada temporalmente');
       setTimeout(() => setNotice(null), 3000);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al cambiar modo de tienda');
+      setError(e instanceof Error ? e.message : 'Error al cambiar estado de tienda');
     } finally {
       setSavingConfig(false);
     }
   };
 
-  // Toggle Raffle Active Status
   const handleToggleRaffle = async () => {
     if (!raffleCampaignId) return;
     setTogglingRaffle(true);
-    setError(null);
+    setNotice(null);
     try {
       const nextState = !raffleActive;
       await updateRaffleCampaignV2(raffleCampaignId, { isActive: nextState });
@@ -450,24 +413,22 @@ export function StoreBannersTool() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between border-b border-zinc-800 pb-4">
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between border-b border-neutral-200 pb-4">
         <div>
-          <h2 className="text-xl font-black text-cyan-300 flex items-center gap-2">🎨 Tienda, Banners & Horarios Operativos</h2>
-          <p className="text-xs text-zinc-400">Gestiona banners visuales y de texto estilizado, horarios por Torre y estado de la tienda.</p>
+          <h2 className="text-xl font-bold text-neutral-800 flex items-center gap-2">🎨 Tienda, Banners & Horarios Operativos</h2>
+          <p className="text-xs text-neutral-500">Gestiona banners visuales y de texto estilizado, horarios por Torre y estado de la tienda.</p>
         </div>
       </div>
 
-      {notice ? <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-xs text-emerald-200">{notice}</div> : null}
-      {error ? <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-700/50 text-xs text-rose-200">{error}</div> : null}
+      {notice ? <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-xs text-green-800">{notice}</div> : null}
+      {error ? <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">{error}</div> : null}
 
-      {/* Sub Tabs */}
-      <div className="flex gap-2 border-b border-zinc-800 pb-2 overflow-x-auto">
+      <div className="flex gap-2 border-b border-neutral-200 pb-2 overflow-x-auto">
         <button
           type="button"
           onClick={() => setActiveTab('banners')}
-          className={`px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
-            activeTab === 'banners' ? 'bg-cyan-400 text-zinc-950 shadow' : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800'
+          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+            activeTab === 'banners' ? 'bg-[#16A34A] text-white shadow-sm' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
           }`}
         >
           🎨 Banners del Catálogo ({banners.length})
@@ -475,8 +436,8 @@ export function StoreBannersTool() {
         <button
           type="button"
           onClick={() => setActiveTab('schedules')}
-          className={`px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
-            activeTab === 'schedules' ? 'bg-cyan-400 text-zinc-950 shadow' : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800'
+          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+            activeTab === 'schedules' ? 'bg-[#16A34A] text-white shadow-sm' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
           }`}
         >
           ⏰ Horarios por Torre ({schedules.length})
@@ -484,8 +445,8 @@ export function StoreBannersTool() {
         <button
           type="button"
           onClick={() => setActiveTab('status')}
-          className={`px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
-            activeTab === 'status' ? 'bg-cyan-400 text-zinc-950 shadow' : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800'
+          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+            activeTab === 'status' ? 'bg-[#16A34A] text-white shadow-sm' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
           }`}
         >
           🏪 Estado de Tienda
@@ -493,34 +454,32 @@ export function StoreBannersTool() {
         <button
           type="button"
           onClick={() => setActiveTab('sorteos')}
-          className={`px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
-            activeTab === 'sorteos' ? 'bg-cyan-400 text-zinc-950 shadow' : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800'
+          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+            activeTab === 'sorteos' ? 'bg-[#16A34A] text-white shadow-sm' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
           }`}
         >
           🎁 Sorteo Activo
         </button>
       </div>
 
-      {/* TAB 1: Banners */}
       {activeTab === 'banners' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-cyan-300">Gestión de Banners Promocionales</h3>
-              <p className="text-[11px] text-zinc-400">Soporta banners visuales con imagen y banners de texto con fondo estilizado degradado.</p>
+              <h3 className="text-sm font-semibold text-neutral-800">Gestión de Banners Promocionales</h3>
+              <p className="text-[11px] text-neutral-500">Soporta banners visuales con imagen y banners de texto con fondo estilizado degradado.</p>
             </div>
             <Button
               type="button"
-              className="bg-cyan-400 text-zinc-950 font-bold text-xs py-1.5 px-3 min-h-0"
+              className="bg-[#16A34A] text-white font-semibold text-xs py-1.5 px-3 min-h-0"
               onClick={beginCreateBannerModal}
             >
               + Crear Banner
             </Button>
           </div>
 
-          {/* List of Banners */}
           {loadingBanners ? (
-            <Card className="p-6 text-center text-xs text-zinc-400">Cargando banners...</Card>
+            <Card className="p-6 text-center text-xs text-neutral-500">Cargando banners...</Card>
           ) : (
             <div className="grid gap-4">
               {banners.map((b) => {
@@ -532,64 +491,59 @@ export function StoreBannersTool() {
                   <Card
                     key={b.id}
                     className={`p-4 border flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 transition-all ${
-                      b.isActive ? 'border-zinc-800 bg-zinc-900/80' : 'border-zinc-800/50 bg-zinc-900/40 opacity-70'
+                      b.isActive ? 'border-neutral-200 bg-white' : 'border-neutral-200/50 bg-neutral-50 opacity-70'
                     }`}
                   >
-                    {/* Live Preview Card Box */}
-                    <div className="w-full md:w-72 h-28 shrink-0 rounded-2xl border border-zinc-800 overflow-hidden relative shadow-lg flex flex-col justify-between p-3.5" style={{ background: previewUrl ? undefined : bgStyle }}>
+                    <div className="w-full md:w-72 h-28 shrink-0 rounded-2xl border border-neutral-200 overflow-hidden relative shadow-sm flex flex-col justify-between p-3.5" style={{ background: previewUrl ? undefined : bgStyle }}>
                       {previewUrl ? (
                         <img src={previewUrl} alt={b.title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
                       ) : null}
 
-                      {/* Overlay gradient if image present */}
                       {previewUrl && <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />}
 
-                      {/* Content inside preview */}
                       <div className="relative z-10 flex items-start justify-between gap-2">
                         {b.badgeText ? (
                           <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full shadow ${badgeStyle}`}>
                             {b.badgeText}
                           </span>
                         ) : (
-                          <span className="text-[10px] bg-black/40 text-zinc-300 backdrop-blur px-2 py-0.5 rounded-full">
+                          <span className="text-[10px] bg-black/40 text-white backdrop-blur px-2 py-0.5 rounded-full">
                             {previewUrl ? '🖼️ Imagen' : '🎨 Texto'}
                           </span>
                         )}
-                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-                          b.isActive ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 backdrop-blur' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 backdrop-blur'
+                        <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                          b.isActive ? 'bg-green-100 text-green-700 border border-green-200 backdrop-blur' : 'bg-red-100 text-red-700 border border-red-200 backdrop-blur'
                         }`}>
                           {b.isActive ? 'Activo' : 'Inactivo'}
                         </span>
                       </div>
 
                       <div className="relative z-10 space-y-0.5">
-                        <h4 className="font-black text-white text-sm leading-tight drop-shadow truncate">{b.title}</h4>
-                        {b.subtitle && <p className="text-[11px] text-zinc-200 line-clamp-1 drop-shadow-sm">{b.subtitle}</p>}
+                        <h4 className="font-bold text-white text-sm leading-tight drop-shadow truncate">{b.title}</h4>
+                        {b.subtitle && <p className="text-[11px] text-white/90 line-clamp-1 drop-shadow-sm">{b.subtitle}</p>}
                       </div>
                     </div>
 
-                    {/* Meta & Info */}
                     <div className="min-w-0 flex-1 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h4 className="font-bold text-zinc-100 text-sm truncate">{b.title}</h4>
-                        <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-mono">
+                        <h4 className="font-semibold text-neutral-800 text-sm truncate">{b.title}</h4>
+                        <span className="text-[10px] bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded font-mono">
                           {previewUrl ? '🖼️ Banner con Imagen' : '🎨 Banner de Texto'}
                         </span>
                       </div>
-                      {b.subtitle && <p className="text-xs text-zinc-400 line-clamp-2">{b.subtitle}</p>}
-                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-zinc-500 font-mono pt-1">
+                      {b.subtitle && <p className="text-xs text-neutral-500 line-clamp-2">{b.subtitle}</p>}
+                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-neutral-500 font-mono pt-1">
                         <span>Orden: <strong>{b.sortOrder}</strong></span>
-                        {b.ctaLabel && <span className="text-cyan-400">CTA: <strong>{b.ctaLabel}</strong></span>}
+                        {b.ctaLabel && <span className="text-[#16A34A]">CTA: <strong>{b.ctaLabel}</strong></span>}
                         {b.ctaActionType && b.ctaActionType !== 'none' && (
-                          <span className="text-amber-300">Acción: <strong>{b.ctaActionType} {b.ctaTarget ? `(${b.ctaTarget})` : ''}</strong></span>
+                          <span className="text-amber-600">Acción: <strong>{b.ctaActionType} {b.ctaTarget ? `(${b.ctaTarget})` : ''}</strong></span>
                         )}
                       </div>
                     </div>
 
-                    {/* Actions */}
                     <Button
                       type="button"
-                      className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-100 text-xs py-2 px-4 rounded-xl shrink-0 font-bold self-end md:self-center min-h-0"
+                      className="bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 text-neutral-700 text-xs py-2 px-4 rounded-xl shrink-0 font-semibold self-end md:self-center min-h-0"
                       onClick={() => beginEditBannerModal(b)}
                     >
                       ✏️ Editar Banner
@@ -598,7 +552,7 @@ export function StoreBannersTool() {
                 );
               })}
               {!banners.length && (
-                <Card className="p-8 text-center text-xs text-zinc-500 border border-dashed border-zinc-800">
+                <Card className="p-8 text-center text-xs text-neutral-400 border border-dashed border-neutral-300">
                   No hay banners de catálogo registrados. Haz clic en "+ Crear Banner" para registrar el primero.
                 </Card>
               )}
@@ -607,25 +561,22 @@ export function StoreBannersTool() {
         </div>
       )}
 
-      {/* Banner Modal */}
       {bannerModalForm ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={closeBannerModal}>
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="font-black text-lg text-cyan-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={closeBannerModal}>
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-neutral-200 rounded-2xl p-6 space-y-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
+              <h3 className="font-bold text-lg text-neutral-800">
                 {bannerModalForm.id ? '✏️ Editar Banner del Catálogo' : '➕ Crear Nuevo Banner'}
               </h3>
-              <button type="button" className="text-zinc-400 hover:text-zinc-100 p-1 text-sm font-bold" onClick={closeBannerModal}>
+              <button type="button" className="text-neutral-400 hover:text-neutral-600 p-1 text-sm font-semibold" onClick={closeBannerModal}>
                 ✕
               </button>
             </div>
 
-            {/* LIVE PREVIEW BOX inside Modal */}
             <div className="space-y-2">
-              <span className="text-[11px] font-black uppercase tracking-widest text-cyan-400 block">👁️ Vista Previa en Vivo (Cliente):</span>
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-[#16A34A] block">👁️ Vista Previa en Vivo (Cliente):</span>
               <div
-                className="w-full h-32 rounded-2xl border border-zinc-800 overflow-hidden relative shadow-xl flex flex-col justify-between p-4 transition-all"
+                className="w-full h-32 rounded-2xl border border-neutral-200 overflow-hidden relative shadow-sm flex flex-col justify-between p-4 transition-all"
                 style={{
                   background: getAssetUrl(bannerModalForm.imageUrl, bannerModalForm.imageKey)
                     ? undefined
@@ -650,8 +601,8 @@ export function StoreBannersTool() {
                       {bannerModalForm.badgeText}
                     </span>
                   ) : <div />}
-                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-                    bannerModalForm.isActive ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 backdrop-blur' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 backdrop-blur'
+                  <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                    bannerModalForm.isActive ? 'bg-green-100 text-green-700 border border-green-200 backdrop-blur' : 'bg-red-100 text-red-700 border border-red-200 backdrop-blur'
                   }`}>
                     {bannerModalForm.isActive ? 'Activo' : 'Inactivo'}
                   </span>
@@ -659,15 +610,15 @@ export function StoreBannersTool() {
 
                 <div className="relative z-10 flex items-end justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-black text-white text-base leading-tight drop-shadow truncate">
+                    <h4 className="font-bold text-white text-base leading-tight drop-shadow truncate">
                       {bannerModalForm.title || 'Título del Banner'}
                     </h4>
-                    <p className="text-xs text-zinc-200 line-clamp-1 drop-shadow-sm mt-0.5">
+                    <p className="text-xs text-white/90 line-clamp-1 drop-shadow-sm mt-0.5">
                       {bannerModalForm.subtitle || 'Subtítulo corto de prueba...'}
                     </p>
                   </div>
                   {bannerModalForm.ctaLabel && (
-                    <span className="shrink-0 px-3 py-1.5 rounded-xl bg-white text-zinc-950 font-black text-xs shadow-lg">
+                    <span className="shrink-0 px-3 py-1.5 rounded-xl bg-white text-neutral-900 font-bold text-xs shadow-lg">
                       {bannerModalForm.ctaLabel}
                     </span>
                   )}
@@ -675,13 +626,12 @@ export function StoreBannersTool() {
               </div>
             </div>
 
-            {/* Quick Presets */}
             <div className="space-y-1.5">
-              <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">Presets Rápidos de Texto:</span>
+              <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block">Presets Rápidos de Texto:</span>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 text-xs transition-colors"
+                  className="px-2.5 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 text-xs transition-colors"
                   onClick={() =>
                     setBannerModalForm({
                       ...bannerModalForm,
@@ -698,7 +648,7 @@ export function StoreBannersTool() {
                 </button>
                 <button
                   type="button"
-                  className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 text-xs transition-colors"
+                  className="px-2.5 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 text-xs transition-colors"
                   onClick={() =>
                     setBannerModalForm({
                       ...bannerModalForm,
@@ -715,7 +665,7 @@ export function StoreBannersTool() {
                 </button>
                 <button
                   type="button"
-                  className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 text-xs transition-colors"
+                  className="px-2.5 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 text-xs transition-colors"
                   onClick={() =>
                     setBannerModalForm({
                       ...bannerModalForm,
@@ -733,12 +683,11 @@ export function StoreBannersTool() {
               </div>
             </div>
 
-            {/* Inputs Section */}
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block mb-1">Título del Banner *</label>
+                <label className="text-xs font-semibold text-neutral-700 uppercase tracking-wider block mb-1">Título del Banner *</label>
                 <input
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-100 font-bold outline-none focus:border-cyan-400"
+                  className="w-full px-3 py-2 rounded-xl bg-[#F5F2EE] border border-neutral-200 text-xs text-neutral-800 font-semibold outline-none focus:border-[#16A34A]"
                   value={bannerModalForm.title}
                   onChange={(e) => setBannerModalForm({ ...bannerModalForm, title: e.target.value })}
                   placeholder="ej. ⚡ ENVÍO GRATIS $0"
@@ -746,9 +695,9 @@ export function StoreBannersTool() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block mb-1">Subtítulo (Opcional)</label>
+                <label className="text-xs font-semibold text-neutral-700 uppercase tracking-wider block mb-1">Subtítulo (Opcional)</label>
                 <textarea
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-100 outline-none focus:border-cyan-400"
+                  className="w-full px-3 py-2 rounded-xl bg-[#F5F2EE] border border-neutral-200 text-xs text-neutral-800 outline-none focus:border-[#16A34A]"
                   rows={2}
                   value={bannerModalForm.subtitle}
                   onChange={(e) => setBannerModalForm({ ...bannerModalForm, subtitle: e.target.value })}
@@ -758,18 +707,18 @@ export function StoreBannersTool() {
 
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block mb-1">Texto del Botón CTA (Opcional)</label>
+                  <label className="text-xs font-semibold text-neutral-700 uppercase tracking-wider block mb-1">Texto del Botón CTA (Opcional)</label>
                   <input
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-100 outline-none focus:border-cyan-400"
+                    className="w-full px-3 py-2 rounded-xl bg-[#F5F2EE] border border-neutral-200 text-xs text-neutral-800 outline-none focus:border-[#16A34A]"
                     value={bannerModalForm.ctaLabel}
                     onChange={(e) => setBannerModalForm({ ...bannerModalForm, ctaLabel: e.target.value })}
                     placeholder="ej. Pedir Ahora"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block mb-1">Orden Visual</label>
+                  <label className="text-xs font-semibold text-neutral-700 uppercase tracking-wider block mb-1">Orden Visual</label>
                   <input
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-100 outline-none focus:border-cyan-400"
+                    className="w-full px-3 py-2 rounded-xl bg-[#F5F2EE] border border-neutral-200 text-xs text-neutral-800 outline-none focus:border-[#16A34A]"
                     inputMode="numeric"
                     value={bannerModalForm.sortOrder}
                     onChange={(e) => setBannerModalForm({ ...bannerModalForm, sortOrder: e.target.value })}
@@ -777,22 +726,20 @@ export function StoreBannersTool() {
                 </div>
               </div>
 
-              {/* Text Banner Styling Options */}
-              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/60 space-y-4">
-                <h4 className="text-xs font-black uppercase tracking-wider text-cyan-300">🎨 Personalización de Banner de Texto (Sin Imagen)</h4>
-                
-                {/* BG Preset selector */}
+              <div className="p-4 rounded-xl border border-neutral-200 bg-[#F5F2EE] space-y-4">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-[#16A34A]">🎨 Personalización de Banner de Texto (Sin Imagen)</h4>
+
                 <div>
-                  <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">Fondo Degradado (BG Preset):</label>
+                  <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">Fondo Degradado (BG Preset):</label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {BG_PRESETS.map((preset) => (
                       <button
                         key={preset.key}
                         type="button"
-                        className={`p-2.5 rounded-xl border text-xs font-bold text-white flex items-center justify-between transition-all ${
+                        className={`p-2.5 rounded-xl border text-xs font-semibold text-white flex items-center justify-between transition-all ${
                           bannerModalForm.bgPreset === preset.key
-                            ? `${preset.border} ring-2 ring-cyan-400 shadow-lg scale-[1.02]`
-                            : 'border-zinc-800 hover:border-zinc-700 opacity-80'
+                            ? `${preset.border} ring-2 ring-[#16A34A] shadow-lg scale-[1.02]`
+                            : 'border-neutral-300 hover:border-neutral-400 opacity-80'
                         }`}
                         style={{ background: preset.style }}
                         onClick={() => setBannerModalForm({ ...bannerModalForm, bgPreset: preset.key })}
@@ -804,21 +751,20 @@ export function StoreBannersTool() {
                   </div>
                 </div>
 
-                {/* Badge Text & Badge Color */}
                 <div className="grid sm:grid-cols-2 gap-3 pt-2">
                   <div>
-                    <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">Texto de la Etiqueta / Badge:</label>
+                    <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-1">Texto de la Etiqueta / Badge:</label>
                     <input
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-zinc-100 outline-none focus:border-cyan-400"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-neutral-200 text-xs text-neutral-800 outline-none focus:border-[#16A34A]"
                       value={bannerModalForm.badgeText}
                       onChange={(e) => setBannerModalForm({ ...bannerModalForm, badgeText: e.target.value })}
                       placeholder="ej. ⚡ PROMO EXCLUSIVA"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">Color del Badge:</label>
+                    <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-1">Color del Badge:</label>
                     <select
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-zinc-100 outline-none focus:border-cyan-400"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-neutral-200 text-xs text-neutral-800 outline-none focus:border-[#16A34A]"
                       value={bannerModalForm.badgeColor}
                       onChange={(e) => setBannerModalForm({ ...bannerModalForm, badgeColor: e.target.value })}
                     >
@@ -829,12 +775,11 @@ export function StoreBannersTool() {
                   </div>
                 </div>
 
-                {/* CTA Action Type & Target */}
                 <div className="grid sm:grid-cols-2 gap-3 pt-2">
                   <div>
-                    <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">Acción al hacer Clic:</label>
+                    <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-1">Acción al hacer Clic:</label>
                     <select
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-zinc-100 outline-none focus:border-cyan-400"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-neutral-200 text-xs text-neutral-800 outline-none focus:border-[#16A34A]"
                       value={bannerModalForm.ctaActionType}
                       onChange={(e) => setBannerModalForm({ ...bannerModalForm, ctaActionType: e.target.value })}
                     >
@@ -844,9 +789,9 @@ export function StoreBannersTool() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">Destino / Target:</label>
+                    <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-1">Destino / Target:</label>
                     <input
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-zinc-100 outline-none focus:border-cyan-400"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-neutral-200 text-xs text-neutral-800 outline-none focus:border-[#16A34A]"
                       value={bannerModalForm.ctaTarget}
                       onChange={(e) => setBannerModalForm({ ...bannerModalForm, ctaTarget: e.target.value })}
                       placeholder={bannerModalForm.ctaActionType === 'category' ? 'ej. burgers, combos' : 'ej. https://...'}
@@ -855,12 +800,11 @@ export function StoreBannersTool() {
                 </div>
               </div>
 
-              {/* Active Toggle Switch */}
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-zinc-900 border border-zinc-800">
-                <label className="flex items-center gap-3 cursor-pointer text-xs font-bold text-zinc-200">
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-[#F5F2EE] border border-neutral-200">
+                <label className="flex items-center gap-3 cursor-pointer text-xs font-semibold text-neutral-700">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-zinc-700 bg-zinc-950 text-cyan-400 focus:ring-cyan-400"
+                    className="h-4 w-4 rounded border-neutral-300 bg-white text-[#16A34A] focus:ring-[#16A34A]"
                     checked={bannerModalForm.isActive}
                     onChange={(e) => setBannerModalForm({ ...bannerModalForm, isActive: e.target.checked })}
                   />
@@ -868,21 +812,20 @@ export function StoreBannersTool() {
                 </label>
               </div>
 
-              {/* Image Manager (Cloudflare R2) */}
               {bannerModalForm.id ? (
-                <div className="p-4 rounded-xl border border-cyan-500/30 bg-cyan-950/20 space-y-3">
+                <div className="p-4 rounded-xl border border-green-300 bg-green-50 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-cyan-300">🖼️ Imagen del Banner (Opcional - Cloudflare R2)</h4>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-[#16A34A]">🖼️ Imagen del Banner (Opcional - Cloudflare R2)</h4>
                     {getAssetUrl(bannerModalForm.imageUrl, bannerModalForm.imageKey) && (
-                      <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">Imagen Activa</span>
+                      <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded font-semibold">Imagen Activa</span>
                     )}
                   </div>
                   <div className="flex flex-col sm:flex-row items-center gap-4">
-                    <div className="w-32 h-20 shrink-0 rounded-xl bg-zinc-950 border border-zinc-800 overflow-hidden flex items-center justify-center">
+                    <div className="w-32 h-20 shrink-0 rounded-xl bg-[#F5F2EE] border border-neutral-200 overflow-hidden flex items-center justify-center">
                       {getAssetUrl(bannerModalForm.imageUrl, bannerModalForm.imageKey) ? (
                         <img src={getAssetUrl(bannerModalForm.imageUrl, bannerModalForm.imageKey)} alt="Banner Visual" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Sin Imagen</span>
+                        <span className="text-[10px] text-neutral-400 font-semibold uppercase tracking-wider">Sin Imagen</span>
                       )}
                     </div>
                     <div className="flex-1 min-w-0 space-y-2 w-full">
@@ -890,15 +833,15 @@ export function StoreBannersTool() {
                         ref={bannerFileInputRef}
                         type="file"
                         accept={ACCEPTED_IMAGE_TYPES.join(',')}
-                        className="w-full text-xs text-zinc-300 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-zinc-800 file:text-cyan-300 hover:file:bg-zinc-700"
+                        className="w-full text-xs text-neutral-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-neutral-100 file:text-[#16A34A] hover:file:bg-neutral-200"
                         disabled={bannerModalUploading || bannerModalRemovingImage || bannerModalSaving}
                         onChange={(e) => setSelectedBannerFile(e.target.files?.[0] ?? null)}
                       />
-                      <p className="text-[11px] text-zinc-400">{ACCEPTED_IMAGE_TYPES_LABEL}</p>
+                      <p className="text-[11px] text-neutral-500">{ACCEPTED_IMAGE_TYPES_LABEL}</p>
                       <div className="flex gap-2">
                         <Button
                           type="button"
-                          className="flex-1 bg-cyan-400 text-zinc-950 font-bold text-xs py-1.5 min-h-0 disabled:opacity-40"
+                          className="flex-1 bg-[#16A34A] text-white font-semibold text-xs py-1.5 min-h-0 disabled:opacity-40"
                           disabled={bannerModalUploading || bannerModalRemovingImage || bannerModalSaving || !selectedBannerFile || Boolean(validateSelectedFile(selectedBannerFile))}
                           onClick={handleUploadImageModal}
                         >
@@ -906,7 +849,7 @@ export function StoreBannersTool() {
                         </Button>
                         <Button
                           type="button"
-                          className="flex-1 border border-rose-700/50 bg-rose-950/40 text-rose-200 text-xs py-1.5 min-h-0 disabled:opacity-40"
+                          className="flex-1 border border-red-300 bg-red-50 text-red-700 text-xs py-1.5 min-h-0 disabled:opacity-40"
                           disabled={bannerModalUploading || bannerModalRemovingImage || bannerModalSaving || (!bannerModalForm.imageKey && !bannerModalForm.imageUrl)}
                           onClick={handleRemoveImageModal}
                         >
@@ -917,18 +860,17 @@ export function StoreBannersTool() {
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-zinc-400 italic">Guarda el banner primero si deseas adjuntar un archivo de imagen en R2.</p>
+                <p className="text-xs text-neutral-500 italic">Guarda el banner primero si deseas adjuntar un archivo de imagen en R2.</p>
               )}
             </div>
 
-            {bannerModalError ? <p className="text-xs text-rose-300 p-2 rounded bg-rose-950/50 border border-rose-800/40">{bannerModalError}</p> : null}
+            {bannerModalError ? <p className="text-xs text-red-600 p-2 rounded bg-red-50 border border-red-200">{bannerModalError}</p> : null}
 
-            {/* Modal Actions */}
-            <div className="flex items-center justify-between pt-3 border-t border-zinc-800 gap-2">
+            <div className="flex items-center justify-between pt-3 border-t border-neutral-200 gap-2">
               {bannerModalForm.id ? (
                 <Button
                   type="button"
-                  className="border border-rose-700/60 bg-rose-950/40 text-rose-300 text-xs py-2 px-3 font-bold min-h-0"
+                  className="border border-red-300 bg-red-50 text-red-700 text-xs py-2 px-3 font-semibold min-h-0"
                   disabled={bannerModalSaving || bannerModalUploading || bannerModalRemovingImage}
                   onClick={handleDeleteBannerModal}
                 >
@@ -940,7 +882,7 @@ export function StoreBannersTool() {
               <div className="flex items-center gap-2">
                 <Button
                   type="button"
-                  className="border border-zinc-700 bg-zinc-900 text-zinc-300 text-xs py-2 px-4 min-h-0"
+                  className="border border-neutral-300 bg-white text-neutral-700 text-xs py-2 px-4 min-h-0"
                   disabled={bannerModalSaving || bannerModalUploading || bannerModalRemovingImage}
                   onClick={closeBannerModal}
                 >
@@ -948,7 +890,7 @@ export function StoreBannersTool() {
                 </Button>
                 <Button
                   type="button"
-                  className="bg-cyan-400 text-zinc-950 font-bold text-xs py-2 px-4 disabled:opacity-40 min-h-0 font-bold"
+                  className="bg-[#16A34A] text-white font-semibold text-xs py-2 px-4 disabled:opacity-40 min-h-0"
                   disabled={bannerModalSaving || bannerModalUploading || bannerModalRemovingImage}
                   onClick={handleSaveBannerModal}
                 >
@@ -960,34 +902,33 @@ export function StoreBannersTool() {
         </div>
       ) : null}
 
-      {/* TAB 2: Horarios por Torre */}
       {activeTab === 'schedules' && (
         <div className="space-y-4">
           {loadingSchedules ? (
-            <Card className="p-6 text-center text-xs text-zinc-400">Cargando horarios de torres...</Card>
+            <Card className="p-6 text-center text-xs text-neutral-500">Cargando horarios de torres...</Card>
           ) : (
             <div className="grid gap-3">
               {schedules.map((sch) => (
-                <Card key={sch.id} className="p-4 border border-zinc-800 bg-zinc-900/80 flex items-center justify-between gap-4">
+                <Card key={sch.id} className="p-4 border border-neutral-200 bg-white flex items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{sch.emoji}</span>
-                      <h4 className="font-bold text-zinc-100 text-sm">{sch.towerName}</h4>
+                      <h4 className="font-semibold text-neutral-800 text-sm">{sch.towerName}</h4>
                       <span
-                        className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-                          sch.isActive ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
+                        className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                          sch.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                         }`}
                       >
                         {sch.isActive ? 'Horario Habilitado' : 'Pausado'}
                       </span>
                     </div>
-                    <p className="text-xs text-zinc-400 mt-1">
+                    <p className="text-xs text-neutral-500 mt-1">
                       Pedidos: {sch.orderStartTime} - {sch.orderEndTime} | Días: {sch.activeDays.map((d) => DAY_LABELS[d]).join(', ')}
                     </p>
                   </div>
                   <Button
                     type="button"
-                    className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs py-1.5 min-h-0 disabled:opacity-40"
+                    className="bg-neutral-100 border border-neutral-300 text-neutral-700 text-xs py-1.5 min-h-0 disabled:opacity-40"
                     disabled={savingScheduleId === sch.id}
                     onClick={() => handleToggleSchedule(sch)}
                   >
@@ -1000,23 +941,22 @@ export function StoreBannersTool() {
         </div>
       )}
 
-      {/* TAB 3: Estado de Tienda */}
       {activeTab === 'status' && (
-        <Card className="p-6 border border-zinc-800 bg-zinc-900/80 space-y-4">
-          <h3 className="font-bold text-base text-cyan-300">Interruptor Principal de la Tienda</h3>
-          <p className="text-xs text-zinc-400">Controla si la tienda en línea permite navegar el catálogo e ingresar pedidos.</p>
+        <Card className="p-6 border border-neutral-200 bg-white space-y-4">
+          <h3 className="font-semibold text-base text-neutral-800">Interruptor Principal de la Tienda</h3>
+          <p className="text-xs text-neutral-500">Controla si la tienda en línea permite navegar el catálogo e ingresar pedidos.</p>
 
-          <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
+          <div className="p-4 rounded-xl bg-[#F5F2EE] border border-neutral-200 flex items-center justify-between">
             <div>
-              <span className="text-xs font-bold text-zinc-200 block">Modo Catálogo Activo</span>
-              <span className="text-[11px] text-zinc-400">
+              <span className="text-xs font-semibold text-neutral-700 block">Modo Catálogo Activo</span>
+              <span className="text-[11px] text-neutral-500">
                 {catalogEnabled ? 'La tienda está abierta al público.' : 'La tienda está cerrada temporalmente.'}
               </span>
             </div>
             <Button
               type="button"
-              className={`font-bold text-xs py-2 px-4 min-h-0 ${
-                catalogEnabled ? 'bg-rose-950 border border-rose-700 text-rose-200' : 'bg-emerald-500 text-zinc-950'
+              className={`font-semibold text-xs py-2 px-4 min-h-0 ${
+                catalogEnabled ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-[#16A34A] text-white'
               }`}
               disabled={savingConfig}
               onClick={handleToggleStoreMode}
@@ -1027,22 +967,21 @@ export function StoreBannersTool() {
         </Card>
       )}
 
-      {/* TAB 4: Sorteo */}
       {activeTab === 'sorteos' && (
-        <Card className="p-6 border border-zinc-800 bg-zinc-900/80 space-y-4">
-          <h3 className="font-bold text-base text-cyan-300">Campaña de Sorteo Activa</h3>
+        <Card className="p-6 border border-neutral-200 bg-white space-y-4">
+          <h3 className="font-semibold text-base text-neutral-800">Campaña de Sorteo Activa</h3>
           {raffleCampaignId ? (
-            <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-[#F5F2EE] border border-neutral-200 flex items-center justify-between">
               <div>
-                <span className="text-xs font-bold text-zinc-200 block">🎁 {raffleTitle}</span>
-                <span className="text-[11px] text-zinc-400">
+                <span className="text-xs font-semibold text-neutral-700 block">🎁 {raffleTitle}</span>
+                <span className="text-[11px] text-neutral-500">
                   {raffleActive ? 'Los clientes acumulan boletos en cada pedido.' : 'El sorteo está pausado actualmente.'}
                 </span>
               </div>
               <Button
                 type="button"
-                className={`font-bold text-xs py-2 px-4 min-h-0 ${
-                  raffleActive ? 'bg-rose-950 border border-rose-700 text-rose-200' : 'bg-emerald-500 text-zinc-950'
+                className={`font-semibold text-xs py-2 px-4 min-h-0 ${
+                  raffleActive ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-[#16A34A] text-white'
                 }`}
                 disabled={togglingRaffle}
                 onClick={handleToggleRaffle}
@@ -1051,7 +990,7 @@ export function StoreBannersTool() {
               </Button>
             </div>
           ) : (
-            <p className="text-xs text-zinc-400">No hay campañas de sorteo registradas.</p>
+            <p className="text-xs text-neutral-500">No hay campañas de sorteo registradas.</p>
           )}
         </Card>
       )}

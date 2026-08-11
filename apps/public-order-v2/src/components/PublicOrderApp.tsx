@@ -19,7 +19,7 @@ import { EmptyState } from "@ui/index";
 import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CatalogModeApp } from "./CatalogModeApp";
-import { loadMenuV2, toFallbackMenuResponse } from "../lib/menu-v2";
+import { loadMenuV2 } from "../lib/menu-v2";
 import { loadActiveRaffleV2 } from "../lib/raffles-v2";
 import {
   type CartEntry,
@@ -1957,7 +1957,8 @@ export function PublicOrderApp() {
   const sideQuestEntryModeRef = useRef<SideQuestEntryMode>("builder");
   const builderRef = useRef<BuilderDraft | null>(null);
   const [extraGarnishQuantities, setExtraGarnishQuantities] = useState<Record<string, number>>({});
-  const [menuData, setMenuData] = useState<MenuV2Response>(toFallbackMenuResponse("fallback"));
+  const [menuData, setMenuData] = useState<MenuV2Response | null>(null);
+  const [menuError, setMenuError] = useState<string | null>(null);
   const [raffleCampaign, setRaffleCampaign] = useState<RaffleCampaignPublicV2 | null>(null);
   const [loadingMenu, setLoadingMenu] = useState(true);
   const [showBoot, setShowBoot] = useState(true);
@@ -1979,6 +1980,23 @@ export function PublicOrderApp() {
   const [orderConfirmation, setOrderConfirmation] = useState<OrderConfirmation | null>(null);
   const [burgerSelectionError, setBurgerSelectionError] = useState<string | null>(null);
   const [cartCustomizationError, setCartCustomizationError] = useState<string | null>(null);
+
+  if (!menuData) {
+    return (
+      <main className="app-shell">
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8 text-center">
+          <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
+            <h2 className="text-xl font-bold text-neutral-800">No se pudo cargar el menú</h2>
+            <p className="mt-2 text-sm text-neutral-500">{menuError || 'Hubo un problema al cargar los productos. Por favor intenta de nuevo.'}</p>
+            <button onClick={() => window.location.reload()} className="mt-4 rounded-xl bg-[#16A34A] px-4 py-2 text-sm font-semibold text-white hover:opacity-95">
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   const publicConfig = useMemo(() => resolvePublicConfig(menuData.publicConfig), [menuData.publicConfig]);
   const shouldRenderCatalogMode = shouldUseCatalogMode(publicConfig);
   const total = useMemo(() => getCartTotal(cart, menuData.items), [cart, menuData.items]);
@@ -2029,6 +2047,10 @@ export function PublicOrderApp() {
       setMenuData(payload);
       setLoadingMenu(false);
       window.setTimeout(() => mounted && setShowBoot(false), reduce ? 0 : 250);
+    }).catch((err) => {
+      if (!mounted) return;
+      setMenuError(err instanceof Error ? err.message : 'No se pudo cargar el menú');
+      setLoadingMenu(false);
     });
     return () => { mounted = false; window.clearTimeout(bootTimer); };
   }, [reduce]);
