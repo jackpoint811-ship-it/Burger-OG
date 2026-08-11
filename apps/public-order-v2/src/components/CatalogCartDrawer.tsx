@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type MouseEvent } from "react";
 import { formatCurrency } from "../lib/order";
 import { resolveCatalogAssetUrl } from "../lib/catalog-mode";
-import { CATALOG_CART_MAX_QTY, type CatalogCartItem } from "../lib/catalog-cart";
+import { CATALOG_CART_MAX_QTY, getCatalogCartItemTotal, getCatalogCartItemUnitTotal, type CatalogCartItem } from "../lib/catalog-cart";
 import { useCatalogCart } from "./CatalogCartContext";
 import { motion, useReducedMotion } from "framer-motion";
 
@@ -208,11 +208,11 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout, onEditItem }: C
                       </div>
                       <div className="catalog-cart-item__price-row">
                         <span className="catalog-cart-item__price">
-                          {formatCurrency(item.price + (item.upgrades?.reduce((sum, u) => sum + u.price * u.qty, 0) || 0))}
+                          {formatCurrency(getCatalogCartItemUnitTotal(item))}
                         </span>
                         {item.qty > 1 && (
                           <span className="catalog-cart-item__subtotal">
-                            × {item.qty} = {formatCurrency((item.price + (item.upgrades?.reduce((sum, u) => sum + u.price * u.qty, 0) || 0)) * item.qty)}
+                            × {item.qty} = {formatCurrency(getCatalogCartItemTotal(item))}
                           </span>
                         )}
                       </div>

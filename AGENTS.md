@@ -9,6 +9,7 @@ Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más especí
 - No hacer merge directo a producción ni deploy directo sin instrucción explícita.
 - No hacer push, commit, PR o publicación si el prompt pide diagnóstico, pausa o revisión previa.
 - No usar `git add .`, `git add -A` ni `git reset --hard` salvo autorización explícita del prompt.
+- **AUTORIZACIÓN PERMANENTE (2026-08-10):** Cuando una tarea termina con resultado positivo (checks en verde y cambios validados), el agente debe preparar rama limpia, commit, push y abrir PR automáticamente, y reportar la URL. El usuario revisa y hace el merge. No aplica si el prompt pidió diagnóstico, pausa o revisión previa.
 - No introducir frameworks, CDNs ni librerías externas salvo autorización explícita del prompt.
 - No modificar `package.json`, lockfiles ni dependencias salvo autorización explícita.
 - No tocar carpetas legacy, especialmente `legacy/`, salvo que el prompt lo autorice.

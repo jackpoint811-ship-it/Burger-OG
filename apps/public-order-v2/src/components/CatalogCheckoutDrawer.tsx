@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState, type MouseEvent, type Form
 import type { OrderV2PaymentMethod, OrderV2ItemKind } from "@config/index";
 import { getPublicOrderEnvironment } from "@config/index";
 import { formatCurrency } from "../lib/order";
+import { getCatalogCartItemTotal } from "../lib/catalog-cart";
 import { useCatalogCart } from "./CatalogCartContext";
 import { createOrderV2 } from "../lib/orders-v2";
 import { motion, useReducedMotion } from "framer-motion";
@@ -472,7 +473,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <span className="catalog-checkout-item-name">{cartItem.name}</span>
                             <span className="catalog-checkout-item-price">
-                              {formatCurrency((cartItem.price + (cartItem.upgrades?.reduce((sum, u) => sum + u.price * u.qty, 0) || 0)) * cartItem.qty)}
+                              {formatCurrency(getCatalogCartItemTotal(cartItem))}
                             </span>
                             {cartItem.mods && cartItem.mods.length > 0 && (
                               <span className="catalog-checkout-item-mods">{cartItem.mods.join(", ")}</span>
