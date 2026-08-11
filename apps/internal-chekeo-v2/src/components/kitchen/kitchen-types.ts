@@ -3,6 +3,7 @@ import type {
   OrderV2Environment,
   OrderV2ItemKind,
   OrderV2DeliveryInfo,
+  OrderV2Event,
 } from "@config/index";
 
 export type KitchenItemKind = Extract<
@@ -57,6 +58,7 @@ export type KitchenOrder = {
   createdAtIso?: string;
   delivery?: OrderV2DeliveryInfo;
   items: KitchenOrderItem[];
+  events?: OrderV2Event[];
 };
 
 export type KitchenProductionItem = {
