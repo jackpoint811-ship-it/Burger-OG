@@ -140,9 +140,21 @@ export function getCatalogCartCount(items: CatalogCartItem[]): number {
   return items.reduce((sum, item) => sum + item.qty, 0);
 }
 
+export function getCatalogCartItemUnitTotal(item: CatalogCartItem): number {
+  const upgradesTotal = item.upgrades?.reduce((uSum, u) => uSum + u.price * u.qty, 0) || 0;
+  const burgerExtrasTotal =
+    item.comboBurgers?.reduce(
+      (bSum, burger) => bSum + (burger.extras?.reduce((eSum, e) => eSum + e.price * e.qty, 0) || 0),
+      0
+    ) || 0;
+  const sideUpcharge = item.comboSide?.upcharge || 0;
+  return item.price + upgradesTotal + burgerExtrasTotal + sideUpcharge;
+}
+
+export function getCatalogCartItemTotal(item: CatalogCartItem): number {
+  return getCatalogCartItemUnitTotal(item) * item.qty;
+}
+
 export function getCatalogCartTotal(items: CatalogCartItem[]): number {
-  return items.reduce((sum, item) => {
-    const upgradesTotal = item.upgrades?.reduce((uSum, u) => uSum + u.price * u.qty, 0) || 0;
-    return sum + (item.price + upgradesTotal) * item.qty;
-  }, 0);
+  return items.reduce((sum, item) => sum + getCatalogCartItemTotal(item), 0);
 }

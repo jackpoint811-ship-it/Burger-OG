@@ -64,6 +64,8 @@ Antes de iniciar cualquier fase de la migracion V2 Clean Architecture, el agente
 
 ## Al cerrar trabajo
 
+- AUTORIZACIÓN PERMANENTE (2026-08-10): al terminar una tarea con resultado positivo, el agente prepara rama limpia, commit, push y PR automáticamente; el usuario revisa y mergea.
+
 1. Commit con mensaje claro.
 2. Push de la rama.
 3. Crear Pull Request.
