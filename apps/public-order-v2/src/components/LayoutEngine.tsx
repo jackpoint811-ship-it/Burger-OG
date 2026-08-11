@@ -12,6 +12,28 @@ import { useCatalogCart } from "./CatalogCartContext";
 import { CatalogImage } from "./CatalogImage";
 import { motion, AnimatePresence } from "framer-motion";
 
+const BANNER_BG_PRESETS: Record<string, string> = {
+  "gradient-cyan": "linear-gradient(135deg, #0891B2 0%, #06B6D4 100%)",
+  "gradient-emerald": "linear-gradient(135deg, #15803D 0%, #16A34A 100%)",
+  "gradient-amber": "linear-gradient(135deg, #C2410C 0%, #EA580C 100%)",
+  "gradient-indigo": "linear-gradient(135deg, #4338CA 0%, #6366F1 100%)",
+  "gradient-rose": "linear-gradient(135deg, #BE185D 0%, #E11D48 100%)",
+  "gradient-dark": "linear-gradient(135deg, #18181B 0%, #27272A 100%)",
+};
+
+const DEFAULT_BANNER_GRADIENTS = [
+  "linear-gradient(135deg, #15803D 0%, #16A34A 100%)",
+  "linear-gradient(135deg, #C2410C 0%, #EA580C 100%)",
+  "linear-gradient(135deg, #4338CA 0%, #6366F1 100%)",
+];
+
+const resolveBannerGradient = (bgPreset?: string, index = 0): string => {
+  const preset = bgPreset ? BANNER_BG_PRESETS[bgPreset] : undefined;
+  if (preset) return preset;
+  if (bgPreset && bgPreset.trim().startsWith("linear-gradient")) return bgPreset.trim();
+  return DEFAULT_BANNER_GRADIENTS[index % DEFAULT_BANNER_GRADIENTS.length];
+};
+
 export interface LayoutEngineProps {
   module: LayoutModule;
   globalTheme?: GlobalTheme;
@@ -143,11 +165,7 @@ export function LayoutEngine({
             ctaLabel: dbBanner.ctaLabel,
             src,
             icon: dbBanner.badgeText ? "⭐" : "🍔",
-            gradient: dbBanner.bgPreset || (idx % 3 === 0
-              ? "linear-gradient(135deg, #15803D 0%, #16A34A 100%)"
-              : idx % 3 === 1
-              ? "linear-gradient(135deg, #C2410C 0%, #EA580C 100%)"
-              : "linear-gradient(135deg, #4338CA 0%, #6366F1 100%)"),
+            gradient: resolveBannerGradient(dbBanner.bgPreset, idx),
             action: () => {
               if (dbBanner.ctaActionType === "category" && dbBanner.ctaTarget) {
                 if (onSelectCategory) onSelectCategory(dbBanner.ctaTarget);
