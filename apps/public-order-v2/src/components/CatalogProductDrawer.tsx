@@ -482,8 +482,8 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
             </span>
           </div>
 
-          {/* ── BURGERS Y COMBOS: Botones de Modo e Ingredientes ── */}
-          {(product.type === "burger" || product.type === "combo") && (
+          {/* ── BURGERS (unit): Modo Receta Original vs Personalizar ── */}
+          {product.type === "burger" && (
             <div className="catalog-drawer__section-card" style={{ marginTop: "12px" }}>
               {AVAILABLE_MODS.length > 0 ? (
                 <>
@@ -584,6 +584,10 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
                   );
                   const isExpanded = expandedComboBurger === index;
                   const burgerMods = burger.sku ? recipesBySku?.[burger.sku] ?? [] : [];
+                  const draftSummary = [
+                    ...(draft?.removedIngredients ?? []).map((m) => `Sin ${m}`),
+                    ...(draft?.upgrades ?? []).filter((u) => u.qty > 0).map((u) => `${u.qty}x ${u.name}`),
+                  ].join(" · ");
                   return (
                     <div
                       key={`${burger.sku ?? burger.name}-${index}`}
@@ -615,16 +619,25 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
                         onClick={() => setExpandedComboBurger(isExpanded ? null : index)}
                         aria-expanded={isExpanded}
                       >
-                        <span style={{ fontSize: "13px", fontWeight: 700 }}>🍔 {burger.name}</span>
-                        <span
-                          style={{
-                            fontSize: "11px",
-                            fontWeight: 700,
-                            color: hasChanges ? "var(--color-accent)" : "var(--color-text-muted)",
-                          }}
-                        >
-                          {hasChanges ? "✓ Personalizada" : "Receta original"}
-                        </span>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <span style={{ fontSize: "13px", fontWeight: 700, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            🍔 {burger.name}{comboBurgerProducts.length > 1 ? ` #${index + 1}` : ""}
+                          </span>
+                          <span
+                            style={{
+                              display: "block",
+                              marginTop: "2px",
+                              fontSize: "11px",
+                              fontWeight: 700,
+                              color: hasChanges ? "var(--color-accent)" : "var(--color-text-muted)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {hasChanges ? `✓ ${draftSummary}` : "Receta original"}
+                          </span>
+                        </div>
                         <b aria-hidden="true" style={{ fontSize: "16px", color: "var(--color-text-secondary)" }}>
                           {isExpanded ? "−" : "+"}
                         </b>
@@ -719,8 +732,8 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
             </div>
           )}
 
-          {/* ── PERSONALIZACIÓN Y EXTRAS (Desplegado solo en modo 'customize') ── */}
-          {itemMode === "customize" && (
+          {/* ── PERSONALIZACIÓN Y EXTRAS (Burger unit, desplegado solo en modo 'customize') ── */}
+          {product.type === "burger" && itemMode === "customize" && (
             <div className="catalog-drawer__section-card" style={{ marginTop: "12px" }}>
               {AVAILABLE_MODS.length > 0 && (
                 <div className="catalog-drawer__mods">
