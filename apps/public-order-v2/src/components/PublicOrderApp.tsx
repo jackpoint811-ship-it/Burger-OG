@@ -22,7 +22,6 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CatalogModeApp } from "./CatalogModeApp";
 import { loadMenuV2 } from "../lib/menu-v2";
-import { toFallbackMenuResponse } from "../lib/menu-v2";
 import { loadActiveRaffleV2 } from "../lib/raffles-v2";
 import {
   type CartEntry,
@@ -594,10 +593,9 @@ const RouteVisual = ({ title, src }: { title: string; src?: string }) => {
   );
 };
 
-const MenuSection = ({ menuData, raffleCampaign, onExplore, onStart, reduce }: { menuData: MenuV2Response; raffleCampaign: RaffleCampaignPublicV2 | null; onExplore: (item: MenuItem) => void; onStart: () => void; reduce: boolean }) => {
+const MenuSection = ({ menuData, raffleCampaign, onExplore, onStart, reduce }: { menuData: MenuV2Response | null; raffleCampaign: RaffleCampaignPublicV2 | null; onExplore: (item: MenuItem) => void; onStart: () => void; reduce: boolean }) => {
   const bonusZoneRef = useRef<HTMLElement | null>(null);
-  const activePromos = useMemo(() => menuData.promos.filter((promo) => promo.isAvailable), [menuData.promos]);
-  const usingFallbackMenu = menuData.source === "fallback";
+  const activePromos = useMemo(() => menuData?.promos.filter((promo) => promo.isAvailable) ?? [], [menuData?.promos]);
   const featuredPromo = useMemo(() => activePromos.filter((promo) => promo.isFeatured).sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 1), [activePromos]);
   const inlinePromos = useMemo(() => activePromos.filter((promo) => !promo.isFeatured), [activePromos]);
   const hasBonusContent = Boolean(raffleCampaign);
@@ -657,13 +655,7 @@ const MenuSection = ({ menuData, raffleCampaign, onExplore, onStart, reduce }: {
           </aside>
         ) : null}
       </div>
-      {usingFallbackMenu ? (
-        <section className="menu-sync-notice" role="status" aria-live="polite">
-          <strong>Menú de respaldo activo</strong>
-          <p>No pudimos confirmar el menú actualizado. Revisa tu conexión o recarga la página antes de ordenar.</p>
-          <button type="button" className="quest-button ghost" onClick={() => window.location.reload()}>Reintentar carga</button>
-        </section>
-      ) : null}
+      {} // Espacio reservado para futura sección de estado de menú
       {featuredPromo.length ? <PromoRail promos={featuredPromo} items={menuData.items} onViewCombo={onExplore} label="Promo destacada" variant="featured" /> : null}
       {MENU_GROUPS.map(({ key, label }) => {
         const list = groups[key] ?? [];
@@ -1960,7 +1952,7 @@ export function PublicOrderApp() {
   const sideQuestEntryModeRef = useRef<SideQuestEntryMode>("builder");
   const builderRef = useRef<BuilderDraft | null>(null);
   const [extraGarnishQuantities, setExtraGarnishQuantities] = useState<Record<string, number>>({});
-  const [menuData, setMenuData] = useState<MenuV2Response>(toFallbackMenuResponse);
+  const [menuData, setMenuData] = useState<MenuV2Response | null>(null);
   const [menuError, setMenuError] = useState<string | null>(null);
   const [raffleCampaign, setRaffleCampaign] = useState<RaffleCampaignPublicV2 | null>(null);
   const [loadingMenu, setLoadingMenu] = useState(true);

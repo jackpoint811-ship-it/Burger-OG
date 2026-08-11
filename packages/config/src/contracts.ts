@@ -107,6 +107,15 @@ export type SiteConfig = {
   updatedAt?: string;
 };
 
+export const DEFAULT_SITE_CONFIG: SiteConfig = {
+  brandName: "Burgers.exe",
+  currency: "MXN",
+  orderModes: ["pickup", "delivery"],
+  supportPhone: "",
+  heroCta: "Armar mi pedido",
+  notice: ""
+};
+
 export type PublicMode = "flow" | "catalog";
 
 export type PublicConfig = {

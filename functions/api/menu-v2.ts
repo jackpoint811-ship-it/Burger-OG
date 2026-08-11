@@ -1,6 +1,6 @@
-import { menuCategories, menuItems, promoCards, publicConfig, siteConfig } from '../../packages/config/src/mock-data';
 import type { MenuCategory, MenuItem, MenuV2Response, PromoCard, PublicConfig, SiteConfig } from '../../packages/config/src';
 import { mapD1CatalogBanner, mapD1CategoryBanner, mapD1ItemToMenuItem, mapD1PromoToPromoCard, parseJsonArray } from './_menu-v2-utils';
+import { DEFAULT_PUBLIC_CONFIG, DEFAULT_SITE_CONFIG } from '../../packages/config/src';
 
 type Env = { BOG_MENU_DB?: D1Database };
 
@@ -13,17 +13,6 @@ const CATEGORY_LABELS: Record<MenuCategory['key'], string> = {
   drinks: 'Bebidas',
   combos: 'Combos'
 };
-
-const fallbackPayload = (source: MenuV2Response['source']): MenuV2Response => ({
-  categories: [...menuCategories].sort((a, b) => a.sortOrder - b.sortOrder),
-  items: [...menuItems].sort((a, b) => a.sortOrder - b.sortOrder),
-  promos: [...promoCards].sort((a, b) => a.sortOrder - b.sortOrder),
-  categoryBanners: [],
-  siteConfig,
-  publicConfig,
-  updatedAt: new Date().toISOString(),
-  source
-});
 
 const json = (payload: MenuV2Response, cacheControl = 'no-store') =>
   new Response(JSON.stringify(payload), { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': cacheControl } });
@@ -75,22 +64,22 @@ const resolveCategories = (rows: any[], items: MenuItem[]): MenuCategory[] => {
 };
 
 const resolveSiteConfig = (row: any | null): SiteConfig => {
-  if (!row) return { ...siteConfig, notice: '' };
+  if (!row) return { ...DEFAULT_SITE_CONFIG, notice: '' };
   return {
-    brandName: row.brand_name ?? row.brandName ?? siteConfig.brandName,
-    currency: row.currency === 'MXN' ? 'MXN' : siteConfig.currency,
+    brandName: row.brand_name ?? row.brandName ?? DEFAULT_SITE_CONFIG.brandName,
+    currency: row.currency === 'MXN' ? 'MXN' : DEFAULT_SITE_CONFIG.currency,
     orderModes: (parseJsonArray(row.order_modes_json ?? row.orderModes).filter((mode) => mode === 'pickup' || mode === 'delivery') as SiteConfig['orderModes']).length
       ? parseJsonArray(row.order_modes_json ?? row.orderModes).filter((mode) => mode === 'pickup' || mode === 'delivery') as SiteConfig['orderModes']
-      : siteConfig.orderModes,
-    supportPhone: row.support_phone ?? row.supportPhone ?? siteConfig.supportPhone,
-    heroCta: row.hero_cta ?? row.heroCta ?? siteConfig.heroCta,
+      : DEFAULT_SITE_CONFIG.orderModes,
+    supportPhone: row.support_phone ?? row.supportPhone ?? DEFAULT_SITE_CONFIG.supportPhone,
+    heroCta: row.hero_cta ?? row.heroCta ?? DEFAULT_SITE_CONFIG.heroCta,
     notice: row.notice ?? '',
     updatedAt: row.updatedAt ?? row.updated_at ?? undefined
   };
 };
 
 const resolvePublicConfigFromRow = (row: any | null): PublicConfig => {
-  if (!row) return publicConfig;
+  if (!row) return DEFAULT_PUBLIC_CONFIG;
   return {
     publicMode: row.public_mode === 'catalog' || row.publicMode === 'catalog' ? 'catalog' : 'flow',
     catalogEnabled: Number(row.catalog_enabled ?? row.catalogEnabled) === 1,
@@ -99,7 +88,12 @@ const resolvePublicConfigFromRow = (row: any | null): PublicConfig => {
 };
 
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
-  if (!env.BOG_MENU_DB) return json(fallbackPayload('fallback'), 'no-store');
+  if (!env.BOG_MENU_DB) {
+    return new Response(JSON.stringify({ error: 'Database unavailable', source: 'error' }), {
+      status: 503,
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
+    });
+  }
   try {
     const itemsResult = await optionalAll<any>(env.BOG_MENU_DB.prepare(`
       SELECT
@@ -176,7 +170,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
     ].filter(Boolean).sort().at(-1) ?? new Date().toISOString();
 
     return json({ categories, items, promos, recipes, categoryBanners, catalogBanners, siteConfig: resolvedSiteConfig, publicConfig: resolvedPublicConfig, updatedAt, source: 'd1' });
-  } catch {
-    return json(fallbackPayload('fallback'), 'no-store');
+  } catch (error) {
+    console.error('[menu-v2] Unexpected error:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error', source: 'error' }), {
+      status: 500,
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
+    });
   }
 };
