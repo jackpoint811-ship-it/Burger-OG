@@ -600,14 +600,15 @@ const MenuSection = ({ menuData, raffleCampaign, onExplore, onStart, reduce }: {
   const inlinePromos = useMemo(() => activePromos.filter((promo) => !promo.isFeatured), [activePromos]);
   const hasBonusContent = Boolean(raffleCampaign);
   const groups = useMemo(() => {
-    const visibleItems = menuData.items.filter((item) => item.category !== "extras" && !isDrinkItem(item));
-    const comboItems = menuData.items.filter((item) => inferItemKind(item) === "combo");
+    const items = menuData?.items ?? [];
+    const visibleItems = items.filter((item) => item.category !== "extras" && !isDrinkItem(item));
+    const comboItems = items.filter((item) => inferItemKind(item) === "combo");
     return MENU_GROUPS.reduce<Record<MenuCategory["key"] | "combos", MenuItem[]>>((acc, { key }) => {
       const groupItems = key === "combos" ? comboItems : visibleItems.filter((item) => item.category === key);
       acc[key] = [...groupItems].sort((a, b) => a.sortOrder - b.sortOrder);
       return acc;
     }, {} as Record<MenuCategory["key"] | "combos", MenuItem[]>);
-  }, [menuData.items]);
+  }, [menuData?.items]);
   const promosByGroup = useMemo(() => MENU_GROUPS.reduce<Record<MenuCategory["key"] | "combos", PromoCard[]>>((acc, { key }) => {
     const skus = new Set((groups[key] ?? []).map((item) => normalizeMenuLink(item.sku)));
     acc[key] = inlinePromos.filter((promo) => promo.comboLinks.some((link) => skus.has(normalizeMenuLink(link))));
@@ -656,7 +657,7 @@ const MenuSection = ({ menuData, raffleCampaign, onExplore, onStart, reduce }: {
         ) : null}
       </div>
       {} // Espacio reservado para futura sección de estado de menú
-      {featuredPromo.length ? <PromoRail promos={featuredPromo} items={menuData.items} onViewCombo={onExplore} label="Promo destacada" variant="featured" /> : null}
+      {featuredPromo.length ? <PromoRail promos={featuredPromo} items={menuData?.items ?? []} onViewCombo={onExplore} label="Promo destacada" variant="featured" /> : null}
       {MENU_GROUPS.map(({ key, label }) => {
         const list = groups[key] ?? [];
         return (
@@ -670,7 +671,7 @@ const MenuSection = ({ menuData, raffleCampaign, onExplore, onStart, reduce }: {
               <span className="menu-cluster-count">{list.length} opcion{list.length === 1 ? "" : "es"}</span>
             </header>
             {list.length ? <div className="kiosk-grid">{list.map((item) => <ProductCard key={item.sku} item={item} mode="info" onClick={onExplore} reduce={reduce} />)}</div> : <EmptyState title={key === "combos" ? "Combos en carga… estamos preparando el siguiente drop." : key === "guarniciones" ? "Side quests disponibles pronto." : `${label} en carga…`} description="Vuelve a revisar el menú para desbloquear el siguiente drop." />}
-            <PromoRail promos={promosByGroup[key] ?? []} items={menuData.items} onViewCombo={onExplore} label={`Promos de ${label}`} />
+            <PromoRail promos={promosByGroup[key] ?? []} items={menuData?.items ?? []} onViewCombo={onExplore} label={`Promos de ${label}`} />
           </section>
         );
       })}
