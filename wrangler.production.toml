@@ -1,0 +1,21 @@
+name = "burgers-exe-v2-production"
+compatibility_date = "2026-05-27"
+main = "functions/api/index.ts"
+
+[[d1_databases]]
+binding = "BOG_MENU_DB"
+database_name = "burgers-exe-menu-v2"
+database_id = "REPLACE_WITH_PRODUCTION_D1_DATABASE_ID"
+
+[[r2_buckets]]
+binding = "BOG_MENU_ASSETS"
+bucket_name = "burgers-exe-assets-v2"
+
+[vars]
+ENVIRONMENT = "production"
+ORDERS_V2_WRITE_ENABLED = "true"
+
+# Route configuration for production
+# [[routes]]
+# pattern = "burgers-exe.pages.dev/*"
+# zone_name = "burgers-exe.pages.dev"
