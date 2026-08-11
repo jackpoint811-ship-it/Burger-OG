@@ -45,14 +45,17 @@ import {
   type OrderV2PaymentStatus,
   type OrderV2Status,
   type ChekeoRuntimeEnvironment,
-  bankPaymentConfig,
-  getBankPaymentPrimaryLabel,
-  getBankPaymentPrimaryValue,
   getChekeoRuntimeEnvironment,
   getOrderEnvironmentForChekeoRuntime,
   getPublicOrderLabelForEnvironment,
   getPublicOrderUrlForEnvironment,
 } from "@config/index";
+import { mockOrders } from "@config/mock-data";
+import {
+  bankPaymentConfig,
+  getBankPaymentPrimaryLabel,
+  getBankPaymentPrimaryValue,
+} from "@config/bank-payment-config";
 import { Button, Card, StatusPill } from "@ui/index";
 import {
   fetchInternalAuthStatus,

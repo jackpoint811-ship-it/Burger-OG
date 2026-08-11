@@ -1,4 +1,5 @@
-import { menuItems, type OrderV2ItemKind } from "@config/index";
+import { menuItems } from "@config/mock-data";
+import type { OrderV2ItemKind } from "@config/index";
 import type {
   KitchenItemKind,
   KitchenLocalBreakdownItem,

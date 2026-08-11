@@ -1,4 +1,5 @@
-import { menuCategories, menuItems, promoCards, publicConfig, siteConfig, type MenuCategory, type MenuItem, type MenuV2Response, type PromoCard, type PublicConfig, type SiteConfig } from '../../packages/config/src';
+import { menuCategories, menuItems, promoCards, publicConfig, siteConfig } from '../../packages/config/src/mock-data';
+import type { MenuCategory, MenuItem, MenuV2Response, PromoCard, PublicConfig, SiteConfig } from '../../packages/config/src';
 import { mapD1CatalogBanner, mapD1CategoryBanner, mapD1ItemToMenuItem, mapD1PromoToPromoCard, parseJsonArray } from './_menu-v2-utils';
 
 type Env = { BOG_MENU_DB?: D1Database };
