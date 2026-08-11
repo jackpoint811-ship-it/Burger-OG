@@ -66,36 +66,10 @@ const mapRow = (row: TowerRow): TowerSchedulePublic => ({
   isActive: Number(row.is_active) === 1,
 });
 
-// Fallback when D1 is unavailable or table doesn't exist yet
-const FALLBACK_TOWERS: TowerSchedulePublic[] = [
-  {
-    towerKey: 'gga',
-    towerName: 'Torre GGA',
-    emoji: '🏢',
-    activeDays: [1, 3, 5],
-    orderStartTime: '09:00',
-    orderEndTime: '11:30',
-    deliveryStartTime: '13:30',
-    deliveryEndTime: '14:00',
-    deliveryLabel: '1:30 PM a 2:00 PM',
-    isActive: true,
-  },
-  {
-    towerKey: 'valcob',
-    towerName: 'Torre Valcob',
-    emoji: '🏢',
-    activeDays: [2, 4, 5],
-    orderStartTime: '09:00',
-    orderEndTime: '11:30',
-    deliveryStartTime: '13:30',
-    deliveryEndTime: '14:00',
-    deliveryLabel: '1:30 PM a 2:00 PM',
-    isActive: true,
-  },
-];
-
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
-  if (!env.BOG_MENU_DB) return json(200, { ok: true, towers: FALLBACK_TOWERS, source: 'fallback' });
+  if (!env.BOG_MENU_DB) {
+    return json(503, { ok: false, error: 'D1 database not configured' });
+  }
 
   try {
     const { results } = await env.BOG_MENU_DB.prepare(
@@ -105,8 +79,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
     const towers = (results ?? []).map(mapRow);
     return json(200, { ok: true, towers, source: 'd1' });
   } catch {
-    // Table might not exist yet if migration hasn't been run
-    return json(200, { ok: true, towers: FALLBACK_TOWERS, source: 'fallback' });
+    return json(500, { ok: false, error: 'Failed to load tower schedules' });
   }
 };
 
