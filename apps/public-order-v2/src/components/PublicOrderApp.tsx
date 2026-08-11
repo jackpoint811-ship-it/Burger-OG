@@ -2,6 +2,8 @@ import {
   bankPaymentConfig,
   getBankPaymentPrimaryLabel,
   getBankPaymentPrimaryValue,
+} from "@config/bank-payment-config";
+import {
   type CreateOrderV2Response,
   type MenuCategory,
   type MenuItem,
