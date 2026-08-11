@@ -1,5 +1,6 @@
 import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from "react";
 import type { ChekeoRuntimeEnvironment, CreateRaffleCampaignPayload, CreateRaffleTicketAdjustmentPayload, RaffleCampaignV2, RaffleParticipantSummary, RaffleReferralCodeV2, RaffleReferralStatus, RaffleReferralV2, RaffleSummaryResponse } from "@config/index";
+import { resolveCatalogAssetUrl } from "@config/index";
 import { Button, Card, StatusPill } from "@ui/index";
 import { createRaffleCampaignV2, createRaffleReferralCodeV2, createRaffleTicketAdjustmentV2, deleteRaffleCampaignV2, fetchRaffleCampaignsV2, fetchRaffleReferralCodesV2, fetchRaffleReferralsV2, fetchRaffleSummaryV2, deleteRaffleCampaignImageV2, updateRaffleCampaignV2, updateRaffleReferralCodeV2, updateRaffleReferralV2, updateRaffleTicketAdjustmentV2, uploadRaffleCampaignImageV2, type RaffleImageKind } from "../lib/raffles-v2-admin";
 import { RAFFLE_SHARE_FALLBACK_CODE, buildRaffleShareText, buildWhatsAppUrl, downloadBlob, generateRaffleTicketImage, shareBlobIfSupported, type RaffleShareImageData } from "../lib/raffle-share-image";
@@ -25,7 +26,6 @@ type RaffleForm = {
 const BURGER_WORDS = ["BURGER", "SMASH", "BACON", "PICKLES", "PICKLE", "CHEESE", "FRIES", "PAPAS", "TOCINO", "QUESO", "CRUNCH", "BBQ", "COMBO", "OG", "CHEDDAR", "KETCHUP", "MOSTAZA"] as const;
 const MAX_RAFFLE_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_RAFFLE_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
-const SAFE_IMAGE_KEY_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;
 
 type ReferralCodeForm = { ownerName: string; ownerPhone: string; burgerWord: typeof BURGER_WORDS[number]; number: string };
 type AdjustmentForm = { ticketsDelta: string; reason: string; actor: string };
@@ -95,29 +95,6 @@ const resolveReferralCodeForParticipant = (participant: RaffleParticipantSummary
   return RAFFLE_SHARE_FALLBACK_CODE;
 };
 
-
-const isSafeSameOriginPath = (value: string) => value.startsWith("/") && !value.startsWith("//") && !value.includes("\\") && !value.includes("..");
-const isSafeHttpsImageUrl = (value: string) => {
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" && !url.username && !url.password;
-  } catch {
-    return false;
-  }
-};
-const isSafeAssetKey = (value: string) => {
-  const key = value.trim().replace(/^\/+/, "");
-  if (!key || !SAFE_IMAGE_KEY_PATTERN.test(key) || key.includes("..") || key.includes("\\") || key.includes("//")) return false;
-  return key.split("/").every((segment) => segment && segment !== "." && segment !== "..");
-};
-const resolveAssetUrl = (imageUrl?: string, imageKey?: string): string | undefined => {
-  const trimmedKey = imageKey?.trim().replace(/^\/+/, "");
-  if (trimmedKey && isSafeAssetKey(trimmedKey)) return `/api/assets-v2/${trimmedKey.split("/").map((segment) => encodeURIComponent(segment)).join("/")}`;
-
-  const trimmedUrl = imageUrl?.trim();
-  if (trimmedUrl && (isSafeSameOriginPath(trimmedUrl) || isSafeHttpsImageUrl(trimmedUrl))) return trimmedUrl;
-  return undefined;
-};
 
 type ImageUploadState = { file: File | null; uploading: boolean; error: string | null; message: string | null };
 const emptyImageUploadState = (): ImageUploadState => ({ file: null, uploading: false, error: null, message: null });
@@ -381,8 +358,8 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
 
   const activeCampaign = useMemo(() => campaigns.find((campaign) => campaign.isActive) ?? null, [campaigns]);
   const selectedCampaign = useMemo(() => campaigns.find((campaign) => campaign.id === selectedCampaignId) ?? activeCampaign ?? campaigns[0] ?? null, [activeCampaign, campaigns, selectedCampaignId]);
-  const currentBannerPreview = resolveAssetUrl(form.bannerImageUrl, form.bannerImageKey);
-  const currentDetailPreview = resolveAssetUrl(form.detailImageUrl, form.detailImageKey);
+  const currentBannerPreview = resolveCatalogAssetUrl(form.bannerImageUrl, form.bannerImageKey);
+  const currentDetailPreview = resolveCatalogAssetUrl(form.detailImageUrl, form.detailImageKey);
   const participantPool = useMemo(() => [...(summary?.participantResults ?? []), ...(summary?.topParticipants ?? [])], [summary?.participantResults, summary?.topParticipants]);
   const selectedParticipant = useMemo(
     () => participantPool.find((participant) => participant.participantKey === selectedParticipantKey) ?? null,

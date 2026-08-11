@@ -1,2 +1,3 @@
+export * from './assets';
 export * from './contracts';
 export * from './runtime-environment';
