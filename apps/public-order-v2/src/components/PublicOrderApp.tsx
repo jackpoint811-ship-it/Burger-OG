@@ -1984,6 +1984,13 @@ export function PublicOrderApp() {
   const [cartCustomizationError, setCartCustomizationError] = useState<string | null>(null);
 
   if (!menuData) {
+    if (loadingMenu) {
+      return (
+        <main className="app-shell">
+          <LoadingOverlay loading={true} />
+        </main>
+      );
+    }
     return (
       <main className="app-shell">
         <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8 text-center">
@@ -1998,6 +2005,7 @@ export function PublicOrderApp() {
       </main>
     );
   }
+
 
   const publicConfig = useMemo(() => resolvePublicConfig(menuData.publicConfig), [menuData.publicConfig]);
   const shouldRenderCatalogMode = shouldUseCatalogMode(publicConfig);
