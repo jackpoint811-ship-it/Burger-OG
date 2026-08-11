@@ -823,7 +823,10 @@ export const KitchenQueue = ({
 
   const toggleKitchenItem = useCallback(
     async (entry: KitchenProductionItem, done: boolean) => {
-      const targetLineKey = entry.item.lineKey || entry.lineKey;
+      const isNestedSideQuest = Boolean(
+        entry.lineKey && entry.item.lineKey && entry.lineKey !== entry.item.lineKey,
+      );
+      const targetLineKey = isNestedSideQuest ? entry.lineKey : entry.item.lineKey || entry.lineKey;
       if (!targetLineKey) return;
       setBusyLineKey(targetLineKey);
       try {
@@ -836,7 +839,7 @@ export const KitchenQueue = ({
         await onToggleKitchenItem(
           entry.order.id,
           targetLineKey,
-          getKitchenItemActionKind(entry.item),
+          isNestedSideQuest ? "garnish" : getKitchenItemActionKind(entry.item),
           done,
         );
         const orderItems = productionItems.filter(
