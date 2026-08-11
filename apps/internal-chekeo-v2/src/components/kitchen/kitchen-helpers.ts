@@ -8,6 +8,26 @@ import type {
   KitchenProductionItem,
   KitchenSideQuestItem,
 } from "./kitchen-types";
+import type { OrderV2Event } from "@config/index";
+
+export const getKitchenDoneByLineKey = (events: OrderV2Event[]): Map<string, boolean> => {
+  const doneByLineKey = new Map<string, boolean>();
+  const getOptionalString = (value: unknown) =>
+    typeof value === "string" && value.trim() ? value.trim() : undefined;
+
+  events.forEach((event) => {
+    if (
+      event.type !== "KITCHEN_ITEM_DONE" &&
+      event.type !== "KITCHEN_ITEM_REOPENED"
+    ) {
+      return;
+    }
+    const lineKey = getOptionalString(event.detail?.lineKey);
+    if (!lineKey) return;
+    doneByLineKey.set(lineKey, event.type === "KITCHEN_ITEM_DONE");
+  });
+  return doneByLineKey;
+};
 
 export const parseOrderTimestamp = (value?: string) => {
   if (!value) return undefined;
@@ -434,8 +454,24 @@ const getSideQuestLabel = (item: KitchenOrderItem) => {
   return labels.join(" + ") || item.name;
 };
 
+const SIDE_QUEST_LINE_KEY_PREFIX = "::sidequest-";
+
+const buildSideQuestLineKey = (
+  parentLineKey: string,
+  source: "included-garnish" | "included-drink" | "extra",
+  index = 0,
+) =>
+  `${parentLineKey}${SIDE_QUEST_LINE_KEY_PREFIX}${
+    source === "included-garnish"
+      ? "included-garnish"
+      : source === "included-drink"
+        ? "included-drink"
+        : `extra-${index}`
+  }`;
+
 export const buildKitchenProductionItems = (
   orders: KitchenOrder[],
+  doneByLineKey?: Map<string, boolean>,
 ): KitchenProductionItem[] =>
   [...orders]
     .sort((a, b) => {
@@ -486,32 +522,41 @@ export const buildKitchenProductionItems = (
           let hasSideQuestEntries = false;
           if (item.garnish) {
             hasSideQuestEntries = true;
+            const sqLineKey = buildSideQuestLineKey(lineKey, "included-garnish");
             nextEntries.push({
               ...base,
               id: `${order.id}-${lineKey}-sidequest-garnish`,
+              lineKey: sqLineKey,
               lane: "sideQuest",
               itemLabel: "Side Quest",
               detailLabel: item.garnish.name,
+              done: doneByLineKey?.get(sqLineKey) ?? false,
             });
           }
           if (item.includedDrink) {
             hasSideQuestEntries = true;
+            const sqLineKey = buildSideQuestLineKey(lineKey, "included-drink");
             nextEntries.push({
               ...base,
               id: `${order.id}-${lineKey}-sidequest-drink`,
+              lineKey: sqLineKey,
               lane: "sideQuest",
               itemLabel: "Bebida",
               detailLabel: item.includedDrink.name,
+              done: doneByLineKey?.get(sqLineKey) ?? false,
             });
           }
           item.sideQuestExtras.forEach((extra, sqIdx) => {
             hasSideQuestEntries = true;
+            const sqLineKey = buildSideQuestLineKey(lineKey, "extra", sqIdx);
             nextEntries.push({
               ...base,
               id: `${order.id}-${lineKey}-sidequest-extra-${sqIdx}`,
+              lineKey: sqLineKey,
               lane: "sideQuest",
               itemLabel: extra.itemKind === "drink" ? "Bebida" : "Side Quest",
               detailLabel: extra.name,
+              done: doneByLineKey?.get(sqLineKey) ?? false,
             });
           });
           if (!hasSideQuestEntries) {

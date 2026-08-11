@@ -172,6 +172,7 @@ type InternalOrder = Omit<
   items: InternalOrderItem[];
   timeline: InternalTimelineEvent[];
   archivedAt?: string;
+  events?: OrderV2Event[];
 };
 
 type StatusAction = { status: OrderStatus; label: string; tone?: "danger" };
@@ -1209,6 +1210,7 @@ const mapOrderV2ToInternalOrder = (order: OrderV2): InternalOrder => {
       nextStatus: event.nextStatus,
       reason: getEventReason(event),
     })),
+    events,
   };
 };
 

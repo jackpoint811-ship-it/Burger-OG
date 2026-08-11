@@ -21,6 +21,7 @@ import {
   extractKitchenLocation,
   getComboBurgerNotes,
   getKitchenBurgerBreakdowns,
+  getKitchenDoneByLineKey,
   getKitchenItemActionKind,
   getKitchenItemImage,
   getKitchenItemKind,
@@ -793,10 +794,11 @@ export const KitchenQueue = ({
     });
   }, [activeOrders, selectedDate]);
 
-  const productionItems = useMemo(
-    () => buildKitchenProductionItems(filteredActiveOrders),
-    [filteredActiveOrders],
-  );
+  const productionItems = useMemo(() => {
+    const allEvents = filteredActiveOrders.flatMap((o) => o.events ?? []);
+    const doneByLineKey = getKitchenDoneByLineKey(allEvents);
+    return buildKitchenProductionItems(filteredActiveOrders, doneByLineKey);
+  }, [filteredActiveOrders]);
   const prepItems = useMemo(
     () => productionItems.filter((entry) => entry.lane === "prep"),
     [productionItems],
