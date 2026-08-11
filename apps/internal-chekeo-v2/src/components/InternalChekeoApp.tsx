@@ -7,6 +7,8 @@ import {
   useRef,
   useState,
 } from "react";
+
+import { TERMINAL_STATUSES } from "functions/api/_orders-v2-utils";
 import * as Tabs from "@radix-ui/react-tabs";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
@@ -45,14 +47,17 @@ import {
   type OrderV2PaymentStatus,
   type OrderV2Status,
   type ChekeoRuntimeEnvironment,
-  bankPaymentConfig,
-  getBankPaymentPrimaryLabel,
-  getBankPaymentPrimaryValue,
   getChekeoRuntimeEnvironment,
   getOrderEnvironmentForChekeoRuntime,
   getPublicOrderLabelForEnvironment,
   getPublicOrderUrlForEnvironment,
 } from "@config/index";
+import { mockOrders } from "@config/mock-data";
+import {
+  bankPaymentConfig,
+  getBankPaymentPrimaryLabel,
+  getBankPaymentPrimaryValue,
+} from "@config/bank-payment-config";
 import { Button, Card, StatusPill } from "@ui/index";
 import {
   fetchInternalAuthStatus,
@@ -471,7 +476,7 @@ const paymentStatusTone: Record<OrderV2PaymentStatus, string> = {
 };
 const isOrderV2PaymentStatus = (value: string): value is OrderV2PaymentStatus =>
   value === "pending" || value === "paid" || value === "cancelled";
-const terminalStatuses = new Set<OrderStatus>(["delivered", "cancelled"]);
+
 const channelLabel: Record<InternalOrder["channel"], string> = {
   "walk-in": "Mostrador",
   pickup: "Para recoger",
@@ -779,7 +784,7 @@ const getOrdersStatusLabel = (status: OrderStatus) =>
   ordersStatusLabel[getOrdersStatusFilterValue(status)];
 const getOrderLocationLabel = (order: InternalOrder) => getPaymentLocation(order);
 const getOperationalSummary = (orders: InternalOrder[]) => {
-  const visibleOrders = orders.filter((order) => !terminalStatuses.has(order.status));
+  const visibleOrders = orders.filter((order) => !TERMINAL_STATUSES.has(order.status));
   const participants = new Set(
     orders.map((order) => (order.customerPhone || order.customer).trim().toLowerCase()).filter(Boolean),
   );
@@ -1803,7 +1808,7 @@ const HomePanel = ({
       orders
         .filter(
           (order) =>
-            !terminalStatuses.has(order.status) &&
+            !TERMINAL_STATUSES.has(order.status) &&
             (order.status === "new" ||
               order.status === "ready" ||
               order.paymentState === "pending"),
@@ -2442,7 +2447,7 @@ const BankConfigAdminPanel = () => {
 };
 
 const getPedidoActions = (status: OrderStatus): StatusAction[] =>
-  terminalStatuses.has(status)
+  TERMINAL_STATUSES.has(status)
     ? []
     : [
         ...(status === "ready"
@@ -2856,7 +2861,7 @@ const CompactRow = ({
   const itemCount = getOrderItemCount(order);
   const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
   const canDeliver = order.status === "ready";
-  const canCancel = !terminalStatuses.has(order.status);
+  const canCancel = !TERMINAL_STATUSES.has(order.status);
   const canArchive = order.status === "cancelled" && !isArchived && Boolean(onArchive);
   return (
     <div className={`orders-card orders-card--${order.status} ${selected ? "ring-2 ring-emerald-500 bg-emerald-950/20" : ""}`}>
@@ -3005,7 +3010,7 @@ const OrderCommandPanel = ({
   const itemCount = getOrderItemCount(order);
   const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
   const canDeliver = order.status === "ready";
-  const canCancel = !terminalStatuses.has(order.status);
+  const canCancel = !TERMINAL_STATUSES.has(order.status);
   const visibleItems = order.items.slice(0, 3);
   return (
     <aside className="orders-command-detail" aria-label={`Detalle rápido ${order.folio}`}>
@@ -4979,7 +4984,7 @@ const HistoryPanel = ({
   }, [activeTab, loadArchivedOrders]);
 
   const terminalOrders = useMemo(() => {
-    const term = orders.filter((o) => terminalStatuses.has(o.status));
+    const term = orders.filter((o) => TERMINAL_STATUSES.has(o.status));
     if (!search.trim()) return term;
     const normalized = search.trim().toLowerCase();
     return term.filter(
@@ -6019,7 +6024,7 @@ export function InternalChekeoApp() {
         });
         return shouldRetainTerminalOrdersInView(tab, adminView)
           ? next
-          : next.filter((o) => !terminalStatuses.has(o.status));
+          : next.filter((o) => !TERMINAL_STATUSES.has(o.status));
       });
       setSelected((current) => {
         if (current?.id !== id) return current;
@@ -6066,7 +6071,7 @@ export function InternalChekeoApp() {
         const next = p.map((o) => (o.id === id ? mapped : o));
         return shouldRetainTerminalOrdersInView(tab, adminView)
           ? next
-          : next.filter((o) => !terminalStatuses.has(o.status));
+          : next.filter((o) => !TERMINAL_STATUSES.has(o.status));
       });
       setSelected((current) => (current?.id === id ? mapped : current));
       setOrdersNotice(
@@ -6269,7 +6274,7 @@ export function InternalChekeoApp() {
     lastUpdated,
     limitWarning,
   };
-  const active = orders.filter((o) => !terminalStatuses.has(o.status));
+  const active = orders.filter((o) => !TERMINAL_STATUSES.has(o.status));
   const shellTruth = getOperationalTruth({
     runtime,
     runtimeEnvironment,

@@ -1,4 +1,5 @@
-import { menuCategories, menuItems, promoCards, publicConfig, siteConfig, type MenuCategory, type MenuItem, type MenuV2Response, type PromoCard, type PublicConfig, type SiteConfig } from '../../packages/config/src';
+import { menuCategories, menuItems, promoCards, publicConfig, siteConfig } from '../../packages/config/src/mock-data';
+import type { MenuCategory, MenuItem, MenuV2Response, PromoCard, PublicConfig, SiteConfig } from '../../packages/config/src';
 import { mapD1CatalogBanner, mapD1CategoryBanner, mapD1ItemToMenuItem, mapD1PromoToPromoCard, parseJsonArray } from './_menu-v2-utils';
 
 type Env = { BOG_MENU_DB?: D1Database };
@@ -27,19 +28,21 @@ const fallbackPayload = (source: MenuV2Response['source']): MenuV2Response => ({
 const json = (payload: MenuV2Response, cacheControl = 'no-store') =>
   new Response(JSON.stringify(payload), { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': cacheControl } });
 
-const optionalAll = async <T>(query: D1PreparedStatement): Promise<T[]> => {
+const optionalAll = async <T>(query: D1PreparedStatement, label: string): Promise<T[]> => {
   try {
     const result = await query.all<T>();
     return result.results ?? [];
-  } catch {
+  } catch (error) {
+    console.error(`[menu-v2] optionalAll failed (${label}):`, error);
     return [];
   }
 };
 
-const optionalFirst = async <T>(query: D1PreparedStatement): Promise<T | null> => {
+const optionalFirst = async <T>(query: D1PreparedStatement, label: string): Promise<T | null> => {
   try {
     return await query.first<T>();
-  } catch {
+  } catch (error) {
+    console.error(`[menu-v2] optionalFirst failed (${label}):`, error);
     return null;
   }
 };
@@ -127,25 +130,25 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
         updated_at AS updatedAt
       FROM menu_items
       ORDER BY category_key ASC, sort_order ASC, sku ASC
-    `));
+    `), 'menu_items');
 
     const items: MenuItem[] = (itemsResult ?? [])
       .map((row: any) => mapD1ItemToMenuItem(row))
       .sort((a, b) => a.sortOrder - b.sortOrder);
 
     const [categoryRows, promoRows, bannerRows, catalogBannerRows, configRow, recipeRows] = await Promise.all([
-      optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT id, key, name, emoji, sort_order AS sortOrder, updated_at AS updatedAt FROM menu_categories ORDER BY sort_order ASC')),
-      optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT id, title, description, badge, promo_label AS promoLabel, is_featured AS isFeatured, is_available AS isAvailable, sort_order AS sortOrder, tags_json, combo_links_json, asset_alt, asset_placeholder, asset_image_url, asset_image_key, updated_at AS updatedAt FROM promo_cards ORDER BY sort_order ASC')),
-      optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT category_key AS categoryKey, title, subtitle, image_key AS imageKey, image_url AS imageUrl, updated_at AS updatedAt FROM menu_category_banners ORDER BY category_key ASC')),
-      optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT id, title, subtitle, cta_label, image_key, image_url, bg_preset, badge_text, badge_color, cta_action_type, cta_target, is_active, sort_order, updated_at FROM catalog_banners WHERE is_active = 1 ORDER BY sort_order ASC')),
-      optionalFirst<any>(env.BOG_MENU_DB.prepare('SELECT brand_name, currency, order_modes_json, support_phone, hero_cta, notice, public_mode, catalog_enabled, updated_at AS updatedAt FROM site_config ORDER BY updated_at DESC LIMIT 1')),
+      optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT id, key, name, emoji, sort_order AS sortOrder, updated_at AS updatedAt FROM menu_categories ORDER BY sort_order ASC'), 'menu_categories'),
+      optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT id, title, description, badge, promo_label AS promoLabel, is_featured AS isFeatured, is_available AS isAvailable, sort_order AS sortOrder, tags_json, combo_links_json, asset_alt, asset_placeholder, asset_image_url, asset_image_key, updated_at AS updatedAt FROM promo_cards ORDER BY sort_order ASC'), 'promo_cards'),
+      optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT category_key AS categoryKey, title, subtitle, image_key AS imageKey, image_url AS imageUrl, updated_at AS updatedAt FROM menu_category_banners ORDER BY category_key ASC'), 'menu_category_banners'),
+      optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT id, title, subtitle, cta_label, image_key, image_url, bg_preset, badge_text, badge_color, cta_action_type, cta_target, is_active, sort_order, updated_at FROM catalog_banners WHERE is_active = 1 ORDER BY sort_order ASC'), 'catalog_banners'),
+      optionalFirst<any>(env.BOG_MENU_DB.prepare('SELECT brand_name, currency, order_modes_json, support_phone, hero_cta, notice, public_mode, catalog_enabled, updated_at AS updatedAt FROM site_config ORDER BY updated_at DESC LIMIT 1'), 'site_config'),
       optionalAll<any>(env.BOG_MENU_DB.prepare(`
         SELECT r.product_sku AS sku, i.name AS ingredientName
         FROM product_ingredient_recipes_v2 r
         JOIN ingredients_v2 i ON r.ingredient_id = i.id
         WHERE i.is_active = 1
         ORDER BY i.sort_order ASC, i.name ASC
-      `))
+      `), 'product_ingredient_recipes_v2')
     ]);
 
     const categories = resolveCategories(categoryRows, items);

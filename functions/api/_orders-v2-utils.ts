@@ -11,7 +11,7 @@ import type {
 export type ErrorEnvelope = { ok: false; error: { code: string; message: string } };
 export type AdminEnv = { BOG_MENU_DB?: D1Database; BOG_INTERNAL_PIN?: string };
 
-const TERMINAL_STATUSES = new Set<OrderV2Status>(['delivered', 'cancelled']);
+export const TERMINAL_STATUSES = new Set<OrderV2Status>(['delivered', 'cancelled']);
 const STATUS_TRANSITIONS: Record<OrderV2Status, OrderV2Status[]> = {
   new: ['preparing', 'cancelled'],
   preparing: ['ready', 'cancelled'],
