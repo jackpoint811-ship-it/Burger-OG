@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { TERMINAL_STATUSES } from "functions/api/_orders-v2-utils";
 import { Button, Card } from "@ui/index";
 import {
   CheckCircle2,
@@ -55,7 +56,7 @@ const aggregateSummaryRows = <T extends { name: string; quantity: number }>(item
   return Array.from(map.values()).sort((a, b) => b.quantity - a.quantity);
 };
 
-const terminalStatuses = new Set<OrderStatus>(["delivered", "cancelled"]);
+
 
 const orderEnvironmentLabel: Record<OrderV2Environment, string> = {
   production: "Producción",
@@ -764,7 +765,7 @@ export const KitchenQueue = ({
   const [busyLineKey, setBusyLineKey] = useState<string | null>(null);
 
   const activeOrders = useMemo(
-    () => orders.filter((order) => !terminalStatuses.has(order.status)),
+    () => orders.filter((order) => !TERMINAL_STATUSES.has(order.status)),
     [orders],
   );
 
