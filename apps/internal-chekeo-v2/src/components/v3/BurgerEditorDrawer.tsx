@@ -181,32 +181,32 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm transition-opacity">
-      <div className="w-full max-w-2xl bg-zinc-950 border-l border-zinc-800 text-zinc-100 flex flex-col h-full shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm transition-opacity">
+      <div className="w-full max-w-2xl bg-white border-l border-neutral-200 text-neutral-800 flex flex-col h-full shadow-xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/60">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 bg-[#F5F2EE]">
           <div>
-            <h3 className="text-lg font-black text-amber-100">{isCreating ? "Crear Producto Nuevo" : `Editar: ${name || sku}`}</h3>
-            <p className="text-xs text-zinc-400">{isCreating ? "Asigna nombre, precio, receta e imágenes" : `SKU: ${sku}`}</p>
+            <h3 className="text-lg font-bold text-neutral-800">{isCreating ? "Crear Producto Nuevo" : `Editar: ${name || sku}`}</h3>
+            <p className="text-xs text-neutral-500">{isCreating ? "Asigna nombre, precio, receta e imágenes" : `SKU: ${sku}`}</p>
           </div>
-          <button type="button" onClick={onClose} className="p-2 rounded-xl text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 text-lg">
+          <button type="button" onClick={onClose} className="p-2 rounded-xl text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 text-lg">
             ✕
           </button>
         </div>
 
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {error ? <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-700/50 text-xs text-rose-200">{error}</div> : null}
+          {error ? <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">{error}</div> : null}
 
           {/* Datos Generales */}
           <div className="space-y-4">
-            <h4 className="text-xs font-black uppercase tracking-widest text-amber-400">1. Datos del Producto</h4>
-            
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-[#16A34A]">1. Datos del Producto</h4>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs uppercase tracking-widest text-zinc-400 font-bold">SKU</label>
+                <label className="text-xs uppercase tracking-widest text-neutral-500 font-semibold">SKU</label>
                 <input
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm font-mono focus:border-amber-400 outline-none"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#F5F2EE] border border-neutral-200 text-neutral-800 text-sm font-mono focus:border-[#16A34A] outline-none"
                   value={sku}
                   readOnly={!isCreating}
                   onChange={(e) => setSku(e.target.value.toUpperCase().replace(/[^A-Z0-9-]+/g, '-'))}
@@ -214,9 +214,9 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
                 />
               </div>
               <div>
-                <label className="text-xs uppercase tracking-widest text-zinc-400 font-bold">Nombre del Producto</label>
+                <label className="text-xs uppercase tracking-widest text-neutral-500 font-semibold">Nombre del Producto</label>
                 <input
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm focus:border-amber-400 outline-none font-bold"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#F5F2EE] border border-neutral-200 text-neutral-800 text-sm font-semibold focus:border-[#16A34A] outline-none"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="ej. Cheeseburger Smash"
@@ -225,9 +225,9 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
             </div>
 
             <div>
-              <label className="text-xs uppercase tracking-widest text-zinc-400 font-bold">Descripción</label>
+              <label className="text-xs uppercase tracking-widest text-neutral-500 font-semibold">Descripción</label>
               <textarea
-                className="w-full mt-1 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm min-h-[70px] focus:border-amber-400 outline-none"
+                className="w-full mt-1 px-3 py-2 rounded-xl bg-[#F5F2EE] border border-neutral-200 text-neutral-800 text-sm min-h-[70px] focus:border-[#16A34A] outline-none"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Descripción amigable de ingredientes..."
@@ -236,18 +236,18 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="text-xs uppercase tracking-widest text-zinc-400 font-bold">Precio ($ MXN)</label>
+                <label className="text-xs uppercase tracking-widest text-neutral-500 font-semibold">Precio ($ MXN)</label>
                 <input
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm font-bold focus:border-amber-400 outline-none"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#F5F2EE] border border-neutral-200 text-neutral-800 text-sm font-semibold focus:border-[#16A34A] outline-none"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="85.00"
                 />
               </div>
               <div>
-                <label className="text-xs uppercase tracking-widest text-zinc-400 font-bold">Categoría</label>
+                <label className="text-xs uppercase tracking-widest text-neutral-500 font-semibold">Categoría</label>
                 <select
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm focus:border-amber-400 outline-none"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#F5F2EE] border border-neutral-200 text-neutral-800 text-sm focus:border-[#16A34A] outline-none"
                   value={category}
                   onChange={(e) => setCategory(e.target.value as MenuCategory['key'])}
                 >
@@ -259,9 +259,9 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
                 </select>
               </div>
               <div>
-                <label className="text-xs uppercase tracking-widest text-zinc-400 font-bold">Orden Visual</label>
+                <label className="text-xs uppercase tracking-widest text-neutral-500 font-semibold">Orden Visual</label>
                 <input
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm focus:border-amber-400 outline-none"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-[#F5F2EE] border border-neutral-200 text-neutral-800 text-sm focus:border-[#16A34A] outline-none"
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value)}
                   placeholder="10"
@@ -269,18 +269,18 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 p-3 rounded-xl border border-zinc-800 bg-zinc-900/50">
-              <label className="flex items-center gap-2 text-xs font-bold cursor-pointer text-zinc-200">
+            <div className="grid grid-cols-3 gap-3 p-3 rounded-xl border border-neutral-200 bg-[#F5F2EE]">
+              <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer text-neutral-700">
                 <input type="checkbox" checked={isAvailable} onChange={(e) => setIsAvailable(e.target.checked)} className="rounded" />
                 ✓ Disponible
               </label>
-              <label className="flex items-center gap-2 text-xs font-bold cursor-pointer text-amber-300">
+              <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer text-[#16A34A]">
                 <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="rounded" />
                 ⭐ Destacado
               </label>
               <div className="col-span-1">
                 <input
-                  className="w-full px-2 py-1 text-xs rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder-zinc-500"
+                  className="w-full px-2 py-1 text-xs rounded-lg bg-white border border-neutral-200 text-neutral-700 placeholder-neutral-400"
                   value={badge}
                   onChange={(e) => setBadge(e.target.value)}
                   placeholder="Badge (ej. Best Seller)"
@@ -290,21 +290,21 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
           </div>
 
           {/* 🥬 Receta e Ingredientes D1 */}
-          <div className="space-y-3 pt-4 border-t border-zinc-800">
+          <div className="space-y-3 pt-4 border-t border-neutral-200">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-xs font-black uppercase tracking-widest text-emerald-400">2. Receta de Ingredientes (Single Source)</h4>
-                <p className="text-[11px] text-zinc-400">Los ingredientes vinculados se muestran al cliente y habilitan remociones en KDS.</p>
+                <h4 className="text-xs font-semibold uppercase tracking-widest text-[#16A34A]">2. Receta de Ingredientes (Single Source)</h4>
+                <p className="text-[11px] text-neutral-500">Los ingredientes vinculados se muestran al cliente y habilitan remociones en KDS.</p>
               </div>
-              <Button type="button" className="text-xs bg-zinc-800 border border-zinc-700 text-zinc-200 py-1 px-3 min-h-0" onClick={addRecipeRow}>
+              <Button type="button" className="text-xs bg-neutral-100 border border-neutral-300 text-neutral-700 py-1 px-3 min-h-0" onClick={addRecipeRow}>
                 + Agregar Ingrediente
               </Button>
             </div>
 
             {loadingRecipe ? (
-              <p className="text-xs text-zinc-400 py-2">Cargando receta de ingrediente...</p>
+              <p className="text-xs text-neutral-500 py-2">Cargando receta de ingrediente...</p>
             ) : recipeRows.length === 0 ? (
-              <div className="p-3 rounded-xl border border-dashed border-zinc-800 bg-zinc-900/30 text-center text-xs text-zinc-500">
+              <div className="p-3 rounded-xl border border-dashed border-neutral-300 bg-[#F5F2EE] text-center text-xs text-neutral-400">
                 Sin ingredientes en la receta. Haz clic en <strong>+ Agregar Ingrediente</strong> para vincular.
               </div>
             ) : (
@@ -312,9 +312,9 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
                 {recipeRows.map((row, index) => {
                   const selectedIng = availableIngredients.find((i) => i.id === row.ingredientId);
                   return (
-                    <div key={index} className="flex items-center gap-2 p-2 rounded-xl border border-zinc-800 bg-zinc-900/60">
+                    <div key={index} className="flex items-center gap-2 p-2 rounded-xl border border-neutral-200 bg-[#F5F2EE]">
                       <select
-                        className="flex-1 px-2 py-1.5 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 outline-none"
+                        className="flex-1 px-2 py-1.5 rounded-lg bg-white border border-neutral-200 text-xs text-neutral-700 outline-none"
                         value={row.ingredientId}
                         onChange={(e) => updateRecipeRow(index, { ingredientId: e.target.value })}
                       >
@@ -324,19 +324,19 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
                           </option>
                         ))}
                       </select>
-                      <span className="text-xs text-zinc-400">Cant:</span>
+                      <span className="text-xs text-neutral-500">Cant:</span>
                       <input
-                        className="w-16 px-2 py-1 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 text-center font-bold"
+                        className="w-16 px-2 py-1 rounded-lg bg-white border border-neutral-200 text-xs text-neutral-700 text-center font-semibold"
                         type="number"
                         min="1"
                         value={row.quantityPerUnit}
                         onChange={(e) => updateRecipeRow(index, { quantityPerUnit: Number(e.target.value) || 1 })}
                       />
-                      <span className="text-xs text-zinc-500 font-mono">{selectedIng?.unit || 'pieza'}</span>
+                      <span className="text-xs text-neutral-400 font-mono">{selectedIng?.unit || 'pieza'}</span>
                       <button
                         type="button"
                         onClick={() => removeRecipeRow(index)}
-                        className="p-1 text-rose-400 hover:text-rose-200 text-xs font-bold"
+                        className="p-1 text-red-500 hover:text-red-700 text-xs font-semibold"
                       >
                         ✕
                       </button>
@@ -348,14 +348,14 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
           </div>
 
           {/* Imagen y Asset R2 */}
-          <div className="space-y-3 pt-4 border-t border-zinc-800">
-            <h4 className="text-xs font-black uppercase tracking-widest text-cyan-400">3. Fotografía del Producto (Cloudflare R2)</h4>
-            <div className="flex gap-4 items-start p-3 rounded-xl border border-cyan-500/20 bg-cyan-950/10">
-              <div className="w-24 h-24 rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden flex items-center justify-center shrink-0">
+          <div className="space-y-3 pt-4 border-t border-neutral-200">
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-[#16A34A]">3. Fotografía del Producto (Cloudflare R2)</h4>
+            <div className="flex gap-4 items-start p-3 rounded-xl border border-neutral-200 bg-[#F5F2EE]">
+              <div className="w-24 h-24 rounded-xl border border-neutral-200 bg-white overflow-hidden flex items-center justify-center shrink-0">
                 {imagePreviewUrl ? (
                   <img src={imagePreviewUrl} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-xs text-zinc-500 text-center">Sin imagen</span>
+                  <span className="text-xs text-neutral-400 text-center">Sin imagen</span>
                 )}
               </div>
               <div className="flex-1 min-w-0 space-y-2">
@@ -365,32 +365,32 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
                   accept={ACCEPTED_IMAGE_TYPES.join(',')}
                   disabled={uploadingImage || isCreating}
                   onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
-                  className="block w-full text-xs text-zinc-400 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-cyan-500/20 file:text-cyan-300"
+                  className="block w-full text-xs text-neutral-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-green-100 file:text-green-700"
                 />
                 {isCreating ? (
-                  <p className="text-[11px] text-amber-300">Guarda el producto primero para habilitar la subida directa a R2.</p>
+                  <p className="text-[11px] text-[#16A34A]">Guarda el producto primero para habilitar la subida directa a R2.</p>
                 ) : (
                   <Button
                     type="button"
-                    className="w-full bg-cyan-400 text-black text-xs font-bold py-1.5 min-h-0 disabled:opacity-40"
+                    className="w-full bg-[#16A34A] text-white text-xs font-semibold py-1.5 min-h-0 disabled:opacity-40"
                     disabled={!selectedFile || uploadingImage}
                     onClick={handleUploadImage}
                   >
                     {uploadingImage ? "Subiendo a R2…" : "Subir Fotografía"}
                   </Button>
                 )}
-                {imageError ? <p className="text-xs text-rose-300">{imageError}</p> : null}
+                {imageError ? <p className="text-xs text-red-600">{imageError}</p> : null}
               </div>
             </div>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center gap-3 px-6 py-4 border-t border-zinc-800 bg-zinc-900/80">
-          <Button type="button" className="flex-1 border border-zinc-700 bg-zinc-900 text-zinc-200" onClick={onClose} disabled={saving}>
+        <div className="flex items-center gap-3 px-6 py-4 border-t border-neutral-200 bg-[#F5F2EE]">
+          <Button type="button" className="flex-1 border border-neutral-300 bg-white text-neutral-700" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
-          <Button type="button" className="flex-1 bg-amber-400 text-zinc-950 font-bold disabled:opacity-40" onClick={handleSave} disabled={saving || savingRecipe}>
+          <Button type="button" className="flex-1 bg-[#16A34A] text-white font-semibold disabled:opacity-40" onClick={handleSave} disabled={saving || savingRecipe}>
             {saving || savingRecipe ? "Guardando…" : "Guardar Producto"}
           </Button>
         </div>

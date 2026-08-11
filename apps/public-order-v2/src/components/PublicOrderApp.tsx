@@ -19,7 +19,7 @@ import { EmptyState } from "@ui/index";
 import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CatalogModeApp } from "./CatalogModeApp";
-import { loadMenuV2, toFallbackMenuResponse } from "../lib/menu-v2";
+import { loadMenuV2 } from "../lib/menu-v2";
 import { loadActiveRaffleV2 } from "../lib/raffles-v2";
 import {
   type CartEntry,
@@ -1957,7 +1957,8 @@ export function PublicOrderApp() {
   const sideQuestEntryModeRef = useRef<SideQuestEntryMode>("builder");
   const builderRef = useRef<BuilderDraft | null>(null);
   const [extraGarnishQuantities, setExtraGarnishQuantities] = useState<Record<string, number>>({});
-  const [menuData, setMenuData] = useState<MenuV2Response>(toFallbackMenuResponse("fallback"));
+  const [menuData, setMenuData] = useState<MenuV2Response | null>(null);
+  const [menuError, setMenuError] = useState<string | null>(null);
   const [raffleCampaign, setRaffleCampaign] = useState<RaffleCampaignPublicV2 | null>(null);
   const [loadingMenu, setLoadingMenu] = useState(true);
   const [showBoot, setShowBoot] = useState(true);
@@ -2029,6 +2030,10 @@ export function PublicOrderApp() {
       setMenuData(payload);
       setLoadingMenu(false);
       window.setTimeout(() => mounted && setShowBoot(false), reduce ? 0 : 250);
+    }).catch((err) => {
+      if (!mounted) return;
+      setMenuError(err instanceof Error ? err.message : 'No se pudo cargar el menú');
+      setLoadingMenu(false);
     });
     return () => { mounted = false; window.clearTimeout(bootTimer); };
   }, [reduce]);
@@ -2318,6 +2323,20 @@ export function PublicOrderApp() {
     else if (section === "checkout") handleCheckout();
     else if (section === "success") handleCreateAnother();
   };
+
+  if (!menuData) {
+    return (
+      <main className="app-shell">
+        <div className="error-state">
+          <h2>No se pudo cargar el menú</h2>
+          <p>{menuError || 'Hubo un problema al cargar los productos. Por favor intenta de nuevo.'}</p>
+          <button onClick={() => window.location.reload()} className="retry-button">
+            Reintentar
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   if (shouldRenderCatalogMode) {
     return (

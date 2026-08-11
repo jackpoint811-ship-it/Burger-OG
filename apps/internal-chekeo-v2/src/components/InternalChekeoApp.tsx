@@ -33,7 +33,6 @@ import {
   WalletCards,
 } from "lucide-react";
 import {
-  mockOrders,
   type KitchenSummaryKResponse,
   type MockOrder,
   type OrdersV2SummaryResponse,
@@ -825,28 +824,7 @@ type ToggleKitchenItemDone = (
   done: boolean,
 ) => Promise<void>;
 
-const normalizeMockOrderItem = (
-  item: MockOrder["items"][number],
-  index: number,
-): InternalOrderItem => ({
-  ...item,
-  lineKey: `mock-${index + 1}-${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-  itemDisplayIndex: index + 1,
-  itemKind: item.name.toLowerCase().includes("fries") ? "garnish" : "burger",
-  removedIngredients: item.note ? [item.note] : [],
-  extras: [],
-  garnish: null,
-  includedDrink: null,
-  sideQuestExtras: [],
-  comboBurgers: [],
-  kitchenDone: false,
-});
-const asInternalOrders = (orders: MockOrder[]): InternalOrder[] =>
-  orders.map((order) => ({
-    ...order,
-    createdAtMs: parseOrderTimestamp(order.createdAt),
-    items: order.items.map(normalizeMockOrderItem),
-  }));
+
 const AUTO_REFRESH_INTERVAL_MS = 10_000;
 const NEW_ORDER_HIGHLIGHT_MS = 12_000;
 const NEW_ORDER_NOTICE_MS = 5_000;
@@ -5677,9 +5655,7 @@ export function InternalChekeoApp() {
     setSoundAlerts((prev) => !prev);
   }, []);
 
-  const [orders, setOrders] = useState<InternalOrder[]>(
-    asInternalOrders(mockOrders),
-  );
+  const [orders, setOrders] = useState<InternalOrder[]>([]);
   const [selected, setSelected] = useState<InternalOrder | null>(null);
   const [cancellationRequest, setCancellationRequest] =
     useState<CancellationRequest>(null);
@@ -5818,7 +5794,7 @@ export function InternalChekeoApp() {
   const expireSession = useCallback(() => {
     setLogged(false);
     setSessionState("expired");
-    setOrders(asInternalOrders(mockOrders));
+    setOrders([]);
     setOrdersSource("mock");
     setOrdersError("Sesión expirada. Vuelve a iniciar sesión.");
     setOrdersNotice(null);
@@ -5940,7 +5916,7 @@ export function InternalChekeoApp() {
           setOrdersError(message);
           return;
         }
-        setOrders(asInternalOrders(mockOrders));
+        setOrders([]);
         setOrdersSource("fallback");
         setLimitWarning(null);
         setOrdersError(message);
@@ -6393,7 +6369,7 @@ export function InternalChekeoApp() {
           setLogged(false);
           setSessionState("inactive");
           setOrdersSource("mock");
-          setOrders(asInternalOrders(mockOrders));
+          setOrders([]);
           setOrdersNotice(null);
           setOrdersError(null);
           setSelected(null);
