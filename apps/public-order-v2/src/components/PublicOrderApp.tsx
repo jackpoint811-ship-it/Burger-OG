@@ -22,6 +22,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CatalogModeApp } from "./CatalogModeApp";
 import { loadMenuV2 } from "../lib/menu-v2";
+import { toFallbackMenuResponse } from "../lib/menu-v2";
 import { loadActiveRaffleV2 } from "../lib/raffles-v2";
 import {
   type CartEntry,
@@ -1959,7 +1960,7 @@ export function PublicOrderApp() {
   const sideQuestEntryModeRef = useRef<SideQuestEntryMode>("builder");
   const builderRef = useRef<BuilderDraft | null>(null);
   const [extraGarnishQuantities, setExtraGarnishQuantities] = useState<Record<string, number>>({});
-  const [menuData, setMenuData] = useState<MenuV2Response | null>(null);
+  const [menuData, setMenuData] = useState<MenuV2Response>(toFallbackMenuResponse);
   const [menuError, setMenuError] = useState<string | null>(null);
   const [raffleCampaign, setRaffleCampaign] = useState<RaffleCampaignPublicV2 | null>(null);
   const [loadingMenu, setLoadingMenu] = useState(true);
