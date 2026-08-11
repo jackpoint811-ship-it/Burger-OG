@@ -1,5 +1,7 @@
 import {
   errorResponse,
+  getOrderSourceForEnvironment,
+  parseOrderEnvironmentFromRequest,
   requireAdminToken,
   type AdminEnv
 } from '../_orders-v2-utils';
@@ -10,6 +12,10 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   if (!env.BOG_MENU_DB) return errorResponse(503, 'MISSING_DB', 'BOG_MENU_DB no está configurado.');
   const authError = await requireAdminToken(request, env);
   if (authError) return authError;
+
+  const environment = parseOrderEnvironmentFromRequest(request);
+  if (!environment) return errorResponse(400, 'INVALID_ENVIRONMENT', 'Ambiente de orden inválido.');
+  const sourceBinding = getOrderSourceForEnvironment(environment);
 
   let lastCheckedTimestamp = new Date(Date.now() - 30000).toISOString();
 
@@ -23,8 +29,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
         try {
           const now = new Date().toISOString();
           const newEvents = await env.BOG_MENU_DB!.prepare(
-            'SELECT * FROM order_events_v2 WHERE created_at > ? ORDER BY created_at ASC LIMIT 20'
-          ).bind(lastCheckedTimestamp).all();
+            `SELECT e.* FROM order_events_v2 e
+             JOIN orders_v2 o ON o.id = e.order_id
+             WHERE e.created_at > ? AND o.source = ?
+             ORDER BY e.created_at ASC LIMIT 20`
+          ).bind(lastCheckedTimestamp, sourceBinding).all();
 
           const events = newEvents.results ?? [];
           if (events.length > 0) {
