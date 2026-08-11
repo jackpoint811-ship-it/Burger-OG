@@ -221,6 +221,29 @@ export function CatalogCartDrawer({ isOpen, onClose, onCheckout, onEditItem }: C
                           {item.mods.join(", ")}
                         </div>
                       )}
+                      {item.comboSide && (
+                        <div style={{ fontSize: "11px", color: "var(--color-text-secondary)", marginTop: "4px", fontWeight: 700 }}>
+                          Guarnición: {item.comboSide.name}
+                          {item.comboSide.upcharge > 0 ? ` (+${formatCurrency(item.comboSide.upcharge)})` : ""}
+                        </div>
+                      )}
+                      {item.comboBurgers && item.comboBurgers.length > 0 && (
+                        <div style={{ fontSize: "11px", color: "var(--color-text-secondary)", marginTop: "2px", display: "flex", flexDirection: "column", gap: "2px" }}>
+                          {item.comboBurgers.map((burger, burgerIndex) => {
+                            const details = [
+                              ...burger.removedIngredients.map((ing) => `Sin ${ing}`),
+                              ...burger.extras.map((extra) => `${extra.qty}x ${extra.name}`),
+                              ...(burger.burgerNote?.trim() ? [burger.burgerNote.trim()] : []),
+                            ];
+                            return (
+                              <span key={`${burger.sku}-${burgerIndex}`}>
+                                🍔 {burger.name}
+                                {details.length ? `: ${details.join(", ")}` : " · Original"}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
                       {item.upgrades && item.upgrades.length > 0 && (
                         <div style={{ fontSize: "11px", color: "var(--color-accent)", marginTop: "2px", display: "flex", flexDirection: "column", gap: "2px" }}>
                           {item.upgrades.map((u) => (

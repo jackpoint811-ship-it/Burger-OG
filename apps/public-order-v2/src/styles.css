@@ -7373,9 +7373,11 @@ html {
 }
 
 .catalog-drawer {
+  display: flex;
+  flex-direction: column;
   width: min(100%, 620px);
   max-height: min(92dvh, 800px);
-  overflow-y: auto;
+  overflow: hidden;
   overscroll-behavior: contain;
   border: 1px solid var(--color-line);
   border-radius: 28px 28px 20px 20px;
@@ -7398,6 +7400,7 @@ html {
   aspect-ratio: 4 / 3;
   overflow: hidden;
   background: var(--color-surface-alt);
+  flex-shrink: 0;
 }
 
 .catalog-drawer__media img {
@@ -7457,6 +7460,10 @@ html {
   display: grid;
   gap: 0.9rem;
   padding: 1rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .catalog-drawer__header {
@@ -7600,16 +7607,13 @@ html {
 }
 
 .catalog-drawer__footer {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  flex-shrink: 0;
   padding: 12px 16px;
   background: var(--color-surface);
   border-top: 1px solid var(--color-line);
   z-index: 25;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
-  margin-top: 16px;
+  margin-top: 0;
 }
 
 .catalog-drawer__add-btn {
@@ -7935,6 +7939,10 @@ html {
   gap: 0.8rem;
   padding: 2.5rem 1.5rem;
   text-align: center;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .catalog-cart-drawer__empty-svg {
@@ -7981,6 +7989,7 @@ html {
 
 .catalog-cart-drawer__list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   list-style: none;
@@ -8129,8 +8138,7 @@ html {
 }
 
 .catalog-cart-drawer__footer {
-  position: sticky;
-  bottom: 0;
+  flex-shrink: 0;
   padding: 0.85rem 1rem max(0.85rem, env(safe-area-inset-bottom));
   background: var(--color-surface);
   border-top: 1px solid var(--color-line-soft);
@@ -8441,6 +8449,10 @@ html {
   padding: 1.5rem 1.5rem;
   text-align: center;
   gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .catalog-checkout-success__icon {

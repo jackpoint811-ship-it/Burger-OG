@@ -285,6 +285,7 @@ function CatalogModeAppInner({ items, categories, siteConfig, recipes, catalogBa
             product={selectedProduct}
             initialCartItem={editingCartItem}
             recipeIngredients={(selectedProduct.sku && recipes?.[selectedProduct.sku]) || recipes?.[selectedProduct.id]}
+            recipesBySku={recipes}
             allProducts={catalogProducts}
             onClose={closeProductDrawer}
           />

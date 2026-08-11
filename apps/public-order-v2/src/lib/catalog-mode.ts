@@ -16,6 +16,7 @@ export type CatalogProduct = {
   isPromoActive?: boolean;
   promoLabel?: string;
   comboConfig?: MenuItemComboConfig;
+  comboLinks?: string[];
   imageUrl?: string;
   imageKey?: string;
   badge?: string;
@@ -97,6 +98,7 @@ export function mapMenuItemsToCatalogProducts(items: MenuItem[], categories: Men
         isPromoActive: item.isPromoActive,
         promoLabel: item.promoLabel,
         comboConfig: item.comboConfig,
+        comboLinks: item.comboLinks,
         imageUrl: item.imageUrl,
         imageKey: item.imageKey,
         badge: item.badge ?? (item.isPromoActive ? (item.promoLabel || "⚡ PRECIO ESPECIAL") : item.promoLabel),
