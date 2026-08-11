@@ -102,24 +102,24 @@ export function MenuStockTool() {
   return (
     <div className="space-y-6">
       {/* Top Action Bar */}
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between border-b border-zinc-800 pb-4">
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between border-b border-neutral-200 pb-4">
         <div>
-          <h2 className="text-xl font-black text-amber-100 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-neutral-800 flex items-center gap-2">
             📦 Catálogo & Stock Diario
           </h2>
-          <p className="text-xs text-zinc-400">Gestiona existencias al instante y edita recetas de hamburguesas.</p>
+          <p className="text-xs text-neutral-500">Gestiona existencias al instante y edita recetas de hamburguesas.</p>
         </div>
 
         <div className="flex gap-3 w-full md:w-auto">
           <input
-            className="px-3 py-2 text-xs rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 flex-1 md:w-64 outline-none focus:border-amber-400"
+            className="px-3 py-2 text-xs rounded-xl bg-[#F5F2EE] border border-neutral-200 text-neutral-800 placeholder-neutral-400 flex-1 md:w-64 outline-none focus:border-[#16A34A]"
             placeholder="Buscar por nombre o SKU..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <Button
             type="button"
-            className="bg-amber-400 text-zinc-950 font-bold text-xs whitespace-nowrap min-h-10"
+            className="bg-[#16A34A] text-white font-semibold text-xs whitespace-nowrap min-h-10"
             onClick={handleOpenCreate}
           >
             + Crear Producto
@@ -127,18 +127,18 @@ export function MenuStockTool() {
         </div>
       </div>
 
-      {notice ? <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-xs text-emerald-200">{notice}</div> : null}
-      {error ? <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-700/50 text-xs text-rose-200">{error}</div> : null}
+      {notice ? <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-xs text-green-800">{notice}</div> : null}
+      {error ? <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">{error}</div> : null}
 
       {/* Category Filter Pills */}
       <div className="flex gap-2 overflow-x-auto pb-1">
         <button
           type="button"
           onClick={() => setActiveCategory('all')}
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
             activeCategory === 'all'
-              ? 'bg-amber-400 text-zinc-950 shadow-md'
-              : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800'
+              ? 'bg-[#16A34A] text-white shadow-sm'
+              : 'bg-neutral-100 border border-neutral-300 text-neutral-600 hover:bg-neutral-200'
           }`}
         >
           📖 Todos ({items.filter(i => i.category !== 'combos').length})
@@ -150,10 +150,10 @@ export function MenuStockTool() {
               key={catKey}
               type="button"
               onClick={() => setActiveCategory(catKey)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
                 activeCategory === catKey
-                  ? 'bg-amber-400 text-zinc-950 shadow-md'
-                  : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800'
+                  ? 'bg-[#16A34A] text-white shadow-sm'
+                  : 'bg-neutral-100 border border-neutral-300 text-neutral-600 hover:bg-neutral-200'
               }`}
             >
               {ITEM_CATEGORY_LABELS[catKey] || catKey} ({count})
@@ -164,9 +164,9 @@ export function MenuStockTool() {
 
       {/* Loading state */}
       {loading ? (
-        <Card className="p-8 text-center text-zinc-400 text-sm">Cargando existencias del catálogo...</Card>
+        <Card className="p-8 text-center text-neutral-500 text-sm">Cargando existencias del catálogo...</Card>
       ) : filteredItems.length === 0 ? (
-        <Card className="p-8 text-center text-zinc-500 text-sm border-dashed">
+        <Card className="p-8 text-center text-neutral-400 text-sm border-dashed border-neutral-300">
           No se encontraron productos para la categoría o filtro seleccionado.
         </Card>
       ) : (
@@ -179,21 +179,21 @@ export function MenuStockTool() {
                 key={item.sku}
                 className={`flex flex-col justify-between p-4 transition-all border ${
                   item.isAvailable
-                    ? 'border-zinc-800 bg-zinc-900/80 hover:border-zinc-700'
-                    : 'border-rose-950/60 bg-zinc-950/60 opacity-80'
+                    ? 'border-neutral-200 bg-white hover:border-neutral-300'
+                    : 'border-red-200 bg-red-50/50 opacity-80'
                 }`}
               >
                 <div>
                   {/* Top Row: SKU & Badge */}
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-[10px] font-mono font-bold text-zinc-400 bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">
+                    <span className="text-[10px] font-mono font-semibold text-[#16A34A] bg-green-50 px-2 py-0.5 rounded border border-green-200">
                       {item.sku}
                     </span>
                     <span
-                      className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                      className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
                         item.isAvailable
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                          : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          ? 'bg-green-100 text-green-700 border border-green-200'
+                          : 'bg-red-100 text-red-700 border border-red-200'
                       }`}
                     >
                       {item.isAvailable ? '✓ Disponible' : '✕ Agotado'}
@@ -202,7 +202,7 @@ export function MenuStockTool() {
 
                   {/* Item Image / Placeholder & Info */}
                   <div className="flex gap-3 mb-3">
-                    <div className="w-14 h-14 rounded-xl bg-zinc-950 border border-zinc-800 overflow-hidden shrink-0 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-xl bg-[#F5F2EE] border border-neutral-200 overflow-hidden shrink-0 flex items-center justify-center">
                       {item.imageUrl || item.imageKey ? (
                         <img
                           src={item.imageUrl || `/api/assets-v2/${item.imageKey}`}
@@ -214,17 +214,17 @@ export function MenuStockTool() {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="font-bold text-zinc-100 text-sm truncate">{item.name}</h4>
-                      <p className="text-xs text-zinc-400 line-clamp-2 mt-0.5">{item.description}</p>
+                      <h4 className="font-semibold text-neutral-800 text-sm truncate">{item.name}</h4>
+                      <p className="text-xs text-neutral-500 line-clamp-2 mt-0.5">{item.description}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Bottom Row: Price & Actions */}
-                <div className="pt-3 border-t border-zinc-800/80 space-y-2">
+                <div className="pt-3 border-t border-neutral-200 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-zinc-400 font-semibold">Precio Público:</span>
-                    <span className="text-base font-black text-amber-400">${Number(item.price).toFixed(2)} MXN</span>
+                    <span className="text-xs text-neutral-500 font-semibold">Precio Público:</span>
+                    <span className="text-base font-bold text-[#16A34A]">${Number(item.price).toFixed(2)} MXN</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
@@ -232,10 +232,10 @@ export function MenuStockTool() {
                       type="button"
                       disabled={isBusy}
                       onClick={() => handleToggleAvailability(item)}
-                      className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                      className={`px-2 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
                         item.isAvailable
-                          ? 'bg-rose-950/40 border-rose-800/60 text-rose-200 hover:bg-rose-900/60'
-                          : 'bg-emerald-950/40 border-emerald-800/60 text-emerald-200 hover:bg-emerald-900/60'
+                          ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
+                          : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
                       }`}
                     >
                       {isBusy ? '...' : item.isAvailable ? 'Marcar Agotado' : 'Marcar Disponible'}
@@ -243,7 +243,7 @@ export function MenuStockTool() {
                     <button
                       type="button"
                       onClick={() => handleOpenEdit(item)}
-                      className="px-2 py-1.5 rounded-xl text-xs font-bold bg-zinc-800 border border-zinc-700 text-zinc-200 hover:bg-zinc-700 transition-colors"
+                      className="px-2 py-1.5 rounded-xl text-xs font-semibold bg-neutral-100 border border-neutral-300 text-neutral-700 hover:bg-neutral-200 transition-colors"
                     >
                       ✏️ Editar / Receta
                     </button>
