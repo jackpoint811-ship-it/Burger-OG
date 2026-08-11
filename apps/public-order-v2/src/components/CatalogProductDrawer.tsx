@@ -1,9 +1,15 @@
 import { useEffect, useId, useRef, useState, useMemo, type MouseEvent } from "react";
 import { type CatalogProduct, type CatalogProductType, PRODUCT_TYPE_LABELS, resolveCatalogAssetUrl } from "../lib/catalog-mode";
-import { CATALOG_CART_MAX_QTY, type CatalogCartItem } from "../lib/catalog-cart";
+import { CATALOG_CART_MAX_QTY, type CatalogCartItem, type CatalogCartUpgrade, type CatalogComboBurger } from "../lib/catalog-cart";
 import { formatCurrency } from "../lib/order";
 import { useCatalogCart } from "./CatalogCartContext";
 import { motion, useReducedMotion } from "framer-motion";
+
+type ComboBurgerDraft = {
+  removedIngredients: string[];
+  upgrades: CatalogCartUpgrade[];
+  note: string;
+};
 
 /* ── Inline SVG fallback para el media del drawer ──────── */
 const DrawerFallbackSvg = ({ type }: { type: CatalogProductType }) => {
@@ -56,6 +62,7 @@ type CatalogProductDrawerProps = {
   product: CatalogProduct;
   initialCartItem?: CatalogCartItem | null;
   recipeIngredients?: string[];
+  recipesBySku?: Record<string, string[]>;
   allProducts?: CatalogProduct[];
   onClose: () => void;
 };
@@ -69,13 +76,15 @@ const focusableSelector = [
   "[tabindex]:not([tabindex='-1'])",
 ].join(",");
 
-export function CatalogProductDrawer({ product, initialCartItem, recipeIngredients, allProducts, onClose }: CatalogProductDrawerProps) {
+export function CatalogProductDrawer({ product, initialCartItem, recipeIngredients, recipesBySku, allProducts, onClose }: CatalogProductDrawerProps) {
   const { items, addItem, updateItem } = useCatalogCart();
   const [justAdded, setJustAdded] = useState(false);
   const [removedMods, setRemovedMods] = useState<string[]>([]);
-  const [upgrades, setUpgrades] = useState<{ id: string; name: string; price: number; qty: number }[]>([]);
+  const [upgrades, setUpgrades] = useState<CatalogCartUpgrade[]>([]);
   const [comboSide, setComboSide] = useState<string>("");
   const [itemMode, setItemMode] = useState<"original" | "customize">("original");
+  const [comboBurgerDrafts, setComboBurgerDrafts] = useState<Record<number, ComboBurgerDraft>>({});
+  const [expandedComboBurger, setExpandedComboBurger] = useState<number | null>(null);
 
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
@@ -144,6 +153,22 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
     return recipeIngredients && recipeIngredients.length > 0 ? recipeIngredients : [];
   }, [recipeIngredients]);
 
+  /* ── 4. Burgers incluidas en el combo (para personalizar) ── */
+  const comboBurgerProducts = useMemo(() => {
+    if (product.type !== "combo") return [];
+    const bySku = new Map((allProducts ?? []).map((p) => [p.sku?.toUpperCase(), p]));
+    const lookup = (sku: string) => bySku.get(sku.trim().toUpperCase());
+    const fromLinks = (product.comboLinks ?? [])
+      .map((link) => lookup(link))
+      .filter((p): p is CatalogProduct => Boolean(p && p.type === "burger" && p.isAvailable));
+    if (fromLinks.length > 0) return fromLinks;
+    const fromConfig = (product.comboConfig?.optionGroups ?? [])
+      .flatMap((group) => group.options.map((option) => lookup(option.sku)))
+      .filter((p): p is CatalogProduct => Boolean(p && p.type === "burger" && p.isAvailable));
+    if (fromConfig.length > 0) return fromConfig;
+    return [product];
+  }, [product, allProducts]);
+
   useEffect(() => {
     setJustAdded(false);
     const defaultSide = comboSideOptions.length > 0 ? comboSideOptions[0].label : "";
@@ -155,12 +180,23 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
       setRemovedMods(parsedRemoved);
       setUpgrades(initialCartItem.upgrades || []);
 
-      const sideMod = (initialCartItem.mods || []).find((m) => m.startsWith("Guarnición: "));
-      if (sideMod) {
-        setComboSide(sideMod.replace("Guarnición: ", ""));
+      if (initialCartItem.comboSide) {
+        const side = comboSideOptions.find((s) => s.rawLabel === initialCartItem.comboSide?.name);
+        setComboSide(side?.label ?? initialCartItem.comboSide.name);
       } else {
-        setComboSide(defaultSide);
+        const sideMod = (initialCartItem.mods || []).find((m) => m.startsWith("Guarnición: "));
+        setComboSide(sideMod ? sideMod.replace("Guarnición: ", "") : defaultSide);
       }
+
+      const burgerDrafts: Record<number, ComboBurgerDraft> = {};
+      (initialCartItem.comboBurgers ?? []).forEach((burger, index) => {
+        burgerDrafts[index] = {
+          removedIngredients: [...burger.removedIngredients],
+          upgrades: burger.extras.map((extra) => ({ ...extra })),
+          note: burger.burgerNote ?? "",
+        };
+      });
+      setComboBurgerDrafts(burgerDrafts);
 
       if (parsedRemoved.length > 0 || (initialCartItem.upgrades && initialCartItem.upgrades.length > 0)) {
         setItemMode("customize");
@@ -171,8 +207,10 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
       setRemovedMods([]);
       setUpgrades([]);
       setComboSide(defaultSide);
+      setComboBurgerDrafts({});
       setItemMode("original");
     }
+    setExpandedComboBurger(null);
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
   }, [product?.id, initialCartItem, comboSideOptions]);
 
@@ -248,10 +286,18 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
     return product.price;
   }, [product.isPromoActive, product.promoPrice, product.price]);
 
+  const comboBurgerExtrasTotal = useMemo(() => {
+    if (product.type !== "combo") return 0;
+    return Object.values(comboBurgerDrafts).reduce(
+      (sum, draft) => sum + draft.upgrades.reduce((s, u) => s + u.price * u.qty, 0),
+      0
+    );
+  }, [product.type, comboBurgerDrafts]);
+
   const currentTotal = useMemo(() => {
     const upgradesTotal = upgrades.reduce((sum, u) => sum + u.price * u.qty, 0);
-    return effectiveBasePrice + comboExtraPrice + (itemMode === "customize" ? upgradesTotal : 0);
-  }, [effectiveBasePrice, comboExtraPrice, upgrades, itemMode]);
+    return effectiveBasePrice + comboExtraPrice + (itemMode === "customize" ? upgradesTotal : 0) + comboBurgerExtrasTotal;
+  }, [effectiveBasePrice, comboExtraPrice, upgrades, itemMode, comboBurgerExtrasTotal]);
 
   const handleAddToCart = () => {
     if (justAdded) {
@@ -265,10 +311,33 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
     if (itemMode === "customize") {
       modsList.push(...removedMods.map((m) => `Sin ${m}`));
     }
-    if (product.type === "combo" && comboSide) {
-      modsList.push(`Guarnición: ${comboSide}`);
-    }
     const activeUpgrades = itemMode === "customize" ? upgrades.filter((u) => u.qty > 0) : [];
+
+    const comboSideToCart =
+      product.type === "combo" && comboSide
+        ? (() => {
+            const sideObj = comboSideOptions.find((s) => s.label === comboSide || s.rawLabel === comboSide);
+            return {
+              sku: sideObj?.id ?? "",
+              name: sideObj?.rawLabel ?? comboSide,
+              upcharge: sideObj?.extraPrice ?? 0,
+            };
+          })()
+        : undefined;
+
+    const comboBurgersToCart: CatalogComboBurger[] | undefined =
+      product.type === "combo" && comboBurgerProducts.length > 0
+        ? comboBurgerProducts.map((burger, index) => {
+            const draft = comboBurgerDrafts[index];
+            return {
+              sku: burger.sku ?? "",
+              name: burger.name,
+              removedIngredients: draft?.removedIngredients ?? [],
+              extras: (draft?.upgrades ?? []).filter((u) => u.qty > 0),
+              ...(draft?.note?.trim() ? { burgerNote: draft.note.trim() } : {}),
+            };
+          })
+        : undefined;
 
     const effectiveProductToCart = {
       ...product,
@@ -276,9 +345,9 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
     };
 
     if (isEditing && initialCartItem) {
-      updateItem(initialCartItem.cartItemId, effectiveProductToCart, modsList, activeUpgrades);
+      updateItem(initialCartItem.cartItemId, effectiveProductToCart, modsList, activeUpgrades, comboSideToCart, comboBurgersToCart);
     } else {
-      addItem(effectiveProductToCart, modsList, activeUpgrades);
+      addItem(effectiveProductToCart, modsList, activeUpgrades, comboSideToCart, comboBurgersToCart);
     }
 
     setJustAdded(true);
@@ -304,6 +373,39 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
       if (delta > 0) return [...prev, { id, name, price, qty: delta }];
       return prev;
     });
+  };
+
+  const updateComboBurgerDraft = (index: number, updater: (draft: ComboBurgerDraft) => ComboBurgerDraft) => {
+    setComboBurgerDrafts((prev) => {
+      const current = prev[index] ?? { removedIngredients: [], upgrades: [], note: "" };
+      return { ...prev, [index]: updater(current) };
+    });
+  };
+
+  const handleBurgerModToggle = (index: number, mod: string) => {
+    updateComboBurgerDraft(index, (draft) => ({
+      ...draft,
+      removedIngredients: draft.removedIngredients.includes(mod)
+        ? draft.removedIngredients.filter((m) => m !== mod)
+        : [...draft.removedIngredients, mod],
+    }));
+  };
+
+  const handleBurgerUpgradeChange = (index: number, id: string, name: string, price: number, delta: number) => {
+    updateComboBurgerDraft(index, (draft) => {
+      const existing = draft.upgrades.find((u) => u.id === id);
+      if (existing) {
+        const newQty = Math.max(0, existing.qty + delta);
+        if (newQty === 0) return { ...draft, upgrades: draft.upgrades.filter((u) => u.id !== id) };
+        return { ...draft, upgrades: draft.upgrades.map((u) => (u.id === id ? { ...u, qty: newQty } : u)) };
+      }
+      if (delta > 0) return { ...draft, upgrades: [...draft.upgrades, { id, name, price, qty: delta }] };
+      return draft;
+    });
+  };
+
+  const handleBurgerNoteChange = (index: number, note: string) => {
+    updateComboBurgerDraft(index, (draft) => ({ ...draft, note }));
   };
 
   return (
@@ -460,6 +562,159 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
                     <span style={{ fontSize: "13px", fontWeight: comboSide === side.label ? 700 : 500 }}>{side.label}</span>
                   </label>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── BURGERS DEL COMBO: Personaliza cada burger incluida ── */}
+          {product.type === "combo" && comboBurgerProducts.length > 0 && (
+            <div className="catalog-drawer__section-card" style={{ marginTop: "12px" }}>
+              <span className="catalog-drawer__section-title">🍔 BURGERS DEL COMBO</span>
+              <p className="catalog-drawer__section-desc" style={{ marginTop: "4px", fontSize: "12px", color: "var(--color-text-secondary)" }}>
+                Toca cada burger para quitar ingredientes o agregar extras.
+              </p>
+              <div className="catalog-drawer__combo-burger-list" style={{ display: "grid", gap: "8px", marginTop: "8px" }}>
+                {comboBurgerProducts.map((burger, index) => {
+                  const draft = comboBurgerDrafts[index];
+                  const hasChanges = Boolean(
+                    draft &&
+                      (draft.removedIngredients.length > 0 ||
+                        draft.upgrades.some((u) => u.qty > 0) ||
+                        draft.note.trim())
+                  );
+                  const isExpanded = expandedComboBurger === index;
+                  const burgerMods = burger.sku ? recipesBySku?.[burger.sku] ?? [] : [];
+                  return (
+                    <div
+                      key={`${burger.sku ?? burger.name}-${index}`}
+                      className="catalog-drawer__combo-burger-card"
+                      style={{
+                        border: "1px solid var(--color-line)",
+                        borderRadius: "var(--radius-sm)",
+                        background: "var(--color-surface)",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        className="catalog-drawer__combo-burger-toggle"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "8px",
+                          width: "100%",
+                          padding: "10px 12px",
+                          border: "none",
+                          background: "transparent",
+                          cursor: "pointer",
+                          textAlign: "left",
+                          color: "var(--color-text-primary)",
+                          fontFamily: "inherit",
+                        }}
+                        onClick={() => setExpandedComboBurger(isExpanded ? null : index)}
+                        aria-expanded={isExpanded}
+                      >
+                        <span style={{ fontSize: "13px", fontWeight: 700 }}>🍔 {burger.name}</span>
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            color: hasChanges ? "var(--color-accent)" : "var(--color-text-muted)",
+                          }}
+                        >
+                          {hasChanges ? "✓ Personalizada" : "Receta original"}
+                        </span>
+                        <b aria-hidden="true" style={{ fontSize: "16px", color: "var(--color-text-secondary)" }}>
+                          {isExpanded ? "−" : "+"}
+                        </b>
+                      </button>
+                      {isExpanded ? (
+                        <div className="catalog-drawer__combo-burger-panel" style={{ padding: "0 12px 12px", borderTop: "1px solid var(--color-line-soft)" }}>
+                          {burgerMods.length > 0 ? (
+                            <div className="catalog-drawer__mods" style={{ marginTop: "10px" }}>
+                              <p className="catalog-drawer__mods-title">Ingredientes (Quitar)</p>
+                              <div className="catalog-drawer__mods-grid">
+                                {burgerMods.map((mod) => {
+                                  const isRemoved = draft?.removedIngredients.includes(mod) ?? false;
+                                  return (
+                                    <button
+                                      key={mod}
+                                      type="button"
+                                      onClick={() => handleBurgerModToggle(index, mod)}
+                                      className={`catalog-drawer__mod-chip ${isRemoved ? "catalog-drawer__mod-chip--removed" : "catalog-drawer__mod-chip--active"}`}
+                                    >
+                                      {isRemoved ? `✕ Sin ${mod}` : `✓ ${mod}`}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ) : null}
+                          {availableUpgrades.length > 0 ? (
+                            <div className="catalog-drawer__mods" style={{ marginTop: "12px" }}>
+                              <p className="catalog-drawer__mods-title">Extras para esta burger</p>
+                              <div className="catalog-drawer__upgrades-grid">
+                                {availableUpgrades.map((upgrade) => {
+                                  const currentQty = draft?.upgrades.find((u) => u.id === upgrade.id)?.qty ?? 0;
+                                  return (
+                                    <div key={upgrade.id} className="catalog-drawer__upgrade-card">
+                                      <div className="catalog-drawer__upgrade-info">
+                                        <span className="catalog-drawer__upgrade-name">{upgrade.name}</span>
+                                        <span className="catalog-drawer__upgrade-price">+{formatCurrency(upgrade.price)}</span>
+                                      </div>
+                                      <div className="catalog-drawer__upgrade-actions">
+                                        <button
+                                          type="button"
+                                          className={`catalog-drawer__upgrade-btn ${currentQty === 0 ? "catalog-drawer__upgrade-btn--disabled" : ""}`}
+                                          onClick={() => handleBurgerUpgradeChange(index, upgrade.id, upgrade.name, upgrade.price, -1)}
+                                          disabled={currentQty === 0}
+                                        >
+                                          −
+                                        </button>
+                                        <span className="catalog-drawer__upgrade-qty">{currentQty}</span>
+                                        <button
+                                          type="button"
+                                          className="catalog-drawer__upgrade-btn"
+                                          onClick={() => handleBurgerUpgradeChange(index, upgrade.id, upgrade.name, upgrade.price, 1)}
+                                        >
+                                          +
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ) : null}
+                          <label className="catalog-drawer__combo-burger-note" style={{ display: "grid", gap: "4px", marginTop: "12px" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text-secondary)" }}>
+                              Nota por burger (opcional)
+                            </span>
+                            <textarea
+                              maxLength={220}
+                              value={draft?.note ?? ""}
+                              onChange={(event) => handleBurgerNoteChange(index, event.target.value)}
+                              placeholder="Ej. bien cocida"
+                              rows={2}
+                              style={{
+                                width: "100%",
+                                padding: "8px 10px",
+                                borderRadius: "var(--radius-sm)",
+                                border: "1px solid var(--color-line)",
+                                background: "var(--color-surface-alt)",
+                                color: "var(--color-text-primary)",
+                                fontFamily: "inherit",
+                                fontSize: "13px",
+                                resize: "vertical",
+                              }}
+                            />
+                          </label>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

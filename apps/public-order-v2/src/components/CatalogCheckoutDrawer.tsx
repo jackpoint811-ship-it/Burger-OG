@@ -267,6 +267,32 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
 
         const lineKey = item.cartItemId || `line-${item.productId}-${index + 1}`;
 
+        const garnish =
+          item.type === "combo" && item.comboSide
+            ? {
+                sku: item.comboSide.sku,
+                name: item.comboSide.name,
+                ...(item.comboSide.upcharge > 0 ? { upcharge: item.comboSide.upcharge } : {}),
+              }
+            : undefined;
+
+        const comboBurgers =
+          item.type === "combo" && item.comboBurgers && item.comboBurgers.length > 0
+            ? item.comboBurgers.map((burger) => ({
+                sku: burger.sku,
+                name: burger.name,
+                removedIngredients: burger.removedIngredients,
+                extras: burger.extras.flatMap((extra) =>
+                  Array.from({ length: extra.qty }, () => ({
+                    sku: extra.id,
+                    name: extra.name,
+                    price: extra.price,
+                  }))
+                ),
+                ...(burger.burgerNote?.trim() ? { burgerNote: burger.burgerNote.trim() } : {}),
+              }))
+            : undefined;
+
         return {
           lineKey,
           sku: item.productId,
@@ -276,6 +302,8 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
           removedIngredients,
           extras,
           burgerNote,
+          ...(garnish ? { garnish } : {}),
+          ...(comboBurgers ? { comboBurgers } : {}),
         };
       });
 
@@ -448,6 +476,29 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
                             </span>
                             {cartItem.mods && cartItem.mods.length > 0 && (
                               <span className="catalog-checkout-item-mods">{cartItem.mods.join(", ")}</span>
+                            )}
+                            {cartItem.comboSide && (
+                              <span className="catalog-checkout-item-mods">
+                                Guarnición: {cartItem.comboSide.name}
+                                {cartItem.comboSide.upcharge > 0 ? ` (+${formatCurrency(cartItem.comboSide.upcharge)})` : ""}
+                              </span>
+                            )}
+                            {cartItem.comboBurgers && cartItem.comboBurgers.length > 0 && (
+                              <div className="catalog-checkout-item-upgrades">
+                                {cartItem.comboBurgers.map((burger, burgerIndex) => {
+                                  const details = [
+                                    ...burger.removedIngredients.map((ing) => `Sin ${ing}`),
+                                    ...burger.extras.map((extra) => `${extra.qty}x ${extra.name}`),
+                                    ...(burger.burgerNote?.trim() ? [burger.burgerNote.trim()] : []),
+                                  ];
+                                  return (
+                                    <span key={`${burger.sku}-${burgerIndex}`}>
+                                      🍔 {burger.name}
+                                      {details.length ? `: ${details.join(", ")}` : " · Original"}
+                                    </span>
+                                  );
+                                })}
+                              </div>
                             )}
                             {cartItem.upgrades && cartItem.upgrades.length > 0 && (
                               <div className="catalog-checkout-item-upgrades">

@@ -267,15 +267,6 @@ const validatePayload = (body: Record<string, unknown>, request: Request): Norma
     const sideQuestExtras = normalizeSideQuestExtras(item.sideQuestExtras);
     const comboBurgers = normalizeComboBurgers(item.comboBurgers);
     const comboBurgerExtras = comboBurgers.flatMap((burger) => burger.extras);
-    // If this is a combo with a garnish, map it to sideQuestExtras for Kitchen UI consistency
-    if (itemKind === 'combo' && garnish && garnish.name) {
-      sideQuestExtras.push({
-        sku: garnish.sku,
-        name: garnish.name,
-        price: garnish.upcharge,
-        itemKind: 'garnish'
-      });
-    }
     if (extras.some((extra) => !extra.sku) || garnish && !garnish.sku || includedDrink && !includedDrink.sku || sideQuestExtras.some((extra) => !extra.sku) || comboBurgerExtras.some((extra) => !extra.sku)) {
       return errorResponse(400, 'INVALID_CUSTOMIZATIONS', 'Extras, guarniciones y bebidas deben incluir SKU válido.');
     }

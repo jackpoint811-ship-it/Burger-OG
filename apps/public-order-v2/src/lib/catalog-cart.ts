@@ -2,6 +2,18 @@ import { type CatalogProduct } from "./catalog-mode";
 
 export const CATALOG_CART_MAX_QTY = 10;
 
+export type CatalogCartUpgrade = { id: string; name: string; price: number; qty: number };
+
+export type CatalogComboSide = { sku: string; name: string; upcharge: number };
+
+export type CatalogComboBurger = {
+  sku: string;
+  name: string;
+  removedIngredients: string[];
+  extras: CatalogCartUpgrade[];
+  burgerNote?: string;
+};
+
 export type CatalogCartItem = {
   cartItemId: string;
   productId: string;
@@ -12,7 +24,9 @@ export type CatalogCartItem = {
   imageUrl?: string;
   imageKey?: string;
   mods?: string[];
-  upgrades?: { id: string; name: string; price: number; qty: number }[];
+  upgrades?: CatalogCartUpgrade[];
+  comboSide?: CatalogComboSide;
+  comboBurgers?: CatalogComboBurger[];
 };
 
 export type CatalogCartState = {
@@ -20,12 +34,22 @@ export type CatalogCartState = {
 };
 
 export type CatalogCartAction =
-  | { type: "ADD_ITEM"; product: CatalogProduct; mods?: string[]; upgrades?: { id: string; name: string; price: number; qty: number }[] }
-  | { type: "UPDATE_ITEM"; oldCartItemId: string; product: CatalogProduct; mods?: string[]; upgrades?: { id: string; name: string; price: number; qty: number }[] }
+  | { type: "ADD_ITEM"; product: CatalogProduct; mods?: string[]; upgrades?: CatalogCartUpgrade[]; comboSide?: CatalogComboSide; comboBurgers?: CatalogComboBurger[] }
+  | { type: "UPDATE_ITEM"; oldCartItemId: string; product: CatalogProduct; mods?: string[]; upgrades?: CatalogCartUpgrade[]; comboSide?: CatalogComboSide; comboBurgers?: CatalogComboBurger[] }
   | { type: "SET_QTY"; cartItemId: string; qty: number }
   | { type: "REMOVE_ITEM"; cartItemId: string }
   | { type: "SET_ITEMS"; items: CatalogCartItem[] }
   | { type: "CLEAR" };
+
+const buildCartItemKey = (productId: string, mods?: string[], upgrades?: CatalogCartUpgrade[], comboSide?: CatalogComboSide, comboBurgers?: CatalogComboBurger[]) => {
+  const modsKey = mods?.length ? `|m:${mods.join(",")}` : "";
+  const upgradesKey = upgrades?.length ? `|u:${upgrades.map(u => `${u.id}:${u.qty}`).join(",")}` : "";
+  const comboSideKey = comboSide ? `|s:${comboSide.sku}:${comboSide.upcharge}` : "";
+  const comboBurgersKey = comboBurgers?.length
+    ? `|cb:${comboBurgers.map(b => `${b.sku}[${b.removedIngredients.join(",")};${b.extras.map(e => `${e.id}:${e.qty}`).join(",")};${b.burgerNote ?? ""}]`).join("|")}`
+    : "";
+  return `${productId}${modsKey}${upgradesKey}${comboSideKey}${comboBurgersKey}`;
+};
 
 export const CATALOG_CART_INITIAL_STATE: CatalogCartState = { items: [] };
 
@@ -35,9 +59,7 @@ export function catalogCartReducer(
 ): CatalogCartState {
   switch (action.type) {
     case "ADD_ITEM": {
-      const modsKey = action.mods?.length ? `|m:${action.mods.join(",")}` : "";
-      const upgradesKey = action.upgrades?.length ? `|u:${action.upgrades.map(u => `${u.id}:${u.qty}`).join(",")}` : "";
-      const cartItemId = `${action.product.id}${modsKey}${upgradesKey}`;
+      const cartItemId = buildCartItemKey(action.product.id, action.mods, action.upgrades, action.comboSide, action.comboBurgers);
       const existing = state.items.find((item) => item.cartItemId === cartItemId);
       if (existing) {
         return {
@@ -59,14 +81,14 @@ export function catalogCartReducer(
         imageKey: action.product.imageKey,
         mods: action.mods,
         upgrades: action.upgrades,
+        comboSide: action.comboSide,
+        comboBurgers: action.comboBurgers,
       };
       return { items: [...state.items, newItem] };
     }
 
     case "UPDATE_ITEM": {
-      const modsKey = action.mods?.length ? `|m:${action.mods.join(",")}` : "";
-      const upgradesKey = action.upgrades?.length ? `|u:${action.upgrades.map(u => `${u.id}:${u.qty}`).join(",")}` : "";
-      const newCartItemId = `${action.product.id}${modsKey}${upgradesKey}`;
+      const newCartItemId = buildCartItemKey(action.product.id, action.mods, action.upgrades, action.comboSide, action.comboBurgers);
       const oldItem = state.items.find(i => i.cartItemId === action.oldCartItemId);
       const currentQty = oldItem ? oldItem.qty : 1;
 
@@ -83,6 +105,8 @@ export function catalogCartReducer(
         imageKey: action.product.imageKey,
         mods: action.mods,
         upgrades: action.upgrades,
+        comboSide: action.comboSide,
+        comboBurgers: action.comboBurgers,
       };
       return { items: [...filtered, newItem] };
     }

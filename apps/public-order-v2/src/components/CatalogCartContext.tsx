@@ -3,6 +3,9 @@ import { type CatalogProduct } from "../lib/catalog-mode";
 import {
   CATALOG_CART_INITIAL_STATE,
   type CatalogCartItem,
+  type CatalogCartUpgrade,
+  type CatalogComboBurger,
+  type CatalogComboSide,
   catalogCartReducer,
   getCatalogCartCount,
   getCatalogCartTotal,
@@ -12,8 +15,8 @@ type CatalogCartContextValue = {
   items: CatalogCartItem[];
   count: number;
   total: number;
-  addItem: (product: CatalogProduct, mods?: string[], upgrades?: { id: string; name: string; price: number; qty: number }[]) => void;
-  updateItem: (oldCartItemId: string, product: CatalogProduct, mods?: string[], upgrades?: { id: string; name: string; price: number; qty: number }[]) => void;
+  addItem: (product: CatalogProduct, mods?: string[], upgrades?: CatalogCartUpgrade[], comboSide?: CatalogComboSide, comboBurgers?: CatalogComboBurger[]) => void;
+  updateItem: (oldCartItemId: string, product: CatalogProduct, mods?: string[], upgrades?: CatalogCartUpgrade[], comboSide?: CatalogComboSide, comboBurgers?: CatalogComboBurger[]) => void;
   setQty: (cartItemId: string, qty: number) => void;
   removeItem: (cartItemId: string) => void;
   setItems: (items: CatalogCartItem[]) => void;
@@ -25,13 +28,13 @@ const CatalogCartContext = createContext<CatalogCartContextValue | null>(null);
 export function CatalogCartProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(catalogCartReducer, CATALOG_CART_INITIAL_STATE);
 
-  const addItem = useCallback((product: CatalogProduct, mods?: string[], upgrades?: { id: string; name: string; price: number; qty: number }[]) => {
+  const addItem = useCallback((product: CatalogProduct, mods?: string[], upgrades?: CatalogCartUpgrade[], comboSide?: CatalogComboSide, comboBurgers?: CatalogComboBurger[]) => {
     if (product.isAvailable === false) return;
-    dispatch({ type: "ADD_ITEM", product, mods, upgrades });
+    dispatch({ type: "ADD_ITEM", product, mods, upgrades, comboSide, comboBurgers });
   }, []);
 
-  const updateItem = useCallback((oldCartItemId: string, product: CatalogProduct, mods?: string[], upgrades?: { id: string; name: string; price: number; qty: number }[]) => {
-    dispatch({ type: "UPDATE_ITEM", oldCartItemId, product, mods, upgrades });
+  const updateItem = useCallback((oldCartItemId: string, product: CatalogProduct, mods?: string[], upgrades?: CatalogCartUpgrade[], comboSide?: CatalogComboSide, comboBurgers?: CatalogComboBurger[]) => {
+    dispatch({ type: "UPDATE_ITEM", oldCartItemId, product, mods, upgrades, comboSide, comboBurgers });
   }, []);
 
   const setQty = useCallback((cartItemId: string, qty: number) => {
