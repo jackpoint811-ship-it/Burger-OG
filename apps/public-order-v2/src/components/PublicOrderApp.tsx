@@ -2055,6 +2055,7 @@ export function PublicOrderApp() {
       if (!mounted) return;
       setMenuError(err instanceof Error ? err.message : 'No se pudo cargar el menú');
       setLoadingMenu(false);
+      window.setTimeout(() => mounted && setShowBoot(false), reduce ? 0 : 250);
     });
     return () => { mounted = false; window.clearTimeout(bootTimer); };
   }, [reduce]);
