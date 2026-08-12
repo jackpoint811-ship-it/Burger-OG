@@ -64,6 +64,15 @@ Aplicar cuando el cambio toque Pages, Wrangler, D1, R2, preview/prod, secrets o 
 - [ ] Si usa Wrangler, separe comandos read-only de comandos que mutan recursos.
 - [ ] Si hay duda sobre binding real en Cloudflare Dashboard, marque bloqueo o riesgo en el PR.
 
+## Checklist de resiliencia y fallbacks (App Pública V2)
+
+Aplicar cuando se modifique la carga del menú, endpoints públicos o manejo de errores de API:
+
+- [ ] La app pública mantiene reintentos automáticos o degradación suave ante fallas 500 / timeouts de `/api/menu-v2`.
+- [ ] No se removieron fallbacks ni guardas defensivas sin asegurar un manejo de errores no bloqueante en la UI.
+- [ ] Se verificó que un cold-start o latencia transitoria en Cloudflare D1 no provoque pantallas en blanco o bloqueos totales.
+- [ ] En desarrollo/preview, la falla del backend muestra una interfaz intuitiva con reintento activo sin colapsar el layout.
+
 ## Checklist superficie activa y Fase 5
 
 Aplicar cuando una fase separe codigo activo de legacy o prepare movimientos de carpetas.
