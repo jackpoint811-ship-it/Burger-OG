@@ -88,3 +88,23 @@ Evitar la pérdida de fechas de entrega programadas y ubicaciones en pedidos cre
 - `POST /api/orders-v2` incluye la columna `delivery_json` al insertar en `orders_v2`.
 - `mapD1OrderToOrderV2` recupera metadatos de entrega desde el snapshot de items si `delivery_json` no está presente.
 - Chekeo V2 filtra y muestra con 100% de precisión las órdenes según la fecha programada.
+
+### Fecha
+
+2026-08-11
+
+### Decisión
+
+Establecer la **Política de Resiliencia en App Pública V2 (Post-Mortem Incidente PR #485 / Clean V3)**:
+1. **Guardas defensivas en Capa Pública**: El flujo del menú público (`loadMenuV2()`) debe contar con resiliencia y degradación suave ante latencias, cold-starts o fallas de red de D1/Cloudflare, evitando que un error transitorio en la API bloquee por completo la UI.
+2. **Prohibición de eliminación agresiva de fallbacks sin monitoreo**: No eliminar fallbacks de la app pública sin asegurar reintentos automáticos, manejo de excepciones no destructivo y pruebas rigurosas en el entorno Preview.
+3. **Manejo de errores no bloqueante**: La app pública debe ofrecer reintentos limpios y fallbacks seguros antes de mostrar pantallas de error totales al usuario final.
+
+### Motivo
+
+En el PR #485 (`pr480-clean-v3`), la remoción de los fallbacks de `loadMenuV2()` y el lanzamiento de excepciones no controladas causaron que latencias de borde en `/api/menu-v2` dejaran inoperable la página pública de producción con la pantalla "No se pudo cargar el menú".
+
+### Impacto
+
+- Regla activa de resiliencia documentada en `docs/codex-memory/07-decisiones.md`, `09-checklists.md` y `19-risk-hardening-plan.md`.
+- Todo PR que afecte la capa de datos pública debe validar la tolerancia a fallas y cold-starts de API.

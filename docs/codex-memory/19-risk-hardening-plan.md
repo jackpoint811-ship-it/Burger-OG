@@ -29,6 +29,7 @@ Esta fase documenta riesgos y criterios de no-go antes de cualquier cambio produ
 | Rollback productivo no esta ensayado como runbook final. | Abierto | Dificulta reaccionar ante un deploy fallido. | Preparar runbook productivo y rollback en Fase 9D sin ejecutarlo. |
 | Rutas legacy activas no deben reaparecer. | Abierto | Riesgo de operar una superficie historica o contradictoria. | Confirmar que no hay rutas legacy activas antes de produccion. |
 | Docs historicas pueden contradecir D1/R2 como fuente de verdad. | Abierto | Codex o humanos podrian seguir instrucciones antiguas de Sheets/App Script. | Mantener docs historicas marcadas como legacy y actualizar referencias vivas. |
+| Remoción agresiva de fallbacks en app pública tumbará la UI ante latencias D1 (Lección Incidente PR #485). | Mitigado / Regla Activa | Alto | Exigir resiliencia en `loadMenuV2()`, reintentos automáticos y manejo no bloqueante de errores de API antes de promover limpiezas V3. |
 
 ## 3. Hardening recomendado antes de produccion
 
