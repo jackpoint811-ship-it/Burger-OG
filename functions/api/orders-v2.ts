@@ -304,12 +304,21 @@ const validatePayload = (body: Record<string, unknown>, request: Request): Norma
 
 const loadCatalogRows = async (db: D1Database, skus: string[]): Promise<CatalogRow[]> => {
   const placeholders = skus.map(() => '?').join(', ');
-  const result = await db.prepare(
-    `SELECT sku, name, price_cents, CASE WHEN COALESCE(is_hidden, 0) = 1 THEN 0 WHEN stock_managed = 1 AND COALESCE(stock_remaining, 0) <= 0 THEN 0 ELSE is_available END AS is_available, category_key, tags_json, badge, promo_label, stock_managed, stock_remaining
-     FROM menu_items
-     WHERE sku IN (${placeholders})`
-  ).bind(...skus).all<CatalogRow>();
-  return result.results ?? [];
+  try {
+    const result = await db.prepare(
+      `SELECT sku, name, price_cents, CASE WHEN COALESCE(is_hidden, 0) = 1 THEN 0 WHEN stock_managed = 1 AND COALESCE(stock_remaining, 0) <= 0 THEN 0 ELSE is_available END AS is_available, category_key, tags_json, badge, promo_label, stock_managed, stock_remaining
+       FROM menu_items
+       WHERE sku IN (${placeholders})`
+    ).bind(...skus).all<CatalogRow>();
+    return result.results ?? [];
+  } catch {
+    const result = await db.prepare(
+      `SELECT sku, name, price_cents, CASE WHEN stock_managed = 1 AND COALESCE(stock_remaining, 0) <= 0 THEN 0 ELSE is_available END AS is_available, category_key, tags_json, badge, promo_label, stock_managed, stock_remaining
+       FROM menu_items
+       WHERE sku IN (${placeholders})`
+    ).bind(...skus).all<CatalogRow>();
+    return result.results ?? [];
+  }
 };
 
 const buildOrderSummary = (order: NonNullable<Awaited<ReturnType<typeof fetchOrderBundle>>>, idempotencyKey: string) => ({

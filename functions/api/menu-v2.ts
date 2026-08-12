@@ -1,6 +1,7 @@
 import type { MenuCategory, MenuItem, MenuV2Response, PromoCard, PublicConfig, SiteConfig } from '../../packages/config/src';
 import { mapD1CatalogBanner, mapD1CategoryBanner, mapD1ItemToMenuItem, mapD1PromoToPromoCard, parseJsonArray } from './_menu-v2-utils';
 import { DEFAULT_PUBLIC_CONFIG, DEFAULT_SITE_CONFIG } from '../../packages/config/src';
+import { menuCategories, menuItems, promoCards, publicConfig, siteConfig } from '../../packages/config/src/mock-data';
 
 type Env = { BOG_MENU_DB?: D1Database };
 
@@ -13,6 +14,18 @@ const CATEGORY_LABELS: Record<MenuCategory['key'], string> = {
   drinks: 'Bebidas',
   combos: 'Combos'
 };
+
+const fallbackPayload = (source: MenuV2Response['source']): MenuV2Response => ({
+  categories: [...menuCategories].sort((a, b) => a.sortOrder - b.sortOrder),
+  items: [...menuItems].sort((a, b) => a.sortOrder - b.sortOrder),
+  promos: [...promoCards].sort((a, b) => a.sortOrder - b.sortOrder),
+  categoryBanners: [],
+  catalogBanners: [],
+  siteConfig: DEFAULT_SITE_CONFIG,
+  publicConfig: DEFAULT_PUBLIC_CONFIG,
+  updatedAt: new Date().toISOString(),
+  source
+});
 
 const json = (payload: MenuV2Response, cacheControl = 'no-store') =>
   new Response(JSON.stringify(payload), { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': cacheControl } });
@@ -89,13 +102,10 @@ const resolvePublicConfigFromRow = (row: any | null): PublicConfig => {
 
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
   if (!env.BOG_MENU_DB) {
-    return new Response(JSON.stringify({ error: 'Database unavailable', source: 'error' }), {
-      status: 503,
-      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
-    });
+    return json(fallbackPayload('fallback'), 'no-store');
   }
   try {
-    const itemsResult = await optionalAll<any>(env.BOG_MENU_DB.prepare(`
+    let itemsResult = await optionalAll<any>(env.BOG_MENU_DB.prepare(`
       SELECT
         sku,
         category_key AS category,
@@ -125,12 +135,50 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
         updated_at AS updatedAt
       FROM menu_items
       ORDER BY category_key ASC, sort_order ASC, sku ASC
-    `), 'menu_items');
+    `), 'menu_items_with_hidden');
+
+    if (!itemsResult || itemsResult.length === 0) {
+      itemsResult = await optionalAll<any>(env.BOG_MENU_DB.prepare(`
+        SELECT
+          sku,
+          category_key AS category,
+          name,
+          description,
+          price_cents AS price,
+          is_available AS isAvailable,
+          CASE WHEN stock_managed = 1 AND COALESCE(stock_remaining, 0) <= 0 THEN 0 ELSE is_available END AS effectiveIsAvailable,
+          stock_managed AS stockManaged,
+          stock_limit AS stockLimit,
+          stock_remaining AS stockRemaining,
+          sold_out_at AS soldOutAt,
+          is_featured AS isFeatured,
+          sort_order AS sortOrder,
+          image_url AS imageUrl,
+          image_key AS imageKey,
+          tags_json,
+          combo_links_json,
+          upsell_items_json,
+          badge,
+          promo_label AS promoLabel,
+          promo_price_cents AS promoPriceCents,
+          is_promo_active AS isPromoActive,
+          promo_expires_at AS promoExpiresAt,
+          combo_config_json AS comboConfig,
+          0 AS isHidden,
+          updated_at AS updatedAt
+        FROM menu_items
+        ORDER BY category_key ASC, sort_order ASC, sku ASC
+      `), 'menu_items_fallback');
+    }
 
     const items: MenuItem[] = (itemsResult ?? [])
       .filter((row: any) => Number(row.isHidden) !== 1)
       .map((row: any) => mapD1ItemToMenuItem(row))
       .sort((a, b) => a.sortOrder - b.sortOrder);
+
+    if (!items.length) {
+      return json(fallbackPayload('fallback'), 'no-store');
+    }
 
     const [categoryRows, promoRows, bannerRows, catalogBannerRows, configRow, recipeRows] = await Promise.all([
       optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT id, key, name, emoji, sort_order AS sortOrder, updated_at AS updatedAt FROM menu_categories ORDER BY sort_order ASC'), 'menu_categories'),
@@ -173,10 +221,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
 
     return json({ categories, items, promos, recipes, categoryBanners, catalogBanners, siteConfig: resolvedSiteConfig, publicConfig: resolvedPublicConfig, updatedAt, source: 'd1' });
   } catch (error) {
-    console.error('[menu-v2] Unexpected error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error', source: 'error' }), {
-      status: 500,
-      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
-    });
+    console.error('[menu-v2] Unexpected error, returning fallback menu:', error);
+    return json(fallbackPayload('fallback'), 'no-store');
   }
 };
