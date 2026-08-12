@@ -2005,6 +2005,35 @@ export function PublicOrderApp() {
     return () => { mounted = false; window.clearTimeout(bootTimer); };
   }, [reduce]);
 
+  const publicConfig = useMemo(() => resolvePublicConfig(menuData?.publicConfig), [menuData?.publicConfig]);
+  const shouldRenderCatalogMode = shouldUseCatalogMode(publicConfig);
+  const total = useMemo(() => getCartTotal(cart, menuData?.items ?? []), [cart, menuData?.items]);
+  const count = useMemo(() => getCartCount(cart), [cart]);
+  const availableBurgerItems = useMemo(() => (menuData?.items ?? []).filter((item) => inferItemKind(item) === "burger" && item.isAvailable), [menuData?.items]);
+  const availableComboItems = useMemo(() => (menuData?.items ?? []).filter((item) => inferItemKind(item) === "combo" && item.isAvailable), [menuData?.items]);
+  const extras = useMemo(() => (menuData?.items ?? []).filter((item) => item.category === "extras" && inferItemKind(item) !== "combo" && item.isAvailable), [menuData?.items]);
+  const garnishes = useMemo(() => (menuData?.items ?? []).filter((item) => item.category === "guarniciones" && item.isAvailable), [menuData?.items]);
+  const drinks = useMemo(() => (menuData?.items ?? []).filter((item) => isDrinkItem(item) && item.isAvailable), [menuData?.items]);
+  const menuItemsBySku = useMemo(() => new Map((menuData?.items ?? []).map((item) => [item.sku, item])), [menuData?.items]);
+  const hasBurgerOrComboInCart = useMemo(() => cart.some((entry) => entry.itemKind === "burger" || entry.itemKind === "combo"), [cart]);
+  const sideHasSelection = useMemo(() => Object.values(extraGarnishQuantities).some((quantity) => quantity > 0), [extraGarnishQuantities]);
+  const clearCheckoutErrorMessage = () => setCheckoutError(null);
+  const clearCheckoutFieldError = (field: CheckoutField) => setCheckoutFieldErrors((prev) => {
+    if (!prev[field]) return prev;
+    const next = { ...prev };
+    delete next[field];
+    return next;
+  });
+  const focusCheckoutErrorsOnStep = (fields: CheckoutErrors, step: CheckoutStepIndex) => {
+    setCheckoutStep(step);
+    window.requestAnimationFrame(() => focusFirstCheckoutError(fields));
+  };
+  const blockCheckoutDataStep = (fields: CheckoutErrors) => {
+    setCheckoutError(checkoutErrorOrder.map((field) => fields[field]).find(Boolean) ?? null);
+    setCheckoutFieldErrors((current) => ({ ...current, ...fields }));
+    focusCheckoutErrorsOnStep(fields, 1);
+  };
+
   if (!menuData) {
     if (loadingMenu) {
       return (
@@ -2027,35 +2056,6 @@ export function PublicOrderApp() {
       </main>
     );
   }
-
-  const publicConfig = useMemo(() => resolvePublicConfig(menuData.publicConfig), [menuData.publicConfig]);
-  const shouldRenderCatalogMode = shouldUseCatalogMode(publicConfig);
-  const total = useMemo(() => getCartTotal(cart, menuData.items), [cart, menuData.items]);
-  const count = useMemo(() => getCartCount(cart), [cart]);
-  const availableBurgerItems = useMemo(() => menuData.items.filter((item) => inferItemKind(item) === "burger" && item.isAvailable), [menuData.items]);
-  const availableComboItems = useMemo(() => menuData.items.filter((item) => inferItemKind(item) === "combo" && item.isAvailable), [menuData.items]);
-  const extras = useMemo(() => menuData.items.filter((item) => item.category === "extras" && inferItemKind(item) !== "combo" && item.isAvailable), [menuData.items]);
-  const garnishes = useMemo(() => menuData.items.filter((item) => item.category === "guarniciones" && item.isAvailable), [menuData.items]);
-  const drinks = useMemo(() => menuData.items.filter((item) => isDrinkItem(item) && item.isAvailable), [menuData.items]);
-  const menuItemsBySku = useMemo(() => new Map(menuData.items.map((item) => [item.sku, item])), [menuData.items]);
-  const hasBurgerOrComboInCart = useMemo(() => cart.some((entry) => entry.itemKind === "burger" || entry.itemKind === "combo"), [cart]);
-  const sideHasSelection = useMemo(() => Object.values(extraGarnishQuantities).some((quantity) => quantity > 0), [extraGarnishQuantities]);
-  const clearCheckoutErrorMessage = () => setCheckoutError(null);
-  const clearCheckoutFieldError = (field: CheckoutField) => setCheckoutFieldErrors((prev) => {
-    if (!prev[field]) return prev;
-    const next = { ...prev };
-    delete next[field];
-    return next;
-  });
-  const focusCheckoutErrorsOnStep = (fields: CheckoutErrors, step: CheckoutStepIndex) => {
-    setCheckoutStep(step);
-    window.requestAnimationFrame(() => focusFirstCheckoutError(fields));
-  };
-  const blockCheckoutDataStep = (fields: CheckoutErrors) => {
-    setCheckoutError(checkoutErrorOrder.map((field) => fields[field]).find(Boolean) ?? null);
-    setCheckoutFieldErrors((current) => ({ ...current, ...fields }));
-    focusCheckoutErrorsOnStep(fields, 1);
-  };
 
   const navigate = useCallback((next: QuestSection, options: { replace?: boolean } = {}) => {
     setSection(next);
