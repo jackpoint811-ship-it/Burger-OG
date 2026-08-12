@@ -91,13 +91,26 @@ Evitar la pérdida de fechas de entrega programadas y ubicaciones en pedidos cre
 
 ### Fecha
 
-2026-08-11
+2026-08-12
 
 ### Decisión
 
-Establecer la **Política de Resiliencia en App Pública V2 (Post-Mortem Incidente PR #485 / Clean V3)**:
-1. **Guardas defensivas en Capa Pública**: El flujo del menú público (`loadMenuV2()`) debe contar con resiliencia y degradación suave ante latencias, cold-starts o fallas de red de D1/Cloudflare, evitando que un error transitorio en la API bloquee por completo la UI.
-2. **Prohibición de eliminación agresiva de fallbacks sin monitoreo**: No eliminar fallbacks de la app pública sin asegurar reintentos automáticos, manejo de excepciones no destructivo y pruebas rigurosas en el entorno Preview.
+Establecer la **Protección Permanente contra Congelamientos de Carga en App Pública (Post-Mortem PR #493 / #498 - #502)**:
+
+1. **Predeterminado Universal de Modo Catálogo**: `DEFAULT_PUBLIC_CONFIG` en `@config/contracts` y los fallbacks de `functions/api/menu-v2.ts` tendrán SIEMPRE `publicMode: "catalog"` y `catalogEnabled: true`. Ningún fallo de BD D1 o falta de columna en `site_config` podrá conmutar la app al flujo legacy descontinuado.
+2. **Cumplimiento Estricto de Reglas de Hooks en React**: Todos los hooks (`useState`, `useRef`, `useMemo`, `useCallback`, `useEffect`) DEBEN declararse al inicio del componente ANTES de cualquier bloque condicional `if (...) return`. Se prohíbe terminantemente colocar hooks debajo de retornos anticipados para evitar errores React #310.
+3. **Invalidador de Caché de HTML en Cloudflare Pages (`_headers`)**: Mantener el archivo `public/_headers` en todos los subproyectos con `Cache-Control: no-cache, no-store, must-revalidate` para `/*`, garantizando que los clientes siempre reciban la referencia al bundle JS más reciente sin errores de tipo MIME.
+4. **Verificación Automatizada E2E**: Todo agente que modifique la app pública debe verificar la compilación y el renderizado real mediante Playwright antes de dar por cerrada la tarea.
+
+### Motivo
+
+Garantizar que la aplicación pública jamás vuelva a sufrir un congelamiento de interfaz por desincronización de esquemas en D1, errores de conmutación de Hooks en React o almacenamiento en caché de bundles JS obsoletos en Cloudflare Pages.
+
+### Impacto
+
+- Cero posibilidad de que errores de BD forcen la app pública al flujo legacy.
+- Cero excepciones no capturadas por violaciones a Rules of Hooks en React.
+- Cero inconsistencias de tipos MIME por HTMLs cacheados en CDN.
 3. **Manejo de errores no bloqueante**: La app pública debe ofrecer reintentos limpios y fallbacks seguros antes de mostrar pantallas de error totales al usuario final.
 
 ### Motivo
