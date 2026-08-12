@@ -1975,59 +1975,6 @@ export function PublicOrderApp() {
   const [burgerSelectionError, setBurgerSelectionError] = useState<string | null>(null);
   const [cartCustomizationError, setCartCustomizationError] = useState<string | null>(null);
 
-  if (!menuData) {
-    if (loadingMenu) {
-      return (
-        <main className="app-shell">
-          <LoadingOverlay loading={true} />
-        </main>
-      );
-    }
-    return (
-      <main className="app-shell">
-        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8 text-center">
-          <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
-            <h2 className="text-xl font-bold text-neutral-800">No se pudo cargar el menú</h2>
-            <p className="mt-2 text-sm text-neutral-500">{menuError || 'Hubo un problema al cargar los productos. Por favor intenta de nuevo.'}</p>
-            <button onClick={() => window.location.reload()} className="mt-4 rounded-xl bg-[#16A34A] px-4 py-2 text-sm font-semibold text-white hover:opacity-95">
-              Reintentar
-            </button>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-
-  const publicConfig = useMemo(() => resolvePublicConfig(menuData.publicConfig), [menuData.publicConfig]);
-  const shouldRenderCatalogMode = shouldUseCatalogMode(publicConfig);
-  const total = useMemo(() => getCartTotal(cart, menuData.items), [cart, menuData.items]);
-  const count = useMemo(() => getCartCount(cart), [cart]);
-  const availableBurgerItems = useMemo(() => menuData.items.filter((item) => inferItemKind(item) === "burger" && item.isAvailable), [menuData.items]);
-  const availableComboItems = useMemo(() => menuData.items.filter((item) => inferItemKind(item) === "combo" && item.isAvailable), [menuData.items]);
-  const extras = useMemo(() => menuData.items.filter((item) => item.category === "extras" && inferItemKind(item) !== "combo" && item.isAvailable), [menuData.items]);
-  const garnishes = useMemo(() => menuData.items.filter((item) => item.category === "guarniciones" && item.isAvailable), [menuData.items]);
-  const drinks = useMemo(() => menuData.items.filter((item) => isDrinkItem(item) && item.isAvailable), [menuData.items]);
-  const menuItemsBySku = useMemo(() => new Map(menuData.items.map((item) => [item.sku, item])), [menuData.items]);
-  const hasBurgerOrComboInCart = useMemo(() => cart.some((entry) => entry.itemKind === "burger" || entry.itemKind === "combo"), [cart]);
-  const sideHasSelection = useMemo(() => Object.values(extraGarnishQuantities).some((quantity) => quantity > 0), [extraGarnishQuantities]);
-  const clearCheckoutErrorMessage = () => setCheckoutError(null);
-  const clearCheckoutFieldError = (field: CheckoutField) => setCheckoutFieldErrors((prev) => {
-    if (!prev[field]) return prev;
-    const next = { ...prev };
-    delete next[field];
-    return next;
-  });
-  const focusCheckoutErrorsOnStep = (fields: CheckoutErrors, step: CheckoutStepIndex) => {
-    setCheckoutStep(step);
-    window.requestAnimationFrame(() => focusFirstCheckoutError(fields));
-  };
-  const blockCheckoutDataStep = (fields: CheckoutErrors) => {
-    setCheckoutError(checkoutErrorOrder.map((field) => fields[field]).find(Boolean) ?? null);
-    setCheckoutFieldErrors((current) => ({ ...current, ...fields }));
-    focusCheckoutErrorsOnStep(fields, 1);
-  };
-
   useEffect(() => {
     if (typeof window === "undefined") return;
     const codeFromUrl = (new URLSearchParams(window.location.search).get("ref") ?? "").trim().toUpperCase().slice(0, 32);
@@ -2057,6 +2004,58 @@ export function PublicOrderApp() {
     });
     return () => { mounted = false; window.clearTimeout(bootTimer); };
   }, [reduce]);
+
+  if (!menuData) {
+    if (loadingMenu) {
+      return (
+        <main className="app-shell">
+          <LoadingOverlay loading={true} />
+        </main>
+      );
+    }
+    return (
+      <main className="app-shell">
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8 text-center">
+          <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
+            <h2 className="text-xl font-bold text-neutral-800">No se pudo cargar el menú</h2>
+            <p className="mt-2 text-sm text-neutral-500">{menuError || 'Hubo un problema al cargar los productos. Por favor intenta de nuevo.'}</p>
+            <button onClick={() => window.location.reload()} className="mt-4 rounded-xl bg-[#16A34A] px-4 py-2 text-sm font-semibold text-white hover:opacity-95">
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const publicConfig = useMemo(() => resolvePublicConfig(menuData.publicConfig), [menuData.publicConfig]);
+  const shouldRenderCatalogMode = shouldUseCatalogMode(publicConfig);
+  const total = useMemo(() => getCartTotal(cart, menuData.items), [cart, menuData.items]);
+  const count = useMemo(() => getCartCount(cart), [cart]);
+  const availableBurgerItems = useMemo(() => menuData.items.filter((item) => inferItemKind(item) === "burger" && item.isAvailable), [menuData.items]);
+  const availableComboItems = useMemo(() => menuData.items.filter((item) => inferItemKind(item) === "combo" && item.isAvailable), [menuData.items]);
+  const extras = useMemo(() => menuData.items.filter((item) => item.category === "extras" && inferItemKind(item) !== "combo" && item.isAvailable), [menuData.items]);
+  const garnishes = useMemo(() => menuData.items.filter((item) => item.category === "guarniciones" && item.isAvailable), [menuData.items]);
+  const drinks = useMemo(() => menuData.items.filter((item) => isDrinkItem(item) && item.isAvailable), [menuData.items]);
+  const menuItemsBySku = useMemo(() => new Map(menuData.items.map((item) => [item.sku, item])), [menuData.items]);
+  const hasBurgerOrComboInCart = useMemo(() => cart.some((entry) => entry.itemKind === "burger" || entry.itemKind === "combo"), [cart]);
+  const sideHasSelection = useMemo(() => Object.values(extraGarnishQuantities).some((quantity) => quantity > 0), [extraGarnishQuantities]);
+  const clearCheckoutErrorMessage = () => setCheckoutError(null);
+  const clearCheckoutFieldError = (field: CheckoutField) => setCheckoutFieldErrors((prev) => {
+    if (!prev[field]) return prev;
+    const next = { ...prev };
+    delete next[field];
+    return next;
+  });
+  const focusCheckoutErrorsOnStep = (fields: CheckoutErrors, step: CheckoutStepIndex) => {
+    setCheckoutStep(step);
+    window.requestAnimationFrame(() => focusFirstCheckoutError(fields));
+  };
+  const blockCheckoutDataStep = (fields: CheckoutErrors) => {
+    setCheckoutError(checkoutErrorOrder.map((field) => fields[field]).find(Boolean) ?? null);
+    setCheckoutFieldErrors((current) => ({ ...current, ...fields }));
+    focusCheckoutErrorsOnStep(fields, 1);
+  };
 
   const navigate = useCallback((next: QuestSection, options: { replace?: boolean } = {}) => {
     setSection(next);
