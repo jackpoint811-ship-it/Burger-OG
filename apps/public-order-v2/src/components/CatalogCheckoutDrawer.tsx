@@ -313,7 +313,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
         const liveMenuRes = await fetch("/api/menu-v2");
         if (liveMenuRes.ok) {
           const liveMenuData: any = await liveMenuRes.json();
-          if (liveMenuData?.ok && Array.isArray(liveMenuData.items)) {
+          if (Array.isArray(liveMenuData?.items)) {
             const liveItemMap = new Map<string, any>(liveMenuData.items.map((i: any) => [i.sku, i]));
             let promoDiscrepancyFound = false;
             let updatedItemName = "";
