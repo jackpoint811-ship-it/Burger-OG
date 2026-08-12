@@ -2034,29 +2034,6 @@ export function PublicOrderApp() {
     focusCheckoutErrorsOnStep(fields, 1);
   };
 
-  if (!menuData) {
-    if (loadingMenu) {
-      return (
-        <main className="app-shell">
-          <LoadingOverlay loading={true} />
-        </main>
-      );
-    }
-    return (
-      <main className="app-shell">
-        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8 text-center">
-          <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
-            <h2 className="text-xl font-bold text-neutral-800">No se pudo cargar el menú</h2>
-            <p className="mt-2 text-sm text-neutral-500">{menuError || 'Hubo un problema al cargar los productos. Por favor intenta de nuevo.'}</p>
-            <button onClick={() => window.location.reload()} className="mt-4 rounded-xl bg-[#16A34A] px-4 py-2 text-sm font-semibold text-white hover:opacity-95">
-              Reintentar
-            </button>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   const navigate = useCallback((next: QuestSection, options: { replace?: boolean } = {}) => {
     setSection(next);
     if (typeof window === "undefined") return;
@@ -2090,6 +2067,29 @@ export function PublicOrderApp() {
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, [navigate]);
+
+  if (!menuData) {
+    if (loadingMenu) {
+      return (
+        <main className="app-shell">
+          <LoadingOverlay loading={true} />
+        </main>
+      );
+    }
+    return (
+      <main className="app-shell">
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8 text-center">
+          <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
+            <h2 className="text-xl font-bold text-neutral-800">No se pudo cargar el menú</h2>
+            <p className="mt-2 text-sm text-neutral-500">{menuError || 'Hubo un problema al cargar los productos. Por favor intenta de nuevo.'}</p>
+            <button onClick={() => window.location.reload()} className="mt-4 rounded-xl bg-[#16A34A] px-4 py-2 text-sm font-semibold text-white hover:opacity-95">
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
   const reindex = (entries: CartEntry[]) => {
     const seen = new Map<string, number>();
     return entries.map((entry) => { const next = (seen.get(entry.sku) ?? 0) + 1; seen.set(entry.sku, next); return { ...entry, itemDisplayIndex: next }; });
