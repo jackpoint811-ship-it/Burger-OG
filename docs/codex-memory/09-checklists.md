@@ -12,6 +12,8 @@ Aplicar en todo PR:
 - [ ] No toque `legacy/` salvo autorizacion explicita.
 - [ ] No agregue dependencias, CDNs ni frameworks salvo autorizacion explicita.
 - [ ] No cambie contratos de datos, precios, tickets, promociones ni payloads salvo autorizacion explicita.
+- [ ] Verifique que TODOS los React Hooks (`useState`, `useRef`, `useMemo`, `useCallback`, `useEffect`) esten declarados AL INICIO del componente, ANTES de cualquier `if (...) return` (Rules of Hooks).
+- [ ] Verifique que los valores por defecto de la API y contratos mantengan activo el Modo Catálogo ante cualquier fallo de BD.
 - [ ] Revise el diff completo.
 - [ ] Ejecute `git diff --check` o reporte por que no pude ejecutarlo.
 - [ ] Abri PR desde una rama limpia.
