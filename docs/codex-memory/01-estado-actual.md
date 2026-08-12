@@ -47,7 +47,7 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - `POST /api/orders-v2` guarda `delivery_json` directamente en `orders_v2` de D1.
   - `mapD1OrderToOrderV2` extrae metadatos de entrega desde `items[].snapshot.delivery` si `delivery_json` viniera nulo.
   - `InternalChekeoApp.tsx` filtra con precisión las fechas (`all`, `today`, `past`, `YYYY-MM-DD`), garantizando que órdenes programadas (ej. día 10) se muestren correctamente.
-- **Rediseño Total V3 de la Pestaña Admin (Chekeo V2)**:
+- **Rediseño Total V3 de la Pestaña Admin (PR #509 Merged en Preview)**:
   - **Cuadrícula Modular V3 Táctil (`AdminWorkspaceV3.tsx`)**: Reemplazo definitivo de la antigua vista apilada `CatalogAdminPanel.tsx` y `CatalogV3Panel.tsx` por un **Hub de Control V3 basado en 12 Cuadros Táctiles**.
   - **Lenguaje 100% Profesional de Restaurante**: Eliminada toda la jerga técnica (D1, API, JSON, Workers, payloads, solo-lectura, base-lista) de los títulos, descripciones y badges de la interfaz.
   - **Aislamiento de Módulos Operativos**: Cada cuadro abre su propia herramienta dedicada (`MenuStockTool`, `ComboBuilderTool`, `IngredientsMasterTool`, `PromosManagementTool`, `StoreBannersTool`, `HistoryPanel`, `OperationalClosePanel`, `BankConfigAdminPanel`, `RafflesAdminPanel`, `AdminReportsPanel`) incorporando el botón táctil `"← Volver al Hub Admin"`.
