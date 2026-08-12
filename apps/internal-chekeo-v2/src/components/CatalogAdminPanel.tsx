@@ -1026,6 +1026,7 @@ export function CatalogAdminPanel() {
               onChange={(e) => void onToggleCatalogEnabled(e.target.checked)}
             />
             <span>{siteConfigSaving ? 'Guardando…' : (menu?.publicConfig?.catalogEnabled ?? true) ? 'Tienda Abierta' : 'Tienda Cerrada'}</span>
+          </label>
         </div>
       </div>
       {siteConfigError ? <p className='mt-2 text-xs text-rose-500 dark:text-rose-400'>{siteConfigError}</p> : null}
