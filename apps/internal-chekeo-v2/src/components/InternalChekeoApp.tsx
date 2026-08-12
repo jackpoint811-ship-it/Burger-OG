@@ -97,6 +97,7 @@ import { CatalogV3Panel } from "./CatalogV3Panel";
 import { KitchenQueue } from "./kitchen/KitchenQueue";
 import { parseOrderCustomerDetails } from "../lib/order-parser";
 import { HorizontalDateCalendarFilter } from "./HorizontalDateCalendarFilter";
+import { CollapsibleCustomerNote } from "./CollapsibleCustomerNote";
 import {
   extractKitchenLocation,
   getKitchenLineKey,
@@ -2230,34 +2231,91 @@ const AdminWorkspace = ({
     ) : view === "reportes" ? (
       <AdminReportsPanel runtime={runtime} authMode={authMode} />
     ) : (
-      <div className="admin-hub-v3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {adminModuleViews.map(renderModuleCard)}
-        <a
-          className="admin-module-card admin-module-card--link"
-          href={publicOrderUrl}
-          target="_blank"
-          rel="noreferrer"
-        >
-          <span className="admin-module-card__top">
-            <span className="admin-module-card__icon">
-              <ExternalLink size={18} aria-hidden="true" />
+      <div className="admin-hub space-y-4 font-sans">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100">
+                Hub Admin V3 — Cuadrícula Modular 3x3
+              </h3>
+              <span className="rounded-full px-2.5 py-0.5 text-xs font-extrabold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                MODO CATÁLOGO ÚNICO
+              </span>
+            </div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              9 módulos táctiles centrales para control total de la operación sin cambiar de aplicación.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 text-xs font-extrabold rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Tienda Activa
             </span>
-            <StatusPill className="admin-module-card__status border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100">
-              Base lista
-            </StatusPill>
-          </span>
-          <span className="admin-module-card__content">
-            <span className="admin-module-card__label">Página pública</span>
-            <span className="admin-module-card__hint">{publicOrderLabel}</span>
-            <span className="admin-module-card__desc">
-              Acceso rápido para revisar la ruta pública activa sin cambiar su implementación.
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          {adminViews
+            .filter((v) => v.key !== "launcher")
+            .map((module) => {
+              const Icon = module.icon;
+              const status = module.status ? adminModuleStatusMeta[module.status] : adminModuleStatusMeta["base-lista"];
+
+              return (
+                <button
+                  key={module.key}
+                  type="button"
+                  className="admin-module-card group"
+                  onClick={() => setView(module.key)}
+                >
+                  <span className="admin-module-card__top">
+                    <span className="admin-module-card__icon">
+                      <Icon size={20} aria-hidden="true" />
+                    </span>
+                    <StatusPill className={`admin-module-card__status ${status.className}`}>
+                      {status.label}
+                    </StatusPill>
+                  </span>
+                  <span className="admin-module-card__content">
+                    <span className="admin-module-card__label">{module.label}</span>
+                    <span className="admin-module-card__hint">{module.hint}</span>
+                    <span className="admin-module-card__desc">{module.description}</span>
+                  </span>
+                  <span className="admin-module-card__footer">
+                    <span>{module.cta}</span>
+                    <span aria-hidden="true">→</span>
+                  </span>
+                </button>
+              );
+            })}
+
+          <a
+            className="admin-module-card admin-module-card--link group"
+            href={publicOrderUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <span className="admin-module-card__top">
+              <span className="admin-module-card__icon">
+                <ExternalLink size={20} aria-hidden="true" />
+              </span>
+              <StatusPill className="admin-module-card__status border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-bold">
+                Base lista
+              </StatusPill>
             </span>
-          </span>
-          <span className="admin-module-card__footer">
-            <span>Abrir página</span>
-            <ExternalLink size={16} aria-hidden="true" />
-          </span>
-        </a>
+            <span className="admin-module-card__content">
+              <span className="admin-module-card__label">Página pública</span>
+              <span className="admin-module-card__hint">{publicOrderLabel}</span>
+              <span className="admin-module-card__desc">
+                Acceso directo para revisar la ruta pública activa sin cambiar su implementación.
+              </span>
+            </span>
+            <span className="admin-module-card__footer">
+              <span>Abrir página</span>
+              <ExternalLink size={16} aria-hidden="true" />
+            </span>
+          </a>
+        </div>
       </div>
     );
 
@@ -2267,12 +2325,12 @@ const AdminWorkspace = ({
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <p className="home-section-label">Admin</p>
-            <h2 className="mt-1 text-xl font-black text-zinc-50">
-              {view === "launcher" ? "Módulos secundarios" : activeView.label}
+            <h2 className="mt-1 text-xl font-black text-zinc-900 dark:text-zinc-50">
+              {view === "launcher" ? "Hub Admin V3 (Cuadrícula 3x3)" : activeView.label}
             </h2>
             <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
               {view === "launcher"
-                ? "Datos bancarios, historial, cierre, catálogo, sorteos y reportes viven aquí para mantener la navegación principal enfocada en operación."
+                ? "Centro de control de administración con 9 módulos táctiles para catálogo único, pedidos históricos, cortes y sorteos."
                 : activeView.description}
             </p>
           </div>
@@ -2280,7 +2338,7 @@ const AdminWorkspace = ({
             {view !== "launcher" ? (
               <Button
                 type="button"
-                className="admin-back-button border border-cyan-400/40 bg-cyan-400/10 text-cyan-900 dark:text-cyan-800 dark:text-cyan-100"
+                className="admin-back-button border border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-bold hover:bg-emerald-500/20"
                 onClick={() => setView("launcher")}
               >
                 Volver al hub
@@ -2904,9 +2962,7 @@ const CompactRow = ({
           <details className="orders-card__more">
             <summary>Más acciones</summary>
             <div className="orders-card__secondary-actions space-y-2 pt-2">
-              {details.cleanNotes ? (
-                <p className="orders-note">Nota: {details.cleanNotes}</p>
-              ) : null}
+              <CollapsibleCustomerNote note={details.cleanNotes} />
               {canDeliver ? (
                 <Button
                   className="orders-secondary-action w-full"
