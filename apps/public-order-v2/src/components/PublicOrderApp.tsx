@@ -442,11 +442,9 @@ const QuestButton = ({ children, className = "", ...props }: React.ButtonHTMLAtt
 const normalizeMenuLink = (value: string) => value.trim().toUpperCase();
 
 const LoadingOverlay = ({ loading }: { loading: boolean }) => loading ? (
-  <div className="boot-overlay" role="status" aria-live="polite">
-    <div className="boot-window">
-      <h1>Burgers.exe</h1>
-      <p>Cargando menú actualizado… Si tarda unos segundos, estamos sincronizando la quest.</p>
-      <div className="boot-bar"><span /></div>
+  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#F5F2EE] dark:bg-[#121212] transition-colors" role="status" aria-live="polite">
+    <div className="flex flex-col items-center gap-4">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-neutral-300 border-t-[#16A34A] dark:border-neutral-700 dark:border-t-[#22C55E]"></div>
     </div>
   </div>
 ) : null;
