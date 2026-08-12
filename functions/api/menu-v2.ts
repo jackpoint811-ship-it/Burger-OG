@@ -95,8 +95,10 @@ const resolveSiteConfig = (row: any | null): SiteConfig => {
 const resolvePublicConfigFromRow = (row: any | null): PublicConfig => {
   if (!row) return DEFAULT_PUBLIC_CONFIG;
   return {
-    publicMode: row.public_mode === 'catalog' || row.publicMode === 'catalog' ? 'catalog' : 'flow',
-    catalogEnabled: Number(row.catalog_enabled ?? row.catalogEnabled) === 1,
+    publicMode: row.public_mode === 'flow' || row.publicMode === 'flow' ? 'flow' : 'catalog',
+    catalogEnabled: row.catalog_enabled !== undefined || row.catalogEnabled !== undefined
+      ? Number(row.catalog_enabled ?? row.catalogEnabled) === 1
+      : true,
     updatedAt: row.updatedAt ?? row.updated_at ?? undefined
   };
 };
@@ -181,7 +183,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
       return json(fallbackPayload('fallback'), 'no-store');
     }
 
-    const [categoryRows, promoRows, bannerRows, catalogBannerRows, configRow, recipeRows] = await Promise.all([
+    let [categoryRows, promoRows, bannerRows, catalogBannerRows, configRow, recipeRows] = await Promise.all([
       optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT id, key, name, emoji, sort_order AS sortOrder, updated_at AS updatedAt FROM menu_categories ORDER BY sort_order ASC'), 'menu_categories'),
       optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT id, title, description, badge, promo_label AS promoLabel, is_featured AS isFeatured, is_available AS isAvailable, sort_order AS sortOrder, tags_json, combo_links_json, asset_alt, asset_placeholder, asset_image_url, asset_image_key, updated_at AS updatedAt FROM promo_cards ORDER BY sort_order ASC'), 'promo_cards'),
       optionalAll<any>(env.BOG_MENU_DB.prepare('SELECT category_key AS categoryKey, title, subtitle, image_key AS imageKey, image_url AS imageUrl, updated_at AS updatedAt FROM menu_category_banners ORDER BY category_key ASC'), 'menu_category_banners'),
@@ -195,6 +197,13 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
         ORDER BY i.sort_order ASC, i.name ASC
       `), 'product_ingredient_recipes_v2')
     ]);
+
+    if (!configRow && env.BOG_MENU_DB) {
+      configRow = await optionalFirst<any>(
+        env.BOG_MENU_DB.prepare('SELECT brand_name, currency, order_modes_json, support_phone, hero_cta, notice, updated_at AS updatedAt FROM site_config ORDER BY updated_at DESC LIMIT 1'),
+        'site_config_fallback'
+      );
+    }
 
     const categories = resolveCategories(categoryRows, items);
     const promos: PromoCard[] = promoRows.map((row: any) => mapD1PromoToPromoCard(row));

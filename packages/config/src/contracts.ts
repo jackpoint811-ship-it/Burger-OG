@@ -158,8 +158,8 @@ export type CatalogSettings = {
 };
 
 export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
-  publicMode: "flow",
-  catalogEnabled: false
+  publicMode: "catalog",
+  catalogEnabled: true
 };
 
 export const DEFAULT_CATALOG_SETTINGS: CatalogSettings = {
@@ -197,8 +197,8 @@ export function resolvePublicConfig(config?: Partial<PublicConfig>): PublicConfi
   return {
     ...DEFAULT_PUBLIC_CONFIG,
     ...config,
-    publicMode: config?.publicMode === "catalog" ? "catalog" : DEFAULT_PUBLIC_CONFIG.publicMode,
-    catalogEnabled: config?.catalogEnabled === true
+    publicMode: config?.publicMode === "flow" ? "flow" : "catalog",
+    catalogEnabled: config?.catalogEnabled !== undefined ? Boolean(config.catalogEnabled) : true
   };
 }
 
