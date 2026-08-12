@@ -113,7 +113,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, params, request 
 
   // Fetch existing item to support partial updates
   const existing = await env.BOG_MENU_DB.prepare(
-    `SELECT sku, category_key AS category, name, description, price_cents AS priceCents, promo_price_cents AS promoPriceCents, is_promo_active AS isPromoActive, promo_expires_at AS promoExpiresAt, combo_config_json AS comboConfigJson, is_available AS isAvailable, is_featured AS isFeatured, badge, promo_label AS promoLabel, sort_order AS sortOrder, image_url AS imageUrl, image_key AS imageKey, stock_managed AS stockManaged, stock_limit AS stockLimit, stock_remaining AS stockRemaining, combo_links_json AS comboLinksJson FROM menu_items WHERE sku = ? LIMIT 1`
+    `SELECT sku, category_key AS category, name, description, price_cents AS priceCents, promo_price_cents AS promoPriceCents, is_promo_active AS isPromoActive, promo_expires_at AS promoExpiresAt, combo_config_json AS comboConfigJson, is_available AS isAvailable, COALESCE(is_hidden, 0) AS isHidden, is_featured AS isFeatured, badge, promo_label AS promoLabel, sort_order AS sortOrder, image_url AS imageUrl, image_key AS imageKey, stock_managed AS stockManaged, stock_limit AS stockLimit, stock_remaining AS stockRemaining, combo_links_json AS comboLinksJson FROM menu_items WHERE sku = ? LIMIT 1`
   )
     .bind(sku)
     .first<any>();
@@ -135,6 +135,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, params, request 
 
   const comboConfigJson = raw.comboConfig !== undefined ? (raw.comboConfig ? JSON.stringify(raw.comboConfig) : null) : existing.comboConfigJson;
   const isAvailable = raw.isAvailable !== undefined ? (raw.isAvailable ? 1 : 0) : Boolean(existing.isAvailable) ? 1 : 0;
+  const isHidden = raw.isHidden !== undefined ? (raw.isHidden ? 1 : 0) : Boolean(existing.isHidden) ? 1 : 0;
   const isFeatured = raw.isFeatured !== undefined ? (raw.isFeatured ? 1 : 0) : Boolean(existing.isFeatured) ? 1 : 0;
   const badge = raw.badge !== undefined ? normalizeOptionalString(raw.badge) : existing.badge;
   const sortOrder = raw.sortOrder !== undefined ? Number(raw.sortOrder) : Number(existing.sortOrder);
@@ -156,16 +157,16 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, params, request 
 
   const updateResult = await env.BOG_MENU_DB.prepare(
     `UPDATE menu_items
-     SET name = ?, description = ?, price_cents = ?, promo_price_cents = ?, is_promo_active = ?, promo_expires_at = ?, combo_config_json = ?, is_available = ?, is_featured = ?, badge = ?, promo_label = ?, sort_order = ?, image_url = ?, image_key = ?, combo_links_json = ?, stock_managed = ?, stock_limit = ?, stock_remaining = ?, sold_out_at = ?, updated_at = CURRENT_TIMESTAMP
+     SET name = ?, description = ?, price_cents = ?, promo_price_cents = ?, is_promo_active = ?, promo_expires_at = ?, combo_config_json = ?, is_available = ?, is_hidden = ?, is_featured = ?, badge = ?, promo_label = ?, sort_order = ?, image_url = ?, image_key = ?, combo_links_json = ?, stock_managed = ?, stock_limit = ?, stock_remaining = ?, sold_out_at = ?, updated_at = CURRENT_TIMESTAMP
      WHERE sku = ?`
   )
-    .bind(name, description, priceCents, promoPriceCents, isPromoActive, promoExpiresAt, comboConfigJson, isAvailable, isFeatured, badge, promoLabel, sortOrder, imageUrl, imageKey, comboLinksJson, stockManaged, stockLimit, stockRemaining, soldOutAt, sku)
+    .bind(name, description, priceCents, promoPriceCents, isPromoActive, promoExpiresAt, comboConfigJson, isAvailable, isHidden, isFeatured, badge, promoLabel, sortOrder, imageUrl, imageKey, comboLinksJson, stockManaged, stockLimit, stockRemaining, soldOutAt, sku)
     .run();
 
   if (!updateResult.success) return json(500, { ok: false, error: 'Database update failed' });
 
   const updatedRow = await env.BOG_MENU_DB.prepare(
-    `SELECT sku, category_key AS category, name, description, price_cents AS price, tags_json, badge, promo_label AS promoLabel, promo_price_cents AS promoPriceCents, is_promo_active AS isPromoActive, promo_expires_at AS promoExpiresAt, combo_config_json AS comboConfig, is_available AS isAvailable,
+    `SELECT sku, category_key AS category, name, description, price_cents AS price, tags_json, badge, promo_label AS promoLabel, promo_price_cents AS promoPriceCents, is_promo_active AS isPromoActive, promo_expires_at AS promoExpiresAt, combo_config_json AS comboConfig, is_available AS isAvailable, COALESCE(is_hidden, 0) AS isHidden,
             CASE WHEN stock_managed = 1 AND COALESCE(stock_remaining, 0) <= 0 THEN 0 ELSE is_available END AS effectiveIsAvailable,
             stock_managed AS stockManaged, stock_limit AS stockLimit, stock_remaining AS stockRemaining, sold_out_at AS soldOutAt,
             is_featured AS isFeatured, sort_order AS sortOrder, image_url AS imageUrl, image_key AS imageKey, combo_links_json, upsell_items_json, updated_at AS updatedAt FROM menu_items WHERE sku = ? LIMIT 1`

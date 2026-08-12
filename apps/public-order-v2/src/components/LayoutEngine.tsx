@@ -489,10 +489,12 @@ export function LayoutEngine({
   if (moduleType === "categories_horizontal" || moduleType === "categories_sticky") {
     const categoryPills = [
       { key: "all", name: "📖 Todo" },
-      ...chekeoCategories.map((c) => ({
-        key: c.key,
-        name: `${getCategoryEmoji(c.key, c.name)} ${c.name}`,
-      })),
+      ...chekeoCategories
+        .filter((c) => c.key !== "extras")
+        .map((c) => ({
+          key: c.key,
+          name: `${getCategoryEmoji(c.key, c.name)} ${c.name}`,
+        })),
     ];
 
     return (
@@ -772,7 +774,7 @@ export function LayoutEngine({
   // 6. CATALOG (GRILLA DE CATÁLOGO)
   if (moduleType === "catalog" || moduleType === "grid") {
     const filteredItems = (activeCategoryKey === "all" || !activeCategoryKey)
-      ? chekeoItems
+      ? chekeoItems.filter((i) => i.category !== "extras")
       : chekeoItems.filter((i) => i.category === activeCategoryKey);
 
     const fallbackBadges = ["🔥 TOP 1", "2x1 FLASH", "ULTRA", "CRISPY", "REFRESH"];

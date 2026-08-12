@@ -98,14 +98,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const priceCents = Math.round(payload.price * 100);
   const soldOutAt = payload.stockManaged && (payload.stockRemaining ?? 0) <= 0 ? new Date().toISOString() : null;
   const result = await env.BOG_MENU_DB.prepare(
-    `INSERT INTO menu_items (id, sku, category_key, name, description, price_cents, tags_json, badge, promo_label, promo_price_cents, is_promo_active, promo_expires_at, combo_config_json, is_available, is_featured, sort_order, image_url, image_key, combo_links_json, upsell_items_json, stock_managed, stock_limit, stock_remaining, sold_out_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, '[]', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+    `INSERT INTO menu_items (id, sku, category_key, name, description, price_cents, tags_json, badge, promo_label, promo_price_cents, is_promo_active, promo_expires_at, combo_config_json, is_available, is_hidden, is_featured, sort_order, image_url, image_key, combo_links_json, upsell_items_json, stock_managed, stock_limit, stock_remaining, sold_out_at, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, '[]', ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, '[]', ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
   ).bind(generateId('mi'), payload.sku, payload.category, payload.name, payload.description, priceCents, payload.badge, payload.promoLabel, payload.promoPriceCents, payload.isPromoActive ? 1 : 0, payload.promoExpiresAt, payload.comboConfigJson, payload.isAvailable ? 1 : 0, payload.isFeatured ? 1 : 0, payload.sortOrder, payload.imageUrl, payload.imageKey, JSON.stringify(payload.comboLinks), payload.stockManaged ? 1 : 0, payload.stockLimit, payload.stockRemaining, soldOutAt).run();
 
   if (!result.success) return json(500, { ok: false, error: 'No se pudo crear producto' });
 
   const itemRow = await env.BOG_MENU_DB.prepare(
-    `SELECT sku, category_key AS category, name, description, price_cents AS price, tags_json, badge, promo_label AS promoLabel, promo_price_cents AS promoPriceCents, is_promo_active AS isPromoActive, promo_expires_at AS promoExpiresAt, combo_config_json AS comboConfig, is_available AS isAvailable,
+    `SELECT sku, category_key AS category, name, description, price_cents AS price, tags_json, badge, promo_label AS promoLabel, promo_price_cents AS promoPriceCents, is_promo_active AS isPromoActive, promo_expires_at AS promoExpiresAt, combo_config_json AS comboConfig, is_available AS isAvailable, COALESCE(is_hidden, 0) AS isHidden,
             CASE WHEN stock_managed = 1 AND COALESCE(stock_remaining, 0) <= 0 THEN 0 ELSE is_available END AS effectiveIsAvailable,
             stock_managed AS stockManaged, stock_limit AS stockLimit, stock_remaining AS stockRemaining, sold_out_at AS soldOutAt,
             is_featured AS isFeatured, sort_order AS sortOrder, image_url AS imageUrl, image_key AS imageKey, combo_links_json, upsell_items_json, updated_at AS updatedAt

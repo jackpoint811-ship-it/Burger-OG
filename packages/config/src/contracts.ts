@@ -61,6 +61,7 @@ export type MenuItem = {
   promoLabel?: string;
   isFeatured: boolean;
   isAvailable: boolean;
+  isHidden?: boolean;
   stockManaged?: boolean;
   stockLimit?: number | null;
   stockRemaining?: number | null;
