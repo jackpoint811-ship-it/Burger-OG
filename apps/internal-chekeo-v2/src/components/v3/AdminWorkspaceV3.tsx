@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   Package,
   Flame,
@@ -19,7 +20,68 @@ export interface AdminWorkspaceV3Props {
   publicOrderUrl?: string;
 }
 
+interface FavoriteOption {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+const ALL_FAVORITE_CATALOG: FavoriteOption[] = [
+  { id: 'v3-store:banners', label: 'Banners del Catálogo', icon: '🎨' },
+  { id: 'v3-store:schedules', label: 'Horarios por Torre', icon: '⏰' },
+  { id: 'v3-store:status', label: 'Estado de Tienda', icon: '🏪' },
+  { id: 'v3-store:sorteos', label: 'Sorteo Promocional', icon: '🎁' },
+  { id: 'v3-stock', label: 'Menú & Productos', icon: '📦' },
+  { id: 'v3-combos', label: 'Combos & Paquetes', icon: '🔥' },
+  { id: 'v3-ingredients', label: 'Insumos & Recetas', icon: '🥗' },
+  { id: 'v3-promos', label: 'Ofertas Especiales', icon: '⚡' },
+  { id: 'v3-store', label: 'Sucursal & Banners', icon: '🏬' },
+  { id: 'historial', label: 'Historial Operativo', icon: '📜' },
+  { id: 'basurero', label: 'Papelera de Órdenes', icon: '🗑️' },
+  { id: 'cierre', label: 'Corte de Caja', icon: '💳' },
+  { id: 'banco', label: 'Cuentas SPEI', icon: '🏦' },
+  { id: 'sorteos', label: 'Sorteos & Promos', icon: '🎟️' },
+  { id: 'reportes', label: 'Reportes CSV', icon: '📊' },
+];
+
+const DEFAULT_FAVORITES = [
+  'v3-store:banners',
+  'v3-store:schedules',
+  'v3-stock',
+  'cierre',
+  'v3-store:status',
+];
+
+const STORAGE_KEY = 'chekeo_admin_favorites';
+
 export function AdminWorkspaceV3({ onSelectModule, publicOrderUrl }: AdminWorkspaceV3Props) {
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      /* noop */
+    }
+    return DEFAULT_FAVORITES;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
+    } catch {
+      /* noop */
+    }
+  }, [favorites]);
+
+  const toggleFavorite = (id: string) => {
+    setFavorites((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   const cards = [
     {
       id: 'v3-stock',
@@ -120,6 +182,10 @@ export function AdminWorkspaceV3({ onSelectModule, publicOrderUrl }: AdminWorksp
     }
   };
 
+  const favoriteItemsToRender = favorites
+    .map((favId) => ALL_FAVORITE_CATALOG.find((item) => item.id === favId))
+    .filter((item): item is FavoriteOption => item !== undefined);
+
   return (
     <div className="space-y-6 font-sans max-w-7xl mx-auto px-4 py-2">
       {/* Header del Hub */}
@@ -132,9 +198,37 @@ export function AdminWorkspaceV3({ onSelectModule, publicOrderUrl }: AdminWorksp
           Centro de Control Administrativo
         </h3>
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-md mx-auto">
-          Selecciona un módulo táctil para gestionar productos, sucursales, finanzas y reportes operativos.
+          Selecciona un módulo táctil o usa tus accesos rápidos para gestionar la operación.
         </p>
       </div>
+
+      {/* ── Sección de Favoritos / Accesos Rápidos ── */}
+      {favoriteItemsToRender.length > 0 && (
+        <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+              <span>⭐</span> Accesos Rápidos (Favoritos)
+            </span>
+            <span className="text-[10px] text-zinc-400 font-medium">
+              Haz clic en ★ en cualquier tarjeta para agregarla
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2.5 overflow-x-auto pb-1">
+            {favoriteItemsToRender.map((fav) => (
+              <button
+                key={fav.id}
+                type="button"
+                onClick={() => onSelectModule(fav.id)}
+                className="group flex items-center gap-2 px-3.5 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 hover:border-amber-400 hover:bg-amber-500/10 transition-all text-xs font-bold text-zinc-800 dark:text-zinc-200 shrink-0 shadow-xs active:scale-95"
+              >
+                <span className="text-sm group-hover:scale-110 transition-transform">{fav.icon}</span>
+                <span>{fav.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Cuadrícula Táctil Modular (Grid Autoadaptable 12 Módulos) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -148,6 +242,8 @@ export function AdminWorkspaceV3({ onSelectModule, publicOrderUrl }: AdminWorksp
             statusLabel={card.statusLabel}
             onClick={() => handleCardClick(card)}
             isExternal={card.isExternal}
+            isFavorite={favorites.includes(card.id)}
+            onToggleFavorite={!card.isExternal ? () => toggleFavorite(card.id) : undefined}
           />
         ))}
       </div>
