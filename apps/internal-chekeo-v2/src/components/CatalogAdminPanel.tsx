@@ -1028,15 +1028,9 @@ export function CatalogAdminPanel() {
             <span>{siteConfigSaving ? 'Guardando…' : 'Modo Catálogo'}</span>
           </label>
 
-          <select
-            className='input text-xs py-1.5 px-3 border-zinc-800 bg-zinc-900 text-zinc-200 rounded-xl md:mt-0'
-            value={menu?.publicConfig?.publicMode ?? 'flow'}
-            disabled={!canEdit || siteConfigSaving}
-            onChange={(e) => void onChangePublicMode(e.target.value as 'flow' | 'catalog')}
-          >
-            <option value='flow'>Experiencia Flujo</option>
-            <option value='catalog'>Experiencia Catálogo</option>
-          </select>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-xs font-black uppercase tracking-wider text-emerald-400 shadow-sm">
+            ✨ Modo Catálogo Único
+          </span>
         </div>
       </div>
       {siteConfigError ? <p className='mt-2 text-xs text-rose-300'>{siteConfigError}</p> : null}

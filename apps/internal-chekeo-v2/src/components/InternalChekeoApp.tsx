@@ -2230,76 +2230,34 @@ const AdminWorkspace = ({
     ) : view === "reportes" ? (
       <AdminReportsPanel runtime={runtime} authMode={authMode} />
     ) : (
-      <div className="admin-hub">
-        {adminModuleGroups.map((group) => {
-          const modules = adminModuleViews.filter((module) => module.category === group.key);
-          if (!modules.length) return null;
-
-          return (
-            <section
-              key={group.key}
-              className="admin-module-group"
-              aria-labelledby={`admin-module-group-${group.key}`}
-            >
-              <div className="admin-module-group__header">
-                <div>
-                  <h3 id={`admin-module-group-${group.key}`} className="admin-module-group__title">
-                    {group.title}
-                  </h3>
-                  <p className="admin-module-group__desc">{group.description}</p>
-                </div>
-                <span className="admin-module-group__count">
-                  {modules.length} módulo{modules.length === 1 ? "" : "s"}
-                </span>
-              </div>
-              <div className="admin-module-grid">
-                {modules.map(renderModuleCard)}
-              </div>
-            </section>
-          );
-        })}
-
-        <section className="admin-module-group" aria-labelledby="admin-module-group-public">
-          <div className="admin-module-group__header">
-            <div>
-              <h3 id="admin-module-group-public" className="admin-module-group__title">
-                Página pública
-              </h3>
-              <p className="admin-module-group__desc">
-                Enlace de estado a la experiencia de clientes; este PR no la modifica.
-              </p>
-            </div>
-            <StatusPill className="border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100">
+      <div className="admin-hub-v3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {adminModuleViews.map(renderModuleCard)}
+        <a
+          className="admin-module-card admin-module-card--link"
+          href={publicOrderUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <span className="admin-module-card__top">
+            <span className="admin-module-card__icon">
+              <ExternalLink size={18} aria-hidden="true" />
+            </span>
+            <StatusPill className="admin-module-card__status border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100">
               Base lista
             </StatusPill>
-          </div>
-          <a
-            className="admin-module-card admin-module-card--link"
-            href={publicOrderUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <span className="admin-module-card__top">
-              <span className="admin-module-card__icon">
-                <ExternalLink size={18} aria-hidden="true" />
-              </span>
-              <StatusPill className="admin-module-card__status border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100">
-                Base lista
-              </StatusPill>
+          </span>
+          <span className="admin-module-card__content">
+            <span className="admin-module-card__label">Página pública</span>
+            <span className="admin-module-card__hint">{publicOrderLabel}</span>
+            <span className="admin-module-card__desc">
+              Acceso rápido para revisar la ruta pública activa sin cambiar su implementación.
             </span>
-            <span className="admin-module-card__content">
-              <span className="admin-module-card__label">Página pública</span>
-              <span className="admin-module-card__hint">{publicOrderLabel}</span>
-              <span className="admin-module-card__desc">
-                Acceso rápido para revisar la ruta pública activa sin cambiar su implementación.
-              </span>
-            </span>
-            <span className="admin-module-card__footer">
-              <span>Abrir página</span>
-              <ExternalLink size={16} aria-hidden="true" />
-            </span>
-          </a>
-        </section>
+          </span>
+          <span className="admin-module-card__footer">
+            <span>Abrir página</span>
+            <ExternalLink size={16} aria-hidden="true" />
+          </span>
+        </a>
       </div>
     );
 
