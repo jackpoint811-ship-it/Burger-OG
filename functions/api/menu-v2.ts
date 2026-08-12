@@ -21,8 +21,9 @@ const fallbackPayload = (source: MenuV2Response['source']): MenuV2Response => ({
   promos: [...promoCards].sort((a, b) => a.sortOrder - b.sortOrder),
   categoryBanners: [],
   catalogBanners: [],
-  siteConfig: DEFAULT_SITE_CONFIG,
-  publicConfig: DEFAULT_PUBLIC_CONFIG,
+  siteConfig: siteConfig,
+  publicConfig: publicConfig,
+  recipes: {},
   updatedAt: new Date().toISOString(),
   source
 });
