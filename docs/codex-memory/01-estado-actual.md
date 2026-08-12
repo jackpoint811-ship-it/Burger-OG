@@ -47,11 +47,15 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - `POST /api/orders-v2` guarda `delivery_json` directamente en `orders_v2` de D1.
   - `mapD1OrderToOrderV2` extrae metadatos de entrega desde `items[].snapshot.delivery` si `delivery_json` viniera nulo.
   - `InternalChekeoApp.tsx` filtra con precisión las fechas (`all`, `today`, `past`, `YYYY-MM-DD`), garantizando que órdenes programadas (ej. día 10) se muestren correctamente.
-- **Rediseño V3 Centrado de Cuadros y Badges tipo Pill (PR #510 Abierto a Preview)**:
+- **Rediseño V3 Centrado de Cuadros y Badges tipo Pill (PR #510)**:
   - **Estructura Simétrica Centrada (`AdminModuleCard.tsx`)**: Maquetación vertical totalmente centrada con contenedor de ícono V3 de 56px (`w-14 h-14`), título en negrita (`text-base font-black`) y descripción acotada (`max-w-[240px]`).
   - **Insignias de Estado tipo Pill**: Transformación de badges a "Pills" discretas con animación `animate-pulse` ubicadas al centro en la parte inferior de cada cuadro.
-  - **Remoción de Footer Redundante**: Eliminación de la flecha `→` e híper-enlaces desalineados para un look simétrico, pulcro y profesional.
-  - **Encabezado Centrado (`AdminWorkspaceV3.tsx`)**: Reorganización del título del hub a un bloque centrado con espaciado equilibrado (`gap-5`).
+- **Submenú Cuadrado V3, Barra de Favoritos & Depuración en Admin (PR #512 Mergeado a Preview)**:
+  - **Submenú Cuadrado**: Vista inicial con 4 tarjetas de opciones (*Banners del Catálogo*, *Horarios por Torre*, *Estado de la Tienda*, *Sorteo Promocional*) al ingresar a Sucursal & Banners.
+  - **Barra de Accesos Rápidos (Favoritos)**: Barra superior compacta con rectángulos de acceso rápido (*🎨 Banners*, *⏰ Horarios*, *📦 Productos*, *💳 Cierre de Caja*, *🏪 Tienda*).
+  - **Marcado con Estrella ⭐**: Posibilidad de fijar/desfijar cualquier herramienta a los accesos rápidos con almacenamiento persistente en `localStorage` (`chekeo_admin_favorites`).
+  - **Depuración de Textos**: Eliminación de títulos redundantes y copys duplicados en la cabecera.
+
 
 
 
