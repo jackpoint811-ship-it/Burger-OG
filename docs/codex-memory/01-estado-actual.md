@@ -47,10 +47,10 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - `POST /api/orders-v2` guarda `delivery_json` directamente en `orders_v2` de D1.
   - `mapD1OrderToOrderV2` extrae metadatos de entrega desde `items[].snapshot.delivery` si `delivery_json` viniera nulo.
   - `InternalChekeoApp.tsx` filtra con precisión las fechas (`all`, `today`, `past`, `YYYY-MM-DD`), garantizando que órdenes programadas (ej. día 10) se muestren correctamente.
-- **Rediseño Admin Hub V3, Notas Plegables y Premium Casual UI (PR #507 Merged en Preview)**:
-  - **Cuadrícula Modular 3x3 Hub Admin V3**: La pestaña principal de `Admin` en Chekeo V2 se reorganizó en una **cuadrícula modular 3x3 de 9 tarjetas táctiles compactas** (`catalogo-v3`, `catalogo`, `historial`, `basurero`, `cierre`, `banco`, `sorteos`, `reportes` y `página pública`).
-  - **Componente Nota Plegable (`CollapsibleCustomerNote.tsx`)**: Badge compacto `[📝 Nota del cliente ▼]` en Pedidos y Cocina plegado por defecto, desplegable inline al presionar para mantener tarjetas compactas.
-  - **Estética Premium Casual Vibe Completa**: Purga total de colores cyberpunk neón (`cyan-400`, `pink-500`, `bg-zinc-950`) en favor de la paleta Verde Bosque (`#16A34A` / `#22C55E`) y tarjetas neutras en modo claro/oscuro.
-  - **Control de Tienda V3**: Remoción del selector `<select>` y consolidación de la cabecera V3 con switch `Tienda Abierta / Tienda Cerrada` y badge permanente `MODO CATÁLOGO ÚNICO`.
+- **Rediseño Total V3 de la Pestaña Admin (Chekeo V2)**:
+  - **Cuadrícula Modular V3 Táctil (`AdminWorkspaceV3.tsx`)**: Reemplazo definitivo de la antigua vista apilada `CatalogAdminPanel.tsx` y `CatalogV3Panel.tsx` por un **Hub de Control V3 basado en 12 Cuadros Táctiles**.
+  - **Lenguaje 100% Profesional de Restaurante**: Eliminada toda la jerga técnica (D1, API, JSON, Workers, payloads, solo-lectura, base-lista) de los títulos, descripciones y badges de la interfaz.
+  - **Aislamiento de Módulos Operativos**: Cada cuadro abre su propia herramienta dedicada (`MenuStockTool`, `ComboBuilderTool`, `IngredientsMasterTool`, `PromosManagementTool`, `StoreBannersTool`, `HistoryPanel`, `OperationalClosePanel`, `BankConfigAdminPanel`, `RafflesAdminPanel`, `AdminReportsPanel`) incorporando el botón táctil `"← Volver al Hub Admin"`.
+
 
 
