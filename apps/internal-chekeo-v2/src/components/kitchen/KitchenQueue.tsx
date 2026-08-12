@@ -13,7 +13,7 @@ import {
   type OrderV2Environment,
 } from "@config/index";
 import { HorizontalDateCalendarFilter } from "../HorizontalDateCalendarFilter";
-import { CollapsibleCustomerNote } from "./CollapsibleCustomerNote";
+import { CollapsibleCustomerNote } from "../CollapsibleCustomerNote";
 import { parseOrderCustomerDetails } from "../../lib/order-parser";
 import {
   buildCategoryProgressBadge,
@@ -387,7 +387,7 @@ const ActiveOrderContainer = ({
         </div>
       </div>
 
-      <CollapsibleCustomerNote note={orderNoteText} className="mx-4" />
+      <CollapsibleCustomerNote note={orderNoteText} label="📝 NOTA DEL PEDIDO" className="mx-4 mb-3" />
 
       <div className="kitchen-active-order__items">
         {group.items.length === 1 ? (

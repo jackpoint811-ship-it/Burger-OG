@@ -1004,37 +1004,33 @@ export function CatalogAdminPanel() {
     </Card>
   );
   return <section className='catalog-control-room space-y-2'>
-    <Card className='catalog-header border-pink-500/30 bg-zinc-950/80 p-3.5'>
+    <Card className='catalog-header border-emerald-500/20 bg-white dark:bg-zinc-900 p-4 shadow-sm'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
           <div className='flex flex-wrap items-center gap-2'>
-            <h3 className='font-bold text-zinc-100 text-base'>Catálogo & Configuración Pública</h3>
-            <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${menu?.publicConfig?.catalogEnabled ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-zinc-800 text-zinc-400 border border-zinc-700'}`}>
-              {menu?.publicConfig?.catalogEnabled ? 'CATÁLOGO ACTIVO' : 'MODO FLUJO'}
+            <h3 className='font-black text-zinc-900 dark:text-zinc-100 text-base'>Catálogo & Configuración Pública</h3>
+            <span className='rounded-full px-2.5 py-0.5 text-xs font-extrabold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40'>
+              MODO CATÁLOGO ÚNICO
             </span>
           </div>
-          <p className='muted text-xs mt-0.5'>Fuente: {sourceLabel} · Modo actual: {menu?.publicConfig?.publicMode ?? 'flow'}</p>
+          <p className='muted text-xs mt-1 text-zinc-500 dark:text-zinc-400'>Fuente: {sourceLabel} · Control dinámico D1 en tiempo real</p>
         </div>
 
         <div className='flex flex-wrap items-center gap-3'>
-          <label className='flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-200 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl transition-colors hover:border-pink-500/40'>
+          <label className='flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 rounded-xl transition-colors hover:border-emerald-500/40'>
             <input
               type='checkbox'
-              className='h-4 w-4 rounded border-zinc-700 bg-zinc-950 text-pink-500 focus:ring-pink-400'
-              checked={menu?.publicConfig?.catalogEnabled ?? false}
+              className='h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-emerald-600 focus:ring-emerald-500'
+              checked={menu?.publicConfig?.catalogEnabled ?? true}
               disabled={!canEdit || siteConfigSaving}
               onChange={(e) => void onToggleCatalogEnabled(e.target.checked)}
             />
-            <span>{siteConfigSaving ? 'Guardando…' : 'Modo Catálogo'}</span>
+            <span>{siteConfigSaving ? 'Guardando…' : (menu?.publicConfig?.catalogEnabled ?? true) ? 'Tienda Abierta' : 'Tienda Cerrada'}</span>
           </label>
-
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-xs font-black uppercase tracking-wider text-emerald-400 shadow-sm">
-            ✨ Modo Catálogo Único
-          </span>
         </div>
       </div>
-      {siteConfigError ? <p className='mt-2 text-xs text-rose-300'>{siteConfigError}</p> : null}
-      {menu?.source !== 'd1' ? <p className='mt-1 text-xs text-amber-300'>Edición deshabilitada por el momento.</p> : null}
+      {siteConfigError ? <p className='mt-2 text-xs text-rose-500 dark:text-rose-400'>{siteConfigError}</p> : null}
+      {menu?.source !== 'd1' ? <p className='mt-1 text-xs text-amber-600 dark:text-amber-400'>Edición deshabilitada por el momento.</p> : null}
     </Card>
 
     <div className='catalog-tabs flex overflow-x-auto'>
