@@ -2200,8 +2200,11 @@ const AdminWorkspace = ({
       <IngredientsMasterTool />
     ) : view === "v3-promos" ? (
       <PromosManagementTool />
-    ) : view === "v3-store" || view === "catalogo-v3" ? (
-      <StoreBannersTool />
+    ) : view === "v3-store" || view.startsWith("v3-store:") || view === "catalogo-v3" ? (
+      <StoreBannersTool
+        initialSubView={view.startsWith("v3-store:") ? (view.split(":")[1] as any) : "grid"}
+        onBackToLauncher={() => setView("launcher")}
+      />
     ) : view === "banco" ? (
       <BankConfigAdminPanel />
     ) : view === "sorteos" ? (
