@@ -52,7 +52,6 @@ import {
   getPublicOrderLabelForEnvironment,
   getPublicOrderUrlForEnvironment,
 } from "@config/index";
-import { mockOrders } from "@config/mock-data";
 import {
   bankPaymentConfig,
   getBankPaymentPrimaryLabel,
@@ -121,7 +120,7 @@ type AdminViewKey =
   | "catalogo-v3"
   | "sorteos"
   | "reportes";
-type OrdersSource = "d1" | "mock" | "fallback";
+type OrdersSource = "d1" | "mock" | "fallback" | "error";
 type BackHandler = () => boolean;
 type OrdersV2Summary = NonNullable<OrdersV2SummaryResponse["data"]>;
 type KitchenSummaryK = NonNullable<KitchenSummaryKResponse["data"]>;
@@ -5666,7 +5665,7 @@ export function InternalChekeoApp() {
   const [selected, setSelected] = useState<InternalOrder | null>(null);
   const [cancellationRequest, setCancellationRequest] =
     useState<CancellationRequest>(null);
-  const [ordersSource, setOrdersSource] = useState<OrdersSource>("mock");
+  const [ordersSource, setOrdersSource] = useState<OrdersSource>("d1");
   const [checkingSession, setCheckingSession] = useState(true);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
@@ -5802,7 +5801,7 @@ export function InternalChekeoApp() {
     setLogged(false);
     setSessionState("expired");
     setOrders([]);
-    setOrdersSource("mock");
+    setOrdersSource("d1");
     setOrdersError("Sesión expirada. Vuelve a iniciar sesión.");
     setOrdersNotice(null);
     setSelected(null);
@@ -5924,7 +5923,7 @@ export function InternalChekeoApp() {
           return;
         }
         setOrders([]);
-        setOrdersSource("fallback");
+        setOrdersSource("error");
         setLimitWarning(null);
         setOrdersError(message);
       } finally {
@@ -6375,7 +6374,7 @@ export function InternalChekeoApp() {
           loggedRef.current = false;
           setLogged(false);
           setSessionState("inactive");
-          setOrdersSource("mock");
+          setOrdersSource("d1");
           setOrders([]);
           setOrdersNotice(null);
           setOrdersError(null);

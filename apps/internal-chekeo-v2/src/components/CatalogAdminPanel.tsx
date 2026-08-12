@@ -306,7 +306,7 @@ export function CatalogAdminPanel() {
     return (menu?.promos ?? []).filter((promo) => !q || [promo.id, promo.title, promo.description, promo.badge, promo.promoLabel].join(' ').toLowerCase().includes(q));
   }, [menu, promoQuery]);
 
-  const sourceLabel = menu?.source === 'd1' ? 'Listo para editar' : menu?.source === 'fallback' ? 'Vista local' : 'Vista local';
+  const sourceLabel = menu?.source === 'd1' ? 'Listo para editar' : 'Menú Cloudflare D1';
   const canEdit = Boolean(menu?.source === 'd1');
   const imagePreviewUrl = getAssetUrl(form?.imageUrl, form?.imageKey);
   const promoImagePreviewUrl = getAssetUrl(promoForm?.imageUrl, promoForm?.imageKey);

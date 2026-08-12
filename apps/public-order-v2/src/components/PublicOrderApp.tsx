@@ -21,6 +21,7 @@ import { EmptyState } from "@ui/index";
 import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CatalogModeApp } from "./CatalogModeApp";
+import { SkeletonLoader } from "./SkeletonLoader";
 import { loadMenuV2 } from "../lib/menu-v2";
 import { loadActiveRaffleV2 } from "../lib/raffles-v2";
 import {
@@ -2072,7 +2073,7 @@ export function PublicOrderApp() {
     if (loadingMenu) {
       return (
         <main className="app-shell">
-          <LoadingOverlay loading={true} />
+          <SkeletonLoader />
         </main>
       );
     }
