@@ -11,6 +11,18 @@ export interface CatalogImageProps {
   loading?: "lazy" | "eager";
 }
 
+export function getCategoryEmojiForFallback(type?: string, altText?: string): string {
+  const seed = `${type ?? ""} ${altText ?? ""}`.toLowerCase();
+  if (seed.includes("combo") || type === "combo") return "💥";
+  if (seed.includes("bebida") || seed.includes("drink") || seed.includes("refresco") || seed.includes("agua") || type === "drink") return "🥤";
+  if (seed.includes("papas") || seed.includes("aros") || seed.includes("side") || seed.includes("garnish") || seed.includes("entrada") || type === "side" || type === "garnish") return "🍟";
+  if (seed.includes("postre") || seed.includes("helado") || seed.includes("shake") || seed.includes("malteada") || type === "dessert") return "🍨";
+  if (seed.includes("extra") || seed.includes("upgrade") || seed.includes("queso") || seed.includes("tocino") || type === "extra" || type === "topping") return "⚡";
+  if (seed.includes("promo") || seed.includes("flash") || type === "promo") return "🔥";
+  if (seed.includes("sorteo") || seed.includes("boleto") || seed.includes("raffle") || type === "raffle") return "🎁";
+  return "🍔";
+}
+
 export function CatalogImage({
   src,
   alt,
@@ -35,6 +47,7 @@ export function CatalogImage({
   };
 
   const showImage = Boolean(src) && !hasError;
+  const categoryEmoji = getCategoryEmojiForFallback(fallbackType, alt);
 
   return (
     <div className={`catalog-image-wrapper ${className}`} style={containerStyle}>
@@ -63,8 +76,8 @@ export function CatalogImage({
       ) : fallbackSvg ? (
         fallbackSvg
       ) : (
-        <div className="catalog-image-fallback-icon" aria-hidden="true">
-          <span style={{ fontSize: "2rem", opacity: 0.5 }}>🍔</span>
+        <div className="catalog-image-fallback-icon" aria-hidden="true" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", background: "var(--color-surface-alt, #f3f4f6)", borderRadius: "inherit" }}>
+          <span style={{ fontSize: "2.4rem", userSelect: "none" }}>{categoryEmoji}</span>
         </div>
       )}
     </div>

@@ -308,6 +308,44 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
         };
       });
 
+      // Live Promo & Price Validation Check
+      try {
+        const liveMenuRes = await fetch("/api/menu-v2");
+        if (liveMenuRes.ok) {
+          const liveMenuData: any = await liveMenuRes.json();
+          if (liveMenuData?.ok && Array.isArray(liveMenuData.items)) {
+            const liveItemMap = new Map<string, any>(liveMenuData.items.map((i: any) => [i.sku, i]));
+            let promoDiscrepancyFound = false;
+            let updatedItemName = "";
+
+            items.forEach((cartItem) => {
+              const rawItem: any = cartItem;
+              const liveItem = liveItemMap.get(cartItem.productId);
+              if (liveItem) {
+                const cartPromoPrice = rawItem.promoPrice ?? rawItem.price;
+                const cartHadPromo = rawItem.promoPrice != null && rawItem.promoPrice < (rawItem.originalPrice ?? rawItem.price);
+                const liveHasPromo = liveItem.isPromoActive && liveItem.promoPrice != null && liveItem.promoPrice < liveItem.price;
+                if (cartHadPromo && (!liveHasPromo || liveItem.promoPrice !== cartPromoPrice)) {
+                  promoDiscrepancyFound = true;
+                  updatedItemName = cartItem.name;
+                }
+              }
+            });
+
+            if (promoDiscrepancyFound) {
+              setCheckoutState({
+                status: "error",
+                error: `⚠️ La promoción de "${updatedItemName}" ha finalizado o cambió de precio. Por favor verifica el nuevo total antes de confirmar tu pedido.`,
+              });
+              window.dispatchEvent(new CustomEvent("refresh-catalog-prices"));
+              return;
+            }
+          }
+        }
+      } catch {
+        /* proceed if network check fails */
+      }
+
       const response = await createOrderV2(
         {
           customer: { name: name.trim(), phone: normalizedPhone },

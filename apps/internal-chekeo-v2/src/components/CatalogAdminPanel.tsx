@@ -616,6 +616,34 @@ export function CatalogAdminPanel() {
     }
   };
 
+  const setItemHidden = async (item: MenuItem, isHidden: boolean) => {
+    if (!canEdit || availabilitySavingSku) return;
+    setAvailabilitySavingSku(item.sku);
+    setNotice(null);
+    setError(null);
+    try {
+      const res = await fetch(`/api/menu-v2-admin/items/${encodeURIComponent(item.sku)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ isHidden })
+      });
+      const data = (await res.json()) as { ok: boolean; item?: MenuItem; error?: string };
+      if (!res.ok || !data.ok || !data.item) throw new Error(data.error ?? 'Error al actualizar visibilidad');
+      const updatedItem = data.item;
+      setMenu((current) => current ? { ...current, items: current.items.map((entry) => (entry.sku === updatedItem.sku ? updatedItem : entry)), updatedAt: updatedItem.updatedAt ?? current.updatedAt } : current);
+      if (editing?.sku === updatedItem.sku) {
+        setEditing(updatedItem);
+        setForm((current) => current ? { ...current, isHidden: updatedItem.isHidden ?? false } : current);
+      }
+      setNotice(`${updatedItem.name} (${updatedItem.sku}) ${updatedItem.isHidden ? '👁️‍🗨️ oculto del menú público' : '👁️ visible en el menú público'}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al actualizar visibilidad');
+    } finally {
+      setAvailabilitySavingSku(null);
+    }
+  };
+
   const onSave = async () => {
     if ((!editing && !creatingItem) || !form || validationError) return;
     setSaving(true);
@@ -1109,6 +1137,11 @@ export function CatalogAdminPanel() {
                     <strong className={item.isAvailable ? 'catalog-status catalog-status--on' : 'catalog-status catalog-status--off'}>
                       {item.isAvailable ? 'Disponible' : 'Agotado'}
                     </strong>
+                    {item.isHidden ? (
+                      <strong className="catalog-status border border-amber-500/40 bg-amber-500/20 text-amber-300">
+                        👁️‍🗨️ Oculto del menú
+                      </strong>
+                    ) : null}
                   </div>
                   <p className='catalog-row__desc'>{item.description}</p>
                   <div className='catalog-row__meta'>
@@ -1139,6 +1172,17 @@ export function CatalogAdminPanel() {
                       {availabilityBusy ? 'Guardando...' : 'Agotado'}
                     </Button>
                   </div>
+                  <Button
+                    disabled={!canEdit || availabilityBusy}
+                    className={`min-h-11 border text-xs px-3 font-bold disabled:opacity-40 ${
+                      item.isHidden
+                        ? 'border-amber-500/60 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                        : 'border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-white'
+                    }`}
+                    onClick={() => void setItemHidden(item, !item.isHidden)}
+                  >
+                    {item.isHidden ? '👁️ Mostrar' : '👁️‍🗨️ Ocultar'}
+                  </Button>
                   <Button disabled={!canEdit || availabilityBusy} className='min-h-11 border border-zinc-700 bg-zinc-900 disabled:opacity-40' onClick={() => beginEdit(item)}>
                     Editar
                   </Button>

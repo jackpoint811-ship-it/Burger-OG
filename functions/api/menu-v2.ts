@@ -121,12 +121,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
         is_promo_active AS isPromoActive,
         promo_expires_at AS promoExpiresAt,
         combo_config_json AS comboConfig,
+        COALESCE(is_hidden, 0) AS isHidden,
         updated_at AS updatedAt
       FROM menu_items
       ORDER BY category_key ASC, sort_order ASC, sku ASC
     `), 'menu_items');
 
     const items: MenuItem[] = (itemsResult ?? [])
+      .filter((row: any) => Number(row.isHidden) !== 1)
       .map((row: any) => mapD1ItemToMenuItem(row))
       .sort((a, b) => a.sortOrder - b.sortOrder);
 

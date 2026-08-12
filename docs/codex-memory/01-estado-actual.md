@@ -47,4 +47,10 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - `POST /api/orders-v2` guarda `delivery_json` directamente en `orders_v2` de D1.
   - `mapD1OrderToOrderV2` extrae metadatos de entrega desde `items[].snapshot.delivery` si `delivery_json` viniera nulo.
   - `InternalChekeoApp.tsx` filtra con precisión las fechas (`all`, `today`, `past`, `YYYY-MM-DD`), garantizando que órdenes programadas (ej. día 10) se muestren correctamente.
-- **Herramientas de QA**: Creado `scripts/preview-reset-orders.sql` y script `npm run db:v2:preview:reset-orders`.
+- **Mejoras V2 UX/UI y Contratos (Fallbacks Emojis, Horarios Torres, Ocultar Menú, Validación Promos)**:
+  - **Fallbacks de Imágenes con Emojis**: Integrada resolución automática de fallbacks vectoriales con emojis por categoría (🍔 Burger, 💥 Combo, 🍟 Side, 🥤 Drink, 🍨 Postre, ⚡ Upgrades, 🔥 Promo, 🎁 Sorteo) en `CatalogImage.tsx`.
+  - **Editor Interactivo de Horarios por Torre en Chekeo**: Añadido panel visual e interactivo en `StoreBannersTool.tsx` para editar días activos, ventana de pedidos y ventana de entrega por edificación.
+  - **Ocultar del Menú sin Borrar**: Migración `0026_add_is_hidden_to_menu_items.sql` y control dual `is_hidden` en `CatalogAdminPanel.tsx` y endpoints API.
+  - **Protección de Promociones Expiradas al Pagar**: Validación pre-flight en `CatalogCheckoutDrawer.tsx` y server-side en `orders-v2.ts` para notificar al cliente si la promoción venció antes de cobrar.
+  - **Categoría Extras -> Upgrades Exclusivamente**: Extras retirados de las píldoras de menú y grilla pública principal (`LayoutEngine.tsx`), conservados en la personalización de productos.
+

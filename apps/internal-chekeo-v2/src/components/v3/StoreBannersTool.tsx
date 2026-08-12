@@ -109,6 +109,7 @@ export function StoreBannersTool() {
   const [schedules, setSchedules] = useState<TowerSchedule[]>([]);
   const [loadingSchedules, setLoadingSchedules] = useState(true);
   const [savingScheduleId, setSavingScheduleId] = useState<string | null>(null);
+  const [editingSchedule, setEditingSchedule] = useState<TowerSchedule | null>(null);
 
   const [catalogEnabled, setCatalogEnabled] = useState(true);
   const [savingConfig, setSavingConfig] = useState(false);
@@ -371,6 +372,42 @@ export function StoreBannersTool() {
     }
   };
 
+  // Save Full Schedule
+  const handleSaveFullSchedule = async (draft: TowerSchedule) => {
+    setSavingScheduleId(draft.id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/menu-v2-admin/tower-schedules/${encodeURIComponent(draft.id)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          towerName: draft.towerName,
+          emoji: draft.emoji,
+          activeDays: draft.activeDays,
+          orderStartTime: draft.orderStartTime,
+          orderEndTime: draft.orderEndTime,
+          deliveryStartTime: draft.deliveryStartTime,
+          deliveryEndTime: draft.deliveryEndTime,
+          deliveryLabel: draft.deliveryLabel,
+          isActive: draft.isActive,
+        })
+      });
+      const data = (await res.json()) as { ok: boolean; tower?: TowerSchedule; error?: string };
+      if (!res.ok || !data.ok || !data.tower) throw new Error(data.error ?? 'Error al actualizar horario');
+
+      setSchedules((prev) => prev.map((s) => (s.id === draft.id ? data.tower! : s)));
+      setEditingSchedule(null);
+      setNotice(`🎉 Horario de ${draft.towerName} actualizado exitosamente`);
+      setTimeout(() => setNotice(null), 3000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al guardar horario');
+    } finally {
+      setSavingScheduleId(null);
+    }
+  };
+
+  // Toggle Store Catalog Mode
   const handleToggleStoreMode = async () => {
     setSavingConfig(true);
     setNotice(null);
@@ -912,30 +949,215 @@ export function StoreBannersTool() {
                 <Card key={sch.id} className="p-4 border border-neutral-200 bg-white flex items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">{sch.emoji}</span>
-                      <h4 className="font-semibold text-neutral-800 text-sm">{sch.towerName}</h4>
+                      <span className="text-xl">{sch.emoji}</span>
+                      <h4 className="font-bold text-neutral-800 text-sm">{sch.towerName}</h4>
                       <span
-                        className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                        className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
                           sch.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                         }`}
                       >
-                        {sch.isActive ? 'Horario Habilitado' : 'Pausado'}
+                        {sch.isActive ? '🟢 Servicio Habilitado' : '🔴 Pausado'}
                       </span>
                     </div>
-                    <p className="text-xs text-neutral-500 mt-1">
-                      Pedidos: {sch.orderStartTime} - {sch.orderEndTime} | Días: {sch.activeDays.map((d) => DAY_LABELS[d]).join(', ')}
+                    <p className="text-xs text-neutral-600 mt-2 font-medium">
+                      ⏰ Pedidos: <span className="text-neutral-800 font-bold">{sch.orderStartTime} - {sch.orderEndTime}</span> | 🚚 Reparto: <span className="text-neutral-800 font-bold">{sch.deliveryStartTime} - {sch.deliveryEndTime}</span>
+                    </p>
+                    <p className="text-[11px] text-neutral-500 mt-1">
+                      📅 Días: <span className="text-neutral-700">{sch.activeDays.length ? sch.activeDays.map((d) => DAY_LABELS[d]).join(', ') : 'Ningún día'}</span>
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    className="bg-neutral-100 border border-neutral-300 text-neutral-700 text-xs py-1.5 min-h-0 disabled:opacity-40"
-                    disabled={savingScheduleId === sch.id}
-                    onClick={() => handleToggleSchedule(sch)}
-                  >
-                    {sch.isActive ? 'Pausar Horario' : 'Activar Horario'}
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button
+                      type="button"
+                      className="bg-neutral-100 border border-neutral-300 text-neutral-700 hover:bg-neutral-200 text-xs py-1.5 px-3 min-h-0 font-medium"
+                      onClick={() => setEditingSchedule({ ...sch, activeDays: [...sch.activeDays] })}
+                    >
+                      ⚙️ Configurar
+                    </Button>
+                    <Button
+                      type="button"
+                      className="bg-neutral-800 border border-neutral-700 text-white hover:bg-neutral-900 text-xs py-1.5 px-3 min-h-0 disabled:opacity-40 font-medium"
+                      disabled={savingScheduleId === sch.id}
+                      onClick={() => handleToggleSchedule(sch)}
+                    >
+                      {sch.isActive ? 'Pausar' : 'Activar'}
+                    </Button>
+                  </div>
                 </Card>
               ))}
+            </div>
+          )}
+
+          {/* Interactive Schedule Editor Modal */}
+          {editingSchedule && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+              <div className="w-full max-w-lg rounded-2xl border border-cyan-500/30 bg-zinc-950 p-6 shadow-2xl space-y-5">
+                <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{editingSchedule.emoji}</span>
+                    <div>
+                      <h3 className="font-extrabold text-base text-zinc-100">Editar Horario: {editingSchedule.towerName}</h3>
+                      <p className="text-xs text-zinc-400">Configura días de atención, toma de pedido y entrega</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="text-zinc-400 hover:text-zinc-100 text-lg font-bold"
+                    onClick={() => setEditingSchedule(null)}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Emoji & Name */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-zinc-300 block">Icono Emoji & Nombre de Ubicación</label>
+                  <div className="flex gap-2 items-center">
+                    <div className="flex gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+                      {['🏢', '🏙️', '🏬', '🗼', '🍔', '🚀'].map((em) => (
+                        <button
+                          key={em}
+                          type="button"
+                          className={`p-1.5 text-lg rounded-lg transition-transform ${editingSchedule.emoji === em ? 'bg-cyan-500/20 border border-cyan-400 scale-110' : 'opacity-60 hover:opacity-100'}`}
+                          onClick={() => setEditingSchedule({ ...editingSchedule, emoji: em })}
+                        >
+                          {em}
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="text"
+                      className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-100 font-bold focus:border-cyan-400 outline-none"
+                      value={editingSchedule.towerName}
+                      onChange={(e) => setEditingSchedule({ ...editingSchedule, towerName: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Days Selection Chips */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-zinc-300 block">Días de Atención Habilitados</label>
+                  <div className="grid grid-cols-7 gap-1.5">
+                    {[
+                      { d: 1, label: 'Lun' },
+                      { d: 2, label: 'Mar' },
+                      { d: 3, label: 'Mié' },
+                      { d: 4, label: 'Jue' },
+                      { d: 5, label: 'Vie' },
+                      { d: 6, label: 'Sáb' },
+                      { d: 0, label: 'Dom' },
+                    ].map(({ d, label }) => {
+                      const selected = editingSchedule.activeDays.includes(d);
+                      return (
+                        <button
+                          key={d}
+                          type="button"
+                          className={`py-2 text-xs font-black rounded-xl border transition-all ${
+                            selected
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400 shadow-sm shadow-emerald-500/20 scale-105'
+                              : 'bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-700'
+                          }`}
+                          onClick={() => {
+                            const nextDays = selected
+                              ? editingSchedule.activeDays.filter((day) => day !== d)
+                              : [...editingSchedule.activeDays, d].sort((a, b) => a - b);
+                            setEditingSchedule({ ...editingSchedule, activeDays: nextDays });
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Order Time Window */}
+                <div className="grid grid-cols-2 gap-3 bg-zinc-900/50 p-3 rounded-xl border border-zinc-800">
+                  <div>
+                    <label className="text-[11px] font-bold text-cyan-300 block mb-1">Hora Inicio Pedidos</label>
+                    <input
+                      type="time"
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-100 font-bold outline-none focus:border-cyan-400"
+                      value={editingSchedule.orderStartTime}
+                      onChange={(e) => setEditingSchedule({ ...editingSchedule, orderStartTime: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-cyan-300 block mb-1">Hora Límite Pedidos</label>
+                    <input
+                      type="time"
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-100 font-bold outline-none focus:border-cyan-400"
+                      value={editingSchedule.orderEndTime}
+                      onChange={(e) => setEditingSchedule({ ...editingSchedule, orderEndTime: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Delivery Time Window */}
+                <div className="grid grid-cols-2 gap-3 bg-zinc-900/50 p-3 rounded-xl border border-zinc-800">
+                  <div>
+                    <label className="text-[11px] font-bold text-amber-300 block mb-1">Hora Inicio Reparto</label>
+                    <input
+                      type="time"
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-100 font-bold outline-none focus:border-amber-400"
+                      value={editingSchedule.deliveryStartTime}
+                      onChange={(e) => setEditingSchedule({ ...editingSchedule, deliveryStartTime: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-amber-300 block mb-1">Hora Fin Reparto</label>
+                    <input
+                      type="time"
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-100 font-bold outline-none focus:border-amber-400"
+                      value={editingSchedule.deliveryEndTime}
+                      onChange={(e) => setEditingSchedule({ ...editingSchedule, deliveryEndTime: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Custom Label */}
+                <div>
+                  <label className="text-xs font-bold text-zinc-300 block mb-1">Etiqueta de Ventana (opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="Ej. 1:30 PM a 2:00 PM"
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-100 font-medium outline-none focus:border-cyan-400"
+                    value={editingSchedule.deliveryLabel ?? ''}
+                    onChange={(e) => setEditingSchedule({ ...editingSchedule, deliveryLabel: e.target.value || null })}
+                  />
+                </div>
+
+                {/* Active Toggle & Modal Actions */}
+                <div className="flex items-center justify-between border-t border-zinc-800 pt-4">
+                  <button
+                    type="button"
+                    className={`text-xs font-black px-3 py-1.5 rounded-full border transition-colors ${
+                      editingSchedule.isActive ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400' : 'bg-rose-500/20 text-rose-300 border-rose-400'
+                    }`}
+                    onClick={() => setEditingSchedule({ ...editingSchedule, isActive: !editingSchedule.isActive })}
+                  >
+                    {editingSchedule.isActive ? '🟢 Horario Activo' : '🔴 Horario Pausado'}
+                  </button>
+
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      className="bg-zinc-800 text-zinc-300 text-xs py-1.5 px-4 min-h-0"
+                      onClick={() => setEditingSchedule(null)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      className="bg-cyan-400 text-zinc-950 font-extrabold text-xs py-1.5 px-5 min-h-0 disabled:opacity-40"
+                      disabled={savingScheduleId === editingSchedule.id}
+                      onClick={() => handleSaveFullSchedule(editingSchedule)}
+                    >
+                      {savingScheduleId === editingSchedule.id ? 'Guardando…' : 'Guardar Horario'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

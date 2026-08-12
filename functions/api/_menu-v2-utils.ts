@@ -35,6 +35,7 @@ export const mapD1ItemToMenuItem = (row: any): MenuItem => ({
   badge: row.badge ?? undefined,
   promoLabel: row.promoLabel ?? undefined,
   isAvailable: Boolean(row.effectiveIsAvailable ?? row.isAvailable),
+  isHidden: Boolean(row.isHidden ?? row.is_hidden ?? false),
   stockManaged: Boolean(row.stockManaged ?? row.stock_managed ?? false),
   stockLimit: row.stockLimit ?? row.stock_limit ?? undefined,
   stockRemaining: row.stockRemaining ?? row.stock_remaining ?? undefined,
