@@ -47,10 +47,12 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - `POST /api/orders-v2` guarda `delivery_json` directamente en `orders_v2` de D1.
   - `mapD1OrderToOrderV2` extrae metadatos de entrega desde `items[].snapshot.delivery` si `delivery_json` viniera nulo.
   - `InternalChekeoApp.tsx` filtra con precisión las fechas (`all`, `today`, `past`, `YYYY-MM-DD`), garantizando que órdenes programadas (ej. día 10) se muestren correctamente.
-- **Rediseño Total V3 de la Pestaña Admin (PR #509 Merged en Preview)**:
-  - **Cuadrícula Modular V3 Táctil (`AdminWorkspaceV3.tsx`)**: Reemplazo definitivo de la antigua vista apilada `CatalogAdminPanel.tsx` y `CatalogV3Panel.tsx` por un **Hub de Control V3 basado en 12 Cuadros Táctiles**.
-  - **Lenguaje 100% Profesional de Restaurante**: Eliminada toda la jerga técnica (D1, API, JSON, Workers, payloads, solo-lectura, base-lista) de los títulos, descripciones y badges de la interfaz.
-  - **Aislamiento de Módulos Operativos**: Cada cuadro abre su propia herramienta dedicada (`MenuStockTool`, `ComboBuilderTool`, `IngredientsMasterTool`, `PromosManagementTool`, `StoreBannersTool`, `HistoryPanel`, `OperationalClosePanel`, `BankConfigAdminPanel`, `RafflesAdminPanel`, `AdminReportsPanel`) incorporando el botón táctil `"← Volver al Hub Admin"`.
+- **Rediseño V3 Centrado de Cuadros y Badges tipo Pill (PR #510 Abierto a Preview)**:
+  - **Estructura Simétrica Centrada (`AdminModuleCard.tsx`)**: Maquetación vertical totalmente centrada con contenedor de ícono V3 de 56px (`w-14 h-14`), título en negrita (`text-base font-black`) y descripción acotada (`max-w-[240px]`).
+  - **Insignias de Estado tipo Pill**: Transformación de badges a "Pills" discretas con animación `animate-pulse` ubicadas al centro en la parte inferior de cada cuadro.
+  - **Remoción de Footer Redundante**: Eliminación de la flecha `→` e híper-enlaces desalineados para un look simétrico, pulcro y profesional.
+  - **Encabezado Centrado (`AdminWorkspaceV3.tsx`)**: Reorganización del título del hub a un bloque centrado con espaciado equilibrado (`gap-5`).
+
 
 
 

@@ -123,30 +123,21 @@ export function AdminWorkspaceV3({ onSelectModule, publicOrderUrl }: AdminWorksp
   return (
     <div className="space-y-6 font-sans max-w-7xl mx-auto px-4 py-2">
       {/* Header del Hub */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-        <div>
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
-              Centro de Control Administrativo
-            </h3>
-            <span className="rounded-full px-3 py-0.5 text-xs font-extrabold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">
-              Catálogo V3 Restaurante
-            </span>
-          </div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5">
-            Selecciona un módulo táctil para gestionar productos, sucursales, finanzas y reportes operativos.
-          </p>
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="px-3.5 py-1.5 text-xs font-extrabold rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Operación Activa
-          </span>
-        </div>
+      <div className="flex flex-col items-center justify-center text-center gap-3 p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm max-w-2xl mx-auto">
+        <span className="px-3.5 py-1.5 text-xs font-extrabold rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-2 mb-1">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          Operación Activa
+        </span>
+        <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+          Centro de Control Administrativo
+        </h3>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-md mx-auto">
+          Selecciona un módulo táctil para gestionar productos, sucursales, finanzas y reportes operativos.
+        </p>
       </div>
 
       {/* Cuadrícula Táctil Modular (Grid Autoadaptable 12 Módulos) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         {cards.map((card) => (
           <AdminModuleCard
             key={card.id}
