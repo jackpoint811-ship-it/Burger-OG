@@ -91,9 +91,13 @@ import {
   generateOrderTicketImage,
   ORDER_TICKET_RAFFLE_NOTE,
 } from "../lib/order-ticket-image";
-import { CatalogAdminPanel } from "./CatalogAdminPanel";
+import { AdminWorkspaceV3 } from "./v3/AdminWorkspaceV3";
+import { MenuStockTool } from "./v3/MenuStockTool";
+import { ComboBuilderTool } from "./v3/ComboBuilderTool";
+import { IngredientsMasterTool } from "./v3/IngredientsMasterTool";
+import { PromosManagementTool } from "./v3/PromosManagementTool";
+import { StoreBannersTool } from "./v3/StoreBannersTool";
 import { RafflesAdminPanel } from "./RafflesAdminPanel";
-import { CatalogV3Panel } from "./CatalogV3Panel";
 import { KitchenQueue } from "./kitchen/KitchenQueue";
 import { parseOrderCustomerDetails } from "../lib/order-parser";
 import { HorizontalDateCalendarFilter } from "./HorizontalDateCalendarFilter";
@@ -113,6 +117,11 @@ type TabKey =
   | "admin";
 type AdminViewKey =
   | "launcher"
+  | "v3-stock"
+  | "v3-combos"
+  | "v3-ingredients"
+  | "v3-promos"
+  | "v3-store"
   | "banco"
   | "historial"
   | "basurero"
@@ -2171,49 +2180,30 @@ const AdminWorkspace = ({
   authMode: InternalAuthMode;
   onArchiveCancelled: (order: InternalOrder) => Promise<void>;
 }) => {
-  const activeView = adminViews.find((option) => option.key === view) ?? adminViews[0];
   const publicOrderUrl = getPublicOrderUrlForEnvironment(runtimeEnvironment);
-  const publicOrderLabel = getPublicOrderLabelForEnvironment(runtimeEnvironment);
 
-  const renderModuleCard = (module: AdminModuleDefinition) => {
-    const Icon = module.icon;
-    const status = adminModuleStatusMeta[module.status];
-
+  if (view === "launcher") {
     return (
-      <button
-        key={module.key}
-        type="button"
-        className="admin-module-card"
-        onClick={() => setView(module.key)}
-      >
-        <span className="admin-module-card__top">
-          <span className="admin-module-card__icon">
-            <Icon size={18} aria-hidden="true" />
-          </span>
-          <StatusPill className={`admin-module-card__status ${status.className}`}>
-            {status.label}
-          </StatusPill>
-        </span>
-        <span className="admin-module-card__content">
-          <span className="admin-module-card__label">{module.label}</span>
-          <span className="admin-module-card__hint">{module.hint}</span>
-          <span className="admin-module-card__desc">{module.description}</span>
-        </span>
-        <span className="admin-module-card__footer">
-          <span>{module.cta}</span>
-          <span aria-hidden="true">→</span>
-        </span>
-      </button>
+      <AdminWorkspaceV3
+        onSelectModule={(key) => setView(key as AdminViewKey)}
+        publicOrderUrl={publicOrderUrl}
+      />
     );
-  };
+  }
 
   const content =
-    view === "banco" ? (
+    view === "v3-stock" || view === "catalogo" ? (
+      <MenuStockTool />
+    ) : view === "v3-combos" ? (
+      <ComboBuilderTool />
+    ) : view === "v3-ingredients" ? (
+      <IngredientsMasterTool />
+    ) : view === "v3-promos" ? (
+      <PromosManagementTool />
+    ) : view === "v3-store" || view === "catalogo-v3" ? (
+      <StoreBannersTool />
+    ) : view === "banco" ? (
       <BankConfigAdminPanel />
-    ) : view === "catalogo" ? (
-      <CatalogAdminPanel />
-    ) : view === "catalogo-v3" ? (
-      <CatalogV3Panel />
     ) : view === "sorteos" ? (
       <RafflesAdminPanel runtimeEnvironment={runtimeEnvironment} />
     ) : view === "historial" || view === "basurero" ? (
@@ -2231,141 +2221,24 @@ const AdminWorkspace = ({
     ) : view === "reportes" ? (
       <AdminReportsPanel runtime={runtime} authMode={authMode} />
     ) : (
-      <div className="admin-hub space-y-4 font-sans">
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100">
-                Hub Admin V3 — Cuadrícula Modular 3x3
-              </h3>
-              <span className="rounded-full px-2.5 py-0.5 text-xs font-extrabold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                MODO CATÁLOGO ÚNICO
-              </span>
-            </div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-              9 módulos táctiles centrales para control total de la operación sin cambiar de aplicación.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 text-xs font-extrabold rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Tienda Activa
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {adminViews
-            .filter((v) => v.key !== "launcher")
-            .map((module) => {
-              const Icon = module.icon;
-              const status = module.status ? adminModuleStatusMeta[module.status] : adminModuleStatusMeta["base-lista"];
-
-              return (
-                <button
-                  key={module.key}
-                  type="button"
-                  className="admin-module-card group"
-                  onClick={() => setView(module.key)}
-                >
-                  <span className="admin-module-card__top">
-                    <span className="admin-module-card__icon">
-                      <Icon size={20} aria-hidden="true" />
-                    </span>
-                    <StatusPill className={`admin-module-card__status ${status.className}`}>
-                      {status.label}
-                    </StatusPill>
-                  </span>
-                  <span className="admin-module-card__content">
-                    <span className="admin-module-card__label">{module.label}</span>
-                    <span className="admin-module-card__hint">{module.hint}</span>
-                    <span className="admin-module-card__desc">{module.description}</span>
-                  </span>
-                  <span className="admin-module-card__footer">
-                    <span>{module.cta}</span>
-                    <span aria-hidden="true">→</span>
-                  </span>
-                </button>
-              );
-            })}
-
-          <a
-            className="admin-module-card admin-module-card--link group"
-            href={publicOrderUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <span className="admin-module-card__top">
-              <span className="admin-module-card__icon">
-                <ExternalLink size={20} aria-hidden="true" />
-              </span>
-              <StatusPill className="admin-module-card__status border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-bold">
-                Base lista
-              </StatusPill>
-            </span>
-            <span className="admin-module-card__content">
-              <span className="admin-module-card__label">Página pública</span>
-              <span className="admin-module-card__hint">{publicOrderLabel}</span>
-              <span className="admin-module-card__desc">
-                Acceso directo para revisar la ruta pública activa sin cambiar su implementación.
-              </span>
-            </span>
-            <span className="admin-module-card__footer">
-              <span>Abrir página</span>
-              <ExternalLink size={16} aria-hidden="true" />
-            </span>
-          </a>
-        </div>
-      </div>
+      <MenuStockTool />
     );
 
   return (
-    <section className="space-y-3">
-      <Card className="admin-workspace-header p-4">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <p className="home-section-label">Admin</p>
-            <h2 className="mt-1 text-xl font-black text-zinc-900 dark:text-zinc-50">
-              {view === "launcher" ? "Hub Admin V3 (Cuadrícula 3x3)" : activeView.label}
-            </h2>
-            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
-              {view === "launcher"
-                ? "Centro de control de administración con 9 módulos táctiles para catálogo único, pedidos históricos, cortes y sorteos."
-                : activeView.description}
-            </p>
-          </div>
-          <div className="admin-workspace-header__actions">
-            {view !== "launcher" ? (
-              <Button
-                type="button"
-                className="admin-back-button border border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-bold hover:bg-emerald-500/20"
-                onClick={() => setView("launcher")}
-              >
-                Volver al hub
-              </Button>
-            ) : null}
-            {view !== "launcher" ? (
-              <label className="admin-compact-select">
-                Cambiar módulo
-                <select
-                  value={view}
-                  onChange={(event) => setView(event.target.value as AdminViewKey)}
-                >
-                  {adminViews.map((option) => (
-                    <option key={option.key} value={option.key}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-          </div>
-        </div>
-        <p className="mt-3 text-xs text-zinc-500">
-          {getAdminAuthModeHint(authMode)}
-        </p>
-      </Card>
-      {content}
+    <section className="space-y-4 font-sans max-w-7xl mx-auto px-4 py-2">
+      {/* Botón táctil para volver al Hub de Control Admin */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <Button
+          type="button"
+          className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-extrabold px-4 py-2 text-xs hover:bg-emerald-500/20 transition-all shadow-sm"
+          onClick={() => setView("launcher")}
+        >
+          <span className="text-base font-black">←</span>
+          <span>Volver al Hub Admin</span>
+        </Button>
+      </div>
+
+      <div>{content}</div>
     </section>
   );
 };
