@@ -47,10 +47,12 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - `POST /api/orders-v2` guarda `delivery_json` directamente en `orders_v2` de D1.
   - `mapD1OrderToOrderV2` extrae metadatos de entrega desde `items[].snapshot.delivery` si `delivery_json` viniera nulo.
   - `InternalChekeoApp.tsx` filtra con precisión las fechas (`all`, `today`, `past`, `YYYY-MM-DD`), garantizando que órdenes programadas (ej. día 10) se muestren correctamente.
-- **Mejoras V2 UX/UI y Contratos (Fallbacks Emojis, Horarios Torres, Ocultar Menú, Validación Promos)**:
-  - **Fallbacks de Imágenes con Emojis**: Integrada resolución automática de fallbacks vectoriales con emojis por categoría (🍔 Burger, 💥 Combo, 🍟 Side, 🥤 Drink, 🍨 Postre, ⚡ Upgrades, 🔥 Promo, 🎁 Sorteo) en `CatalogImage.tsx`.
-  - **Editor Interactivo de Horarios por Torre en Chekeo**: Añadido panel visual e interactivo en `StoreBannersTool.tsx` para editar días activos, ventana de pedidos y ventana de entrega por edificación.
-  - **Ocultar del Menú sin Borrar**: Migración `0026_add_is_hidden_to_menu_items.sql` y control dual `is_hidden` en `CatalogAdminPanel.tsx` y endpoints API.
-  - **Protección de Promociones Expiradas al Pagar**: Validación pre-flight en `CatalogCheckoutDrawer.tsx` y server-side en `orders-v2.ts` para notificar al cliente si la promoción venció antes de cobrar.
-  - **Categoría Extras -> Upgrades Exclusivamente**: Extras retirados de las píldoras de menú y grilla pública principal (`LayoutEngine.tsx`), conservados en la personalización de productos.
+- **Diagnóstico y Solución Definitiva de Carga en Producción (Post-PR #493 / PR #497)**:
+  - **Causa Raíz Identificada**: La tabla `site_config` en el D1 de Producción no contaba con las columnas `public_mode` y `catalog_enabled`. La consulta SQL en `menu-v2.ts` fallaba con `SQLITE_ERROR: no such column: public_mode`, haciendo que `optionalFirst` retornara `null`.
+  - **Fallback Defectuoso**: Al retornar `null`, `resolvePublicConfigFromRow` utilizaba `DEFAULT_PUBLIC_CONFIG`, el cual tenía por defecto `publicMode: "flow"` y `catalogEnabled: false`. Esto obligaba al frontend a apagar el Modo Catálogo y conmutar a la vista Legacy Cyberpunk descontinuada, la cual se congelaba en la pantalla de carga.
+  - **Resolución Ejecutada**:
+    1. Ejecutada la migración `0027_add_catalog_config_to_site_config.sql` directamente en el D1 remoto de Producción (`burgers-exe-menu-live`), añadiendo las columnas `public_mode` ('catalog') y `catalog_enabled` (1).
+    2. Actualizado `DEFAULT_PUBLIC_CONFIG` en `packages/config/src/contracts.ts` a `publicMode: "catalog"` y `catalogEnabled: true` como valor predeterminado universal.
+    3. Añadida consulta de respaldo (fallback) en `functions/api/menu-v2.ts` para que `site_config` preserve `brand_name`, `currency` y teléfonos de contacto aún si faltan columnas.
+    4. Rediseñada la pantalla de carga inicial en `PublicOrderApp.tsx` con un spinner minimalista en estética Premium Casual.
 
