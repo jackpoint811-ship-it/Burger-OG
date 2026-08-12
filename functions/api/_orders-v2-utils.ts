@@ -1,17 +1,18 @@
-import type {
-  OrderV2,
-  OrderV2DeliveryInfo,
-  OrderV2Environment,
-  OrderV2Event,
-  OrderV2Item,
-  OrderV2Source,
-  OrderV2Status
+import {
+  TERMINAL_STATUSES,
+  type OrderV2,
+  type OrderV2DeliveryInfo,
+  type OrderV2Environment,
+  type OrderV2Event,
+  type OrderV2Item,
+  type OrderV2Source,
+  type OrderV2Status
 } from '../../packages/config/src';
 
 export type ErrorEnvelope = { ok: false; error: { code: string; message: string } };
 export type AdminEnv = { BOG_MENU_DB?: D1Database; BOG_INTERNAL_PIN?: string };
 
-export const TERMINAL_STATUSES = new Set<OrderV2Status>(['delivered', 'cancelled']);
+export { TERMINAL_STATUSES };
 const STATUS_TRANSITIONS: Record<OrderV2Status, OrderV2Status[]> = {
   new: ['preparing', 'cancelled'],
   preparing: ['ready', 'cancelled'],

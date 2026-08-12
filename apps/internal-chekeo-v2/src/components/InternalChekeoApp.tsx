@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 
-import { TERMINAL_STATUSES } from "functions/api/_orders-v2-utils";
+import { TERMINAL_STATUSES } from "@config/index";
 import * as Tabs from "@radix-ui/react-tabs";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
