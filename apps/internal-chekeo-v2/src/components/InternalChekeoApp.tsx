@@ -52,7 +52,7 @@ import {
   getPublicOrderLabelForEnvironment,
   getPublicOrderUrlForEnvironment,
 } from "@config/index";
-import { mockOrders } from "@config/mock-data";
+
 import {
   bankPaymentConfig,
   getBankPaymentPrimaryLabel,
@@ -121,7 +121,7 @@ type AdminViewKey =
   | "catalogo-v3"
   | "sorteos"
   | "reportes";
-type OrdersSource = "d1" | "mock" | "fallback";
+type OrdersSource = "d1";
 type BackHandler = () => boolean;
 type OrdersV2Summary = NonNullable<OrdersV2SummaryResponse["data"]>;
 type KitchenSummaryK = NonNullable<KitchenSummaryKResponse["data"]>;
@@ -318,19 +318,19 @@ const adminModuleStatusMeta: Record<
 > = {
   "base-lista": {
     label: "Base lista",
-    className: "border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100",
+    className: "border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-zinc-900 dark:text-zinc-100",
   },
   "solo-lectura": {
     label: "Solo lectura",
-    className: "border-zinc-600 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100",
+    className: "border-zinc-600 bg-zinc-50 dark:bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-900 dark:text-zinc-900 dark:text-zinc-100",
   },
   basico: {
     label: "Básico",
-    className: "border-cyan-400/40 bg-cyan-500/10 text-cyan-900 dark:text-cyan-800 dark:text-cyan-100",
+    className: "border-green-400/40 bg-green-50 dark:bg-green-900/20 text-cyan-900 dark:text-cyan-800 dark:text-zinc-900 dark:text-zinc-100",
   },
   pendiente: {
     label: "Pendiente",
-    className: "border-amber-400/40 bg-amber-500/10 text-amber-800 dark:text-amber-100",
+    className: "border-amber-400/40 bg-amber-500/10 text-amber-800 dark:text-zinc-900 dark:text-zinc-100",
   },
 };
 const adminViews: AdminViewDefinition[] = [
@@ -458,10 +458,10 @@ const statusLabel: Record<OrderStatus, string> = {
   cancelled: "Cancelado",
 };
 const statusTone: Record<OrderStatus, string> = {
-  new: "border-sky-400/40 text-sky-200",
-  preparing: "border-amber-400/40 text-amber-700 dark:text-amber-200",
-  ready: "border-emerald-400/40 text-emerald-700 dark:text-emerald-200",
-  delivered: "border-zinc-500/40 text-zinc-800 dark:text-zinc-200",
+  new: "border-sky-400/40 text-zinc-700 dark:text-zinc-200",
+  preparing: "border-amber-400/40 text-amber-700 dark:text-zinc-700 dark:text-zinc-200",
+  ready: "border-emerald-400/40 text-emerald-700 dark:text-zinc-700 dark:text-zinc-200",
+  delivered: "border-zinc-500/40 text-zinc-800 dark:text-zinc-700 dark:text-zinc-200",
   cancelled: "border-rose-300 dark:border-rose-500/40 text-rose-800 dark:text-rose-300",
 };
 const paymentStatusLabel: Record<OrderV2PaymentStatus, string> = {
@@ -470,8 +470,8 @@ const paymentStatusLabel: Record<OrderV2PaymentStatus, string> = {
   cancelled: "Cancelado",
 };
 const paymentStatusTone: Record<OrderV2PaymentStatus, string> = {
-  pending: "border-amber-400/40 text-amber-700 dark:text-amber-200",
-  paid: "border-emerald-400/40 text-emerald-700 dark:text-emerald-200",
+  pending: "border-amber-400/40 text-amber-700 dark:text-zinc-700 dark:text-zinc-200",
+  paid: "border-emerald-400/40 text-emerald-700 dark:text-zinc-700 dark:text-zinc-200",
   cancelled: "border-rose-300 dark:border-rose-500/40 text-rose-800 dark:text-rose-300",
 };
 const isOrderV2PaymentStatus = (value: string): value is OrderV2PaymentStatus =>
@@ -522,25 +522,21 @@ const getOperationalTruth = ({
     tone: "system",
   };
   const session = sessionStateLabel[runtime.sessionState];
-  const isLiveD1 = runtime.source === "d1" && runtime.environment === "production";
-  const isPreviewD1 = runtime.source === "d1" && runtime.environment === "preview";
+  const isLiveD1 = runtime.environment === "production";
+  const isPreviewD1 = runtime.environment === "preview";
   const data: TruthItem = isLiveD1
     ? { label: "Datos", value: "D1 real", tone: "success" }
     : isPreviewD1
       ? { label: "Datos", value: "Preview D1", tone: "system" }
-      : runtime.source === "fallback"
-        ? { label: "Datos", value: "Fallback", tone: "warning" }
-        : { label: "Datos", value: "Mock local", tone: "warning" };
+      : { label: "Datos", value: "D1 local", tone: "system" };
   const capability: TruthItem =
-    runtime.error && runtime.source !== "d1"
+    runtime.error
       ? { label: "Capacidad", value: "Sin backend", tone: "danger" }
-      : runtime.source === "d1"
-        ? {
-            label: "Capacidad",
-            value: runtime.environment === "preview" ? "Operable en preview" : "Operable",
-            tone: "success",
-          }
-        : { label: "Capacidad", value: "Solo revisión", tone: "warning" };
+      : {
+          label: "Capacidad",
+          value: runtime.environment === "preview" ? "Operable en preview" : "Operable",
+          tone: "success",
+        };
   const activity: TruthItem = {
     label: "Carga",
     value: `${activeCount} activos`,
@@ -549,7 +545,7 @@ const getOperationalTruth = ({
   const freshness: TruthItem = {
     label: "Actualización",
     value: runtime.lastUpdated ? runtime.lastUpdated : "Pendiente",
-    tone: runtime.lastUpdated ? "neutral" : runtime.source === "d1" ? "warning" : "neutral",
+    tone: runtime.lastUpdated ? "neutral" : "warning",
   };
 
   let headline = "Chekeo listo para revisar";
@@ -606,45 +602,26 @@ const getOperationalTruth = ({
       message: "La sesión de administrador expiró. Reingresa el PIN en la pestaña Admin si requieres cambiar configuración.",
       tone: "danger",
     };
-  } else if (runtime.source === "fallback") {
-    headline = "Chekeo está en fallback";
-    summary = "Puedes revisar pedidos, pero no confiar en escritura real.";
-    action = {
-      label: runtime.loading ? "Reconectando..." : "Reintentar",
-      helper: "Busca volver a D1.",
-      tone: "warning",
-    };
-    banner = {
-      title: "Solo revisión",
-      message: runtime.error
-        ? "El backend falló y Chekeo cayó a fallback. Reintenta antes de operar."
-        : "Los cambios quedan en esta vista hasta recuperar D1.",
-      tone: runtime.error ? "danger" : "warning",
-    };
-    sourceMessage = "Solo lectura mientras el backend no responde.";
-    sourceHint = "No confirmes pagos o estados como definitivos.";
-    kitchenTitle = "Cocina en fallback";
-    kitchenHint = "Referencia visual. Reintenta para volver a D1.";
   } else {
-    headline = runtimeEnvironment === "local" ? "Chekeo corre en local" : "Chekeo está en mock";
-    summary = "Úsalo para revisar UI; no hay backend real activo.";
+    headline = "Chekeo corre en local";
+    summary = "Usando base local, no hay backend real activo.";
     action = {
       label: runtime.loading ? "Reintentando..." : "Reintentar",
       helper: "Intenta recuperar D1 o sesión.",
       tone: "warning",
     };
     banner = {
-      title: runtimeEnvironment === "local" ? "Mock local" : "Modo mock",
-      message: "Solo valida la interfaz. Los cambios no llegan a datos reales.",
+      title: "D1 local",
+      message: "Los cambios se aplican sobre tu entorno de desarrollo.",
       tone: "warning",
     };
-    sourceMessage = "Vista aislada del backend real.";
-    sourceHint = "Úsala para revisar layout y flujo base.";
+    sourceMessage = "Vista aislada del backend remoto.";
+    sourceHint = "Úsala para desarrollar.";
     kitchenTitle = "Cocina en vista local";
-    kitchenHint = "Solo referencia visual hasta volver a D1.";
+    kitchenHint = "Referencia visual en desarrollo.";
   }
 
-  if (runtime.error && runtime.source === "d1") {
+  if (runtime.error) {
     banner = {
       title: "Backend con error",
       message: "La última solicitud falló. Reintenta antes de asumir que todo está al día.",
@@ -757,9 +734,9 @@ const ordersStatusLabel: Record<Exclude<OrdersStatusFilter, "all">, string> = {
   cancelled: "Cancelado",
 };
 const ordersStatusTone: Record<Exclude<OrdersStatusFilter, "all">, string> = {
-  received: "border-sky-400/40 text-sky-200",
-  ready: "border-emerald-400/40 text-emerald-700 dark:text-emerald-200",
-  delivered: "border-zinc-500/40 text-zinc-800 dark:text-zinc-200",
+  received: "border-sky-400/40 text-zinc-700 dark:text-zinc-200",
+  ready: "border-emerald-400/40 text-emerald-700 dark:text-zinc-700 dark:text-zinc-200",
+  delivered: "border-zinc-500/40 text-zinc-800 dark:text-zinc-700 dark:text-zinc-200",
   cancelled: "border-rose-300 dark:border-rose-500/40 text-rose-800 dark:text-rose-300",
 };
 const ordersStatusFilterOptions: Array<{
@@ -1241,10 +1218,10 @@ const EmptyOrdersState = ({
   description?: string;
   action?: ReactNode;
 }) => (
-  <Card className="border-dashed border-zinc-700/90 p-5 text-center">
-    <p className="text-base font-black text-zinc-900 dark:text-zinc-100">{title}</p>
+  <Card className="border-dashed border-zinc-300 dark:border-zinc-700/90 p-5 text-center">
+    <p className="text-base font-black text-zinc-900 dark:text-zinc-900 dark:text-zinc-900 dark:text-zinc-100">{title}</p>
     {description ? (
-      <p className="mx-auto mt-1 max-w-md text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
+      <p className="mx-auto mt-1 max-w-md text-sm text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">{description}</p>
     ) : null}
     {action ? <div className="mt-3">{action}</div> : null}
   </Card>
@@ -1336,22 +1313,22 @@ const OrdersExportControls = ({
   };
 
   return (
-    <div className="mt-3 rounded-lg border border-zinc-800 bg-white dark:bg-zinc-950/70 p-2">
+    <div className="mt-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-white dark:bg-zinc-950 p-2">
       <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Descargar reporte</p>
-          <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+          <p className="text-xs font-bold text-zinc-900 dark:text-zinc-900 dark:text-zinc-900 dark:text-zinc-100">Descargar reporte</p>
+          <p className="text-[11px] text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
             Baja los pedidos filtrados para revisión o cierre.
           </p>
         </div>
         {!sessionActive ? (
-          <p className="text-[11px] text-amber-700 dark:text-amber-200">
+          <p className="text-[11px] text-amber-700 dark:text-zinc-700 dark:text-zinc-200">
             Sesión expirada. Vuelve a iniciar sesión.
           </p>
         ) : null}
       </div>
       <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-        <label className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 sm:col-span-2 lg:col-span-1">
+        <label className="flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-700 dark:text-zinc-200 sm:col-span-2 lg:col-span-1">
           <input
             type="checkbox"
             checked={includeTerminal}
@@ -1359,7 +1336,7 @@ const OrdersExportControls = ({
           />
           Incluir entregados y cancelados
         </label>
-        <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
+        <label className="text-[11px] text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
           Estado
           <select
             className="input mt-1 text-xs"
@@ -1375,7 +1352,7 @@ const OrdersExportControls = ({
             ))}
           </select>
         </label>
-        <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
+        <label className="text-[11px] text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
           Máximo de registros
           <input
             className="input mt-1 text-xs"
@@ -1388,7 +1365,7 @@ const OrdersExportControls = ({
             onChange={(event) => setLimit(event.target.value)}
           />
         </label>
-        <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
+        <label className="text-[11px] text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
           Desde
           <input
             className="input mt-1 text-xs"
@@ -1397,7 +1374,7 @@ const OrdersExportControls = ({
             onChange={(event) => setFrom(event.target.value)}
           />
         </label>
-        <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
+        <label className="text-[11px] text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
           Hasta
           <input
             className="input mt-1 text-xs"
@@ -1408,22 +1385,22 @@ const OrdersExportControls = ({
         </label>
       </div>
       {invalidLimit ? (
-        <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-rose-200">
+        <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-zinc-700 dark:text-zinc-200">
           El límite debe ser un entero entre 1 y 1000.
         </p>
       ) : null}
       {error ? (
-        <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-rose-200">
+        <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-zinc-700 dark:text-zinc-200">
           {error}
         </p>
       ) : null}
       {success ? (
-        <p className="mt-2 rounded bg-emerald-500/10 px-2 py-1 text-xs text-emerald-700 dark:text-emerald-200">
+        <p className="mt-2 rounded bg-emerald-500/10 px-2 py-1 text-xs text-emerald-700 dark:text-zinc-700 dark:text-zinc-200">
           {success}
         </p>
       ) : null}
       <Button
-        className="mt-2 w-full bg-cyan-400 px-3 py-2 text-sm font-bold text-black disabled:opacity-40 md:w-auto"
+        className="mt-2 w-full bg-green-600 text-white dark:bg-green-500 dark:text-black px-3 py-2 text-sm font-bold text-black disabled:opacity-40 md:w-auto"
         onClick={() => void downloadCsv()}
         disabled={disabled}
       >
@@ -1442,14 +1419,14 @@ const NewOrderBanner = ({
 }) =>
   notice ? (
     <section
-      className="mb-3 rounded-2xl border border-cyan-300/40 bg-cyan-400/15 p-3 text-cyan-50 shadow-lg shadow-cyan-950/20"
+      className="mb-3 rounded-2xl border border-cyan-300/40 bg-green-50 dark:bg-green-900/20 p-3 text-cyan-50 shadow-lg shadow-cyan-950/20"
       role="status"
       aria-live="polite"
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-black">{notice.message}</p>
-          <p className="mt-1 break-words text-[11px] text-cyan-900 dark:text-cyan-800 dark:text-cyan-100/80">
+          <p className="mt-1 break-words text-[11px] text-cyan-900 dark:text-cyan-800 dark:text-zinc-900 dark:text-zinc-100/80">
             Folios: {notice.orderFolios.join(", ")}
           </p>
         </div>
@@ -1514,12 +1491,12 @@ const InternalLogin = ({
 
   return (
     <main className="shell flex items-center justify-center py-8">
-      <section className="login card w-full max-w-md border-cyan-400/20 bg-white dark:bg-zinc-950/95 p-4 shadow-cyan-950/30">
+      <section className="login card w-full max-w-md border-green-400/20 bg-white dark:bg-zinc-950/95 p-4 shadow-cyan-950/30">
         <div className="mb-4 text-center">
           <p className="text-2xl font-black tracking-tight text-zinc-50">
             Burgers<span className="text-cyan-800 dark:text-cyan-300">.exe</span>
           </p>
-          <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200">
+          <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-700 dark:text-zinc-200">
             Chekeo
           </p>
         </div>
@@ -1547,7 +1524,7 @@ const InternalLogin = ({
               {sessionStateLabel[sessionState].value}
             </StatusPill>
           </div>
-          <p className="mt-2 text-xs text-zinc-700 dark:text-zinc-300">{copy.secondary}</p>
+          <p className="mt-2 text-xs text-zinc-700 dark:text-zinc-600 dark:text-zinc-300">{copy.secondary}</p>
           <a
             className="runtime-environment-link runtime-environment-link--muted mt-3 w-full"
             href={publicOrderUrl}
@@ -1615,7 +1592,7 @@ const SessionPinForm = ({
 
   return (
     <form className="space-y-4" onSubmit={(event) => void submit(event)}>
-      <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100" htmlFor={inputId}>
+      <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-900 dark:text-zinc-900 dark:text-zinc-100" htmlFor={inputId}>
         {label}
         <input
           id={inputId}
@@ -1647,7 +1624,7 @@ const SessionPinForm = ({
         </p>
       ) : null}
       <Button
-        className="w-full bg-cyan-400 py-3 text-base font-black text-black disabled:opacity-50"
+        className="w-full bg-green-600 text-white dark:bg-green-500 dark:text-black py-3 text-base font-black text-black disabled:opacity-50"
         disabled={loading || disabled}
       >
         {loading || disabled ? submitBusyLabel : submitLabel}
@@ -1737,7 +1714,7 @@ const OperatorHeader = ({
             {runtime.lastUpdated ? `Sync ${runtime.lastUpdated}` : "Sin sync"}
           </span>
           <Button
-            className={`shell-icon-button ${soundAlerts ? "text-emerald-400" : "text-zinc-500"}`}
+            className={`shell-icon-button ${soundAlerts ? "text-green-600 dark:text-green-400" : "text-zinc-500"}`}
             aria-label={soundAlerts ? "Sonido activado" : "Sonido desactivado"}
             title={soundAlerts ? "Desactivar alertas sonoras de pedidos" : "Activar alertas sonoras de pedidos"}
             onClick={onToggleSound}
@@ -1753,9 +1730,9 @@ const OperatorHeader = ({
             {themeMode === "light" ? (
               <Sun size={16} className="text-amber-500" aria-hidden="true" />
             ) : themeMode === "dark" ? (
-              <Moon size={16} className="text-cyan-400" aria-hidden="true" />
+              <Moon size={16} className="text-green-600 dark:text-green-400" aria-hidden="true" />
             ) : (
-              <Monitor size={16} className="text-zinc-600 dark:text-zinc-400" aria-hidden="true" />
+              <Monitor size={16} className="text-zinc-600 dark:text-zinc-500 dark:text-zinc-400" aria-hidden="true" />
             )}
           </Button>
           <Button
@@ -2043,7 +2020,7 @@ const HomePanel = ({
             </span>
           </div>
         ) : (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
             {todayLoading ? "Cargando resumen..." : "Sin Resumen K disponible."}
           </p>
         )}
@@ -2072,13 +2049,13 @@ const AdminReportsPanel = ({
 }) => (
   <div className="grid gap-3 xl:grid-cols-[1.1fr_0.9fr]">
     <Card className="p-4">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700 dark:text-amber-200">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700 dark:text-zinc-700 dark:text-zinc-200">
         Reportes y exportes
       </p>
       <h3 className="mt-2 text-xl font-black text-zinc-50">
         Exportes operativos
       </h3>
-      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
         Descarga cortes y listas filtradas sin volver a mezclar estos controles con Pedidos, Cocina o Pagos.
       </p>
       <OrdersExportControls
@@ -2088,7 +2065,7 @@ const AdminReportsPanel = ({
       />
     </Card>
     <Card className="p-4">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-700 dark:text-zinc-200">
         Estado técnico
       </p>
       <h3 className="mt-2 text-lg font-black text-zinc-50">
@@ -2131,16 +2108,16 @@ const AdminGate = ({
   return (
     <Card className="p-4 sm:p-5">
       <div className="max-w-md">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-700 dark:text-zinc-200">
           Admin protegido
         </p>
         <h2 className="mt-1 text-xl font-black text-zinc-50">
           Acceso Admin
         </h2>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
           La pestaña Admin requiere PIN de administrador. Las pestañas operativas (Home, Pedidos, Cocina, Pagos) son de acceso directo.
         </p>
-        <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-white dark:bg-zinc-950/70 p-4">
+        <div className="mt-4 rounded-2xl border border-green-400/20 bg-white dark:bg-white dark:bg-zinc-950 p-4">
           <SessionPinForm
             inputId="admin-pin"
             label="PIN Admin"
@@ -2270,7 +2247,7 @@ const AdminWorkspace = ({
                 Enlace de estado a la experiencia de clientes; este PR no la modifica.
               </p>
             </div>
-            <StatusPill className="border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100">
+            <StatusPill className="border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-zinc-900 dark:text-zinc-100">
               Base lista
             </StatusPill>
           </div>
@@ -2284,7 +2261,7 @@ const AdminWorkspace = ({
               <span className="admin-module-card__icon">
                 <ExternalLink size={18} aria-hidden="true" />
               </span>
-              <StatusPill className="admin-module-card__status border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100">
+              <StatusPill className="admin-module-card__status border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-zinc-900 dark:text-zinc-100">
                 Base lista
               </StatusPill>
             </span>
@@ -2313,7 +2290,7 @@ const AdminWorkspace = ({
             <h2 className="mt-1 text-xl font-black text-zinc-50">
               {view === "launcher" ? "Módulos secundarios" : activeView.label}
             </h2>
-            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
               {view === "launcher"
                 ? "Datos bancarios, historial, cierre, catálogo, sorteos y reportes viven aquí para mantener la navegación principal enfocada en operación."
                 : activeView.description}
@@ -2323,7 +2300,7 @@ const AdminWorkspace = ({
             {view !== "launcher" ? (
               <Button
                 type="button"
-                className="admin-back-button border border-cyan-400/40 bg-cyan-400/10 text-cyan-900 dark:text-cyan-800 dark:text-cyan-100"
+                className="admin-back-button border border-green-400/40 bg-green-50 dark:bg-green-900/20 text-cyan-900 dark:text-cyan-800 dark:text-zinc-900 dark:text-zinc-100"
                 onClick={() => setView("launcher")}
               >
                 Volver al hub
@@ -2364,19 +2341,19 @@ const BankConfigAdminPanel = () => {
       <Card className="p-4">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-700 dark:text-zinc-200">
               Configuración de pago
             </p>
             <h3 className="mt-1 text-xl font-black text-zinc-50">
               Datos bancarios
             </h3>
-            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
               Fuente central compartida para transferencias. Pagos la consume
               para el mensaje operativo y esta vista la expone solo dentro de
               Admin.
             </p>
           </div>
-          <StatusPill className="border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
+          <StatusPill className="border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-900 dark:text-zinc-900 dark:text-zinc-100">
             {bankPaymentConfig.editable ? "Editable" : "Solo lectura"}
           </StatusPill>
         </div>
@@ -2385,7 +2362,7 @@ const BankConfigAdminPanel = () => {
       <div className="grid gap-3 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="p-4">
           <div className="grid gap-3 min-[520px]:grid-cols-2">
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3">
+            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3">
               <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
                 Banco
               </p>
@@ -2393,7 +2370,7 @@ const BankConfigAdminPanel = () => {
                 {bankPaymentConfig.bankName}
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3">
+            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3">
               <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
                 Titular
               </p>
@@ -2401,7 +2378,7 @@ const BankConfigAdminPanel = () => {
                 {bankPaymentConfig.accountHolder}
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3 min-[520px]:col-span-2">
+            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3 min-[520px]:col-span-2">
               <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
                 {primaryLabel}
               </p>
@@ -2415,24 +2392,24 @@ const BankConfigAdminPanel = () => {
         <Card className="p-4">
           <div className="space-y-3">
             <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-800 dark:text-emerald-100">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-800 dark:text-zinc-900 dark:text-zinc-100">
                 Alcance
               </p>
-              <p className="mt-2 text-sm text-zinc-900 dark:text-zinc-100">
+              <p className="mt-2 text-sm text-zinc-900 dark:text-zinc-900 dark:text-zinc-900 dark:text-zinc-100">
                 Solo transferencia. Pedidos, ticket, Home y Cocina no deben
                 mostrar estos datos.
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3 text-sm text-zinc-700 dark:text-zinc-300">
-              <p className="font-black text-zinc-900 dark:text-zinc-100">Estado de edición</p>
+            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3 text-sm text-zinc-700 dark:text-zinc-600 dark:text-zinc-300">
+              <p className="font-black text-zinc-900 dark:text-zinc-900 dark:text-zinc-900 dark:text-zinc-100">Estado de edición</p>
               <p className="mt-2">
                 La configuración actual es de solo lectura y vive en la capa
                 compartida del proyecto. La edición persistente queda pendiente
                 hasta definir una fuente segura en backend.
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3 text-sm text-zinc-700 dark:text-zinc-300">
-              <p className="font-black text-zinc-900 dark:text-zinc-100">Fuente</p>
+            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3 text-sm text-zinc-700 dark:text-zinc-600 dark:text-zinc-300">
+              <p className="font-black text-zinc-900 dark:text-zinc-900 dark:text-zinc-900 dark:text-zinc-100">Fuente</p>
               <p className="mt-2">
                 <code>{bankPaymentConfig.source}</code> compartida por{" "}
                 <code>Pagos</code>, <code>Admin</code> y la integración de
@@ -2486,7 +2463,7 @@ const ActionButtons = ({
           <button
             key={action.status}
             type="button"
-            className={`btn-sm ${action.tone === "danger" ? "danger" : "border-cyan-300 dark:border-cyan-500/50 bg-cyan-500/10 text-cyan-900 dark:text-cyan-800 dark:text-cyan-100"}`}
+            className={`btn-sm ${action.tone === "danger" ? "danger" : "border-cyan-300 dark:border-green-500/50 bg-green-50 dark:bg-green-900/20 text-cyan-900 dark:text-cyan-800 dark:text-zinc-900 dark:text-zinc-100"}`}
             onClick={() =>
               isCancellation
                 ? onCancel(order)
@@ -2591,28 +2568,28 @@ const WhatsappOrderActions = ({
   };
 
   return (
-    <div className="mt-2 rounded-lg border border-cyan-400/20 bg-cyan-400/5 p-2">
+    <div className="mt-2 rounded-lg border border-green-400/20 bg-green-50 dark:bg-green-900/20 p-2">
       {!phone ? (
-        <p className="mb-2 rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-700 dark:text-amber-200">
+        <p className="mb-2 rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-700 dark:text-zinc-700 dark:text-zinc-200">
           Teléfono inválido para WhatsApp
         </p>
       ) : null}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <Button
-          className="border border-amber-700 bg-amber-50 dark:bg-amber-950/50 px-2 py-1.5 text-[11px] text-amber-800 dark:text-amber-100 disabled:opacity-40"
+          className="border border-amber-700 bg-amber-50 dark:bg-amber-950/50 px-2 py-1.5 text-[11px] text-amber-800 dark:text-zinc-900 dark:text-zinc-100 disabled:opacity-40"
           onClick={() => void downloadTicket()}
           disabled={generatingTicket}
         >
           {generatingTicket ? "Generando…" : "Descargar ticket"}
         </Button>
         <Button
-          className="border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-2 py-1.5 text-[11px]"
+          className="border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-50 dark:bg-zinc-900 px-2 py-1.5 text-[11px]"
           onClick={() => void copySummary()}
         >
           Copiar WhatsApp
         </Button>
         <Button
-          className="border border-emerald-700 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-1.5 text-[11px] text-emerald-800 dark:text-emerald-100 disabled:opacity-40"
+          className="border border-emerald-700 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-1.5 text-[11px] text-emerald-800 dark:text-zinc-900 dark:text-zinc-100 disabled:opacity-40"
           onClick={openWhatsapp}
           disabled={!phone}
         >
@@ -2621,7 +2598,7 @@ const WhatsappOrderActions = ({
       </div>
       {notice ? (
         <p
-          className={`mt-2 rounded px-2 py-1 text-[11px] ${notice.tone === "success" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200" : "bg-rose-500/10 text-rose-700 dark:text-rose-200"}`}
+          className={`mt-2 rounded px-2 py-1 text-[11px] ${notice.tone === "success" ? "bg-emerald-500/10 text-emerald-700 dark:text-zinc-700 dark:text-zinc-200" : "bg-rose-500/10 text-rose-700 dark:text-zinc-700 dark:text-zinc-200"}`}
         >
           {notice.message}
         </p>
@@ -2717,25 +2694,25 @@ const CancellationReasonDialog = ({
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-rose-700 dark:text-rose-200">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-rose-700 dark:text-zinc-700 dark:text-zinc-200">
               Cancelación manual
             </p>
             <h2 id="cancel-title" className="text-lg font-black">
               Cancelar {order.folio}
             </h2>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
               {order.customer} · {order.createdAt}
             </p>
           </div>
           <StatusBadge status={order.status} />
         </div>
-        <div className="mt-3 rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-2 text-xs text-zinc-700 dark:text-zinc-300">
+        <div className="mt-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-50 dark:bg-zinc-900 p-2 text-xs text-zinc-700 dark:text-zinc-600 dark:text-zinc-300">
           <p>
             La cancelación quedará guardada con su razón para seguimiento
             administrativo.
           </p>
           {runtime.source !== "d1" ? (
-            <p className="mt-1 rounded bg-amber-500/10 px-2 py-1 text-amber-800 dark:text-amber-100">
+            <p className="mt-1 rounded bg-amber-500/10 px-2 py-1 text-amber-800 dark:text-zinc-900 dark:text-zinc-100">
               Vista local: la cancelación se refleja solo en pantalla.
             </p>
           ) : null}
@@ -2745,7 +2722,7 @@ const CancellationReasonDialog = ({
             <button
               key={option}
               type="button"
-              className={`rounded-lg border px-3 py-2 text-xs font-semibold ${preset === option ? "border-rose-300 bg-rose-300 text-black" : "border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200"}`}
+              className={`rounded-lg border px-3 py-2 text-xs font-semibold ${preset === option ? "border-rose-300 bg-rose-300 text-black" : "border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-700 dark:text-zinc-200"}`}
               onClick={() => selectPreset(option)}
               disabled={busy}
             >
@@ -2753,7 +2730,7 @@ const CancellationReasonDialog = ({
             </button>
           ))}
         </div>
-        <label className="mt-3 block text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+        <label className="mt-3 block text-xs font-semibold text-zinc-800 dark:text-zinc-700 dark:text-zinc-200">
           Razón obligatoria
           <textarea
             className="input min-h-24 text-sm"
@@ -2776,20 +2753,20 @@ const CancellationReasonDialog = ({
           <span>{reason.length}/200</span>
         </div>
         {error || validationError ? (
-          <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-rose-200">
+          <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-zinc-700 dark:text-zinc-200">
             {error ?? validationError}
           </p>
         ) : null}
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <Button
-            className="flex-1 border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm disabled:opacity-40"
+            className="flex-1 border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm disabled:opacity-40"
             onClick={onClose}
             disabled={busy}
           >
             Volver
           </Button>
           <Button
-            className="flex-1 border border-rose-700 bg-rose-50 dark:bg-rose-950/70 px-3 py-2 text-sm font-bold text-rose-800 dark:text-rose-100 disabled:opacity-40"
+            className="flex-1 border border-rose-700 bg-rose-50 dark:bg-rose-950/70 px-3 py-2 text-sm font-bold text-rose-800 dark:text-zinc-900 dark:text-zinc-100 disabled:opacity-40"
             onClick={() => void submit()}
             disabled={disabled}
           >
@@ -2802,7 +2779,7 @@ const CancellationReasonDialog = ({
 };
 
 const OrderItems = ({ order }: { order: InternalOrder }) => (
-  <div className="mt-2 space-y-1 rounded-lg border border-dashed border-zinc-700 p-2">
+  <div className="mt-2 space-y-1 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-2">
     {order.items.map((i, idx) => {
       const lineTotal = i.lineTotal ?? i.qty * i.price;
       return (
@@ -2872,7 +2849,7 @@ const CompactRow = ({
             {onToggleSelect ? (
               <input
                 type="checkbox"
-                className="w-5 h-5 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-zinc-950 cursor-pointer shrink-0"
+                className="w-5 h-5 rounded border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-zinc-950 cursor-pointer shrink-0"
                 checked={selected}
                 onChange={() => onToggleSelect(order.id)}
                 onClick={(e) => e.stopPropagation()}
@@ -2890,7 +2867,7 @@ const CompactRow = ({
                   </span>
                 ) : null}
               </div>
-              <p className="orders-card__customer font-bold text-base text-zinc-900 dark:text-zinc-100 mt-0.5">
+              <p className="orders-card__customer font-bold text-base text-zinc-900 dark:text-zinc-900 dark:text-zinc-900 dark:text-zinc-100 mt-0.5">
                 {details.cleanCustomerName}
               </p>
               {order.customerPhone ? (
@@ -2904,16 +2881,16 @@ const CompactRow = ({
         </div>
 
         {/* 3 Main Priority Facts: Total, Location, Scheduled Delivery Date */}
-        <div className="v3-order-facts-grid grid grid-cols-3 gap-2 my-2.5 p-2 rounded-xl bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800">
+        <div className="v3-order-facts-grid grid grid-cols-3 gap-2 my-2.5 p-2 rounded-xl bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-200 dark:border-zinc-800">
           <div className="v3-fact-card flex flex-col justify-center">
             <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Total</span>
-            <strong className="text-base font-black text-emerald-600 dark:text-emerald-400">
+            <strong className="text-base font-black text-emerald-600 dark:text-green-600 dark:text-green-400">
               {formatCurrency(order.total)}
             </strong>
           </div>
           <div className="v3-fact-card flex flex-col justify-center">
             <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Entrega</span>
-            <strong className="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate" title={details.deliveryLocation}>
+            <strong className="text-xs font-bold text-zinc-800 dark:text-zinc-700 dark:text-zinc-200 truncate" title={details.deliveryLocation}>
               📍 {details.deliveryLocation}
             </strong>
           </div>
@@ -2927,11 +2904,11 @@ const CompactRow = ({
 
         {/* Inline Items Preview */}
         {order.items.length ? (
-          <div className="v3-order-items-preview mb-2.5 px-2.5 py-1.5 rounded-lg bg-zinc-900/60 border border-zinc-800 text-xs text-zinc-300">
+          <div className="v3-order-items-preview mb-2.5 px-2.5 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-300">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 block mb-0.5">
               Productos ({itemCount}):
             </span>
-            <p className="line-clamp-2 font-medium text-zinc-200">
+            <p className="line-clamp-2 font-medium text-zinc-700 dark:text-zinc-200">
               {order.items.map((i) => `${i.qty}x ${i.name}`).join(" · ")}
             </p>
           </div>
@@ -3018,10 +2995,10 @@ const OrderCommandPanel = ({
         <div className="min-w-0">
           <p className="orders-command-detail__eyebrow">Ticket abierto</p>
           <h3>{order.folio}</h3>
-          <p className="font-bold text-zinc-100">{details.cleanCustomerName}</p>
-          <p className="text-xs text-zinc-400">📍 {details.deliveryLocation}</p>
+          <p className="font-bold text-zinc-900 dark:text-zinc-900 dark:text-zinc-100">{details.cleanCustomerName}</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">📍 {details.deliveryLocation}</p>
         </div>
-        <strong className="text-emerald-400 text-xl font-black">{formatCurrency(order.total)}</strong>
+        <strong className="text-green-600 dark:text-green-400 text-xl font-black">{formatCurrency(order.total)}</strong>
       </div>
       <div className="orders-command-detail__facts">
         <OrderFact label="Estado" value={statusLabel[order.status]} />
@@ -3104,14 +3081,14 @@ const BatchActionBar = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-zinc-900/95 backdrop-blur-md border border-zinc-700 rounded-2xl shadow-2xl max-w-xl w-[90%]"
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-zinc-900/95 backdrop-blur-md border border-zinc-300 dark:border-zinc-700 rounded-2xl shadow-2xl max-w-xl w-[90%]"
     >
       <div className="flex items-center gap-2">
         <span className="flex h-3 w-3 rounded-full bg-emerald-500 animate-pulse" />
-        <p className="text-xs font-bold text-zinc-100">
+        <p className="text-xs font-bold text-zinc-900 dark:text-zinc-900 dark:text-zinc-100">
           {selectedCount} seleccionadas{" "}
           {!isArchivedView && selectedCount > 0 ? (
-            <span className="text-zinc-400 font-normal">
+            <span className="text-zinc-500 dark:text-zinc-400 font-normal">
               ({cancelledCount} canceladas, {activeCount} activas)
             </span>
           ) : null}
@@ -3121,7 +3098,7 @@ const BatchActionBar = ({
       <div className="flex items-center gap-2">
         <button
           type="button"
-          className="px-2.5 py-1.5 text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition-colors"
+          className="px-2.5 py-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:text-zinc-200 transition-colors"
           onClick={onClearSelection}
           disabled={busy}
         >
@@ -3177,25 +3154,25 @@ const BatchConfirmModal = ({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-2xl space-y-4"
+        className="w-full max-w-md bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-2xl space-y-4"
       >
-        <div className="flex items-center gap-3 text-amber-400">
+        <div className="flex items-center gap-3 text-amber-600 dark:text-amber-400">
           <span className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xl">⚠️</span>
-          <h3 className="text-lg font-bold text-zinc-100">Confirmar envío a Basurero</h3>
+          <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-900 dark:text-zinc-100">Confirmar envío a Basurero</h3>
         </div>
 
-        <p className="text-sm text-zinc-300 leading-relaxed">
-          Has seleccionado <strong className="text-amber-400">{activeCount} órdenes activas</strong> y{" "}
-          <strong className="text-zinc-200">{cancelledCount} canceladas</strong> (Total: {totalCount}).
+        <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
+          Has seleccionado <strong className="text-amber-600 dark:text-amber-400">{activeCount} órdenes activas</strong> y{" "}
+          <strong className="text-zinc-700 dark:text-zinc-200">{cancelledCount} canceladas</strong> (Total: {totalCount}).
         </p>
-        <p className="text-xs text-zinc-400 leading-relaxed bg-zinc-950 p-3 rounded-xl border border-zinc-800">
-          🔒 <strong>Regla de negocio:</strong> Toda orden debe estar previamente cancelada para enviarse al basurero. Las órdenes activas se cancelarán automáticamente con el motivo <em className="text-zinc-200">'Limpieza de turno'</em> antes de moverlas.
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed bg-white dark:bg-zinc-950 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800">
+          🔒 <strong>Regla de negocio:</strong> Toda orden debe estar previamente cancelada para enviarse al basurero. Las órdenes activas se cancelarán automáticamente con el motivo <em className="text-zinc-700 dark:text-zinc-200">'Limpieza de turno'</em> antes de moverlas.
         </p>
 
         <div className="flex items-center justify-end gap-2 pt-2">
           <button
             type="button"
-            className="px-4 py-2 text-xs font-bold text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
+            className="px-4 py-2 text-xs font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
             onClick={onCancel}
             disabled={busy}
           >
@@ -3427,7 +3404,7 @@ const OrdersBoard = ({
             <h2 className="mt-1 text-2xl font-black text-zinc-50">
               {viewMode === "active" ? "Pedidos Activos" : "🗑️ Basurero / Archivadas"}
             </h2>
-            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
               {viewMode === "active"
                 ? "Gestión estandarizada con jerarquía clara: Total, Dónde entregar y Fecha de entrega."
                 : "Consulta u opera la restauración de pedidos archivados previamente en Cloudflare D1."}
@@ -3446,14 +3423,14 @@ const OrdersBoard = ({
         </div>
 
         {/* View Mode Switcher & Select All Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pb-3 border-b border-zinc-800">
+        <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pb-3 border-b border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-2">
             <button
               type="button"
               className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
                 viewMode === "active"
                   ? "bg-emerald-500 text-zinc-950 shadow-md"
-                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700"
+                  : "bg-zinc-800/80 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-700"
               }`}
               onClick={() => {
                 setViewMode("active");
@@ -3467,7 +3444,7 @@ const OrdersBoard = ({
               className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
                 viewMode === "archived"
                   ? "bg-rose-600 text-white shadow-md"
-                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700"
+                  : "bg-zinc-800/80 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-700"
               }`}
               onClick={() => {
                 setViewMode("archived");
@@ -3479,10 +3456,10 @@ const OrdersBoard = ({
           </div>
 
           {displayedOrders.length > 0 ? (
-            <label className="flex items-center gap-2 text-xs text-zinc-300 font-semibold cursor-pointer select-none">
+            <label className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300 font-semibold cursor-pointer select-none">
               <input
                 type="checkbox"
-                className="w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-zinc-950"
+                className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-zinc-950"
                 checked={selectedOrderIds.size > 0 && selectedOrderIds.size >= displayedOrders.length}
                 onChange={toggleSelectAll}
               />
@@ -3493,22 +3470,22 @@ const OrdersBoard = ({
 
         {/* Date Filter Bar for Archived View */}
         {viewMode === "archived" ? (
-          <div className="flex flex-wrap items-center gap-3 my-3 p-3 bg-zinc-900/80 border border-zinc-800 rounded-xl">
-            <span className="text-xs font-bold text-zinc-400">Filtrar Basurero por fecha:</span>
-            <label className="flex items-center gap-1.5 text-xs text-zinc-300">
+          <div className="flex flex-wrap items-center gap-3 my-3 p-3 bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl">
+            <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">Filtrar Basurero por fecha:</span>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300">
               <span>Desde:</span>
               <input
                 type="date"
-                className="input text-xs py-1 px-2 bg-zinc-950 border-zinc-800"
+                className="input text-xs py-1 px-2 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800"
                 value={archivedDateFrom}
                 onChange={(e) => setArchivedDateFrom(e.target.value)}
               />
             </label>
-            <label className="flex items-center gap-1.5 text-xs text-zinc-300">
+            <label className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300">
               <span>Hasta:</span>
               <input
                 type="date"
-                className="input text-xs py-1 px-2 bg-zinc-950 border-zinc-800"
+                className="input text-xs py-1 px-2 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800"
                 value={archivedDateTo}
                 onChange={(e) => setArchivedDateTo(e.target.value)}
               />
@@ -3532,10 +3509,10 @@ const OrdersBoard = ({
           />
         ) : null}
 
-        <div className="orders-filters flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-3 pt-3 border-t border-zinc-800">
+        <div className="orders-filters flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
           <label className="orders-search flex-1">
             <input
-              className="input text-sm w-full bg-zinc-900/90 border-zinc-800 focus:border-emerald-500"
+              className="input text-sm w-full bg-zinc-900/90 border-zinc-200 dark:border-zinc-800 focus:border-emerald-500"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="🔍 Buscar por folio, cliente o ubicación..."
@@ -3543,7 +3520,7 @@ const OrdersBoard = ({
           </label>
           {viewMode === "active" ? (
             <div className="orders-filter-group flex items-center gap-2">
-              <span className="text-xs text-zinc-400 font-bold">Estado:</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-bold">Estado:</span>
               <div className="orders-filter-pills flex items-center gap-1 overflow-x-auto">
                 {ordersStatusFilterOptions.map((option) => (
                   <button
@@ -3552,7 +3529,7 @@ const OrdersBoard = ({
                     className={`orders-filter-pill px-2.5 py-1 text-xs font-bold rounded-lg transition-colors ${
                       statusFilter === option.value
                         ? "orders-filter-pill--active bg-emerald-500 text-zinc-950"
-                        : "bg-zinc-800/60 text-zinc-300 hover:bg-zinc-700"
+                        : "bg-zinc-800/60 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-700"
                     }`}
                     onClick={() => setStatusFilter(option.value)}
                   >
@@ -3668,7 +3645,7 @@ const CloseMetricCard = ({
 );
 
 const EmptyCloseState = () => (
-  <Card className="p-3 text-sm text-zinc-600 dark:text-zinc-400">
+  <Card className="p-3 text-sm text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
     No hay datos de cierre para el rango seleccionado.
   </Card>
 );
@@ -3819,7 +3796,7 @@ const OperationalClosePanel = ({
           <div>
             <p className="home-section-label">Cierre de caja</p>
             <h2 className="text-xl font-black">Cierre</h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
               Rango, total, órdenes y exporte sin estados repetidos.
             </p>
           </div>
@@ -3832,7 +3809,7 @@ const OperationalClosePanel = ({
               <Share2 size={15} /> WhatsApp
             </Button>
             <Button
-              className="border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm disabled:opacity-40"
+              className="border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm disabled:opacity-40"
               onClick={() => void downloadRangeCsv()}
               disabled={exporting || !sessionActive}
             >
@@ -3841,7 +3818,7 @@ const OperationalClosePanel = ({
           </div>
         </div>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
+          <label className="text-[11px] text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
             Desde
             <input
               className="input text-xs"
@@ -3850,7 +3827,7 @@ const OperationalClosePanel = ({
               onChange={(event) => setFrom(event.target.value)}
             />
           </label>
-          <label className="text-[11px] text-zinc-600 dark:text-zinc-400">
+          <label className="text-[11px] text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
             Hasta
             <input
               className="input text-xs"
@@ -3859,7 +3836,7 @@ const OperationalClosePanel = ({
               onChange={(event) => setTo(event.target.value)}
             />
           </label>
-          <label className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200">
+          <label className="flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-xs text-zinc-800 dark:text-zinc-700 dark:text-zinc-200">
             <input
               type="checkbox"
               checked={includeTerminal}
@@ -3868,7 +3845,7 @@ const OperationalClosePanel = ({
             Incluir terminales
           </label>
           <Button
-            className="bg-cyan-400 px-3 py-2 text-sm font-bold text-black disabled:opacity-40"
+            className="bg-green-600 text-white dark:bg-green-500 dark:text-black px-3 py-2 text-sm font-bold text-black disabled:opacity-40"
             onClick={() => void loadSummary()}
             disabled={loading || !sessionActive}
           >
@@ -3876,17 +3853,17 @@ const OperationalClosePanel = ({
           </Button>
         </div>
         {!sessionActive ? (
-          <p className="mt-2 rounded bg-amber-500/10 px-2 py-1 text-xs text-amber-700 dark:text-amber-200">
+          <p className="mt-2 rounded bg-amber-500/10 px-2 py-1 text-xs text-amber-700 dark:text-zinc-700 dark:text-zinc-200">
             Sesión expirada. Vuelve a iniciar sesión.
           </p>
         ) : null}
         {error ? (
-          <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-rose-200">
+          <p className="mt-2 rounded bg-rose-500/10 px-2 py-1 text-xs text-rose-700 dark:text-zinc-700 dark:text-zinc-200">
             {error}
           </p>
         ) : null}
         {notice ? (
-          <p className="mt-2 rounded bg-emerald-500/10 px-2 py-1 text-xs text-emerald-700 dark:text-emerald-200">
+          <p className="mt-2 rounded bg-emerald-500/10 px-2 py-1 text-xs text-emerald-700 dark:text-zinc-700 dark:text-zinc-200">
             {notice}
           </p>
         ) : null}
@@ -3900,7 +3877,7 @@ const OperationalClosePanel = ({
       </Card>
 
       {loading ? (
-        <Card className="p-3 text-sm text-zinc-700 dark:text-zinc-300">
+        <Card className="p-3 text-sm text-zinc-700 dark:text-zinc-600 dark:text-zinc-300">
           Cargando cierre operativo…
         </Card>
       ) : null}
@@ -3978,7 +3955,7 @@ const OperationalClosePanel = ({
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
                     Sin métodos en el rango.
                   </p>
                 )}
@@ -3997,7 +3974,7 @@ const OperationalClosePanel = ({
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
                     Sin modos en el rango.
                   </p>
                 )}
@@ -4012,7 +3989,7 @@ const OperationalClosePanel = ({
                 summary.topItems.map((item) => (
                   <div
                     key={item.sku}
-                    className="rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-2 text-xs"
+                    className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-50 dark:bg-zinc-900 p-2 text-xs"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <span className="font-semibold">{item.name}</span>
@@ -4026,7 +4003,7 @@ const OperationalClosePanel = ({
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
                   Sin productos no cancelados en el rango.
                 </p>
               )}
@@ -4040,7 +4017,7 @@ const OperationalClosePanel = ({
                 summary.recentOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="rounded-lg border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-2 text-xs"
+                    className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-50 dark:bg-zinc-900 p-2 text-xs"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -4060,7 +4037,7 @@ const OperationalClosePanel = ({
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
                   Sin órdenes recientes en el rango.
                 </p>
               )}
@@ -4095,7 +4072,7 @@ const PaymentStatusBadge = ({ status }: { status: string }) => {
     : status;
   const tone = isOrderV2PaymentStatus(status)
     ? paymentStatusTone[status]
-    : "border-zinc-500/40 text-zinc-800 dark:text-zinc-200";
+    : "border-zinc-500/40 text-zinc-800 dark:text-zinc-700 dark:text-zinc-200";
   return <StatusPill className={tone}>{label}</StatusPill>;
 };
 
@@ -4255,10 +4232,10 @@ const PaymentDetailModal = ({
             <h2 id="payment-detail-title" className="payments-detail__title">
               {order.folio}
             </h2>
-            <p className="break-words text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <p className="break-words text-sm font-semibold text-zinc-900 dark:text-zinc-900 dark:text-zinc-900 dark:text-zinc-100">
               {order.customer}
             </p>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
               {order.createdAt} · {channelLabel[order.channel]} ·{" "}
               {sourceLabel(order.source)}
             </p>
@@ -4299,11 +4276,11 @@ const PaymentDetailModal = ({
         </div>
 
         <div className="mt-3 space-y-3">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/55 p-3">
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/55 p-3">
             <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
               Resumen del pedido
             </p>
-            <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{getPaymentItemsDigest(order)}</p>
+            <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-600 dark:text-zinc-300">{getPaymentItemsDigest(order)}</p>
             <OrderItems order={order} />
           </div>
 
@@ -4328,13 +4305,13 @@ const PaymentDetailModal = ({
           ) : null}
 
           {ticketVisible ? (
-            <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-3">
+            <div className="rounded-2xl border border-green-400/20 bg-green-50 dark:bg-green-900/20 p-3">
               <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-900 dark:text-cyan-800 dark:text-cyan-100">
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-900 dark:text-cyan-800 dark:text-zinc-900 dark:text-zinc-100">
                     Ticket visual
                   </p>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
                     Preview compacto para validar folio, lugar, pago y total.
                   </p>
                 </div>
@@ -4349,7 +4326,7 @@ const PaymentDetailModal = ({
             </div>
           ) : null}
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/55 p-3">
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/55 p-3">
             <label className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
               Nota para seguimiento
               <textarea
@@ -4361,14 +4338,14 @@ const PaymentDetailModal = ({
               />
             </label>
             {noteWithoutLocation ? (
-              <p className="mt-2 text-[11px] text-zinc-600 dark:text-zinc-400">
+              <p className="mt-2 text-[11px] text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
                 Nota actual: {noteWithoutLocation}
               </p>
             ) : null}
           </div>
 
-          <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-3">
-            <label className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-900 dark:text-cyan-800 dark:text-cyan-100">
+          <div className="rounded-2xl border border-green-400/20 bg-green-50 dark:bg-green-900/20 p-3">
+            <label className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-900 dark:text-cyan-800 dark:text-zinc-900 dark:text-zinc-100">
               Mensaje listo para WhatsApp
               <textarea
                 className="input mt-2 min-h-48 text-xs leading-5"
@@ -4377,7 +4354,7 @@ const PaymentDetailModal = ({
               />
             </label>
             {!phone ? (
-              <p className="mt-2 rounded-lg bg-amber-400/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-100">
+              <p className="mt-2 rounded-lg bg-amber-400/10 px-3 py-2 text-xs text-amber-800 dark:text-zinc-900 dark:text-zinc-100">
                 Telefono invalido para abrir WhatsApp desde esta vista.
               </p>
             ) : null}
@@ -4440,7 +4417,7 @@ const PaymentDetailModal = ({
 
         {notice ? (
           <p
-            className={`mt-3 rounded-xl px-3 py-2 text-xs ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-200" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"}`}
+            className={`mt-3 rounded-xl px-3 py-2 text-xs ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-zinc-700 dark:text-zinc-200" : "bg-emerald-500/10 text-emerald-700 dark:text-zinc-700 dark:text-zinc-200"}`}
           >
             {notice.message}
           </p>
@@ -4693,7 +4670,7 @@ const PaymentNotesPanel = ({
             </p>
           </div>
           <Button
-            className="border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-1.5 text-xs disabled:opacity-40"
+            className="border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-50 dark:bg-zinc-900 px-3 py-1.5 text-xs disabled:opacity-40"
             onClick={() => runtime.reload(true)}
             disabled={runtime.loading || !runtime.sessionActive}
           >
@@ -4773,7 +4750,7 @@ const PaymentNotesPanel = ({
         </div>
 
         {!runtime.sessionActive ? (
-          <p className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-100">
+          <p className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-800 dark:text-zinc-900 dark:text-zinc-100">
             Inicia sesión para operar pagos y guardar seguimiento.
           </p>
         ) : null}
@@ -4793,7 +4770,7 @@ const PaymentNotesPanel = ({
           action={
             filter !== "all" || search.trim() || rangeFilter !== "today" || selectedDate !== "today" ? (
               <Button
-                className="border border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-xs"
+                className="border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-xs"
                 onClick={() => {
                   setFilter("all");
                   setSelectedDate("today");
@@ -4820,18 +4797,18 @@ const PaymentNotesPanel = ({
               <div className="payments-card__head">
                 <div className="min-w-0">
                   <p className="payments-card__folio">{order.folio}</p>
-                  <p className="break-words text-base font-black text-zinc-900 dark:text-zinc-100">
+                  <p className="break-words text-base font-black text-zinc-900 dark:text-zinc-900 dark:text-zinc-900 dark:text-zinc-100">
                     {details.cleanCustomerName}
                   </p>
                   {details.scheduledDeliveryTime ? (
-                    <p className="text-xs font-bold text-cyan-600 dark:text-cyan-400 mt-0.5">
+                    <p className="text-xs font-bold text-cyan-600 dark:text-green-600 dark:text-green-400 mt-0.5">
                       {details.deliveryDateLabel}: {details.scheduledDeliveryTime}
                     </p>
                   ) : null}
                 </div>
                 <div className="payments-card__amount text-right">
                   <span className="text-xs text-zinc-500 uppercase tracking-wider block">Total</span>
-                  <strong className="text-xl font-black text-emerald-600 dark:text-emerald-400">{formatCurrency(order.total)}</strong>
+                  <strong className="text-xl font-black text-emerald-600 dark:text-green-600 dark:text-green-400">{formatCurrency(order.total)}</strong>
                 </div>
               </div>
 
@@ -4839,7 +4816,7 @@ const PaymentNotesPanel = ({
                 <div className="flex flex-wrap gap-1.5 items-center">
                   <PaymentStatusBadge status={order.paymentState} />
                   <span className="orders-location-chip font-bold">📍 {location}</span>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-600 dark:text-zinc-300">
                     {getPaymentMethodLabel(order.paymentMethod)}
                   </span>
                 </div>
@@ -4864,7 +4841,7 @@ const PaymentNotesPanel = ({
                   )}
                   {order.customerPhone ? (
                     <Button
-                      className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-2.5 py-1.5 h-auto flex items-center gap-1"
+                      className="bg-zinc-800 hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-xs px-2.5 py-1.5 h-auto flex items-center gap-1"
                       onClick={() => openPaymentWhatsapp(order)}
                     >
                       WhatsApp
@@ -4880,7 +4857,7 @@ const PaymentNotesPanel = ({
               </div>
               {notice ? (
                 <p
-                  className={`mt-2 rounded px-2 py-1 text-xs ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-200" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"}`}
+                  className={`mt-2 rounded px-2 py-1 text-xs ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-zinc-700 dark:text-zinc-200" : "bg-emerald-500/10 text-emerald-700 dark:text-zinc-700 dark:text-zinc-200"}`}
                 >
                   {notice.message}
                 </p>
@@ -5075,21 +5052,21 @@ const HistoryPanel = ({
 
   return (
     <section className="space-y-4">
-      <Card className="p-4 border-zinc-800 bg-zinc-950">
+      <Card className="p-4 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div>
             <p className="home-section-label">Módulo de Administración</p>
-            <h3 className="text-xl font-black text-zinc-100">
+            <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-900 dark:text-zinc-100">
               {activeTab === "historial" ? "Historial Terminal" : "🗑️ Basurero de Órdenes (Soft-Delete)"}
             </h3>
-            <p className="text-xs text-zinc-400 mt-0.5">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
               {activeTab === "historial"
                 ? "Consulta pedidos entregados y cancelados. Puedes enviarlos al basurero para limpiar métricas."
                 : "Audita órdenes archivadas, filtra por fechas y restaura cualquier pedido a la vista operativa."}
             </p>
           </div>
           <Button
-            className="btn-sm bg-zinc-900 border-zinc-700 text-xs"
+            className="btn-sm bg-zinc-50 dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-xs"
             onClick={() => {
               if (activeTab === "basurero") void loadArchivedOrders();
               else runtime.reload(true);
@@ -5101,14 +5078,14 @@ const HistoryPanel = ({
         </div>
 
         {/* Mode Switcher Tabs & Select All */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-800">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-2">
             <button
               type="button"
               className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
                 activeTab === "historial"
                   ? "bg-emerald-500 text-zinc-950 shadow-md"
-                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700"
+                  : "bg-zinc-800/80 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-700"
               }`}
               onClick={() => {
                 setActiveTab("historial");
@@ -5122,7 +5099,7 @@ const HistoryPanel = ({
               className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
                 activeTab === "basurero"
                   ? "bg-rose-600 text-white shadow-md"
-                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700"
+                  : "bg-zinc-800/80 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-700"
               }`}
               onClick={() => {
                 setActiveTab("basurero");
@@ -5134,10 +5111,10 @@ const HistoryPanel = ({
           </div>
 
           {currentDisplayList.length > 0 ? (
-            <label className="flex items-center gap-2 text-xs text-zinc-300 font-semibold cursor-pointer select-none">
+            <label className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300 font-semibold cursor-pointer select-none">
               <input
                 type="checkbox"
-                className="w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-emerald-500"
+                className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-emerald-500 focus:ring-emerald-500"
                 checked={selectedOrderIds.size > 0 && selectedOrderIds.size >= currentDisplayList.length}
                 onChange={toggleSelectAll}
               />
@@ -5148,22 +5125,22 @@ const HistoryPanel = ({
 
         {/* Date Filter for Basurero View */}
         {activeTab === "basurero" ? (
-          <div className="flex flex-wrap items-center gap-3 mt-3 p-3 bg-zinc-900/80 border border-zinc-800 rounded-xl">
-            <span className="text-xs font-bold text-zinc-400">Filtrar por rango de fecha:</span>
-            <label className="flex items-center gap-1.5 text-xs text-zinc-300">
+          <div className="flex flex-wrap items-center gap-3 mt-3 p-3 bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl">
+            <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">Filtrar por rango de fecha:</span>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300">
               <span>Desde:</span>
               <input
                 type="date"
-                className="input text-xs py-1 px-2 bg-zinc-950 border-zinc-800"
+                className="input text-xs py-1 px-2 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800"
                 value={archivedDateFrom}
                 onChange={(e) => setArchivedDateFrom(e.target.value)}
               />
             </label>
-            <label className="flex items-center gap-1.5 text-xs text-zinc-300">
+            <label className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300">
               <span>Hasta:</span>
               <input
                 type="date"
-                className="input text-xs py-1 px-2 bg-zinc-950 border-zinc-800"
+                className="input text-xs py-1 px-2 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800"
                 value={archivedDateTo}
                 onChange={(e) => setArchivedDateTo(e.target.value)}
               />
@@ -5181,7 +5158,7 @@ const HistoryPanel = ({
         {/* Search Bar */}
         <div className="mt-3">
           <input
-            className="input text-sm w-full bg-zinc-900/90 border-zinc-800 focus:border-emerald-500"
+            className="input text-sm w-full bg-zinc-900/90 border-zinc-200 dark:border-zinc-800 focus:border-emerald-500"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="🔍 Buscar por folio, cliente o teléfono..."
@@ -5191,7 +5168,7 @@ const HistoryPanel = ({
 
       {/* List Rendering */}
       {currentDisplayList.length === 0 ? (
-        <Card className="p-6 text-center text-zinc-400">
+        <Card className="p-6 text-center text-zinc-500 dark:text-zinc-400">
           <p className="text-sm">
             {activeTab === "historial"
               ? "No hay pedidos en el historial terminal con los filtros actuales."
@@ -5212,20 +5189,20 @@ const HistoryPanel = ({
                   <div className="flex items-start gap-3 min-w-0">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 mt-1 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer shrink-0"
+                      className="w-4 h-4 mt-1 rounded border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer shrink-0"
                       checked={isSelected}
                       onChange={() => toggleSelectOrder(o.id)}
                     />
                     <div className="min-w-0">
-                      <p className="break-words font-bold text-sm text-zinc-100">
-                        {o.folio} · {o.customer} · <span className="text-zinc-400 font-normal">{o.createdAt}</span>
+                      <p className="break-words font-bold text-sm text-zinc-900 dark:text-zinc-900 dark:text-zinc-100">
+                        {o.folio} · {o.customer} · <span className="text-zinc-500 dark:text-zinc-400 font-normal">{o.createdAt}</span>
                       </p>
-                      <p className="text-xs text-emerald-400 font-bold mt-0.5">Total: {formatCurrency(o.total)}</p>
+                      <p className="text-xs text-green-600 dark:text-green-400 font-bold mt-0.5">Total: {formatCurrency(o.total)}</p>
                       {o.status === "cancelled" ? (
                         <p className="mt-0.5 text-xs text-rose-400">Cancelado por operador</p>
                       ) : null}
                       {cancellationReason ? (
-                        <p className="mt-0.5 text-xs text-amber-400">Razón: {cancellationReason}</p>
+                        <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400">Razón: {cancellationReason}</p>
                       ) : null}
                     </div>
                   </div>
@@ -5320,7 +5297,7 @@ const TicketPreviewItems = ({ order }: { order: InternalOrder }) => (
               {item.qty}x {item.name}
             </p>
             {notes.length ? (
-              <p className="mt-1 break-words text-xs text-zinc-600 dark:text-zinc-400">
+              <p className="mt-1 break-words text-xs text-zinc-600 dark:text-zinc-500 dark:text-zinc-400">
                 {notes.join(" · ")}
               </p>
             ) : null}
@@ -5393,7 +5370,7 @@ const OrderTicketPreview = ({
 
       <div className="orders-ticket-preview__body">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700 dark:text-amber-200">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700 dark:text-zinc-700 dark:text-zinc-200">
             Resumen del pedido
           </p>
           <TicketPreviewItems order={order} />
@@ -5666,7 +5643,7 @@ export function InternalChekeoApp() {
   const [selected, setSelected] = useState<InternalOrder | null>(null);
   const [cancellationRequest, setCancellationRequest] =
     useState<CancellationRequest>(null);
-  const [ordersSource, setOrdersSource] = useState<OrdersSource>("mock");
+  const ordersSource: OrdersSource = "d1";
   const [checkingSession, setCheckingSession] = useState(true);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
@@ -5802,7 +5779,7 @@ export function InternalChekeoApp() {
     setLogged(false);
     setSessionState("expired");
     setOrders([]);
-    setOrdersSource("mock");
+
     setOrdersError("Sesión expirada. Vuelve a iniciar sesión.");
     setOrdersNotice(null);
     setSelected(null);
@@ -5895,7 +5872,7 @@ export function InternalChekeoApp() {
             mappedOrders.find((order) => order.id === current.id) ?? current
           );
         });
-        setOrdersSource("d1");
+
         setLastUpdated(formatOrderRefreshTime(reason));
         setLimitWarning(
           mappedOrders.length >= requestedLimit
@@ -5924,7 +5901,7 @@ export function InternalChekeoApp() {
           return;
         }
         setOrders([]);
-        setOrdersSource("fallback");
+
         setLimitWarning(null);
         setOrdersError(message);
       } finally {
@@ -6375,7 +6352,7 @@ export function InternalChekeoApp() {
           loggedRef.current = false;
           setLogged(false);
           setSessionState("inactive");
-          setOrdersSource("mock");
+
           setOrders([]);
           setOrdersNotice(null);
           setOrdersError(null);

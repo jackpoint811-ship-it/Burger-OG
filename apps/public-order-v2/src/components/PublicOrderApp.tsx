@@ -441,12 +441,20 @@ const QuestButton = ({ children, className = "", ...props }: React.ButtonHTMLAtt
 
 const normalizeMenuLink = (value: string) => value.trim().toUpperCase();
 
-const LoadingOverlay = ({ loading }: { loading: boolean }) => loading ? (
-  <div className="boot-overlay" role="status" aria-live="polite">
-    <div className="boot-window">
-      <h1>Burgers.exe</h1>
-      <p>Cargando menú actualizado… Si tarda unos segundos, estamos sincronizando la quest.</p>
-      <div className="boot-bar"><span /></div>
+const SkeletonLoader = ({ loading }: { loading: boolean }) => loading ? (
+  <div className="skeleton-overlay" role="status" aria-live="polite">
+    <div className="skeleton-header">
+      <div className="skeleton-pulse skeleton-title" />
+      <div className="skeleton-pulse skeleton-subtitle" />
+    </div>
+    <div className="skeleton-grid">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="skeleton-card">
+          <div className="skeleton-pulse skeleton-image" />
+          <div className="skeleton-pulse skeleton-text" />
+          <div className="skeleton-pulse skeleton-text-short" />
+        </div>
+      ))}
     </div>
   </div>
 ) : null;
@@ -1981,7 +1989,7 @@ export function PublicOrderApp() {
     if (loadingMenu) {
       return (
         <main className="app-shell">
-          <LoadingOverlay loading={true} />
+          <SkeletonLoader loading={true} />
         </main>
       );
     }
@@ -2360,7 +2368,7 @@ export function PublicOrderApp() {
 
   return (
     <main className={`app-shell public-section-${section} ${showPersistentCta ? "has-persistent-cta" : ""}`}>
-      <LoadingOverlay loading={showBoot || loadingMenu} />
+      <SkeletonLoader loading={showBoot || loadingMenu} />
       <AppHeader section={section} count={count} total={total} builder={builder} />
       {isPreviewMode ? <PublicPreviewBanner /> : null}
       {section === "menu" ? <MenuSection menuData={menuData} raffleCampaign={raffleCampaign} onExplore={openInfoDialog} onStart={beginQuest} reduce={reduce} /> : null}

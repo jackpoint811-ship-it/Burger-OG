@@ -21,7 +21,7 @@ export function CatalogV3Panel() {
   return (
     <div className="v3-control-shell space-y-6">
       {/* ── Sub-menú de Navegación Unificado V3 ── */}
-      <div className="sticky top-0 z-30 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800 py-3 px-4 shadow-lg">
+      <div className="sticky top-0 z-30 bg-white dark:bg-zinc-950 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 py-3 px-4 shadow-lg">
         <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto overflow-x-auto">
           <div className="flex items-center gap-1.5 shrink-0">
             {NAV_TABS.map((tab) => {
@@ -34,7 +34,7 @@ export function CatalogV3Panel() {
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0 ${
                     isActive
                       ? 'bg-amber-400 text-zinc-950 shadow-md scale-[1.02]'
-                      : 'bg-zinc-900/80 border border-zinc-800/80 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100'
+                      : 'bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-800 hover:text-zinc-900 dark:text-zinc-900 dark:text-zinc-100'
                   }`}
                 >
                   <span>{tab.icon}</span>

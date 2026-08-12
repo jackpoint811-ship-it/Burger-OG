@@ -306,8 +306,8 @@ export function CatalogAdminPanel() {
     return (menu?.promos ?? []).filter((promo) => !q || [promo.id, promo.title, promo.description, promo.badge, promo.promoLabel].join(' ').toLowerCase().includes(q));
   }, [menu, promoQuery]);
 
-  const sourceLabel = menu?.source === 'd1' ? 'Listo para editar' : menu?.source === 'fallback' ? 'Vista local' : 'Vista local';
-  const canEdit = Boolean(menu?.source === 'd1');
+  const sourceLabel = 'Listo para editar';
+  const canEdit = true;
   const imagePreviewUrl = getAssetUrl(form?.imageUrl, form?.imageKey);
   const promoImagePreviewUrl = getAssetUrl(promoForm?.imageUrl, promoForm?.imageKey);
   const bannerImagePreviewUrl = getAssetUrl(bannerForm.imageUrl, bannerForm.imageKey);
@@ -490,7 +490,7 @@ export function CatalogAdminPanel() {
   const onUploadImage = async () => {
     if (!editing || !form) return;
 
-    if (menu?.source !== 'd1') { setImageError('La carga de imágenes requiere catálogo editable'); return; }
+
     const fileError = validateSelectedFile(selectedFile);
     if (fileError || !selectedFile) { setImageError(fileError); return; }
 
@@ -517,7 +517,7 @@ export function CatalogAdminPanel() {
   const onPromoUploadImage = async () => {
     if (!editingPromo || !promoForm) return;
 
-    if (menu?.source !== 'd1') { setPromoImageError('La carga de imágenes requiere catálogo editable'); return; }
+
     const fileError = validateSelectedFile(selectedPromoFile);
     if (fileError || !selectedPromoFile) { setPromoImageError(fileError); return; }
 
@@ -544,7 +544,7 @@ export function CatalogAdminPanel() {
   const onRemoveImage = async () => {
     if (!editing || !form) return;
 
-    if (menu?.source !== 'd1') { setImageError('La eliminación de imágenes requiere catálogo editable'); return; }
+
 
     setRemovingImage(true);
     setImageError(null);
@@ -567,7 +567,7 @@ export function CatalogAdminPanel() {
   const onPromoRemoveImage = async () => {
     if (!editingPromo || !promoForm) return;
 
-    if (menu?.source !== 'd1') { setPromoImageError('La eliminación de imágenes requiere catálogo editable'); return; }
+
 
     setPromoRemovingImage(true);
     setPromoImageError(null);
@@ -700,7 +700,7 @@ export function CatalogAdminPanel() {
   const onPromoSave = async () => {
     if (!editingPromo || !promoForm || promoValidationError) return;
 
-    if (menu?.source !== 'd1') { setPromoSaveError('La edición requiere catálogo editable'); return; }
+
 
     setPromoSaving(true);
     setPromoSaveError(null);
@@ -941,9 +941,9 @@ export function CatalogAdminPanel() {
   const saveIngredient = async () => { const name = ingredientForm.name.trim(); const unitPriceCents = pesoInputToCents(ingredientForm.unitPrice); const sortOrder = Number(ingredientForm.sortOrder); if (name.length < 2) { setIngredientError('Captura un nombre de ingrediente.'); return; } if (ingredientForm.unitPrice.trim() && unitPriceCents === null) { setIngredientError('Precio por unidad inválido.'); return; } if (!Number.isInteger(sortOrder)) { setIngredientError('Orden inválido.'); return; } setIngredientSaving(true); setIngredientError(null); try { const payload = { name, unit: ingredientForm.unit, unitPriceCents, isActive: ingredientForm.isActive, sortOrder }; if (ingredientForm.id) await updateIngredientV2Admin(ingredientForm.id, payload); else await createIngredientV2Admin(payload); setIngredientForm(emptyIngredientForm()); setNotice('Ingrediente cuantificable guardado.'); await loadIngredients(); } catch (err) { setIngredientError(err instanceof Error ? err.message : 'No se pudo guardar ingrediente'); } finally { setIngredientSaving(false); } };
   const toggleIngredientActive = async (ingredient: IngredientV2) => { setIngredientError(null); try { await updateIngredientV2Admin(ingredient.id, { isActive: !ingredient.isActive }); await loadIngredients(); } catch (err) { setIngredientError(err instanceof Error ? err.message : 'No se pudo cambiar activo/inactivo'); } };
   const saveRecipe = async () => { if (!selectedRecipeSku) return; const recipes = recipeRows.map((row) => ({ ingredientId: row.ingredientId, quantityPerUnit: Number(row.quantityPerUnit) })).filter((row) => row.ingredientId && Number.isFinite(row.quantityPerUnit) && row.quantityPerUnit > 0); setRecipeSaving(true); setRecipeError(null); try { const saved = await saveProductRecipeV2Admin(selectedRecipeSku, recipes); setRecipeRows(saved.map(recipeToFormRow)); setNotice('Receta aproximada por producto guardada.'); } catch (err) { setRecipeError(err instanceof Error ? err.message : 'No se pudo guardar receta aproximada'); } finally { setRecipeSaving(false); } };
-  const ingredientsPanel = catalogTab === 'ingredients' ? <div className='grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'><Card className='border-emerald-500/20 bg-zinc-950/90 p-4'><h3 className='text-lg font-black text-emerald-100'>Ingredientes cuantificables</h3><p className='mt-1 text-sm text-zinc-400'>Administra insumos medibles como carne, pan, queso, tocino, papas o aros.</p><div className='mt-4 grid gap-3'><label className='text-xs uppercase tracking-widest text-zinc-300'>Nombre<input className='input md:mt-1' value={ingredientForm.name} onChange={(e) => setIngredientForm({ ...ingredientForm, name: e.target.value })} placeholder='Carne smash' /></label><div className='grid gap-3 sm:grid-cols-2'><label className='text-xs uppercase tracking-widest text-zinc-300'>Unidad<select className='input md:mt-1' value={ingredientForm.unit} onChange={(e) => setIngredientForm({ ...ingredientForm, unit: e.target.value })}>{INGREDIENT_UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}</select></label><label className='text-xs uppercase tracking-widest text-zinc-300'>Costo estimado<input className='input md:mt-1' inputMode='decimal' value={ingredientForm.unitPrice} onChange={(e) => setIngredientForm({ ...ingredientForm, unitPrice: e.target.value })} placeholder='0.00 opcional' /></label></div><div className='grid gap-3 sm:grid-cols-2'><label className='text-xs uppercase tracking-widest text-zinc-300'>Orden<input className='input md:mt-1' inputMode='numeric' value={ingredientForm.sortOrder} onChange={(e) => setIngredientForm({ ...ingredientForm, sortOrder: e.target.value })} /></label><label className='flex min-h-11 items-center gap-2 text-sm text-zinc-200'><input type='checkbox' checked={ingredientForm.isActive} onChange={(e) => setIngredientForm({ ...ingredientForm, isActive: e.target.checked })} /> Activo</label></div>{ingredientError ? <p className='rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs text-rose-100'>{ingredientError}</p> : null}<div className='flex gap-2'><Button className='flex-1 border border-zinc-700 bg-zinc-900' onClick={() => setIngredientForm(emptyIngredientForm())}>Limpiar</Button><Button className='flex-1 bg-emerald-300 text-emerald-950 disabled:opacity-40' disabled={ingredientSaving} onClick={saveIngredient}>{ingredientSaving ? 'Guardando…' : ingredientForm.id ? 'Guardar edición' : 'Crear ingrediente'}</Button></div></div><div className='mt-4 space-y-2'>{ingredientsLoading ? <p className='text-sm text-zinc-400'>Cargando ingredientes…</p> : ingredients.map((ingredient) => <div key={ingredient.id} className='rounded-xl border border-zinc-800 bg-zinc-900/70 p-3'><div className='flex items-start justify-between gap-2'><div><p className='font-bold text-zinc-100'>{ingredient.name}</p><p className='text-xs text-zinc-400'>{ingredient.unit} · {ingredient.unitPriceCents == null ? 'sin costo estimado' : `$${(ingredient.unitPriceCents / 100).toFixed(2)}`} · orden {ingredient.sortOrder}</p></div><span className={`rounded-full border px-2 py-1 text-[11px] font-bold ${ingredient.isActive ? 'border-emerald-400/40 text-emerald-200' : 'border-zinc-600 text-zinc-400'}`}>{ingredient.isActive ? 'Activo' : 'Inactivo'}</span></div><div className='mt-2 flex gap-2'><Button className='flex-1 border border-zinc-700 bg-zinc-950' onClick={() => setIngredientForm(ingredientToForm(ingredient))}>Editar</Button><Button className='flex-1 border border-zinc-700 bg-zinc-950' onClick={() => void toggleIngredientActive(ingredient)}>{ingredient.isActive ? 'Desactivar' : 'Activar'}</Button></div></div>)}</div></Card><Card className='border-cyan-500/20 bg-zinc-950/90 p-4'><h3 className='text-lg font-black text-cyan-100'>Receta aproximada por producto</h3><p className='mt-1 text-sm text-zinc-400'>Asigna ingredientes y cantidad por producto. No modifica stock ni precios del menú.</p><label className='mt-4 block text-xs uppercase tracking-widest text-zinc-300'>Producto<select className='input md:mt-1' value={selectedRecipeSku} onChange={(e) => setSelectedRecipeSku(e.target.value)}>{productOptions.map((item) => <option key={item.sku} value={item.sku}>{item.name} · {item.category}</option>)}</select></label><div className='mt-4 space-y-2'>{recipeLoading ? <p className='text-sm text-zinc-400'>Cargando receta…</p> : recipeRows.map((row, index) => <div key={`${row.ingredientId}-${index}`} className='grid gap-2 rounded-xl border border-zinc-800 bg-zinc-900/70 p-3 sm:grid-cols-[1fr_0.6fr_auto]'><label className='text-xs uppercase tracking-widest text-zinc-300'>Ingrediente<select className='input md:mt-1' value={row.ingredientId} onChange={(e) => setRecipeRows((rows) => rows.map((entry, i) => i === index ? { ...entry, ingredientId: e.target.value } : entry))}><option value=''>Selecciona</option>{ingredients.filter((ingredient) => ingredient.isActive).map((ingredient) => <option key={ingredient.id} value={ingredient.id}>{ingredient.name} · {ingredient.unit}</option>)}</select></label><label className='text-xs uppercase tracking-widest text-zinc-300'>Cantidad por producto<input className='input md:mt-1' inputMode='decimal' value={row.quantityPerUnit} onChange={(e) => setRecipeRows((rows) => rows.map((entry, i) => i === index ? { ...entry, quantityPerUnit: e.target.value } : entry))} placeholder='1' /></label><Button className='min-h-11 self-end border border-rose-700 bg-zinc-950 text-rose-200' onClick={() => setRecipeRows((rows) => rows.filter((_, i) => i !== index))}>Quitar</Button></div>)}</div>{recipeError ? <p className='mt-3 rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs text-rose-100'>{recipeError}</p> : null}<div className='mt-4 flex flex-col gap-2 sm:flex-row'><Button className='flex-1 border border-zinc-700 bg-zinc-900' onClick={() => setRecipeRows((rows) => [...rows, { ingredientId: '', quantityPerUnit: '' }])}>Agregar ingrediente</Button><Button className='flex-1 bg-cyan-300 text-cyan-950 disabled:opacity-40' disabled={recipeSaving || !selectedRecipeSku} onClick={saveRecipe}>{recipeSaving ? 'Guardando…' : 'Guardar receta'}</Button></div>{!recipeRows.length ? <p className='mt-4 rounded-xl border border-dashed border-zinc-700 p-4 text-sm text-zinc-400'>Este producto todavía no tiene receta aproximada.</p> : null}</Card></div> : null;
+  const ingredientsPanel = catalogTab === 'ingredients' ? <div className='grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'><Card className='border-emerald-500/20 bg-white dark:bg-zinc-950 p-4'><h3 className='text-lg font-black text-zinc-900 dark:text-zinc-100'>Ingredientes cuantificables</h3><p className='mt-1 text-sm text-zinc-500 dark:text-zinc-400'>Administra insumos medibles como carne, pan, queso, tocino, papas o aros.</p><div className='mt-4 grid gap-3'><label className='text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>Nombre<input className='input md:mt-1' value={ingredientForm.name} onChange={(e) => setIngredientForm({ ...ingredientForm, name: e.target.value })} placeholder='Carne smash' /></label><div className='grid gap-3 sm:grid-cols-2'><label className='text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>Unidad<select className='input md:mt-1' value={ingredientForm.unit} onChange={(e) => setIngredientForm({ ...ingredientForm, unit: e.target.value })}>{INGREDIENT_UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}</select></label><label className='text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>Costo estimado<input className='input md:mt-1' inputMode='decimal' value={ingredientForm.unitPrice} onChange={(e) => setIngredientForm({ ...ingredientForm, unitPrice: e.target.value })} placeholder='0.00 opcional' /></label></div><div className='grid gap-3 sm:grid-cols-2'><label className='text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>Orden<input className='input md:mt-1' inputMode='numeric' value={ingredientForm.sortOrder} onChange={(e) => setIngredientForm({ ...ingredientForm, sortOrder: e.target.value })} /></label><label className='flex min-h-11 items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200'><input type='checkbox' checked={ingredientForm.isActive} onChange={(e) => setIngredientForm({ ...ingredientForm, isActive: e.target.checked })} /> Activo</label></div>{ingredientError ? <p className='rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100'>{ingredientError}</p> : null}<div className='flex gap-2'><Button className='flex-1 border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900' onClick={() => setIngredientForm(emptyIngredientForm())}>Limpiar</Button><Button className='flex-1 bg-green-600 text-white dark:bg-green-500 dark:text-black  disabled:opacity-40' disabled={ingredientSaving} onClick={saveIngredient}>{ingredientSaving ? 'Guardando…' : ingredientForm.id ? 'Guardar edición' : 'Crear ingrediente'}</Button></div></div><div className='mt-4 space-y-2'>{ingredientsLoading ? <p className='text-sm text-zinc-500 dark:text-zinc-400'>Cargando ingredientes…</p> : ingredients.map((ingredient) => <div key={ingredient.id} className='rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3'><div className='flex items-start justify-between gap-2'><div><p className='font-bold text-zinc-900 dark:text-zinc-900 dark:text-zinc-100'>{ingredient.name}</p><p className='text-xs text-zinc-500 dark:text-zinc-400'>{ingredient.unit} · {ingredient.unitPriceCents == null ? 'sin costo estimado' : `$${(ingredient.unitPriceCents / 100).toFixed(2)}`} · orden {ingredient.sortOrder}</p></div><span className={`rounded-full border px-2 py-1 text-[11px] font-bold ${ingredient.isActive ? 'border-emerald-400/40 text-zinc-700 dark:text-zinc-200' : 'border-zinc-600 text-zinc-500 dark:text-zinc-400'}`}>{ingredient.isActive ? 'Activo' : 'Inactivo'}</span></div><div className='mt-2 flex gap-2'><Button className='flex-1 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950' onClick={() => setIngredientForm(ingredientToForm(ingredient))}>Editar</Button><Button className='flex-1 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950' onClick={() => void toggleIngredientActive(ingredient)}>{ingredient.isActive ? 'Desactivar' : 'Activar'}</Button></div></div>)}</div></Card><Card className='border-green-500/20 bg-white dark:bg-zinc-950 p-4'><h3 className='text-lg font-black text-zinc-900 dark:text-zinc-100'>Receta aproximada por producto</h3><p className='mt-1 text-sm text-zinc-500 dark:text-zinc-400'>Asigna ingredientes y cantidad por producto. No modifica stock ni precios del menú.</p><label className='mt-4 block text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>Producto<select className='input md:mt-1' value={selectedRecipeSku} onChange={(e) => setSelectedRecipeSku(e.target.value)}>{productOptions.map((item) => <option key={item.sku} value={item.sku}>{item.name} · {item.category}</option>)}</select></label><div className='mt-4 space-y-2'>{recipeLoading ? <p className='text-sm text-zinc-500 dark:text-zinc-400'>Cargando receta…</p> : recipeRows.map((row, index) => <div key={`${row.ingredientId}-${index}`} className='grid gap-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3 sm:grid-cols-[1fr_0.6fr_auto]'><label className='text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>Ingrediente<select className='input md:mt-1' value={row.ingredientId} onChange={(e) => setRecipeRows((rows) => rows.map((entry, i) => i === index ? { ...entry, ingredientId: e.target.value } : entry))}><option value=''>Selecciona</option>{ingredients.filter((ingredient) => ingredient.isActive).map((ingredient) => <option key={ingredient.id} value={ingredient.id}>{ingredient.name} · {ingredient.unit}</option>)}</select></label><label className='text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>Cantidad por producto<input className='input md:mt-1' inputMode='decimal' value={row.quantityPerUnit} onChange={(e) => setRecipeRows((rows) => rows.map((entry, i) => i === index ? { ...entry, quantityPerUnit: e.target.value } : entry))} placeholder='1' /></label><Button className='min-h-11 self-end border border-rose-700 bg-white dark:bg-zinc-950 text-zinc-700 dark:text-zinc-200' onClick={() => setRecipeRows((rows) => rows.filter((_, i) => i !== index))}>Quitar</Button></div>)}</div>{recipeError ? <p className='mt-3 rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100'>{recipeError}</p> : null}<div className='mt-4 flex flex-col gap-2 sm:flex-row'><Button className='flex-1 border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900' onClick={() => setRecipeRows((rows) => [...rows, { ingredientId: '', quantityPerUnit: '' }])}>Agregar ingrediente</Button><Button className='flex-1 bg-green-600 text-white dark:bg-green-500 dark:text-black  disabled:opacity-40' disabled={recipeSaving || !selectedRecipeSku} onClick={saveRecipe}>{recipeSaving ? 'Guardando…' : 'Guardar receta'}</Button></div>{!recipeRows.length ? <p className='mt-4 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-4 text-sm text-zinc-500 dark:text-zinc-400'>Este producto todavía no tiene receta aproximada.</p> : null}</Card></div> : null;
 
-  const bannersPanel = <Card className='p-3'><div className='grid gap-4'><div><p className='text-xs font-black uppercase tracking-[0.2em] text-cyan-200'>Main Quest</p><h4 className='text-lg font-black text-cyan-50'>Banners de Main Quest</h4><p className='muted'>Estos banners aparecen en la pantalla Main Quest de la app pública.</p></div><div className='grid gap-3 md:grid-cols-3'>{mainQuestBannerCards.map((slot) => <button key={slot.categoryKey} type='button' className={`min-h-11 rounded-xl border p-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-400 ${slot.selected ? 'border-cyan-300 bg-cyan-500/15 shadow-[0_0_18px_rgba(34,211,238,0.18)]' : 'border-zinc-800 bg-zinc-900/70 hover:border-cyan-500/60'}`} onClick={() => selectBannerCategory(slot.categoryKey)} aria-pressed={slot.selected}><div className='image-preview sm:w-full'>{slot.previewUrl ? <img src={slot.previewUrl} alt={`Preview del banner de ${slot.label}`} loading='lazy' decoding='async' /> : <span>Sin banner</span>}</div><div className='mt-3 min-w-0 space-y-1'><div className='flex flex-wrap items-center gap-2'><span className='text-sm font-black text-zinc-100'>{slot.label}</span><span className={`rounded-full px-2 py-1 text-[11px] font-bold uppercase tracking-wide ${slot.configured ? 'bg-emerald-500/15 text-emerald-200' : 'bg-amber-500/15 text-amber-200'}`}>{slot.configured ? 'Banner configurado' : 'Sin banner, la app usará fallback'}</span></div><p className='text-xs text-zinc-400'>Categoría: {slot.categoryKey}</p><p className='truncate text-xs text-cyan-100'>Título: {slot.banner?.title || 'Sin título configurado'}</p><p className='line-clamp-2 text-xs text-zinc-400'>Subtítulo: {slot.banner?.subtitle || 'Sin subtítulo configurado'}</p><p className='text-xs text-emerald-200'>{slot.note}</p></div></button>)}</div><div className='rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-3'><div className='grid gap-3'><label className='text-xs uppercase tracking-widest text-zinc-300'>Slot Main Quest<select className='input md:mt-1' value={bannerForm.categoryKey} onChange={(e) => selectBannerCategory(e.target.value as MenuCategory['key'])}><option value='burgers'>Burgers</option><option value='combos'>Combos</option><option value='guarniciones'>Guarniciones</option></select></label><input className='input md:mt-0' value={bannerForm.title} onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })} placeholder='Título del banner' /><textarea className='input md:mt-0' value={bannerForm.subtitle} onChange={(e) => setBannerForm({ ...bannerForm, subtitle: e.target.value })} placeholder='Subtítulo / copy' /><div className='rounded-xl border border-cyan-500/30 bg-zinc-950/70 p-3'><div className='flex flex-col gap-3 sm:flex-row'><div className='image-preview'>{bannerImagePreviewUrl ? <img src={bannerImagePreviewUrl} alt={`Banner de ${bannerForm.categoryKey}`} loading='lazy' decoding='async' /> : <span>Sin imagen</span>}</div><div className='min-w-0 flex-1 space-y-2'><h5 className='text-sm font-bold text-cyan-100'>Imagen del banner</h5>{bannerForm.imageKey || bannerForm.imageUrl ? <p className='break-all text-xs text-cyan-200'>Banner configurado: {bannerForm.imageKey || bannerForm.imageUrl}</p> : <p className='text-xs text-zinc-400'>Sin banner, la app usará fallback del primer producto disponible en esta ruta.</p>}<input ref={bannerFileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={bannerImageBusy || bannerSaving} onChange={(e) => onBannerFileChange(e.target.files?.[0] ?? null)} /><p className='text-xs text-zinc-400'>{ACCEPTED_IMAGE_TYPES_LABEL}. Se verá en Public Order Main Quest.</p><div className='flex flex-col gap-2 sm:flex-row'><Button className='min-h-11 flex-1 bg-cyan-400 text-black disabled:opacity-40' disabled={bannerImageBusy || bannerSaving || !canEdit || !selectedBannerFile || Boolean(validateSelectedFile(selectedBannerFile))} onClick={onBannerUploadImage}>{bannerUploading ? 'Subiendo…' : bannerForm.imageKey || bannerForm.imageUrl ? 'Cambiar imagen' : 'Subir banner'}</Button><Button className='min-h-11 flex-1 border border-rose-700 bg-zinc-900 text-rose-200 disabled:opacity-40' disabled={bannerImageBusy || bannerSaving || !canEdit || (!bannerForm.imageKey && !bannerForm.imageUrl)} onClick={onBannerRemoveImage}>{bannerRemovingImage ? 'Quitando…' : 'Quitar imagen'}</Button></div></div></div></div><details className='rounded-xl border border-zinc-800 bg-zinc-900/50 p-3'><summary className='min-h-11 cursor-pointer text-xs uppercase tracking-widest text-zinc-300'>Opciones avanzadas</summary><div className='mt-2 grid gap-2'><input className='input md:mt-0' value={bannerForm.imageUrl} onChange={(e) => setBannerForm({ ...bannerForm, imageUrl: e.target.value })} placeholder='Image URL opcional' /><input className='input md:mt-0' value={bannerForm.imageKey} onChange={(e) => setBannerForm({ ...bannerForm, imageKey: e.target.value })} placeholder='Image key opcional' /><p className='text-xs text-zinc-400'>URL/key manual queda como opción avanzada. La administración principal debe usar upload directo.</p></div></details>{bannerError ? <p className='text-xs text-rose-300'>{bannerError}</p> : null}<Button disabled={!canEdit || bannerSaving || bannerImageBusy} className='min-h-11 bg-cyan-400 text-black disabled:opacity-40' onClick={onBannerSave}>{bannerSaving ? 'Guardando…' : 'Guardar banner de Main Quest'}</Button></div></div></div></Card>;
+  const bannersPanel = <Card className='p-3'><div className='grid gap-4'><div><p className='text-xs font-black uppercase tracking-[0.2em] text-zinc-700 dark:text-zinc-200'>Main Quest</p><h4 className='text-lg font-black text-cyan-50'>Banners de Main Quest</h4><p className='muted'>Estos banners aparecen en la pantalla Main Quest de la app pública.</p></div><div className='grid gap-3 md:grid-cols-3'>{mainQuestBannerCards.map((slot) => <button key={slot.categoryKey} type='button' className={`min-h-11 rounded-xl border p-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-400 ${slot.selected ? 'border-cyan-300 bg-green-50 dark:bg-green-900/20 shadow-[0_0_18px_rgba(34,211,238,0.18)]' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 hover:border-green-500/60'}`} onClick={() => selectBannerCategory(slot.categoryKey)} aria-pressed={slot.selected}><div className='image-preview sm:w-full'>{slot.previewUrl ? <img src={slot.previewUrl} alt={`Preview del banner de ${slot.label}`} loading='lazy' decoding='async' /> : <span>Sin banner</span>}</div><div className='mt-3 min-w-0 space-y-1'><div className='flex flex-wrap items-center gap-2'><span className='text-sm font-black text-zinc-900 dark:text-zinc-900 dark:text-zinc-100'>{slot.label}</span><span className={`rounded-full px-2 py-1 text-[11px] font-bold uppercase tracking-wide ${slot.configured ? 'bg-emerald-500/15 text-zinc-700 dark:text-zinc-200' : 'bg-amber-500/15 text-zinc-700 dark:text-zinc-200'}`}>{slot.configured ? 'Banner configurado' : 'Sin banner, la app usará fallback'}</span></div><p className='text-xs text-zinc-500 dark:text-zinc-400'>Categoría: {slot.categoryKey}</p><p className='truncate text-xs text-zinc-900 dark:text-zinc-100'>Título: {slot.banner?.title || 'Sin título configurado'}</p><p className='line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400'>Subtítulo: {slot.banner?.subtitle || 'Sin subtítulo configurado'}</p><p className='text-xs text-zinc-700 dark:text-zinc-200'>{slot.note}</p></div></button>)}</div><div className='rounded-xl border border-green-500/30 bg-green-50 dark:bg-green-900/20 p-3'><div className='grid gap-3'><label className='text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>Slot Main Quest<select className='input md:mt-1' value={bannerForm.categoryKey} onChange={(e) => selectBannerCategory(e.target.value as MenuCategory['key'])}><option value='burgers'>Burgers</option><option value='combos'>Combos</option><option value='guarniciones'>Guarniciones</option></select></label><input className='input md:mt-0' value={bannerForm.title} onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })} placeholder='Título del banner' /><textarea className='input md:mt-0' value={bannerForm.subtitle} onChange={(e) => setBannerForm({ ...bannerForm, subtitle: e.target.value })} placeholder='Subtítulo / copy' /><div className='rounded-xl border border-green-500/30 bg-white dark:bg-zinc-950 p-3'><div className='flex flex-col gap-3 sm:flex-row'><div className='image-preview'>{bannerImagePreviewUrl ? <img src={bannerImagePreviewUrl} alt={`Banner de ${bannerForm.categoryKey}`} loading='lazy' decoding='async' /> : <span>Sin imagen</span>}</div><div className='min-w-0 flex-1 space-y-2'><h5 className='text-sm font-bold text-zinc-900 dark:text-zinc-100'>Imagen del banner</h5>{bannerForm.imageKey || bannerForm.imageUrl ? <p className='break-all text-xs text-zinc-700 dark:text-zinc-200'>Banner configurado: {bannerForm.imageKey || bannerForm.imageUrl}</p> : <p className='text-xs text-zinc-500 dark:text-zinc-400'>Sin banner, la app usará fallback del primer producto disponible en esta ruta.</p>}<input ref={bannerFileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={bannerImageBusy || bannerSaving} onChange={(e) => onBannerFileChange(e.target.files?.[0] ?? null)} /><p className='text-xs text-zinc-500 dark:text-zinc-400'>{ACCEPTED_IMAGE_TYPES_LABEL}. Se verá en Public Order Main Quest.</p><div className='flex flex-col gap-2 sm:flex-row'><Button className='min-h-11 flex-1 bg-green-600 text-white dark:bg-green-500 dark:text-black text-black disabled:opacity-40' disabled={bannerImageBusy || bannerSaving || !canEdit || !selectedBannerFile || Boolean(validateSelectedFile(selectedBannerFile))} onClick={onBannerUploadImage}>{bannerUploading ? 'Subiendo…' : bannerForm.imageKey || bannerForm.imageUrl ? 'Cambiar imagen' : 'Subir banner'}</Button><Button className='min-h-11 flex-1 border border-rose-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 disabled:opacity-40' disabled={bannerImageBusy || bannerSaving || !canEdit || (!bannerForm.imageKey && !bannerForm.imageUrl)} onClick={onBannerRemoveImage}>{bannerRemovingImage ? 'Quitando…' : 'Quitar imagen'}</Button></div></div></div></div><details className='rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3'><summary className='min-h-11 cursor-pointer text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>Opciones avanzadas</summary><div className='mt-2 grid gap-2'><input className='input md:mt-0' value={bannerForm.imageUrl} onChange={(e) => setBannerForm({ ...bannerForm, imageUrl: e.target.value })} placeholder='Image URL opcional' /><input className='input md:mt-0' value={bannerForm.imageKey} onChange={(e) => setBannerForm({ ...bannerForm, imageKey: e.target.value })} placeholder='Image key opcional' /><p className='text-xs text-zinc-500 dark:text-zinc-400'>URL/key manual queda como opción avanzada. La administración principal debe usar upload directo.</p></div></details>{bannerError ? <p className='text-xs text-rose-300'>{bannerError}</p> : null}<Button disabled={!canEdit || bannerSaving || bannerImageBusy} className='min-h-11 bg-green-600 text-white dark:bg-green-500 dark:text-black text-black disabled:opacity-40' onClick={onBannerSave}>{bannerSaving ? 'Guardando…' : 'Guardar banner de Main Quest'}</Button></div></div></div></Card>;
 
   const catalogBannerImagePreviewUrl = getAssetUrl(catalogBannerForm?.imageUrl, catalogBannerForm?.imageKey);
   const catalogBannerImageBusy = catalogBannerUploading || catalogBannerRemovingImage;
@@ -953,23 +953,23 @@ export function CatalogAdminPanel() {
       <div className='grid gap-4'>
         <div className='flex items-center justify-between'>
           <div>
-            <p className='text-xs font-black uppercase tracking-[0.2em] text-pink-200'>Catálogo</p>
+            <p className='text-xs font-black uppercase tracking-[0.2em] text-zinc-700 dark:text-zinc-200'>Catálogo</p>
             <h4 className='text-lg font-black text-pink-50'>Banners Superiores</h4>
             <p className='muted'>Estos banners aparecen en el tope del nuevo Catálogo.</p>
           </div>
-          <Button disabled={!canEdit || catalogBannerSaving} className='bg-pink-400 text-black' onClick={beginCreateCatalogBanner}>
+          <Button disabled={!canEdit || catalogBannerSaving} className='bg-zinc-200 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100 text-black' onClick={beginCreateCatalogBanner}>
             Crear Banner
           </Button>
         </div>
 
         <div className='grid gap-3'>
           {catalogBannersLoading ? (
-            <p className='text-sm text-zinc-400'>Cargando banners del catálogo...</p>
+            <p className='text-sm text-zinc-500 dark:text-zinc-400'>Cargando banners del catálogo...</p>
           ) : catalogBannersError ? (
-            <p className='rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs text-rose-100'>{catalogBannersError}</p>
+            <p className='rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100'>{catalogBannersError}</p>
           ) : (
             (menu?.catalogBanners ?? []).map((banner) => (
-              <div key={banner.id} className={`rounded-xl border p-3 flex gap-4 items-start ${banner.isActive ? 'border-zinc-800 bg-zinc-900/70' : 'border-zinc-800/50 bg-zinc-900/40 opacity-75'}`}>
+              <div key={banner.id} className={`rounded-xl border p-3 flex gap-4 items-start ${banner.isActive ? 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900' : 'border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-900 opacity-75'}`}>
                 <div className='image-preview w-24 shrink-0 sm:w-32'>
                   {banner.imageUrl || banner.imageKey ? (
                     <img src={getAssetUrl(banner.imageUrl, banner.imageKey)} alt={`Banner ${banner.title}`} loading='lazy' decoding='async' />
@@ -979,23 +979,23 @@ export function CatalogAdminPanel() {
                 </div>
                 <div className='flex-1 min-w-0'>
                   <div className='flex flex-wrap gap-2 items-center'>
-                    <h5 className='font-bold text-zinc-100 truncate'>{banner.title}</h5>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${banner.isActive ? 'bg-emerald-500/15 text-emerald-200' : 'bg-rose-500/15 text-rose-200'}`}>{banner.isActive ? 'Activo' : 'Inactivo'}</span>
+                    <h5 className='font-bold text-zinc-900 dark:text-zinc-900 dark:text-zinc-100 truncate'>{banner.title}</h5>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${banner.isActive ? 'bg-emerald-500/15 text-zinc-700 dark:text-zinc-200' : 'bg-rose-500/15 text-zinc-700 dark:text-zinc-200'}`}>{banner.isActive ? 'Activo' : 'Inactivo'}</span>
                   </div>
-                  {banner.subtitle && <p className='text-sm text-zinc-400 line-clamp-2'>{banner.subtitle}</p>}
+                  {banner.subtitle && <p className='text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2'>{banner.subtitle}</p>}
                   <div className='text-xs text-zinc-500 mt-2 flex gap-3'>
                     <span>Orden: {banner.sortOrder}</span>
                     {banner.ctaLabel && <span>CTA: {banner.ctaLabel}</span>}
                   </div>
                 </div>
                 <div className='flex flex-col gap-2 shrink-0'>
-                  <Button disabled={!canEdit} className='border border-zinc-700 bg-zinc-950 px-3' onClick={() => beginEditCatalogBanner(banner)}>Editar</Button>
+                  <Button disabled={!canEdit} className='border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3' onClick={() => beginEditCatalogBanner(banner)}>Editar</Button>
                 </div>
               </div>
             ))
           )}
           {!catalogBannersLoading && !catalogBannersError && !(menu?.catalogBanners?.length) && (
-            <div className='rounded-xl border border-dashed border-zinc-700 p-6 text-center text-zinc-500'>
+            <div className='rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center text-zinc-500'>
               No hay banners de catálogo registrados.
             </div>
           )}
@@ -1004,12 +1004,12 @@ export function CatalogAdminPanel() {
     </Card>
   );
   return <section className='catalog-control-room space-y-2'>
-    <Card className='catalog-header border-pink-500/30 bg-zinc-950/80 p-3.5'>
+    <Card className='catalog-header border-zinc-300 dark:border-zinc-700/30 bg-white dark:bg-zinc-950 p-3.5'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
           <div className='flex flex-wrap items-center gap-2'>
-            <h3 className='font-bold text-zinc-100 text-base'>Catálogo & Configuración Pública</h3>
-            <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${menu?.publicConfig?.catalogEnabled ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-zinc-800 text-zinc-400 border border-zinc-700'}`}>
+            <h3 className='font-bold text-zinc-900 dark:text-zinc-900 dark:text-zinc-100 text-base'>Catálogo & Configuración Pública</h3>
+            <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${menu?.publicConfig?.catalogEnabled ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-700'}`}>
               {menu?.publicConfig?.catalogEnabled ? 'CATÁLOGO ACTIVO' : 'MODO FLUJO'}
             </span>
           </div>
@@ -1017,10 +1017,10 @@ export function CatalogAdminPanel() {
         </div>
 
         <div className='flex flex-wrap items-center gap-3'>
-          <label className='flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-200 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl transition-colors hover:border-pink-500/40'>
+          <label className='flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 dark:text-zinc-200 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-3 py-1.5 rounded-xl transition-colors hover:border-zinc-300 dark:border-zinc-700/40'>
             <input
               type='checkbox'
-              className='h-4 w-4 rounded border-zinc-700 bg-zinc-950 text-pink-500 focus:ring-pink-400'
+              className='h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-300 focus:ring-pink-400'
               checked={menu?.publicConfig?.catalogEnabled ?? false}
               disabled={!canEdit || siteConfigSaving}
               onChange={(e) => void onToggleCatalogEnabled(e.target.checked)}
@@ -1029,7 +1029,7 @@ export function CatalogAdminPanel() {
           </label>
 
           <select
-            className='input text-xs py-1.5 px-3 border-zinc-800 bg-zinc-900 text-zinc-200 rounded-xl md:mt-0'
+            className='input text-xs py-1.5 px-3 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 rounded-xl md:mt-0'
             value={menu?.publicConfig?.publicMode ?? 'flow'}
             disabled={!canEdit || siteConfigSaving}
             onChange={(e) => void onChangePublicMode(e.target.value as 'flow' | 'catalog')}
@@ -1040,7 +1040,7 @@ export function CatalogAdminPanel() {
         </div>
       </div>
       {siteConfigError ? <p className='mt-2 text-xs text-rose-300'>{siteConfigError}</p> : null}
-      {menu?.source !== 'd1' ? <p className='mt-1 text-xs text-amber-300'>Edición deshabilitada por el momento.</p> : null}
+
     </Card>
 
     <div className='catalog-tabs flex overflow-x-auto'>
@@ -1053,11 +1053,11 @@ export function CatalogAdminPanel() {
     </div>
 
     {!loading && !error && catalogTab === 'categories' ? (
-      <Card className="p-4 border-zinc-800 bg-zinc-950/90">
-        <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3 mb-4">
+      <Card className="p-4 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+        <div className="flex items-center justify-between gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3 mb-4">
           <div>
-            <h3 className="text-lg font-black text-amber-100">Gestor de Categorías</h3>
-            <p className="text-xs text-zinc-400">Personaliza el nombre, icono emoji y el orden visual en la tienda pública.</p>
+            <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100">Gestor de Categorías</h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Personaliza el nombre, icono emoji y el orden visual en la tienda pública.</p>
           </div>
           <Button
             className="bg-amber-400 text-zinc-950 font-bold min-h-10 disabled:opacity-40"
@@ -1072,7 +1072,7 @@ export function CatalogAdminPanel() {
 
         <div className="grid gap-3">
           {categoryList.map((cat, index) => (
-            <div key={cat.key || index} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 p-3 rounded-xl border border-zinc-800 bg-zinc-900/60">
+            <div key={cat.key || index} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
               <input
                 className="input w-16 text-center text-xl p-1 md:mt-0"
                 value={cat.emoji || getCategoryEmoji(cat.key, cat.name)}
@@ -1081,7 +1081,7 @@ export function CatalogAdminPanel() {
               />
               <div className="min-w-0">
                 <input
-                  className="input font-bold text-zinc-100 md:mt-0"
+                  className="input font-bold text-zinc-900 dark:text-zinc-900 dark:text-zinc-100 md:mt-0"
                   value={cat.name}
                   onChange={(e) => updateCategoryItem(index, { name: e.target.value })}
                   placeholder="Nombre categoría"
@@ -1090,14 +1090,14 @@ export function CatalogAdminPanel() {
               </div>
               <div className="flex gap-1">
                 <Button
-                  className="min-h-9 px-2 bg-zinc-800 border border-zinc-700 text-zinc-200"
+                  className="min-h-9 px-2 bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200"
                   disabled={index === 0}
                   onClick={() => moveCategory(index, -1)}
                 >
                   ⬆️ Subir
                 </Button>
                 <Button
-                  className="min-h-9 px-2 bg-zinc-800 border border-zinc-700 text-zinc-200"
+                  className="min-h-9 px-2 bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200"
                   disabled={index === categoryList.length - 1}
                   onClick={() => moveCategory(index, 1)}
                 >
@@ -1112,7 +1112,7 @@ export function CatalogAdminPanel() {
 
     <Card className='p-3'>
       {ingredientsPanel}
-    {catalogTab === 'items' ? <div className='grid gap-2 md:grid-cols-4'><input className='input md:mt-0' placeholder='Buscar por SKU o texto' value={query} onChange={(e) => setQuery(e.target.value)} /><select className='input md:mt-0' value={category} onChange={(e) => setCategory(e.target.value)}><option value='all'>Todas categorías</option>{(menu?.categories ?? []).map((cat) => <option key={cat.key} value={cat.key}>{cat.name}</option>)}</select><select className='input md:mt-0' value={availability} onChange={(e) => setAvailability(e.target.value)}><option value='all'>Todos</option><option value='available'>Disponibles</option><option value='unavailable'>Agotados</option></select><Button onClick={() => void loadMenu()}>Recargar</Button><Button disabled={!canEdit} className='bg-cyan-400 text-black disabled:opacity-40' onClick={beginCreate}>Crear producto</Button></div> : <div className='grid gap-2 md:grid-cols-[1fr_auto]'><input className='input md:mt-0' placeholder='Buscar promos por ID, título o texto' value={promoQuery} onChange={(e) => setPromoQuery(e.target.value)} /><Button onClick={() => void loadMenu()}>Recargar</Button></div>}
+    {catalogTab === 'items' ? <div className='grid gap-2 md:grid-cols-4'><input className='input md:mt-0' placeholder='Buscar por SKU o texto' value={query} onChange={(e) => setQuery(e.target.value)} /><select className='input md:mt-0' value={category} onChange={(e) => setCategory(e.target.value)}><option value='all'>Todas categorías</option>{(menu?.categories ?? []).map((cat) => <option key={cat.key} value={cat.key}>{cat.name}</option>)}</select><select className='input md:mt-0' value={availability} onChange={(e) => setAvailability(e.target.value)}><option value='all'>Todos</option><option value='available'>Disponibles</option><option value='unavailable'>Agotados</option></select><Button onClick={() => void loadMenu()}>Recargar</Button><Button disabled={!canEdit} className='bg-green-600 text-white dark:bg-green-500 dark:text-black text-black disabled:opacity-40' onClick={beginCreate}>Crear producto</Button></div> : <div className='grid gap-2 md:grid-cols-[1fr_auto]'><input className='input md:mt-0' placeholder='Buscar promos por ID, título o texto' value={promoQuery} onChange={(e) => setPromoQuery(e.target.value)} /><Button onClick={() => void loadMenu()}>Recargar</Button></div>}
     </Card>
 
     {notice ? <p className='text-xs text-emerald-300'>{notice}</p> : null}
@@ -1122,7 +1122,7 @@ export function CatalogAdminPanel() {
     {!loading && !error && catalogTab === 'items' ? <div className='grid gap-3'>{groupedFilteredItems.map((group) => (
       <section key={group.key} className='space-y-2'>
         <div className='flex items-center justify-between gap-2 px-1'>
-          <h4 className='text-sm font-bold uppercase tracking-widest text-zinc-300'>{group.label}</h4>
+          <h4 className='text-sm font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>{group.label}</h4>
           <span className='text-xs text-zinc-500'>{group.items.length} producto{group.items.length === 1 ? '' : 's'}</span>
         </div>
         {group.items.length ? <div className='grid gap-2'>{group.items.map((item) => {
@@ -1165,10 +1165,10 @@ export function CatalogAdminPanel() {
                 </div>
                 <div className='catalog-row__actions'>
                   <div className='catalog-row__availability' role='group' aria-label={`Disponibilidad de ${item.name}`}>
-                    <Button disabled={!canEdit || availabilityBusy || item.isAvailable} className={`min-h-11 border text-sm disabled:opacity-40 ${item.isAvailable ? 'border-emerald-500 bg-emerald-400 text-black' : 'border-zinc-700 bg-zinc-900 text-zinc-200'}`} onClick={() => void setItemAvailability(item, true)}>
+                    <Button disabled={!canEdit || availabilityBusy || item.isAvailable} className={`min-h-11 border text-sm disabled:opacity-40 ${item.isAvailable ? 'border-emerald-500 bg-emerald-400 text-black' : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200'}`} onClick={() => void setItemAvailability(item, true)}>
                       {availabilityBusy ? 'Guardando...' : 'Disponible'}
                     </Button>
-                    <Button disabled={!canEdit || availabilityBusy || !item.isAvailable} className={`min-h-11 border text-sm disabled:opacity-40 ${!item.isAvailable ? 'border-rose-500 bg-rose-500 text-white' : 'border-zinc-700 bg-zinc-900 text-zinc-200'}`} onClick={() => void setItemAvailability(item, false)}>
+                    <Button disabled={!canEdit || availabilityBusy || !item.isAvailable} className={`min-h-11 border text-sm disabled:opacity-40 ${!item.isAvailable ? 'border-rose-500 bg-rose-500 text-white' : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200'}`} onClick={() => void setItemAvailability(item, false)}>
                       {availabilityBusy ? 'Guardando...' : 'Agotado'}
                     </Button>
                   </div>
@@ -1177,37 +1177,37 @@ export function CatalogAdminPanel() {
                     className={`min-h-11 border text-xs px-3 font-bold disabled:opacity-40 ${
                       item.isHidden
                         ? 'border-amber-500/60 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
-                        : 'border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-white'
+                        : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 hover:text-white'
                     }`}
                     onClick={() => void setItemHidden(item, !item.isHidden)}
                   >
                     {item.isHidden ? '👁️ Mostrar' : '👁️‍🗨️ Ocultar'}
                   </Button>
-                  <Button disabled={!canEdit || availabilityBusy} className='min-h-11 border border-zinc-700 bg-zinc-900 disabled:opacity-40' onClick={() => beginEdit(item)}>
+                  <Button disabled={!canEdit || availabilityBusy} className='min-h-11 border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 disabled:opacity-40' onClick={() => beginEdit(item)}>
                     Editar
                   </Button>
                 </div>
               </div>
             </Card>
           );
-        })}</div> : <Card className='border-dashed border-zinc-800 bg-zinc-950/50 p-3 text-sm text-zinc-500'>Sin productos en {group.label} para los filtros actuales.</Card>}
+        })}</div> : <Card className='border-dashed border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 text-sm text-zinc-500'>Sin productos en {group.label} para los filtros actuales.</Card>}
       </section>
     ))}</div> : null}
 
     {!loading && !error && catalogTab === 'banners' ? bannersPanel : null}
     {!loading && !error && catalogTab === 'catalog-banners' ? catalogBannersPanel : null}
 
-    {!loading && !error && catalogTab === 'promos' ? <div className='grid gap-2'>{filteredPromos.map((promo) => <Card key={promo.id} className='catalog-row'><div className='catalog-row__main'><div className='min-w-0'><div className='catalog-row__title'><p>{promo.title}</p><span>{promo.id}</span><strong className={promo.isAvailable ? 'catalog-status catalog-status--on' : 'catalog-status catalog-status--off'}>{promo.isAvailable ? 'Disponible' : 'Oculta'}</strong></div><p className='catalog-row__desc'>{promo.description}</p><div className='catalog-row__meta'><span>{promo.isFeatured ? 'Destacada' : 'No destacada'}</span><span>Orden {promo.sortOrder}</span><span>Badge: {promo.badge || '-'}</span><span>Promo: {promo.promoLabel || '-'}</span></div><details className='catalog-row__details'><summary>Assets y datos técnicos</summary>{promo.asset.imageKey || promo.asset.imageUrl ? <p>{promo.asset.imageKey ?? promo.asset.imageUrl}</p> : <p>Sin asset configurado.</p>}</details></div><div className='catalog-row__actions'><Button disabled={!canEdit} className='min-h-11 border border-zinc-700 bg-zinc-900 disabled:opacity-40' onClick={() => beginPromoEdit(promo)}>Editar</Button></div></div></Card>)}</div> : null}
+    {!loading && !error && catalogTab === 'promos' ? <div className='grid gap-2'>{filteredPromos.map((promo) => <Card key={promo.id} className='catalog-row'><div className='catalog-row__main'><div className='min-w-0'><div className='catalog-row__title'><p>{promo.title}</p><span>{promo.id}</span><strong className={promo.isAvailable ? 'catalog-status catalog-status--on' : 'catalog-status catalog-status--off'}>{promo.isAvailable ? 'Disponible' : 'Oculta'}</strong></div><p className='catalog-row__desc'>{promo.description}</p><div className='catalog-row__meta'><span>{promo.isFeatured ? 'Destacada' : 'No destacada'}</span><span>Orden {promo.sortOrder}</span><span>Badge: {promo.badge || '-'}</span><span>Promo: {promo.promoLabel || '-'}</span></div><details className='catalog-row__details'><summary>Assets y datos técnicos</summary>{promo.asset.imageKey || promo.asset.imageUrl ? <p>{promo.asset.imageKey ?? promo.asset.imageUrl}</p> : <p>Sin asset configurado.</p>}</details></div><div className='catalog-row__actions'><Button disabled={!canEdit} className='min-h-11 border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 disabled:opacity-40' onClick={() => beginPromoEdit(promo)}>Editar</Button></div></div></Card>)}</div> : null}
 
     {(editing || creatingItem) && form ? (
       <div className='overlay' onClick={closeEditor}>
         <section className='modal modal--large' onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-3">
+          <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3 mb-3">
             <div>
-              <h3 className='font-bold text-lg text-amber-100'>{creatingItem ? 'Crear Producto Nuevo' : `Editar ${editing?.name || editing?.sku}`}</h3>
-              <p className='text-xs text-zinc-400'>{creatingItem ? 'Asigna nombre, precio e imágenes' : `SKU: ${editing?.sku}`}</p>
+              <h3 className='font-bold text-lg text-zinc-900 dark:text-zinc-100'>{creatingItem ? 'Crear Producto Nuevo' : `Editar ${editing?.name || editing?.sku}`}</h3>
+              <p className='text-xs text-zinc-500 dark:text-zinc-400'>{creatingItem ? 'Asigna nombre, precio e imágenes' : `SKU: ${editing?.sku}`}</p>
             </div>
-            <Button className="text-zinc-400 bg-transparent min-h-8 p-1" onClick={closeEditor}>✕</Button>
+            <Button className="text-zinc-500 dark:text-zinc-400 bg-transparent min-h-8 p-1" onClick={closeEditor}>✕</Button>
           </div>
 
           <div className="grid lg:grid-cols-[1fr_320px] gap-6 mt-4 max-h-[75vh] overflow-y-auto pr-1">
@@ -1215,27 +1215,27 @@ export function CatalogAdminPanel() {
             <div className="space-y-4">
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-zinc-400">SKU del Producto</label>
+                  <label className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">SKU del Producto</label>
                   <input className='input mt-1' value={form.sku} readOnly={!creatingItem} onChange={(e) => setForm({ ...form, sku: e.target.value.toUpperCase().replace(/[^A-Z0-9-]+/g, '-') })} placeholder='ej. BRG-OG' />
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-zinc-400">Nombre del Producto</label>
+                  <label className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Nombre del Producto</label>
                   <input className='input mt-1' value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder='ej. Cheeseburger Doble' />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-widest text-zinc-400">Descripción del Producto</label>
+                <label className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Descripción del Producto</label>
                 <textarea className='input mt-1 min-h-[70px]' value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder='Describe los ingredientes y sabor...' />
               </div>
 
               <div className="grid sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-zinc-400">Precio Regular ($ MXN)</label>
+                  <label className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Precio Regular ($ MXN)</label>
                   <input className='input mt-1' value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder='105.00' />
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-zinc-400">Categoría</label>
+                  <label className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Categoría</label>
                   <select className='input mt-1' value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as MenuCategory['key'] })}>
                     <option value='burgers'>🍔 Hamburguesas</option>
                     <option value='combos'>🔥 Combos</option>
@@ -1245,33 +1245,33 @@ export function CatalogAdminPanel() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-zinc-400">Orden Visual</label>
+                  <label className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Orden Visual</label>
                   <input className='input mt-1' value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value })} placeholder='10' />
                 </div>
               </div>
 
-              <div className='grid gap-2 sm:grid-cols-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-3'>
-                <label className='flex items-center gap-2 text-sm font-bold text-zinc-200 cursor-pointer'>
+              <div className='grid gap-2 sm:grid-cols-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3'>
+                <label className='flex items-center gap-2 text-sm font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer'>
                   <input type='checkbox' checked={form.isAvailable} onChange={(e) => setForm({ ...form, isAvailable: e.target.checked })} /> ✓ Disponible
                 </label>
-                <label className='flex items-center gap-2 text-sm font-bold text-amber-200 cursor-pointer'>
+                <label className='flex items-center gap-2 text-sm font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer'>
                   <input type='checkbox' checked={form.isFeatured} onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })} /> ⭐ Destacado
                 </label>
-                <label className='flex items-center gap-2 text-sm font-bold text-fuchsia-200 cursor-pointer'>
+                <label className='flex items-center gap-2 text-sm font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer'>
                   <input type='checkbox' checked={form.isCombo} onChange={(e) => setForm({ ...form, isCombo: e.target.checked })} /> 🔥 Es Combo
                 </label>
               </div>
 
               {/* Accordion 1: ⚡ Producto Especial / Oferta Temporal */}
               <details className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3" open={form.isPromoActive}>
-                <summary className="cursor-pointer font-bold text-amber-200 flex items-center justify-between text-sm">
+                <summary className="cursor-pointer font-bold text-zinc-700 dark:text-zinc-200 flex items-center justify-between text-sm">
                   <span>⚡ Módulo de Producto Especial (Promoción)</span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded ${form.isPromoActive ? "bg-amber-400 text-amber-950" : "bg-zinc-800 text-zinc-400"}`}>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded ${form.isPromoActive ? "bg-amber-400 text-amber-950" : "bg-zinc-800 text-zinc-500 dark:text-zinc-400"}`}>
                     {form.isPromoActive ? "OFERTA ACTIVA" : "INACTIVO"}
                   </span>
                 </summary>
                 <div className="mt-3 grid gap-3">
-                  <label className="flex items-center gap-2 text-xs font-bold text-amber-100 cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs font-bold text-zinc-900 dark:text-zinc-100 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={form.isPromoActive}
@@ -1281,7 +1281,7 @@ export function CatalogAdminPanel() {
                   </label>
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs uppercase tracking-widest text-zinc-400">Precio Oferta ($ MXN)</label>
+                      <label className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Precio Oferta ($ MXN)</label>
                       <input
                         className="input mt-1"
                         value={form.promoPrice}
@@ -1290,7 +1290,7 @@ export function CatalogAdminPanel() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs uppercase tracking-widest text-zinc-400">Etiqueta Oferta</label>
+                      <label className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Etiqueta Oferta</label>
                       <input
                         className="input mt-1"
                         value={form.promoLabel}
@@ -1305,7 +1305,7 @@ export function CatalogAdminPanel() {
               {/* Accordion 2: 🔥 Creador de Combos (4 Grupos) */}
               {(form.category === 'combos' || form.isCombo) && (
                 <details className="rounded-xl border border-fuchsia-500/30 bg-fuchsia-500/5 p-3" open={form.isCombo}>
-                  <summary className="cursor-pointer font-bold text-fuchsia-200 flex items-center justify-between text-sm">
+                  <summary className="cursor-pointer font-bold text-zinc-700 dark:text-zinc-200 flex items-center justify-between text-sm">
                     <span>🔥 Creador de Combos (4 Grupos + Upcharges)</span>
                     <span className="text-[10px] font-black bg-fuchsia-400/20 text-fuchsia-300 px-2 py-0.5 rounded">
                       {form.comboGroups.length} GRUPOS
@@ -1314,9 +1314,9 @@ export function CatalogAdminPanel() {
                   <div className="mt-3 space-y-3">
                     <div className="space-y-2">
                       {form.comboGroups.map((grp, gIdx) => (
-                        <div key={grp.id || gIdx} className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
+                        <div key={grp.id || gIdx} className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3">
                           <input
-                            className="input font-bold text-zinc-100 text-xs mb-2 md:mt-0"
+                            className="input font-bold text-zinc-900 dark:text-zinc-900 dark:text-zinc-100 text-xs mb-2 md:mt-0"
                             value={grp.name}
                             onChange={(e) => {
                               const next = [...form.comboGroups];
@@ -1340,7 +1340,7 @@ export function CatalogAdminPanel() {
                                   }}
                                   placeholder="SKU"
                                 />
-                                <span className="text-zinc-400 shrink-0">+$</span>
+                                <span className="text-zinc-500 dark:text-zinc-400 shrink-0">+$</span>
                                 <input
                                   className="input text-xs w-20 py-1 md:mt-0"
                                   value={opt.upchargeCents / 100}
@@ -1354,7 +1354,7 @@ export function CatalogAdminPanel() {
                                   placeholder="0"
                                 />
                                 <Button
-                                  className="px-2 py-1 text-xs bg-rose-950 border border-rose-700 text-rose-200 shrink-0 min-h-0"
+                                  className="px-2 py-1 text-xs bg-rose-950 border border-rose-700 text-zinc-700 dark:text-zinc-200 shrink-0 min-h-0"
                                   onClick={() => {
                                     const nextGrp = [...form.comboGroups];
                                     nextGrp[gIdx].options = nextGrp[gIdx].options.filter((_, i) => i !== oIdx);
@@ -1366,7 +1366,7 @@ export function CatalogAdminPanel() {
                               </div>
                             ))}
                             <Button
-                              className="mt-1 text-xs bg-zinc-800 border border-zinc-700 text-zinc-200 py-1 min-h-0"
+                              className="mt-1 text-xs bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 py-1 min-h-0"
                               onClick={() => {
                                 const nextGrp = [...form.comboGroups];
                                 nextGrp[gIdx].options.push({ sku: "", upchargeCents: 0 });
@@ -1384,20 +1384,20 @@ export function CatalogAdminPanel() {
               )}
 
               {/* Upload image block */}
-              <div className='rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-3'>
+              <div className='rounded-xl border border-green-500/30 bg-green-50 dark:bg-green-900/20 p-3'>
                 <div className='flex flex-col gap-3 sm:flex-row'>
                   <div className='image-preview'>
                     {imagePreviewUrl ? <img src={imagePreviewUrl} alt={`Imagen de ${editing?.name ?? form.name}`} loading='lazy' decoding='async' /> : <span>Sin imagen</span>}
                   </div>
                   <div className='min-w-0 flex-1 space-y-2'>
-                    <h4 className='text-xs font-bold text-cyan-100 uppercase tracking-widest'>Imagen del producto</h4>
-                    {form.imageKey || form.imageUrl ? <p className='break-all text-xs text-cyan-200'>Imagen actual: {form.imageKey || form.imageUrl}</p> : <p className='text-xs text-zinc-400'>Sin imagen asignada: Public V2 usa una card compacta sin imagen.</p>}
+                    <h4 className='text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest'>Imagen del producto</h4>
+                    {form.imageKey || form.imageUrl ? <p className='break-all text-xs text-zinc-700 dark:text-zinc-200'>Imagen actual: {form.imageKey || form.imageUrl}</p> : <p className='text-xs text-zinc-500 dark:text-zinc-400'>Sin imagen asignada: Public V2 usa una card compacta sin imagen.</p>}
                     <input ref={fileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={imageBusy || saving} onChange={(e) => onFileChange(e.target.files?.[0] ?? null)} />
                     <div className='flex flex-col gap-2 sm:flex-row'>
-                      <Button className='flex-1 bg-cyan-400 text-black disabled:opacity-40' disabled={imageBusy || saving || creatingItem || !canEdit || !selectedFile || Boolean(validateSelectedFile(selectedFile))} onClick={onUploadImage}>
+                      <Button className='flex-1 bg-green-600 text-white dark:bg-green-500 dark:text-black text-black disabled:opacity-40' disabled={imageBusy || saving || creatingItem || !canEdit || !selectedFile || Boolean(validateSelectedFile(selectedFile))} onClick={onUploadImage}>
                         {uploading ? 'Subiendo…' : 'Subir imagen'}
                       </Button>
-                      <Button className='flex-1 border border-rose-700 bg-zinc-900 text-rose-200 disabled:opacity-40' disabled={imageBusy || saving || creatingItem || !canEdit || (!form.imageKey && !form.imageUrl)} onClick={onRemoveImage}>
+                      <Button className='flex-1 border border-rose-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 disabled:opacity-40' disabled={imageBusy || saving || creatingItem || !canEdit || (!form.imageKey && !form.imageUrl)} onClick={onRemoveImage}>
                         {removingImage ? 'Quitando…' : 'Quitar imagen'}
                       </Button>
                     </div>
@@ -1409,21 +1409,21 @@ export function CatalogAdminPanel() {
 
             {/* Live Preview Side Panel */}
             <div className="space-y-3">
-              <div className="rounded-2xl border border-emerald-500/30 bg-zinc-950 p-3 sticky top-0">
-                <div className="flex items-center justify-between mb-3 border-b border-zinc-800 pb-2">
-                  <span className="text-xs font-black uppercase tracking-widest text-emerald-400">👁️ Live Preview</span>
+              <div className="rounded-2xl border border-emerald-500/30 bg-white dark:bg-zinc-950 p-3 sticky top-0">
+                <div className="flex items-center justify-between mb-3 border-b border-zinc-200 dark:border-zinc-800 pb-2">
+                  <span className="text-xs font-black uppercase tracking-widest text-green-600 dark:text-green-400">👁️ Live Preview</span>
                   <span className="text-[10px] bg-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded font-bold">Vista Cliente</span>
                 </div>
 
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden shadow-lg">
-                  <div className="relative h-36 bg-zinc-950 flex items-center justify-center border-b border-zinc-800">
+                <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 overflow-hidden shadow-lg">
+                  <div className="relative h-36 bg-white dark:bg-zinc-950 flex items-center justify-center border-b border-zinc-200 dark:border-zinc-800">
                     {imagePreviewUrl ? (
                       <img src={imagePreviewUrl} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
                       <div className="text-4xl">{getCategoryEmoji(form.category, form.name)}</div>
                     )}
                     {form.isPromoActive && (
-                      <div className="absolute top-2 left-2 bg-emerald-500 text-emerald-950 text-[10px] font-black uppercase px-2 py-0.5 rounded shadow">
+                      <div className="absolute top-2 left-2 bg-emerald-500  text-[10px] font-black uppercase px-2 py-0.5 rounded shadow">
                         {form.promoLabel || "⚡ OFERTA"}
                       </div>
                     )}
@@ -1434,21 +1434,21 @@ export function CatalogAdminPanel() {
                     )}
                   </div>
                   <div className="p-3 space-y-2">
-                    <h4 className="font-bold text-zinc-100 text-sm leading-snug">{form.name || "Nombre del producto"}</h4>
-                    <p className="text-xs text-zinc-400 line-clamp-2">{form.description || "Descripción del producto..."}</p>
+                    <h4 className="font-bold text-zinc-900 dark:text-zinc-900 dark:text-zinc-100 text-sm leading-snug">{form.name || "Nombre del producto"}</h4>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">{form.description || "Descripción del producto..."}</p>
 
-                    <div className="pt-2 border-t border-zinc-800 flex items-center justify-between">
+                    <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
                       <div>
                         {form.isPromoActive && form.promoPrice ? (
                           <div className="flex items-baseline gap-1.5">
-                            <span className="text-xs line-through opacity-50 text-zinc-400">${Number(form.price).toFixed(2)}</span>
-                            <span className="font-black text-emerald-400 text-base">${Number(form.promoPrice).toFixed(2)} MXN</span>
+                            <span className="text-xs line-through opacity-50 text-zinc-500 dark:text-zinc-400">${Number(form.price).toFixed(2)}</span>
+                            <span className="font-black text-green-600 dark:text-green-400 text-base">${Number(form.promoPrice).toFixed(2)} MXN</span>
                           </div>
                         ) : (
-                          <span className="font-black text-emerald-400 text-base">${Number(form.price).toFixed(2)} MXN</span>
+                          <span className="font-black text-green-600 dark:text-green-400 text-base">${Number(form.price).toFixed(2)} MXN</span>
                         )}
                       </div>
-                      <button type="button" className="px-3 py-1.5 rounded-lg bg-emerald-400 text-emerald-950 text-xs font-black">
+                      <button type="button" className="px-3 py-1.5 rounded-lg bg-emerald-400  text-xs font-black">
                         ➕ Agregar
                       </button>
                     </div>
@@ -1461,9 +1461,9 @@ export function CatalogAdminPanel() {
           {validationError ? <p className='mt-2 text-xs text-rose-300'>{validationError}</p> : null}
           {saveError ? <p className='mt-2 text-xs text-rose-300'>{saveError}</p> : null}
 
-          <div className='mt-4 flex gap-2 border-t border-zinc-800 pt-3'>
-            <Button className='flex-1 border border-zinc-700 bg-zinc-900' onClick={closeEditor} disabled={saving || imageBusy}>Cancelar</Button>
-            <Button className='flex-1 bg-cyan-400 text-black font-bold disabled:opacity-40' onClick={() => void onSave()} disabled={saving || imageBusy || Boolean(validationError)}>
+          <div className='mt-4 flex gap-2 border-t border-zinc-200 dark:border-zinc-800 pt-3'>
+            <Button className='flex-1 border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900' onClick={closeEditor} disabled={saving || imageBusy}>Cancelar</Button>
+            <Button className='flex-1 bg-green-600 text-white dark:bg-green-500 dark:text-black text-black font-bold disabled:opacity-40' onClick={() => void onSave()} disabled={saving || imageBusy || Boolean(validationError)}>
               {saving ? "Guardando…" : "Guardar Producto"}
             </Button>
           </div>
@@ -1471,12 +1471,12 @@ export function CatalogAdminPanel() {
       </div>
     ) : null}
 
-    {editingPromo && promoForm ? <div className='overlay' onClick={closePromoEditor}><section className='modal' onClick={(e) => e.stopPropagation()}><h3 className='font-bold'>Editar promo {editingPromo.id}</h3><p className='muted'>ID solo lectura</p><div className='mt-2 grid gap-2'><label className='text-xs uppercase tracking-widest text-zinc-300'>ID<input className='input md:mt-1' value={editingPromo.id} readOnly /></label><input className='input md:mt-0' value={promoForm.title} onChange={(e) => setPromoForm({ ...promoForm, title: e.target.value })} placeholder='Título' /><textarea className='input md:mt-0' value={promoForm.description} onChange={(e) => setPromoForm({ ...promoForm, description: e.target.value })} placeholder='Descripción' /><input className='input md:mt-0' value={promoForm.badge} onChange={(e) => setPromoForm({ ...promoForm, badge: e.target.value })} placeholder='Badge (opcional)' /><input className='input md:mt-0' value={promoForm.promoLabel} onChange={(e) => setPromoForm({ ...promoForm, promoLabel: e.target.value })} placeholder='Promo label (opcional)' /><label className='text-xs uppercase tracking-widest text-zinc-300'>Link a combo/producto<textarea className='input md:mt-1' value={promoForm.comboLinks} onChange={(e) => setPromoForm({ ...promoForm, comboLinks: e.target.value })} placeholder='COMBO-OG o BRG-OG' /></label><div className='grid gap-2 sm:grid-cols-2'><label className='flex min-h-11 items-center gap-2 text-sm'><input type='checkbox' checked={promoForm.isAvailable} onChange={(e) => setPromoForm({ ...promoForm, isAvailable: e.target.checked })} /> Disponible</label><label className='flex min-h-11 items-center gap-2 text-sm'><input type='checkbox' checked={promoForm.isFeatured} onChange={(e) => setPromoForm({ ...promoForm, isFeatured: e.target.checked })} /> Destacada</label></div><input className='input md:mt-0' value={promoForm.sortOrder} onChange={(e) => setPromoForm({ ...promoForm, sortOrder: e.target.value })} placeholder='Orden' />
-        <div className='rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-3'><div className='flex flex-col gap-3 sm:flex-row'><div className='image-preview'>{promoImagePreviewUrl ? <img src={promoImagePreviewUrl} alt={`Imagen de ${editingPromo.title}`} loading='lazy' decoding='async' /> : <span>Sin imagen</span>}</div><div className='min-w-0 flex-1 space-y-2'><h4 className='text-sm font-bold text-cyan-100'>Imagen de promo</h4>{promoForm.imageKey || promoForm.imageUrl ? <p className='break-all text-xs text-cyan-200'>Imagen actual: {promoForm.imageKey || promoForm.imageUrl}</p> : <p className='text-xs text-zinc-400'>Sin imagen asignada: Public V2 muestra la promo sin imagen.</p>}<input ref={promoFileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={promoImageBusy || promoSaving} onChange={(e) => onPromoFileChange(e.target.files?.[0] ?? null)} /><p className='text-xs text-zinc-400'>{ACCEPTED_IMAGE_TYPES_LABEL}. La ruta de imagen se genera automáticamente en <code>promos/</code>.</p><div className='flex flex-col gap-2 sm:flex-row'><Button className='flex-1 bg-cyan-400 text-black disabled:opacity-40' disabled={promoImageBusy || promoSaving || !canEdit || !selectedPromoFile || Boolean(validateSelectedFile(selectedPromoFile))} onClick={onPromoUploadImage}>{promoUploading ? 'Subiendo…' : 'Subir imagen'}</Button><Button className='flex-1 border border-rose-700 bg-zinc-900 text-rose-200 disabled:opacity-40' disabled={promoImageBusy || promoSaving || !canEdit || (!promoForm.imageKey && !promoForm.imageUrl)} onClick={onPromoRemoveImage}>{promoRemovingImage ? 'Quitando…' : 'Quitar imagen'}</Button></div>{promoImageError ? <p className='text-xs text-rose-300'>{promoImageError}</p> : null}</div></div></div>
-        <details className='rounded-xl border border-zinc-800 bg-zinc-900/50 p-3'><summary className='cursor-pointer text-xs uppercase tracking-widest text-zinc-300'>Referencia manual avanzada</summary><div className='mt-2 grid gap-2'><label className='text-xs uppercase tracking-widest text-zinc-300'>Image URL<input className='input md:mt-1' value={promoForm.imageUrl} onChange={(e) => setPromoForm({ ...promoForm, imageUrl: e.target.value })} placeholder='Image URL' /></label><label className='text-xs uppercase tracking-widest text-zinc-300'>Image key<input className='input md:mt-1' value={promoForm.imageKey} onChange={(e) => setPromoForm({ ...promoForm, imageKey: e.target.value })} placeholder='promos/combo-og.webp' /></label><p className='text-xs text-zinc-400'>Image URL puede ser /api/assets-v2/... o URL externa segura https://. Image key apunta a R2, ejemplo promos/combo-og.webp.</p></div></details>
-      </div>{promoValidationError ? <p className='mt-2 text-xs text-rose-300'>{promoValidationError}</p> : null}{promoSaveError ? <p className='mt-2 text-xs text-rose-300'>{promoSaveError}</p> : null}<div className='mt-3 flex gap-2'><Button className='flex-1 border border-zinc-700 bg-zinc-900' onClick={closePromoEditor} disabled={promoSaving || promoImageBusy}>Cancelar</Button><Button className='flex-1 bg-cyan-400 text-black disabled:opacity-40' onClick={onPromoSave} disabled={promoSaving || promoImageBusy || Boolean(promoValidationError) || !canEdit}>Guardar</Button></div></section></div> : null}
+    {editingPromo && promoForm ? <div className='overlay' onClick={closePromoEditor}><section className='modal' onClick={(e) => e.stopPropagation()}><h3 className='font-bold'>Editar promo {editingPromo.id}</h3><p className='muted'>ID solo lectura</p><div className='mt-2 grid gap-2'><label className='text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>ID<input className='input md:mt-1' value={editingPromo.id} readOnly /></label><input className='input md:mt-0' value={promoForm.title} onChange={(e) => setPromoForm({ ...promoForm, title: e.target.value })} placeholder='Título' /><textarea className='input md:mt-0' value={promoForm.description} onChange={(e) => setPromoForm({ ...promoForm, description: e.target.value })} placeholder='Descripción' /><input className='input md:mt-0' value={promoForm.badge} onChange={(e) => setPromoForm({ ...promoForm, badge: e.target.value })} placeholder='Badge (opcional)' /><input className='input md:mt-0' value={promoForm.promoLabel} onChange={(e) => setPromoForm({ ...promoForm, promoLabel: e.target.value })} placeholder='Promo label (opcional)' /><label className='text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>Link a combo/producto<textarea className='input md:mt-1' value={promoForm.comboLinks} onChange={(e) => setPromoForm({ ...promoForm, comboLinks: e.target.value })} placeholder='COMBO-OG o BRG-OG' /></label><div className='grid gap-2 sm:grid-cols-2'><label className='flex min-h-11 items-center gap-2 text-sm'><input type='checkbox' checked={promoForm.isAvailable} onChange={(e) => setPromoForm({ ...promoForm, isAvailable: e.target.checked })} /> Disponible</label><label className='flex min-h-11 items-center gap-2 text-sm'><input type='checkbox' checked={promoForm.isFeatured} onChange={(e) => setPromoForm({ ...promoForm, isFeatured: e.target.checked })} /> Destacada</label></div><input className='input md:mt-0' value={promoForm.sortOrder} onChange={(e) => setPromoForm({ ...promoForm, sortOrder: e.target.value })} placeholder='Orden' />
+        <div className='rounded-xl border border-green-500/30 bg-green-50 dark:bg-green-900/20 p-3'><div className='flex flex-col gap-3 sm:flex-row'><div className='image-preview'>{promoImagePreviewUrl ? <img src={promoImagePreviewUrl} alt={`Imagen de ${editingPromo.title}`} loading='lazy' decoding='async' /> : <span>Sin imagen</span>}</div><div className='min-w-0 flex-1 space-y-2'><h4 className='text-sm font-bold text-zinc-900 dark:text-zinc-100'>Imagen de promo</h4>{promoForm.imageKey || promoForm.imageUrl ? <p className='break-all text-xs text-zinc-700 dark:text-zinc-200'>Imagen actual: {promoForm.imageKey || promoForm.imageUrl}</p> : <p className='text-xs text-zinc-500 dark:text-zinc-400'>Sin imagen asignada: Public V2 muestra la promo sin imagen.</p>}<input ref={promoFileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={promoImageBusy || promoSaving} onChange={(e) => onPromoFileChange(e.target.files?.[0] ?? null)} /><p className='text-xs text-zinc-500 dark:text-zinc-400'>{ACCEPTED_IMAGE_TYPES_LABEL}. La ruta de imagen se genera automáticamente en <code>promos/</code>.</p><div className='flex flex-col gap-2 sm:flex-row'><Button className='flex-1 bg-green-600 text-white dark:bg-green-500 dark:text-black text-black disabled:opacity-40' disabled={promoImageBusy || promoSaving || !canEdit || !selectedPromoFile || Boolean(validateSelectedFile(selectedPromoFile))} onClick={onPromoUploadImage}>{promoUploading ? 'Subiendo…' : 'Subir imagen'}</Button><Button className='flex-1 border border-rose-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 disabled:opacity-40' disabled={promoImageBusy || promoSaving || !canEdit || (!promoForm.imageKey && !promoForm.imageUrl)} onClick={onPromoRemoveImage}>{promoRemovingImage ? 'Quitando…' : 'Quitar imagen'}</Button></div>{promoImageError ? <p className='text-xs text-rose-300'>{promoImageError}</p> : null}</div></div></div>
+        <details className='rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3'><summary className='cursor-pointer text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>Referencia manual avanzada</summary><div className='mt-2 grid gap-2'><label className='text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>Image URL<input className='input md:mt-1' value={promoForm.imageUrl} onChange={(e) => setPromoForm({ ...promoForm, imageUrl: e.target.value })} placeholder='Image URL' /></label><label className='text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>Image key<input className='input md:mt-1' value={promoForm.imageKey} onChange={(e) => setPromoForm({ ...promoForm, imageKey: e.target.value })} placeholder='promos/combo-og.webp' /></label><p className='text-xs text-zinc-500 dark:text-zinc-400'>Image URL puede ser /api/assets-v2/... o URL externa segura https://. Image key apunta a R2, ejemplo promos/combo-og.webp.</p></div></details>
+      </div>{promoValidationError ? <p className='mt-2 text-xs text-rose-300'>{promoValidationError}</p> : null}{promoSaveError ? <p className='mt-2 text-xs text-rose-300'>{promoSaveError}</p> : null}<div className='mt-3 flex gap-2'><Button className='flex-1 border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900' onClick={closePromoEditor} disabled={promoSaving || promoImageBusy}>Cancelar</Button><Button className='flex-1 bg-green-600 text-white dark:bg-green-500 dark:text-black text-black disabled:opacity-40' onClick={onPromoSave} disabled={promoSaving || promoImageBusy || Boolean(promoValidationError) || !canEdit}>Guardar</Button></div></section></div> : null}
 
-    {catalogBannerForm ? <div className='overlay' onClick={closeCatalogBannerEditor}><section className='modal modal--large' onClick={(e) => e.stopPropagation()}><div className='flex items-center justify-between'><h3 className='font-bold text-pink-100'>{catalogBannerForm.id ? 'Editar Banner' : 'Crear Banner de Catálogo'}</h3><Button className='text-zinc-400 bg-transparent min-h-8 p-1' onClick={closeCatalogBannerEditor}>X</Button></div><div className='mt-4 grid gap-3'><div className='flex flex-wrap items-center gap-1.5 p-2 rounded-lg bg-zinc-900/60 border border-zinc-800 text-xs text-zinc-300'><span className='font-semibold text-zinc-400 mr-1'>Presets de texto (opcional):</span><button type='button' className='px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors' onClick={() => setCatalogBannerForm({ ...catalogBannerForm, title: '⚡ ENVÍO GRATIS $0', subtitle: 'En tu primer pedido mayor a $150 con código BURGERS', ctaLabel: 'Copiar código BURGERS' })}>⚡ Envío Gratis</button><button type='button' className='px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors' onClick={() => setCatalogBannerForm({ ...catalogBannerForm, title: '🔥 DOBLE SMASH 2x1', subtitle: 'Aprovecha 2 hamburguesas dobles al precio de 1', ctaLabel: 'Ver Combos' })}>🔥 2x1 Smash</button><button type='button' className='px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors' onClick={() => setCatalogBannerForm({ ...catalogBannerForm, title: '🏆 COMBOS GRATIS', subtitle: 'Participa por un año de combos en cada pedido', ctaLabel: 'Ver Sorteo' })}>🏆 Sorteo Combos</button></div><input className='input' value={catalogBannerForm.title} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, title: e.target.value })} placeholder='Título (Requerido)' /><textarea className='input' value={catalogBannerForm.subtitle} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, subtitle: e.target.value })} placeholder='Subtítulo (Opcional)' /><input className='input' value={catalogBannerForm.ctaLabel} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, ctaLabel: e.target.value })} placeholder='Texto CTA (Opcional)' /><div className='grid grid-cols-2 gap-2'><label className='text-xs uppercase tracking-widest text-zinc-300'>Orden<input className='input md:mt-1' inputMode='numeric' value={catalogBannerForm.sortOrder} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, sortOrder: e.target.value })} /></label><label className='flex items-center gap-2 text-sm pt-5'><input type='checkbox' checked={catalogBannerForm.isActive} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, isActive: e.target.checked })} /> Activo</label></div>{catalogBannerForm.id && <div className='rounded-xl border border-pink-500/30 bg-zinc-950/70 p-3 mt-2'><div className='flex flex-col gap-3 sm:flex-row'><div className='image-preview'>{catalogBannerImagePreviewUrl ? <img src={catalogBannerImagePreviewUrl} alt='Banner visual' loading='lazy' decoding='async' /> : <span>Sin imagen</span>}</div><div className='min-w-0 flex-1 space-y-2'><h5 className='text-sm font-bold text-pink-100'>Imagen del banner</h5><input ref={catalogBannerFileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={catalogBannerImageBusy || catalogBannerSaving} onChange={(e) => setSelectedCatalogBannerFile(e.target.files?.[0] ?? null)} /><p className='text-xs text-zinc-400'>{ACCEPTED_IMAGE_TYPES_LABEL}</p><div className='flex flex-col gap-2 sm:flex-row'><Button className='min-h-11 flex-1 bg-pink-400 text-black disabled:opacity-40' disabled={catalogBannerImageBusy || catalogBannerSaving || !canEdit || !selectedCatalogBannerFile || Boolean(validateSelectedFile(selectedCatalogBannerFile))} onClick={onCatalogBannerUploadImage}>{catalogBannerUploading ? 'Subiendo…' : catalogBannerForm.imageKey || catalogBannerForm.imageUrl ? 'Cambiar imagen' : 'Subir imagen'}</Button><Button className='min-h-11 flex-1 border border-rose-700 bg-zinc-900 text-rose-200 disabled:opacity-40' disabled={catalogBannerImageBusy || catalogBannerSaving || !canEdit || (!catalogBannerForm.imageKey && !catalogBannerForm.imageUrl)} onClick={onCatalogBannerRemoveImage}>{catalogBannerRemovingImage ? 'Quitando…' : 'Quitar imagen'}</Button></div></div></div></div>}{catalogBannerError ? <p className='text-xs text-rose-300 mt-2'>{catalogBannerError}</p> : null}<div className='flex flex-wrap gap-2 mt-2'><Button disabled={!canEdit || catalogBannerSaving || catalogBannerImageBusy} className='min-h-11 bg-pink-400 text-black disabled:opacity-40 flex-1' onClick={onCatalogBannerSave}>{catalogBannerSaving ? 'Guardando…' : 'Guardar Banner'}</Button>{catalogBannerForm.id && <Button disabled={!canEdit || catalogBannerSaving || catalogBannerImageBusy} className='min-h-11 border border-rose-700 bg-zinc-900 text-rose-300 disabled:opacity-40' onClick={onCatalogBannerDelete}>Eliminar</Button>}</div></div></section></div> : null}
+    {catalogBannerForm ? <div className='overlay' onClick={closeCatalogBannerEditor}><section className='modal modal--large' onClick={(e) => e.stopPropagation()}><div className='flex items-center justify-between'><h3 className='font-bold text-zinc-900 dark:text-zinc-100'>{catalogBannerForm.id ? 'Editar Banner' : 'Crear Banner de Catálogo'}</h3><Button className='text-zinc-500 dark:text-zinc-400 bg-transparent min-h-8 p-1' onClick={closeCatalogBannerEditor}>X</Button></div><div className='mt-4 grid gap-3'><div className='flex flex-wrap items-center gap-1.5 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-300'><span className='font-semibold text-zinc-500 dark:text-zinc-400 mr-1'>Presets de texto (opcional):</span><button type='button' className='px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700 transition-colors' onClick={() => setCatalogBannerForm({ ...catalogBannerForm, title: '⚡ ENVÍO GRATIS $0', subtitle: 'En tu primer pedido mayor a $150 con código BURGERS', ctaLabel: 'Copiar código BURGERS' })}>⚡ Envío Gratis</button><button type='button' className='px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700 transition-colors' onClick={() => setCatalogBannerForm({ ...catalogBannerForm, title: '🔥 DOBLE SMASH 2x1', subtitle: 'Aprovecha 2 hamburguesas dobles al precio de 1', ctaLabel: 'Ver Combos' })}>🔥 2x1 Smash</button><button type='button' className='px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700 transition-colors' onClick={() => setCatalogBannerForm({ ...catalogBannerForm, title: '🏆 COMBOS GRATIS', subtitle: 'Participa por un año de combos en cada pedido', ctaLabel: 'Ver Sorteo' })}>🏆 Sorteo Combos</button></div><input className='input' value={catalogBannerForm.title} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, title: e.target.value })} placeholder='Título (Requerido)' /><textarea className='input' value={catalogBannerForm.subtitle} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, subtitle: e.target.value })} placeholder='Subtítulo (Opcional)' /><input className='input' value={catalogBannerForm.ctaLabel} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, ctaLabel: e.target.value })} placeholder='Texto CTA (Opcional)' /><div className='grid grid-cols-2 gap-2'><label className='text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-300'>Orden<input className='input md:mt-1' inputMode='numeric' value={catalogBannerForm.sortOrder} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, sortOrder: e.target.value })} /></label><label className='flex items-center gap-2 text-sm pt-5'><input type='checkbox' checked={catalogBannerForm.isActive} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, isActive: e.target.checked })} /> Activo</label></div>{catalogBannerForm.id && <div className='rounded-xl border border-zinc-300 dark:border-zinc-700/30 bg-white dark:bg-zinc-950 p-3 mt-2'><div className='flex flex-col gap-3 sm:flex-row'><div className='image-preview'>{catalogBannerImagePreviewUrl ? <img src={catalogBannerImagePreviewUrl} alt='Banner visual' loading='lazy' decoding='async' /> : <span>Sin imagen</span>}</div><div className='min-w-0 flex-1 space-y-2'><h5 className='text-sm font-bold text-zinc-900 dark:text-zinc-100'>Imagen del banner</h5><input ref={catalogBannerFileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={catalogBannerImageBusy || catalogBannerSaving} onChange={(e) => setSelectedCatalogBannerFile(e.target.files?.[0] ?? null)} /><p className='text-xs text-zinc-500 dark:text-zinc-400'>{ACCEPTED_IMAGE_TYPES_LABEL}</p><div className='flex flex-col gap-2 sm:flex-row'><Button className='min-h-11 flex-1 bg-zinc-200 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100 text-black disabled:opacity-40' disabled={catalogBannerImageBusy || catalogBannerSaving || !canEdit || !selectedCatalogBannerFile || Boolean(validateSelectedFile(selectedCatalogBannerFile))} onClick={onCatalogBannerUploadImage}>{catalogBannerUploading ? 'Subiendo…' : catalogBannerForm.imageKey || catalogBannerForm.imageUrl ? 'Cambiar imagen' : 'Subir imagen'}</Button><Button className='min-h-11 flex-1 border border-rose-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 disabled:opacity-40' disabled={catalogBannerImageBusy || catalogBannerSaving || !canEdit || (!catalogBannerForm.imageKey && !catalogBannerForm.imageUrl)} onClick={onCatalogBannerRemoveImage}>{catalogBannerRemovingImage ? 'Quitando…' : 'Quitar imagen'}</Button></div></div></div></div>}{catalogBannerError ? <p className='text-xs text-rose-300 mt-2'>{catalogBannerError}</p> : null}<div className='flex flex-wrap gap-2 mt-2'><Button disabled={!canEdit || catalogBannerSaving || catalogBannerImageBusy} className='min-h-11 bg-zinc-200 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100 text-black disabled:opacity-40 flex-1' onClick={onCatalogBannerSave}>{catalogBannerSaving ? 'Guardando…' : 'Guardar Banner'}</Button>{catalogBannerForm.id && <Button disabled={!canEdit || catalogBannerSaving || catalogBannerImageBusy} className='min-h-11 border border-rose-700 bg-zinc-50 dark:bg-zinc-900 text-rose-300 disabled:opacity-40' onClick={onCatalogBannerDelete}>Eliminar</Button>}</div></div></section></div> : null}
 
   </section>;
 }
