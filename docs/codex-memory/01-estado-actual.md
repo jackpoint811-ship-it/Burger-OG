@@ -47,9 +47,10 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - `POST /api/orders-v2` guarda `delivery_json` directamente en `orders_v2` de D1.
   - `mapD1OrderToOrderV2` extrae metadatos de entrega desde `items[].snapshot.delivery` si `delivery_json` viniera nulo.
   - `InternalChekeoApp.tsx` filtra con precisión las fechas (`all`, `today`, `past`, `YYYY-MM-DD`), garantizando que órdenes programadas (ej. día 10) se muestren correctamente.
-- **Consolidación y Refinamiento V3 (PR #494 Adaptado a Main)**:
-  - **SkeletonLoader Profesional**: Reemplazado el antiguo `LoadingOverlay` por un `SkeletonLoader` mobile-first en `PublicOrderApp.tsx`, ubicado estrictamente por debajo de todos los React Hooks para cumplir con las reglas de resiliencia de React (#501 - #503).
-  - **Purga de Mocks/Fallbacks Residuales**: Removida la importación de `mockOrders` en `InternalChekeoApp.tsx`, simplificado el tipo de origen y eliminados los banners neón de "Vista local".
-  - **Limpieza Estética Premium Casual**: Eliminadas las clases neón/oscuras en `CatalogAdminPanel.tsx`, adoptando la paleta neutra Premium Casual Vibe (`bg-white`, `border-neutral-200`, `text-green-700`).
-  - **Interruptor Dinámico en D1**: Conectada la herramienta `StoreBannersTool.tsx` con el endpoint de API `/api/menu-v2-admin/site-config` en D1, permitiendo encender o apagar la tienda pública en tiempo real sin recompilar.
+- **Rediseño Admin Hub V3, Notas Plegables y Premium Casual UI (PR #507 Merged en Preview)**:
+  - **Cuadrícula Modular 3x3 Hub Admin V3**: La pestaña principal de `Admin` en Chekeo V2 se reorganizó en una **cuadrícula modular 3x3 de 9 tarjetas táctiles compactas** (`catalogo-v3`, `catalogo`, `historial`, `basurero`, `cierre`, `banco`, `sorteos`, `reportes` y `página pública`).
+  - **Componente Nota Plegable (`CollapsibleCustomerNote.tsx`)**: Badge compacto `[📝 Nota del cliente ▼]` en Pedidos y Cocina plegado por defecto, desplegable inline al presionar para mantener tarjetas compactas.
+  - **Estética Premium Casual Vibe Completa**: Purga total de colores cyberpunk neón (`cyan-400`, `pink-500`, `bg-zinc-950`) en favor de la paleta Verde Bosque (`#16A34A` / `#22C55E`) y tarjetas neutras en modo claro/oscuro.
+  - **Control de Tienda V3**: Remoción del selector `<select>` y consolidación de la cabecera V3 con switch `Tienda Abierta / Tienda Cerrada` y badge permanente `MODO CATÁLOGO ÚNICO`.
+
 

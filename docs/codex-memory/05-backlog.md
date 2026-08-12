@@ -12,8 +12,12 @@
 - Mejorar Corte.
 - Reacomodar Sorteo.
 - Agregar tickets extra a participantes.
-- Mantener documentación viva por PR.
-- Implementar interruptor dinámico para activar/desactivar el Modo Catálogo directamente desde el panel de configuración de Chekeo (guardando y leyendo el estado desde D1/site_config en lugar de la config estática de mock-data).
+## Completados recientemente
+
+- [x] **PR #507**: Rediseño Hub Admin V3 con Cuadrícula Modular 3x3 de 9 tarjetas táctiles compactas.
+- [x] **PR #507**: Componente `CollapsibleCustomerNote.tsx` (píldora plegada por defecto `[📝 Nota del cliente ▼]`) en Pedidos y Cocina.
+- [x] **PR #507**: Purga completa de estilos cyberpunk neón (`cyan-400`, `pink-500`, `zinc-950`) adoptando la paleta Premium Casual Vibe (`#16A34A` / `#22C55E`, tarjetas neutras).
+- [x] **PR #507**: Interruptor dinámico para activar/desactivar la tienda pública directamente desde Chekeo V2 (`site_config` en D1) con badge permanente `MODO CATÁLOGO ÚNICO`.
 
 ## Ideas futuras
 
