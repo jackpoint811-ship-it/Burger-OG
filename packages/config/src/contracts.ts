@@ -295,6 +295,7 @@ export type OrderV2Status =
   | "ready"
   | "delivered"
   | "cancelled";
+export const TERMINAL_STATUSES = new Set<OrderV2Status>(["delivered", "cancelled"]);
 export type OrderV2Mode = "pickup" | "delivery";
 export type OrderV2PaymentMethod = "cash" | "transfer" | "card" | "unknown";
 export type OrderV2PaymentStatus = "pending" | "paid" | "cancelled";

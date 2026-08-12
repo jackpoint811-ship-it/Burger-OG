@@ -1,4 +1,4 @@
-import type { OrderV2Item, OrderV2Status } from '../../packages/config/src';
+import { TERMINAL_STATUSES, type OrderV2Item, type OrderV2Status } from '../../packages/config/src';
 import {
   buildOrderEnvironmentCondition,
   errorResponse,
@@ -14,7 +14,6 @@ import {
 type Env = AdminEnv;
 
 const ORDER_STATUSES = new Set<OrderV2Status>(['new', 'preparing', 'ready', 'delivered', 'cancelled']);
-const TERMINAL_STATUSES = new Set<OrderV2Status>(['delivered', 'cancelled']);
 const SIDE_QUEST_LINE_KEY_PREFIX = '::sidequest-';
 
 type SnapshotRecord = Record<string, unknown>;

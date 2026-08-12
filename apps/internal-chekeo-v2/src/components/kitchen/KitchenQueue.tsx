@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { TERMINAL_STATUSES } from "functions/api/_orders-v2-utils";
 import { Button, Card } from "@ui/index";
 import {
   CheckCircle2,
@@ -8,9 +7,10 @@ import {
   MapPin,
   RefreshCw,
 } from "lucide-react";
-import type {
-  OrderStatus,
-  OrderV2Environment,
+import {
+  TERMINAL_STATUSES,
+  type OrderStatus,
+  type OrderV2Environment,
 } from "@config/index";
 import { HorizontalDateCalendarFilter } from "../HorizontalDateCalendarFilter";
 import { parseOrderCustomerDetails } from "../../lib/order-parser";
