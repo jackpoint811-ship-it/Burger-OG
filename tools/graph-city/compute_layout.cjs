@@ -123,15 +123,30 @@ commIds.forEach((c, bi) => {
   colonyBuildings[ci].push(bi);
 
   /* ventanas: nodos con degree>=2, ordenados por degree desc (hubs arriba) */
+  const W_OFF = 0.55; // separación de la fachada (ventanas "pegadas" al muro)
   list.forEach((n, k) => {
     const d = deg[n.id] || 0;
     const isLeaf = d <= 1;
-    const jitterX = (rng() - 0.5) * Math.max(0.2, b.w - 0.9);
-    const jitterZ = (rng() - 0.5) * Math.max(0.2, b.d - 0.9);
     const wy = isLeaf ? 0 : 1 - (k / Math.max(1, size)) * 0.92 - 0.04; // hubs arriba (wy alto)
+    let wpx = 0, wpz = 0;
+    if (isLeaf) {
+      const jitterX = (rng() - 0.5) * Math.max(0.2, b.w - 0.9);
+      const jitterZ = (rng() - 0.5) * Math.max(0.2, b.d - 0.9);
+      wpx = jitterX; wpz = jitterZ;
+    } else {
+      /* distribución en el perímetro de la fachada, alineado al muro */
+      const winN = Math.max(1, list.length);
+      const total = 2 * (b.w + b.d);
+      const pos = ((k + 0.5) / winN) * total;
+      if (pos < b.w) { wpx = pos - b.w / 2; wpz = -(b.d / 2 + W_OFF); }
+      else if (pos < b.w + b.d) { wpx = b.w / 2 + W_OFF; wpz = pos - b.w - b.d / 2; }
+      else if (pos < 2 * b.w + b.d) { wpx = b.w / 2 - (pos - b.w - b.d); wpz = b.d / 2 + W_OFF; }
+      else { wpx = -(b.w / 2 + W_OFF); wpz = b.d / 2 - (pos - 2 * b.w - b.d); }
+      wpx = +wpx.toFixed(2); wpz = +wpz.toFixed(2);
+    }
     const nodeIdx = nodeArr.length;
     nodeIdxById[n.id] = nodeIdx;
-    const wpos = { x: +jitterX.toFixed(2), y: +wy.toFixed(3), z: +jitterZ.toFixed(2) };
+    const wpos = { x: +wpx.toFixed(2), y: +wy.toFixed(3), z: +wpz.toFixed(2) };
     nodeArr.push([
       n.id, n.label || n.id, n.source_file || '', n.file_type || '', d,
       bi, wpos.x, wpos.y, wpos.z, isLeaf ? 1 : 0

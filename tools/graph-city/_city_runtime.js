@@ -40,9 +40,9 @@
   scene.fog = new THREE.FogExp2(0x080b16, 0.00042);
 
   camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 6000);
-  renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.setSize(innerWidth, innerHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.15;
   document.body.appendChild(renderer.domElement);
@@ -55,8 +55,9 @@
   rim.position.set(-240, -60, -320);
   scene.add(rim);
 
-  /* ---------- suelo / calles ---------- */
+/* ---------- suelo / calles ---------- */
   var GROUND_Y = 0;
+  var groundMesh = null, lotMeshes = [];
   (function buildGround() {
     var xMin = Infinity, xMax = -Infinity, zMin = Infinity, zMax = -Infinity;
     COLS.forEach(function (c) {
@@ -64,28 +65,52 @@
       zMin = Math.min(zMin, c.cz - 150); zMax = Math.max(zMax, c.cz + 150);
     });
     var pad = 90;
+    var span = Math.max(xMax - xMin, zMax - zMin) + pad * 2;
     var geo = new THREE.PlaneGeometry(xMax - xMin + pad * 2, zMax - zMin + pad * 2);
     var mat = new THREE.MeshLambertMaterial({ color: 0x0d1220, roughness: 1 });
-    var g = new THREE.Mesh(geo, mat);
-    g.rotation.x = -Math.PI / 2;
-    g.position.set((xMin + xMax) / 2, GROUND_Y - 0.05, (zMin + zMax) / 2);
-    scene.add(g);
+    groundMesh = new THREE.Mesh(geo, mat);
+    groundMesh.rotation.x = -Math.PI / 2;
+    groundMesh.position.set((xMin + xMax) / 2, GROUND_Y - 0.05, (zMin + zMax) / 2);
+    scene.add(groundMesh);
 
-    /* rejilla de calles */
-    var grid = new THREE.GridHelper(Math.max(xMax - xMin, zMax - zMin) + pad * 2, 48, 0x1c2840, 0x131a2c);
-    grid.position.set((xMin + xMax) / 2, GROUND_Y + 0.01, (zMin + zMax) / 2);
-    grid.material.transparent = true; grid.material.opacity = 0.5;
-    scene.add(grid);
+    /* avenidas mayores = líneas cada 300 u alineadas al origen */
+    (function () {
+      var cs = Math.max(3, Math.round(span / 300));
+      var hc = cs / 2 * 300;
+      var pts = [];
+      for (var i = 0; i <= cs; i++) {
+        var p = -hc + i * 300;
+        pts.push(p, 0, -hc, p, 0, hc);
+        pts.push(-hc, 0, p, hc, 0, p);
+      }
+      var gg = new THREE.BufferGeometry();
+      gg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pts), 3));
+      var grid = new THREE.LineSegments(gg, new THREE.LineBasicMaterial({ color: 0x1c2840, transparent: true, opacity: 0.55, depthWrite: false }));
+      grid.position.set(0, GROUND_Y + 0.01, 0);
+      scene.add(grid);
+    })();
 
-    /* parcelas de colonia (cajas translúcidas) */
+    /* parcelas de colonia (cajas translúcidas con borde definido) */
     COLS.forEach(function (c, ci) {
       var lot = new THREE.Mesh(
         new THREE.BoxGeometry(260, 0.4, 260),
         new THREE.MeshLambertMaterial({ color: 0x151d31, transparent: true, opacity: 0.85 })
       );
-      lot.position.set(c.cx, GROUND_Y, c.cz);
+      lot.position.set(c.cx, GROUND_Y - 0.12, c.cz);
       lot.userData.ci = ci;
       scene.add(lot);
+      lotMeshes.push(lot);
+      var edge2 = new THREE.BufferGeometry();
+      var hw = 130, hd = 130;
+      var ep = new Float32Array([
+        -hw, 0, -hd, hw, 0, -hd, hw, 0, -hd, hw, 0, hd,
+        hw, 0, hd, -hw, 0, hd, -hw, 0, hd, -hw, 0, -hd
+      ]);
+      edge2.setAttribute('position', new THREE.BufferAttribute(ep, 3));
+      var edge = new THREE.LineSegments(edge2, new THREE.LineBasicMaterial({ color: 0x2a3a5f, transparent: true, opacity: 0.65, depthWrite: false }));
+      edge.position.set(c.cx, GROUND_Y - 0.1, c.cz);
+      edge.userData.ci = ci;
+      scene.add(edge);
     });
   })();
 
@@ -126,10 +151,10 @@
     scene.add(m);
     buildingMeshes.push(m);
 
-    /* techo iluminado */
-    var roof = new THREE.Mesh(geoBox, new THREE.MeshLambertMaterial({ color: 0x2b3d63, transparent: true, opacity: 0.9 }));
-    roof.position.set(b.x, b.h + 0.06, b.z);
-    roof.scale.set(b.w * 1.02, 0.5, b.d * 1.02);
+    /* cornisa superior (sin solape con el tope → sin z-fighting) */
+    var roof = new THREE.Mesh(geoBox, new THREE.MeshLambertMaterial({ color: 0x2b3d63 }));
+    roof.position.set(b.x, b.h + 0.22, b.z);
+    roof.scale.set(b.w * 0.96, 0.32, b.d * 0.96);
     roof.userData.bi = bi;
     scene.add(roof);
 
@@ -251,6 +276,15 @@
 
   /* ---------- humo de fábricas ---------- */
   var smokePts = null, smokeData = [];
+  function makeCircleTex() {
+    var c = cv(64, 64), x = c.getContext('2d');
+    var g = x.createRadialGradient(32, 32, 2, 32, 32, 30);
+    g.addColorStop(0, 'rgba(255,255,255,0.85)');
+    g.addColorStop(0.55, 'rgba(255,255,255,0.35)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+    return texFrom(c);
+  }
   (function buildSmoke() {
     var list = [];
     B.forEach(function (b) {
@@ -268,7 +302,7 @@
     var g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-    smokePts = new THREE.Points(g, new THREE.PointsMaterial({ size: 2.4, vertexColors: true, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
+    smokePts = new THREE.Points(g, new THREE.PointsMaterial({ size: 2.4, map: makeCircleTex(), transparent: true, opacity: 0.55, alphaTest: 0.02, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
     scene.add(smokePts);
   })();
   function updateSmoke(dt) {
@@ -398,17 +432,23 @@
     camera.lookAt(cam.tx, cam.ty, cam.tz);
     var d = cam.radius;
     var lod = d > 380 ? 0 : (d > 110 ? 1 : 2);
-    if (lod === 0) {
-      if (winMesh) winMesh.visible = false;
-      if (basementMesh) basementMesh.visible = false;
-      if (lineSegs) lineSegs.visible = linesOn;
-    } else {
-      if (winMesh) winMesh.visible = true;
-      if (basementMesh) basementMesh.visible = basementOn;
-      if (lineSegs) lineSegs.visible = linesOn;
+    /* fade suave de ventanas según distancia (sin pop brusco) */
+    var want = d > 380 ? 0 : (d > 300 ? (380 - d) / 80 : 1);
+    if (winMesh) {
+      winMesh.material.transparent = true;
+      winMesh.material.opacity += (want - winMesh.material.opacity) * 0.25;
+      winMesh.visible = winMesh.material.opacity > 0.02;
     }
-    colonyLabels.forEach(function (l) { l.visible = lod !== 2 || true; });
-    buildingLOD.forEach(function (o) { o.mesh.visible = lod >= o.lod; });
+    if (basementMesh) { basementMesh.visible = basementOn && lod !== 0; }
+    if (lineSegs) lineSegs.visible = linesOn;
+    colonyLabels.forEach(function (l, ci) {
+      var o = lod === 0 ? 0.4 : (lod === 1 ? 0.75 : 0.94);
+      l.material.opacity += (o - l.material.opacity) * 0.2;
+    });
+    buildingLOD.forEach(function (o) {
+      var on = lod >= o.lod;
+      if (o.mesh.visible !== on) o.mesh.visible = on;
+    });
   }
   function flyTo(x, y, z, radius) {
     cam.dtx = x; cam.dty = y; cam.dtz = z; cam.dr = clamp(radius, 10, 4000);
@@ -800,7 +840,16 @@
   };
   $('btnBasement').onclick = function () {
     basementOn = !basementOn;
-    if (basementMesh) { basementMesh.visible = basementOn; basementMesh.material.opacity = basementOn ? 0.9 : 0.0; }
+    if (basementMesh) {
+      basementMesh.visible = basementOn;
+      basementMesh.material.opacity = basementOn ? 0.95 : 0.0;
+      if (groundMesh) { groundMesh.material.transparent = true; groundMesh.material.opacity = basementOn ? 0.05 : 1; groundMesh.material.needsUpdate = true; }
+      lotMeshes.forEach(function (l) {
+        l.material.transparent = true;
+        l.material.opacity = basementOn ? 0.12 : 0.85;
+        l.material.needsUpdate = true;
+      });
+    }
     this.classList.toggle('on', basementOn);
     userInteract();
     toast(basementOn ? '🕳 Sótano visible: ' + fmt(baseIdx.length) + ' hojas enterradas' : '🕳 Sótano oculto');
