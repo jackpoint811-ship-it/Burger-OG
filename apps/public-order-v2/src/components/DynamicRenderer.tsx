@@ -76,13 +76,13 @@ export function DynamicRenderer({
           width: "100%",
           padding: "32px",
           textAlign: "center",
-          border: "1px dashed #27272a",
+          border: "1px dashed var(--color-line)",
           borderRadius: "16px",
-          backgroundColor: "#0d0f12",
+          backgroundColor: "var(--color-surface)",
         }}
       >
-        <p style={{ fontSize: "14px", fontFamily: "monospace", color: "#71717a", margin: 0 }}>
-          [SYS_MSG] Especificación de diseño vacía o no provista.
+        <p style={{ fontSize: "14px", color: "var(--color-text-secondary)", margin: 0 }}>
+          Especificación de diseño vacía o no provista.
         </p>
       </div>
     );
@@ -92,11 +92,14 @@ export function DynamicRenderer({
   const globalTheme = spec.globalTheme;
   const themeStyle: React.CSSProperties = {
     backgroundColor:
-      typeof globalTheme?.backgroundColor === "string" && globalTheme.backgroundColor !== "#0B0B0B"
+      typeof globalTheme?.backgroundColor === "string" &&
+      globalTheme.backgroundColor !== "#0B0B0B" &&
+      globalTheme.backgroundColor !== "#0d0f12"
         ? globalTheme.backgroundColor
         : "var(--color-bg-base)",
     color:
-      typeof globalTheme?.textColor === "string" && globalTheme.textColor !== "#00FF66"
+      typeof globalTheme?.textColor === "string" &&
+      globalTheme.textColor !== "#00FF66"
         ? globalTheme.textColor
         : "var(--color-text-primary)",
     fontFamily:

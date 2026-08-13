@@ -186,16 +186,17 @@ function CatalogModeAppInner({ items, categories, siteConfig, recipes, catalogBa
             <a href="/" className="site-header__logo-link" aria-label="Burgers.exe — Inicio">
               <svg
                 className="site-header__logo-icon"
-                width="32"
-                height="32"
-                viewBox="0 0 32 32"
+                width="34"
+                height="34"
+                viewBox="0 0 36 36"
                 fill="none"
                 aria-hidden="true"
               >
-                <rect width="32" height="32" rx="10" fill="var(--color-accent-soft)" stroke="var(--color-accent-line)" />
-                <path d="M 8 11 C 8 7, 24 7, 24 11 Z" fill="var(--color-accent)" />
-                <rect x="7" y="14" width="18" height="3" rx="1.5" fill="var(--color-warning)" />
-                <path d="M 8 20 H 24 C 24 23, 20 25, 16 25 C 12 25, 8 23, 8 20 Z" fill="var(--color-accent)" />
+                <rect width="36" height="36" rx="10" fill="var(--color-accent-soft)" stroke="var(--color-accent-line)" strokeWidth="1.5" />
+                <path d="M 8 13 C 8 7, 28 7, 28 13 Z" fill="var(--color-accent)" />
+                <rect x="7" y="15" width="22" height="3" rx="1.5" fill="var(--color-warning)" />
+                <rect x="6" y="19" width="24" height="4" rx="2" fill="var(--color-accent)" opacity="0.85" />
+                <path d="M 8 24 H 28 C 28 27, 23 29, 18 29 C 13 29, 8 27, 8 24 Z" fill="var(--color-accent)" />
               </svg>
               <span className="site-header__logo-text">
                 Burgers<span className="site-header__logo-ext">.exe</span>
@@ -275,6 +276,23 @@ function CatalogModeAppInner({ items, categories, siteConfig, recipes, catalogBa
           }}
         />
       </main>
+
+      {/* ── Pie de página oficial Premium Casual ────────────────────────── */}
+      <footer className="site-footer" role="contentinfo">
+        <div className="site-footer__container">
+          <div className="site-footer__brand">
+            <span className="site-footer__logo-text">Burgers<span className="site-footer__logo-ext">.exe</span></span>
+            <p className="site-footer__tagline">Smash burgers artesanales hechas al instante con ingredientes frescos.</p>
+          </div>
+          <div className="site-footer__links">
+            <a href="/tickets" className="site-footer__link">🎟️ Mis Tickets de Rifas</a>
+            <a href="https://chat.whatsapp.com/GycE5zALOypGPvJVaMfbPp" target="_blank" rel="noopener noreferrer" className="site-footer__link">💬 Grupo de WhatsApp</a>
+          </div>
+          <div className="site-footer__copy">
+            © {new Date().getFullYear()} Burgers.exe — Hecho con ❤️ para ti.
+          </div>
+        </div>
+      </footer>
 
       <CatalogToast toast={activeToast} hasCartBar={true} />
 

@@ -536,36 +536,6 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
             </div>
           )}
 
-          {/* ── OPCIONES DE COMBO: Guarnición Dinámica desde Chekeo ── */}
-          {product.type === "combo" && comboSideOptions.length > 0 && (
-            <div className="catalog-drawer__section-card" style={{ marginTop: "12px" }}>
-              <span className="catalog-drawer__section-title">🍟 ELIGE TU GUARNICIÓN</span>
-              <div className="catalog-drawer__radio-group" style={{ display: "grid", gap: "8px", marginTop: "8px" }}>
-                {comboSideOptions.map((side) => (
-                  <label key={side.id} className="catalog-drawer__radio-label" style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    padding: "10px 14px",
-                    borderRadius: "var(--radius-sm)",
-                    background: comboSide === side.label ? "var(--color-accent-soft)" : "var(--color-surface)",
-                    border: comboSide === side.label ? "1px solid var(--color-accent)" : "1px solid var(--color-line)",
-                    cursor: "pointer"
-                  }}>
-                    <input
-                      type="radio"
-                      name="combo-side-opt"
-                      checked={comboSide === side.label}
-                      onChange={() => setComboSide(side.label)}
-                      style={{ accentColor: "var(--color-accent)", width: "18px", height: "18px" }}
-                    />
-                    <span style={{ fontSize: "13px", fontWeight: comboSide === side.label ? 700 : 500 }}>{side.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* ── BURGERS DEL COMBO: Personaliza cada burger incluida ── */}
           {product.type === "combo" && comboBurgerProducts.length > 0 && (
             <div className="catalog-drawer__section-card" style={{ marginTop: "12px" }}>
@@ -728,6 +698,36 @@ export function CatalogProductDrawer({ product, initialCartItem, recipeIngredien
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* ── OPCIONES DE COMBO: Guarnición Dinámica desde Chekeo ── */}
+          {product.type === "combo" && comboSideOptions.length > 0 && (
+            <div className="catalog-drawer__section-card" style={{ marginTop: "12px" }}>
+              <span className="catalog-drawer__section-title">🍟 ELIGE TU GUARNICIÓN</span>
+              <div className="catalog-drawer__radio-group" style={{ display: "grid", gap: "8px", marginTop: "8px" }}>
+                {comboSideOptions.map((side) => (
+                  <label key={side.id} className="catalog-drawer__radio-label" style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: "10px 14px",
+                    borderRadius: "var(--radius-sm)",
+                    background: comboSide === side.label ? "var(--color-accent-soft)" : "var(--color-surface)",
+                    border: comboSide === side.label ? "1px solid var(--color-accent)" : "1px solid var(--color-line)",
+                    cursor: "pointer"
+                  }}>
+                    <input
+                      type="radio"
+                      name="combo-side-opt"
+                      checked={comboSide === side.label}
+                      onChange={() => setComboSide(side.label)}
+                      style={{ accentColor: "var(--color-accent)", width: "18px", height: "18px" }}
+                    />
+                    <span style={{ fontSize: "13px", fontWeight: comboSide === side.label ? 700 : 500 }}>{side.label}</span>
+                  </label>
+                ))}
               </div>
             </div>
           )}

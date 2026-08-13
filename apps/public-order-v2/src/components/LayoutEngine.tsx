@@ -167,11 +167,55 @@ export function LayoutEngine({
             icon: dbBanner.badgeText ? "⭐" : "🍔",
             gradient: resolveBannerGradient(dbBanner.bgPreset, idx),
             action: () => {
-              if (dbBanner.ctaActionType === "category" && dbBanner.ctaTarget) {
-                if (onSelectCategory) onSelectCategory(dbBanner.ctaTarget);
+              const rawType = dbBanner.ctaActionType?.toLowerCase()?.trim();
+              const target = dbBanner.ctaTarget?.trim();
+
+              // 1. Navegación a Categorías (ej. "combos", "burgers", "bebidas", "menu", "all")
+              if (
+                rawType === "category" ||
+                rawType === "cat" ||
+                target === "combos" ||
+                target === "burgers" ||
+                target === "bebidas" ||
+                target === "menu" ||
+                target === "all"
+              ) {
+                const catKey = target && target !== "menu" ? target : "combos";
+                if (onSelectCategory) onSelectCategory(catKey);
                 document.getElementById("catalog-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
-              } else if (dbBanner.ctaActionType === "url" && dbBanner.ctaTarget) {
-                window.location.href = dbBanner.ctaTarget;
+                return;
+              }
+
+              // 2. Subpáginas Internas (ej. /tickets, /sorteo, etc.)
+              if (rawType === "page" || rawType === "internal" || (target && target.startsWith("/"))) {
+                if (target === "/menu" || target === "/") {
+                  document.getElementById("catalog-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                } else if (target) {
+                  window.location.href = target;
+                }
+                return;
+              }
+
+              // 3. Links Externos (ej. http://... o https://...)
+              if (
+                rawType === "url" ||
+                rawType === "external" ||
+                (target && (target.startsWith("http://") || target.startsWith("https://")))
+              ) {
+                if (target) window.open(target, "_blank", "noopener,noreferrer");
+                return;
+              }
+
+              // 4. Mensajes Toast explícitos
+              if (rawType === "toast" || rawType === "message") {
+                if (onAction) onAction(`TOAST:⭐|${target || dbBanner.title}`);
+                return;
+              }
+
+              // 5. Mapeo genérico por target
+              if (target) {
+                if (onSelectCategory) onSelectCategory(target);
+                document.getElementById("catalog-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
               } else if (onAction) {
                 onAction(`TOAST:⭐|${dbBanner.title}`);
               }
@@ -985,28 +1029,35 @@ export function LayoutEngine({
                         {formatCurrency(item.price)}
                       </span>
                     )}
-                    <button
-                      type="button"
-                      disabled={item.isAvailable === false}
-                      aria-label={item.isAvailable === false ? `${item.name} agotado` : `Agregar ${item.name}`}
-                      className={`catalog-card__btn-add ${item.isAvailable === false ? "catalog-card__btn-add--disabled" : ""} ${pulsingItemIds[item.sku] ? "catalog-card__btn-add--pulse" : ""}`}
-                      onClick={(e) => {
-                        if (item.isAvailable === false) {
-                          e.stopPropagation();
-                          return;
-                        }
-                        handleQuickAdd(item, e);
-                      }}
-                    >
-                      {item.isAvailable === false ? (
-                        <span style={{ fontSize: "11px", fontWeight: 800 }} aria-hidden="true">✕</span>
-                      ) : (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <line x1="12" y1="5" x2="12" y2="19" />
-                          <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                      )}
-                    </button>
+                    {(() => {
+                      const cartQty = cartQtyByProductId[(item as any).id || item.sku] || cartQtyByProductId[item.sku] || 0;
+                      return (
+                        <button
+                          type="button"
+                          disabled={item.isAvailable === false}
+                          aria-label={item.isAvailable === false ? `${item.name} agotado` : `Agregar ${item.name}`}
+                          className={`catalog-card__btn-add ${item.isAvailable === false ? "catalog-card__btn-add--disabled" : ""} ${pulsingItemIds[item.sku] ? "catalog-card__btn-add--pulse" : ""} ${cartQty > 0 ? "catalog-card__btn-add--has-qty" : ""}`}
+                          onClick={(e) => {
+                            if (item.isAvailable === false) {
+                              e.stopPropagation();
+                              return;
+                            }
+                            handleQuickAdd(item, e);
+                          }}
+                        >
+                          {item.isAvailable === false ? (
+                            <span style={{ fontSize: "11px", fontWeight: 800 }} aria-hidden="true">✕</span>
+                          ) : cartQty > 0 ? (
+                            <span style={{ fontSize: "12px", fontFamily: "'Inter', sans-serif", fontWeight: 800 }} aria-hidden="true">{cartQty}</span>
+                          ) : (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <line x1="12" y1="5" x2="12" y2="19" />
+                              <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               </motion.article>
