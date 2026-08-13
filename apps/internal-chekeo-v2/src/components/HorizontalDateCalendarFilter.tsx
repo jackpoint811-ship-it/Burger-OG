@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Calendar, Filter, Clock } from "lucide-react";
+import { useMemo, useRef, useEffect, useCallback } from "react";
+import { Calendar, Filter, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import type { OrderV2DeliveryInfo } from "@config/index";
 import { parseOrderCustomerDetails } from "../lib/order-parser";
 
@@ -41,6 +41,8 @@ export function HorizontalDateCalendarFilter({
   selectedDate,
   onSelectDate,
 }: HorizontalDateCalendarFilterProps) {
+  const railRef = useRef<HTMLDivElement>(null);
+
   const calendarOptions = useMemo(() => {
     const today = new Date();
     const todayStr = formatIsoDate(today);
@@ -48,14 +50,12 @@ export function HorizontalDateCalendarFilter({
     const pendingByDate = new Map<string, number>();
     const totalByDate = new Map<string, number>();
 
-    let totalPendingAll = 0;
+    let totalPendingUpcoming = 0;
     let pastPendingCount = 0;
     let pastTotalCount = 0;
 
     orders.forEach((order) => {
       const isPending = order.status !== "delivered" && order.status !== "cancelled";
-      if (isPending) totalPendingAll++;
-
       const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
       let targetDateStr = todayStr;
 
@@ -69,6 +69,8 @@ export function HorizontalDateCalendarFilter({
         pastTotalCount++;
         if (isPending) pastPendingCount++;
       } else {
+        // Solo pedidos de hoy y futuros cuentan en 'Todos'
+        if (isPending) totalPendingUpcoming++;
         totalByDate.set(targetDateStr, (totalByDate.get(targetDateStr) || 0) + 1);
         if (isPending) {
           pendingByDate.set(targetDateStr, (pendingByDate.get(targetDateStr) || 0) + 1);
@@ -76,7 +78,7 @@ export function HorizontalDateCalendarFilter({
       }
     });
 
-    // Build consecutive dates starting from Today for 14 days
+    // Construir 14 días consecutivos desde hoy
     const dateStrSet = new Set<string>();
     for (let i = 0; i < 14; i++) {
       const d = new Date(today);
@@ -84,7 +86,7 @@ export function HorizontalDateCalendarFilter({
       dateStrSet.add(formatIsoDate(d));
     }
 
-    // Also include any future order dates beyond 14 days
+    // Incluir cualquier fecha futura que tenga pedidos programados más allá de 14 días
     totalByDate.forEach((_, dateStr) => {
       if (dateStr >= todayStr) {
         dateStrSet.add(dateStr);
@@ -128,7 +130,7 @@ export function HorizontalDateCalendarFilter({
 
     return {
       dates,
-      totalPendingAll,
+      totalPendingUpcoming,
       pastPendingCount,
       pastTotalCount,
     };
@@ -136,68 +138,116 @@ export function HorizontalDateCalendarFilter({
 
   const isPastSelected = selectedDate === "past";
 
+  const scrollRail = useCallback((direction: "left" | "right") => {
+    if (!railRef.current) return;
+    const scrollAmount = direction === "left" ? -240 : 240;
+    railRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+  }, []);
+
+  // Auto-scroll hacia la fecha activa al montar o cambiar de selección
+  useEffect(() => {
+    if (!railRef.current) return;
+    const activeEl = railRef.current.querySelector<HTMLElement>('[data-active="true"]');
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
+  }, [selectedDate]);
+
   return (
-    <div className="v3-calendar-filter-shell my-3 w-full max-w-full overflow-hidden">
-      <div className="v3-calendar-header flex items-center justify-between mb-2 px-1">
+    <div className="v3-calendar-filter-shell my-3 w-full max-w-full rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3 shadow-[var(--shadow-card)]">
+      <div className="v3-calendar-header flex flex-wrap items-center justify-between gap-2 pb-2.5">
         <div className="flex items-center gap-2">
-          <Calendar size={16} className="text-emerald-500" />
-          <span className="text-xs font-black uppercase tracking-wider text-zinc-400">
-            Filtro de Fecha de Entrega
+          <Calendar size={16} className="text-[var(--color-accent)]" />
+          <span className="text-xs font-black uppercase tracking-wider text-[var(--color-text-secondary)]">
+            Fecha de Entrega
           </span>
         </div>
-        <button
-          type="button"
-          className={`v3-calendar-pill-all px-3 py-1 text-xs font-bold rounded-full transition-all flex items-center gap-1.5 ${
-            selectedDate === "all"
-              ? "bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20 ring-2 ring-emerald-400/50"
-              : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700"
-          }`}
-          onClick={() => onSelectDate("all")}
-        >
-          <Filter size={12} />
-          <span>Ver Todos</span>
-          {calendarOptions.totalPendingAll > 0 ? (
-            <span className="ml-1 px-1.5 py-0.2 rounded-full bg-zinc-900 text-[10px] text-emerald-400 font-extrabold">
-              {calendarOptions.totalPendingAll}
-            </span>
-          ) : null}
-        </button>
+
+        <div className="flex items-center gap-2">
+          {/* Controles de desplazamiento para desktop / tablet */}
+          <div className="hidden sm:flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => scrollRail("left")}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--color-line)] bg-[var(--color-surface-raised)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]"
+              aria-label="Desplazar calendario a la izquierda"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollRail("right")}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--color-line)] bg-[var(--color-surface-raised)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]"
+              aria-label="Desplazar calendario a la derecha"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+
+          {/* Botón Ver Todos (Hoy y Futuros) */}
+          <button
+            type="button"
+            className={`v3-calendar-pill-all px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] ${
+              selectedDate === "all"
+                ? "bg-[var(--color-accent)] text-white shadow-sm ring-2 ring-[var(--color-accent)]/30 font-extrabold"
+                : "bg-[var(--color-surface-raised)] border border-[var(--color-line)] text-[var(--color-text-secondary)] hover:border-[var(--color-line-strong)] hover:text-[var(--color-text-primary)]"
+            }`}
+            onClick={() => onSelectDate("all")}
+          >
+            <Filter size={12} />
+            <span>Ver Todos</span>
+            {calendarOptions.totalPendingUpcoming > 0 ? (
+              <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                selectedDate === "all"
+                  ? "bg-black/20 text-white"
+                  : "bg-[var(--color-accent-soft)] text-[var(--color-accent)]"
+              }`}>
+                {calendarOptions.totalPendingUpcoming}
+              </span>
+            ) : null}
+          </button>
+        </div>
       </div>
 
-      {/* Horizontal Scroll Rail */}
-      <div className="v3-calendar-rail flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none snap-x w-full max-w-full">
-        {/* Special First Button: Clock / Past Dates */}
+      {/* Riel Horizontal de Fechas */}
+      <div
+        ref={railRef}
+        className="v3-calendar-rail flex items-center gap-2 overflow-x-auto pt-1 pb-1 scrollbar-none snap-x w-full max-w-full"
+      >
+        {/* Tarjeta Especial: Anteriores / Histórico */}
         <button
           type="button"
+          data-active={isPastSelected}
           onClick={() => onSelectDate("past")}
-          className={`v3-calendar-card flex-shrink-0 snap-start px-3.5 py-2.5 rounded-2xl transition-all border text-left min-w-[95px] flex flex-col justify-between relative ${
+          className={`v3-calendar-card flex-shrink-0 snap-start px-3.5 py-2.5 rounded-2xl transition-all border text-left min-w-[105px] min-h-[64px] flex flex-col justify-between relative focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-500 ${
             isPastSelected
-              ? "bg-amber-500/20 border-amber-500 text-amber-300 ring-2 ring-amber-500/40 shadow-lg shadow-amber-500/10"
-              : "bg-zinc-900/80 border-amber-500/30 text-amber-400/90 hover:bg-zinc-800/80 hover:border-amber-500/60"
+              ? "bg-amber-500/15 border-amber-500 text-amber-900 dark:text-amber-200 ring-2 ring-amber-500/40 shadow-sm"
+              : "bg-[var(--color-surface-raised)] border-amber-500/30 text-amber-800 dark:text-amber-300 hover:border-amber-500/60"
           }`}
         >
           <div className="flex items-center justify-between w-full gap-1">
-            <span className="text-[11px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1">
-              <span className="text-sm">⏱️</span> Anteriores
+            <span className="text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+              <Clock size={13} className="text-amber-600 dark:text-amber-400" />
+              Anteriores
             </span>
             {calendarOptions.pastPendingCount > 0 ? (
-              <span className="px-1.5 py-0.5 text-[10px] font-black rounded-full bg-amber-500 text-zinc-950 animate-pulse">
+              <span className="px-1.5 py-0.5 text-[10px] font-black rounded-full bg-amber-500 text-stone-900 animate-pulse">
                 {calendarOptions.pastPendingCount}
               </span>
             ) : calendarOptions.pastTotalCount > 0 ? (
-              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-zinc-800 text-zinc-400">
+              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400">
                 {calendarOptions.pastTotalCount}
               </span>
             ) : null}
           </div>
 
-          <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-amber-300/80">
-            <Clock size={14} className="text-amber-400" />
-            <span className="text-[11px] font-extrabold tracking-tight">Histórico</span>
+          <div className="mt-1 flex items-baseline gap-1">
+            <span className="text-xs font-extrabold text-amber-700 dark:text-amber-400">Histórico</span>
+            <span className="text-[10px] text-amber-800/70 dark:text-amber-400/70">pasados</span>
           </div>
         </button>
 
-        {/* Regular Date Cards */}
+        {/* Tarjetas de Días */}
         {calendarOptions.dates.map((item) => {
           const isSelected =
             selectedDate === item.key ||
@@ -208,43 +258,65 @@ export function HorizontalDateCalendarFilter({
             <button
               key={item.key}
               type="button"
+              data-active={isSelected}
               onClick={() => onSelectDate(item.key)}
-              className={`v3-calendar-card flex-shrink-0 snap-start px-3.5 py-2.5 rounded-2xl transition-all border text-left min-w-[85px] flex flex-col justify-between relative ${
+              className={`v3-calendar-card flex-shrink-0 snap-start px-3.5 py-2.5 rounded-2xl transition-all border text-left min-w-[90px] min-h-[64px] flex flex-col justify-between relative focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] ${
                 isSelected
-                  ? "bg-emerald-500/15 border-emerald-500 text-emerald-300 ring-2 ring-emerald-500/40 shadow-lg shadow-emerald-500/10"
+                  ? "bg-[var(--color-accent-soft)] border-[var(--color-accent)] text-[var(--color-accent)] ring-2 ring-[var(--color-accent)]/30 shadow-sm"
                   : item.isToday
-                    ? "bg-zinc-900/90 border-emerald-500/50 text-zinc-100 shadow-sm shadow-emerald-500/10 hover:border-emerald-500"
+                    ? "bg-[var(--color-surface)] border-[var(--color-accent)]/50 text-[var(--color-text-primary)] shadow-sm hover:border-[var(--color-accent)]"
                     : item.isWeekend
-                      ? "bg-zinc-950/60 border-zinc-800/60 text-zinc-500 opacity-60 hover:opacity-100"
-                      : "bg-zinc-900/60 border-zinc-800/80 text-zinc-300 hover:bg-zinc-800/70 hover:border-zinc-700"
+                      ? "bg-[var(--color-surface-raised)] border-[var(--color-line)] text-[var(--color-text-muted)] opacity-80 hover:opacity-100 hover:border-[var(--color-line-strong)]"
+                      : "bg-[var(--color-surface-raised)] border-[var(--color-line)] text-[var(--color-text-primary)] hover:border-[var(--color-line-strong)]"
               }`}
             >
               <div className="flex items-center justify-between w-full gap-1">
-                <span className={`text-[11px] font-black uppercase tracking-wider ${item.isToday ? "text-emerald-400" : "text-zinc-400"}`}>
+                <span className={`text-[11px] font-black uppercase tracking-wider ${
+                  isSelected
+                    ? "text-[var(--color-accent)] font-black"
+                    : item.isToday
+                      ? "text-[var(--color-accent)]"
+                      : "text-[var(--color-text-secondary)]"
+                }`}>
                   {item.dayName}
                 </span>
 
                 <div className="flex items-center gap-1">
-                  {item.isToday ? (
-                    <span className="px-1.5 py-0.5 text-[9px] font-black rounded-full bg-emerald-500 text-zinc-950 shadow-sm tracking-tighter">
-                      🟢 HOY
+                  {item.isToday && !isSelected ? (
+                    <span className="px-1.5 py-0.5 text-[9px] font-black uppercase rounded-md bg-[var(--color-accent)] text-white shadow-xs">
+                      HOY
                     </span>
                   ) : null}
                   {item.pendingCount > 0 ? (
-                    <span className="px-1.5 py-0.5 text-[10px] font-black rounded-full bg-emerald-500 text-zinc-950 shadow-sm animate-pulse">
+                    <span className="px-1.5 py-0.5 text-[10px] font-black rounded-full bg-[var(--color-accent)] text-white shadow-xs animate-pulse">
                       {item.pendingCount}
                     </span>
                   ) : item.totalCount > 0 ? (
-                    <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-zinc-800 text-zinc-400">
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400">
                       {item.totalCount}
                     </span>
                   ) : null}
                 </div>
               </div>
 
-              <div className="mt-1 flex items-baseline gap-1">
-                <span className="text-xl font-black tracking-tight">{item.dayNumber}</span>
-                <span className="text-[10px] font-semibold text-zinc-400">{item.monthName}</span>
+              <div className="mt-1 flex items-baseline justify-between w-full">
+                <div className="flex items-baseline gap-1">
+                  <span className={`text-xl font-black tracking-tight ${
+                    isSelected
+                      ? "text-[var(--color-accent)]"
+                      : "text-[var(--color-text-primary)]"
+                  }`}>
+                    {item.dayNumber}
+                  </span>
+                  <span className="text-[10px] font-semibold text-[var(--color-text-muted)]">
+                    {item.monthName}
+                  </span>
+                </div>
+                {item.isWeekend ? (
+                  <span className="text-[9px] font-semibold text-[var(--color-text-muted)] uppercase tracking-tighter">
+                    Fin
+                  </span>
+                ) : null}
               </div>
             </button>
           );

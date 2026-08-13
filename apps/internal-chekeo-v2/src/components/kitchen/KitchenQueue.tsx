@@ -152,7 +152,7 @@ const ItemDetailList = ({ item }: { item: KitchenProductionItem }) => {
       );
     } else {
       sideQuestSource = (
-        <span className="kitchen-note-chip text-[11px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 inline-flex">
+        <span className="kitchen-note-chip text-[11px] font-bold bg-[var(--color-accent-soft)] text-[var(--color-accent)] border border-[var(--color-accent)]/30 inline-flex">
           Individual
         </span>
       );
@@ -268,7 +268,7 @@ const AccordionItemRow = ({
         <span className="kitchen-item-kind">
           {entry.itemLabel || getKitchenItemLabel(entry.item)}
         </span>
-        <h3 className="break-words text-base font-black text-zinc-50 text-left">
+        <h3 className="break-words text-base font-black text-[var(--color-text-primary)] text-left">
           {entry.detailLabel || entry.item.name}
         </h3>
       </div>
@@ -440,7 +440,7 @@ const PendingOrdersQueue = ({
       {expanded ? (
         <button
           type="button"
-          className="kitchen-following-orders__toggle w-full flex items-center justify-between px-4 py-3 text-left font-black text-cyan-400 hover:bg-zinc-100 dark:bg-zinc-800/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-lime-300 transition-colors"
+          className="kitchen-following-orders__toggle w-full flex items-center justify-between px-4 py-3 text-left font-black text-[var(--color-accent)] hover:bg-[var(--color-surface-raised)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] transition-colors"
           onClick={() => setExpanded(false)}
           aria-expanded={true}
         >
@@ -452,20 +452,20 @@ const PendingOrdersQueue = ({
       ) : null}
 
       {expanded ? (
-        <div className="kitchen-following-orders__list border-t border-zinc-800/40 p-3 space-y-3">
+        <div className="kitchen-following-orders__list border-t border-[var(--color-line)] p-3 space-y-3">
           {groups.map((group) => {
             const shortSummary = buildKitchenOrderQueueSummary(group.order, laneMode);
             return (
-              <div key={group.orderId} className="kitchen-production-card bg-white dark:bg-zinc-950/60 border border-zinc-800/80 p-3 rounded-xl text-left">
+              <div key={group.orderId} className="kitchen-production-card bg-[var(--color-surface)] border border-[var(--color-line)] p-3 rounded-xl text-left shadow-sm">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-black text-zinc-900 dark:text-zinc-100 text-lg">{group.order.customer}</p>
+                    <p className="font-black text-[var(--color-text-primary)] text-lg">{group.order.customer}</p>
                     {shortSummary ? (
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">{shortSummary}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{shortSummary}</p>
                     ) : null}
                   </div>
                   <Button
-                    className="bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 text-xs px-3 py-1.5 h-auto min-h-0 whitespace-nowrap"
+                    className="bg-[var(--color-surface-raised)] hover:bg-[var(--color-surface)] border border-[var(--color-line)] text-[var(--color-text-primary)] text-xs px-3 py-1.5 h-auto min-h-0 whitespace-nowrap"
                     onClick={() => onSelect(group.orderId)}
                   >
                     Abrir
@@ -477,7 +477,7 @@ const PendingOrdersQueue = ({
         </div>
       ) : (
         <div
-          className="kitchen-following-orders__list p-3 grid gap-2 cursor-pointer hover:bg-zinc-50 dark:bg-zinc-900/20"
+          className="kitchen-following-orders__list p-3 grid gap-2 cursor-pointer hover:bg-[var(--color-surface-raised)]"
           onClick={() => setExpanded(true)}
           role="button"
           tabIndex={0}
@@ -489,10 +489,10 @@ const PendingOrdersQueue = ({
           }}
         >
           <div className="flex items-center justify-between mb-1 px-1">
-            <span className="text-[11px] font-black tracking-[0.2em] uppercase text-cyan-400">
+            <span className="text-[11px] font-black tracking-[0.2em] uppercase text-[var(--color-accent)]">
               Cola de pedidos ({groups.length})
             </span>
-            <ChevronDown size={16} className="text-cyan-400" />
+            <ChevronDown size={16} className="text-[var(--color-accent)]" />
           </div>
           {visible.map((group, idx) => {
             const isFirst = idx === 0;
@@ -867,7 +867,7 @@ export const KitchenQueue = ({
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <p className="home-section-label">Preparación</p>
-            <h2 className="mt-1 text-2xl font-black text-zinc-50 md:text-3xl">
+            <h2 className="mt-1 text-2xl font-black text-[var(--color-text-primary)] md:text-3xl">
               Cocina
             </h2>
             <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">

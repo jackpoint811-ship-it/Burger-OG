@@ -335,7 +335,7 @@ const adminModuleStatusMeta: Record<
   },
   basico: {
     label: "Básico",
-    className: "border-cyan-400/40 bg-cyan-500/10 text-cyan-900 dark:text-cyan-800 dark:text-cyan-100",
+    className: "border-[var(--color-accent)]/40 bg-[var(--color-accent-soft)] text-[var(--color-accent)]",
   },
   pendiente: {
     label: "Pendiente",
@@ -1432,7 +1432,7 @@ const OrdersExportControls = ({
         </p>
       ) : null}
       <Button
-        className="mt-2 w-full bg-cyan-400 px-3 py-2 text-sm font-bold text-black disabled:opacity-40 md:w-auto"
+        className="mt-2 w-full bg-[var(--color-accent)] hover:opacity-90 px-3 py-2 text-sm font-bold text-white disabled:opacity-40 md:w-auto"
         onClick={() => void downloadCsv()}
         disabled={disabled}
       >
@@ -1451,19 +1451,19 @@ const NewOrderBanner = ({
 }) =>
   notice ? (
     <section
-      className="mb-3 rounded-2xl border border-cyan-300/40 bg-cyan-400/15 p-3 text-cyan-50 shadow-lg shadow-cyan-950/20"
+      className="mb-3 rounded-2xl border border-[var(--color-accent)]/40 bg-[var(--color-accent-soft)] p-3 text-[var(--color-text-primary)] shadow-[var(--shadow-card)]"
       role="status"
       aria-live="polite"
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="text-sm font-black">{notice.message}</p>
-          <p className="mt-1 break-words text-[11px] text-cyan-900 dark:text-cyan-800 dark:text-cyan-100/80">
+          <p className="text-sm font-black text-[var(--color-text-primary)]">{notice.message}</p>
+          <p className="mt-1 break-words text-[11px] text-[var(--color-text-secondary)]">
             Folios: {notice.orderFolios.join(", ")}
           </p>
         </div>
         <Button
-          className="w-full shrink-0 border border-cyan-200/40 bg-cyan-50 dark:bg-cyan-950/50 px-3 py-1.5 text-xs text-cyan-50 sm:w-auto"
+          className="w-full shrink-0 bg-[var(--color-accent)] px-3 py-1.5 text-xs font-bold text-white hover:opacity-90 sm:w-auto"
           onClick={onDismiss}
         >
           Entendido
@@ -1523,12 +1523,12 @@ const InternalLogin = ({
 
   return (
     <main className="shell flex items-center justify-center py-8">
-      <section className="login card w-full max-w-md border-cyan-400/20 bg-white dark:bg-zinc-950/95 p-4 shadow-cyan-950/30">
+      <section className="login card w-full max-w-md border border-[var(--color-line)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-panel)]">
         <div className="mb-4 text-center">
-          <p className="text-2xl font-black tracking-tight text-zinc-50">
-            Burgers<span className="text-cyan-800 dark:text-cyan-300">.exe</span>
+          <p className="text-2xl font-black tracking-tight text-[var(--color-text-primary)]">
+            Burgers<span className="text-[var(--color-accent)]">.exe</span>
           </p>
-          <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200">
+          <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-accent)]">
             Chekeo
           </p>
         </div>
@@ -1547,7 +1547,7 @@ const InternalLogin = ({
           notice={sessionMessage}
         />
         <div className="runtime-login-notice">
-          <p className="text-xs font-semibold text-zinc-50">{copy.primary}</p>
+          <p className="text-xs font-semibold text-[var(--color-text-primary)]">{copy.primary}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <StatusPill className={truthToneClassName.system}>
               {runtimeEnvironmentLabel[runtimeEnvironment]}
@@ -1629,7 +1629,7 @@ const SessionPinForm = ({
         <input
           id={inputId}
           type="password"
-          className="input mt-2 min-h-12 text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+          className="input mt-2 min-h-12 text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]"
           placeholder="••••"
           value={pin}
           inputMode="numeric"
@@ -1656,7 +1656,7 @@ const SessionPinForm = ({
         </p>
       ) : null}
       <Button
-        className="w-full bg-cyan-400 py-3 text-base font-black text-black disabled:opacity-50"
+        className="w-full bg-[var(--color-accent)] hover:opacity-90 py-3 text-base font-black text-white disabled:opacity-50"
         disabled={loading || disabled}
       >
         {loading || disabled ? submitBusyLabel : submitLabel}
@@ -1746,7 +1746,7 @@ const OperatorHeader = ({
             {runtime.lastUpdated ? `Sync ${runtime.lastUpdated}` : "Sin sync"}
           </span>
           <Button
-            className={`shell-icon-button ${soundAlerts ? "text-emerald-400" : "text-zinc-500"}`}
+            className={`shell-icon-button ${soundAlerts ? "text-emerald-600 dark:text-emerald-400" : "text-stone-400"}`}
             aria-label={soundAlerts ? "Sonido activado" : "Sonido desactivado"}
             title={soundAlerts ? "Desactivar alertas sonoras de pedidos" : "Activar alertas sonoras de pedidos"}
             onClick={onToggleSound}
@@ -1759,33 +1759,38 @@ const OperatorHeader = ({
             title={`Cambiar tema (actual: ${themeMode})`}
             onClick={onToggleTheme}
           >
-            {themeMode === "light" ? (
-              <Sun size={16} className="text-amber-500" aria-hidden="true" />
-            ) : themeMode === "dark" ? (
-              <Moon size={16} className="text-cyan-400" aria-hidden="true" />
+            {themeMode === "dark" ? (
+              <Sun size={16} className="text-amber-400" aria-hidden="true" />
+            ) : themeMode === "light" ? (
+              <Moon size={16} className="text-[var(--color-accent)]" aria-hidden="true" />
             ) : (
-              <Monitor size={16} className="text-zinc-600 dark:text-zinc-400" aria-hidden="true" />
+              <Monitor size={16} aria-hidden="true" />
             )}
           </Button>
           <Button
             className="shell-icon-button"
-            aria-label="Actualizar datos"
+            aria-label="Recargar pedidos"
+            title="Recargar pedidos"
             onClick={onRefresh}
-            disabled={runtime.loading || runtime.sessionState !== "active"}
+            disabled={runtime.loading}
           >
-            <RefreshCw size={16} aria-hidden="true" />
+            <RefreshCw
+              size={16}
+              className={runtime.loading ? "animate-spin" : ""}
+              aria-hidden="true"
+            />
           </Button>
           <a
-            className="shell-icon-button"
+            className="runtime-environment-link hidden lg:inline-flex"
             href={publicOrderUrl}
             target="_blank"
             rel="noreferrer"
-            aria-label={publicOrderLabel}
           >
-            <ExternalLink size={16} aria-hidden="true" />
+            {publicOrderLabel}
           </a>
           <Button
-            className="shell-logout-button"
+            className="btn btn-sm"
+            aria-label="Cerrar sesión interna"
             onClick={onLogout}
           >
             Salir
@@ -2084,7 +2089,7 @@ const AdminReportsPanel = ({
       <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700 dark:text-amber-200">
         Reportes y exportes
       </p>
-      <h3 className="mt-2 text-xl font-black text-zinc-50">
+      <h3 className="mt-2 text-xl font-black text-[var(--color-text-primary)]">
         Exportes operativos
       </h3>
       <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
@@ -2097,10 +2102,10 @@ const AdminReportsPanel = ({
       />
     </Card>
     <Card className="p-4">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--color-accent)]">
         Estado técnico
       </p>
-      <h3 className="mt-2 text-lg font-black text-zinc-50">
+      <h3 className="mt-2 text-lg font-black text-[var(--color-text-primary)]">
         Contexto actual del backend
       </h3>
       <div className="mt-3 space-y-2">
@@ -2140,16 +2145,16 @@ const AdminGate = ({
   return (
     <Card className="p-4 sm:p-5">
       <div className="max-w-md">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--color-accent)]">
           Admin protegido
         </p>
-        <h2 className="mt-1 text-xl font-black text-zinc-50">
+        <h2 className="mt-1 text-xl font-black text-[var(--color-text-primary)]">
           Acceso Admin
         </h2>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           La pestaña Admin requiere PIN de administrador. Las pestañas operativas (Home, Pedidos, Cocina, Pagos) son de acceso directo.
         </p>
-        <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-white dark:bg-zinc-950/70 p-4">
+        <div className="mt-4 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
           <SessionPinForm
             inputId="admin-pin"
             label="PIN Admin"
@@ -2230,10 +2235,10 @@ const AdminWorkspace = ({
   return (
     <section className="space-y-4 font-sans max-w-7xl mx-auto px-4 py-2">
       {/* Botón táctil para volver al Hub de Control Admin */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-line)] shadow-sm">
         <Button
           type="button"
-          className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-extrabold px-4 py-2 text-xs hover:bg-emerald-500/20 transition-all shadow-sm"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-accent)]/30 bg-[var(--color-accent-soft)] text-[var(--color-accent)] font-extrabold px-4 py-2 text-xs hover:opacity-90 transition-all shadow-sm"
           onClick={() => setView("launcher")}
         >
           <span className="text-base font-black">←</span>
@@ -2255,10 +2260,10 @@ const BankConfigAdminPanel = () => {
       <Card className="p-4">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--color-accent)]">
               Configuración de pago
             </p>
-            <h3 className="mt-1 text-xl font-black text-zinc-50">
+            <h3 className="mt-1 text-xl font-black text-[var(--color-text-primary)]">
               Datos bancarios
             </h3>
             <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
@@ -2267,7 +2272,7 @@ const BankConfigAdminPanel = () => {
               Admin.
             </p>
           </div>
-          <StatusPill className="border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
+          <StatusPill className="border-[var(--color-line)] bg-[var(--color-surface-raised)] text-[var(--color-text-primary)]">
             {bankPaymentConfig.editable ? "Editable" : "Solo lectura"}
           </StatusPill>
         </div>
@@ -2276,27 +2281,27 @@ const BankConfigAdminPanel = () => {
       <div className="grid gap-3 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="p-4">
           <div className="grid gap-3 min-[520px]:grid-cols-2">
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
+            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
                 Banco
               </p>
-              <p className="mt-2 break-words text-base font-black text-zinc-50">
+              <p className="mt-2 break-words text-base font-black text-[var(--color-text-primary)]">
                 {bankPaymentConfig.bankName}
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
+            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
                 Titular
               </p>
-              <p className="mt-2 break-words text-base font-black text-zinc-50">
+              <p className="mt-2 break-words text-base font-black text-[var(--color-text-primary)]">
                 {bankPaymentConfig.accountHolder}
               </p>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/65 p-3 min-[520px]:col-span-2">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
+            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3 min-[520px]:col-span-2">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
                 {primaryLabel}
               </p>
-              <p className="mt-2 break-all text-base font-black text-zinc-50">
+              <p className="mt-2 break-all text-base font-black text-[var(--color-text-primary)]">
                 {primaryValue || "Sin dato configurado"}
               </p>
             </div>
@@ -2377,7 +2382,7 @@ const ActionButtons = ({
           <button
             key={action.status}
             type="button"
-            className={`btn-sm ${action.tone === "danger" ? "danger" : "border-cyan-300 dark:border-cyan-500/50 bg-cyan-500/10 text-cyan-900 dark:text-cyan-800 dark:text-cyan-100"}`}
+            className={`btn-sm ${action.tone === "danger" ? "danger" : "border border-[var(--color-accent)]/40 bg-[var(--color-accent-soft)] text-[var(--color-accent)]"}`}
             onClick={() =>
               isCancellation
                 ? onCancel(order)
@@ -2482,7 +2487,7 @@ const WhatsappOrderActions = ({
   };
 
   return (
-    <div className="mt-2 rounded-lg border border-cyan-400/20 bg-cyan-400/5 p-2">
+    <div className="mt-2 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-2.5">
       {!phone ? (
         <p className="mb-2 rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-700 dark:text-amber-200">
           Teléfono inválido para WhatsApp
@@ -3061,30 +3066,30 @@ const BatchConfirmModal = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-2xl space-y-4"
+        className="w-full max-w-md bg-[var(--color-surface)] border border-[var(--color-line)] rounded-2xl p-5 shadow-[var(--shadow-panel)] space-y-4"
       >
-        <div className="flex items-center gap-3 text-amber-400">
+        <div className="flex items-center gap-3 text-amber-600 dark:text-amber-400">
           <span className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xl">⚠️</span>
-          <h3 className="text-lg font-bold text-zinc-100">Confirmar envío a Basurero</h3>
+          <h3 className="text-lg font-bold text-[var(--color-text-primary)]">Confirmar envío a Basurero</h3>
         </div>
 
-        <p className="text-sm text-zinc-300 leading-relaxed">
-          Has seleccionado <strong className="text-amber-400">{activeCount} órdenes activas</strong> y{" "}
-          <strong className="text-zinc-200">{cancelledCount} canceladas</strong> (Total: {totalCount}).
+        <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
+          Has seleccionado <strong className="text-amber-600 dark:text-amber-400">{activeCount} órdenes activas</strong> y{" "}
+          <strong className="text-[var(--color-text-primary)]">{cancelledCount} canceladas</strong> (Total: {totalCount}).
         </p>
-        <p className="text-xs text-zinc-400 leading-relaxed bg-zinc-950 p-3 rounded-xl border border-zinc-800">
-          🔒 <strong>Regla de negocio:</strong> Toda orden debe estar previamente cancelada para enviarse al basurero. Las órdenes activas se cancelarán automáticamente con el motivo <em className="text-zinc-200">'Limpieza de turno'</em> antes de moverlas.
+        <p className="text-xs text-[var(--color-text-muted)] leading-relaxed bg-[var(--color-surface-raised)] p-3 rounded-xl border border-[var(--color-line)]">
+          🔒 <strong>Regla de negocio:</strong> Toda orden debe estar previamente cancelada para enviarse al basurero. Las órdenes activas se cancelarán automáticamente con el motivo <em className="text-[var(--color-text-primary)]">'Limpieza de turno'</em> antes de moverlas.
         </p>
 
         <div className="flex items-center justify-end gap-2 pt-2">
           <button
             type="button"
-            className="px-4 py-2 text-xs font-bold text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
+            className="px-4 py-2 text-xs font-bold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] bg-[var(--color-surface-raised)] border border-[var(--color-line)] rounded-xl transition-colors"
             onClick={onCancel}
             disabled={busy}
           >
@@ -3176,10 +3181,14 @@ const OrdersBoard = ({
           orderDeliveryDate = formatIsoDate(new Date(order.createdAtMs));
         }
 
-        if (selectedCalendarDate !== "all") {
-          if (selectedCalendarDate === "today" && orderDeliveryDate !== todayStr) return false;
-          if (selectedCalendarDate === "past" && orderDeliveryDate >= todayStr) return false;
-          if (selectedCalendarDate !== "today" && selectedCalendarDate !== "past" && orderDeliveryDate !== selectedCalendarDate) return false;
+        if (selectedCalendarDate === "all") {
+          if (orderDeliveryDate < todayStr) return false;
+        } else if (selectedCalendarDate === "past") {
+          if (orderDeliveryDate >= todayStr) return false;
+        } else if (selectedCalendarDate === "today") {
+          if (orderDeliveryDate !== todayStr) return false;
+        } else if (orderDeliveryDate !== selectedCalendarDate) {
+          return false;
         }
 
         if (!normalizedSearch) return true;
@@ -3313,7 +3322,7 @@ const OrdersBoard = ({
         <div className="orders-board-shell__header">
           <div>
             <p className="home-section-label">Cola de pedidos V3</p>
-            <h2 className="mt-1 text-2xl font-black text-zinc-50">
+            <h2 className="mt-1 text-2xl font-black text-[var(--color-text-primary)]">
               {viewMode === "active" ? "Pedidos Activos" : "🗑️ Basurero / Archivadas"}
             </h2>
             <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
@@ -3757,7 +3766,7 @@ const OperationalClosePanel = ({
             Incluir terminales
           </label>
           <Button
-            className="bg-cyan-400 px-3 py-2 text-sm font-bold text-black disabled:opacity-40"
+            className="bg-[var(--color-accent)] hover:opacity-90 px-3 py-2 text-sm font-bold text-white disabled:opacity-40"
             onClick={() => void loadSummary()}
             disabled={loading || !sessionActive}
           >
@@ -4217,10 +4226,10 @@ const PaymentDetailModal = ({
           ) : null}
 
           {ticketVisible ? (
-            <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-3">
+            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
               <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-900 dark:text-cyan-800 dark:text-cyan-100">
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-accent)]">
                     Ticket visual
                   </p>
                   <p className="text-xs text-zinc-600 dark:text-zinc-400">
@@ -4238,7 +4247,7 @@ const PaymentDetailModal = ({
             </div>
           ) : null}
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-50 dark:bg-zinc-900/55 p-3">
+          <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
             <label className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
               Nota para seguimiento
               <textarea
@@ -4256,8 +4265,8 @@ const PaymentDetailModal = ({
             ) : null}
           </div>
 
-          <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-3">
-            <label className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-900 dark:text-cyan-800 dark:text-cyan-100">
+          <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+            <label className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-secondary)]">
               Mensaje listo para WhatsApp
               <textarea
                 className="input mt-2 min-h-48 text-xs leading-5"
@@ -4419,17 +4428,22 @@ const PaymentNotesPanel = ({
     return [...orders]
       .sort((a, b) => (b.createdAtMs ?? 0) - (a.createdAtMs ?? 0))
       .filter((order) => {
-        if (selectedDate !== "all") {
-          const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
-          let orderDateStr = todayStr;
-          if (details.isScheduled && details.scheduledDeliveryDate) {
-            orderDateStr = details.scheduledDeliveryDate;
-          } else if (order.createdAtMs) {
-            orderDateStr = formatIsoDate(new Date(order.createdAtMs));
-          }
-          if (selectedDate === "today" && orderDateStr !== todayStr) return false;
-          if (selectedDate === "past" && orderDateStr >= todayStr) return false;
-          if (selectedDate !== "today" && selectedDate !== "past" && selectedDate !== "all" && orderDateStr !== selectedDate) return false;
+        const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
+        let orderDateStr = todayStr;
+        if (details.isScheduled && details.scheduledDeliveryDate) {
+          orderDateStr = details.scheduledDeliveryDate;
+        } else if (order.createdAtMs) {
+          orderDateStr = formatIsoDate(new Date(order.createdAtMs));
+        }
+
+        if (selectedDate === "all") {
+          if (orderDateStr < todayStr) return false;
+        } else if (selectedDate === "past") {
+          if (orderDateStr >= todayStr) return false;
+        } else if (selectedDate === "today") {
+          if (orderDateStr !== todayStr) return false;
+        } else if (orderDateStr !== selectedDate) {
+          return false;
         }
 
         if (rangeFilter !== "all" && order.createdAtMs) {
@@ -4440,7 +4454,6 @@ const PaymentNotesPanel = ({
 
         if (!normalizedSearch) return true;
 
-        const details = parseOrderCustomerDetails(order.customer, order.note, order.createdAt, order.delivery);
         return (
           order.folio.toLowerCase().includes(normalizedSearch) ||
           details.cleanCustomerName.toLowerCase().includes(normalizedSearch) ||
@@ -4713,7 +4726,7 @@ const PaymentNotesPanel = ({
                     {details.cleanCustomerName}
                   </p>
                   {details.scheduledDeliveryTime ? (
-                    <p className="text-xs font-bold text-cyan-600 dark:text-cyan-400 mt-0.5">
+                    <p className="text-xs font-bold text-[var(--color-accent)] mt-0.5">
                       {details.deliveryDateLabel}: {details.scheduledDeliveryTime}
                     </p>
                   ) : null}
@@ -5205,7 +5218,7 @@ const TicketPreviewItems = ({ order }: { order: InternalOrder }) => (
       return (
         <div key={`${order.id}-${index}`} className="orders-ticket-item">
           <div className="min-w-0">
-            <p className="break-words text-sm font-black text-zinc-50">
+            <p className="break-words text-sm font-black text-[var(--color-text-primary)]">
               {item.qty}x {item.name}
             </p>
             {notes.length ? (

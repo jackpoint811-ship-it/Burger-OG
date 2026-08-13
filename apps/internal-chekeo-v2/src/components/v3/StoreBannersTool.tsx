@@ -49,20 +49,20 @@ const ACCEPTED_IMAGE_TYPES_LABEL = 'JPG, PNG, WEBP o AVIF (máx. 5 MB)';
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 const BG_PRESETS: Array<{ key: string; label: string; style: string; border: string }> = [
-  { key: 'gradient-cyan', label: '🩵 Cyan Neón', style: 'linear-gradient(135deg, #0891B2 0%, #06B6D4 100%)', border: 'border-cyan-400' },
   { key: 'gradient-emerald', label: '💚 Verde Smash', style: 'linear-gradient(135deg, #15803D 0%, #16A34A 100%)', border: 'border-emerald-400' },
   { key: 'gradient-amber', label: '🟧 Fuego Ámbar', style: 'linear-gradient(135deg, #C2410C 0%, #EA580C 100%)', border: 'border-amber-400' },
   { key: 'gradient-indigo', label: '🍇 Índigo Místico', style: 'linear-gradient(135deg, #4338CA 0%, #6366F1 100%)', border: 'border-indigo-400' },
   { key: 'gradient-rose', label: '🩷 Smash Rose', style: 'linear-gradient(135deg, #BE185D 0%, #E11D48 100%)', border: 'border-rose-400' },
+  { key: 'gradient-cyan', label: '🩵 Cyan Vibrante', style: 'linear-gradient(135deg, #0891B2 0%, #06B6D4 100%)', border: 'border-cyan-400' },
   { key: 'gradient-dark', label: '🖤 Carbón Premium', style: 'linear-gradient(135deg, #18181B 0%, #27272A 100%)', border: 'border-neutral-600' },
 ];
 
 const BADGE_COLORS: Array<{ key: string; label: string; badgeStyle: string }> = [
-  { key: 'cyan', label: '🩵 Cyan', badgeStyle: 'bg-cyan-100 text-cyan-800 font-bold' },
+  { key: 'emerald', label: '💚 Verde', badgeStyle: 'bg-emerald-100 text-emerald-800 font-bold' },
   { key: 'amber', label: '💛 Ámbar', badgeStyle: 'bg-amber-100 text-amber-800 font-bold' },
   { key: 'rose', label: '🩷 Rose', badgeStyle: 'bg-rose-100 text-rose-800 font-bold' },
-  { key: 'emerald', label: '💚 Verde', badgeStyle: 'bg-emerald-100 text-emerald-800 font-bold' },
   { key: 'purple', label: '💜 Morado', badgeStyle: 'bg-indigo-100 text-indigo-800 font-bold' },
+  { key: 'cyan', label: '🩵 Cyan', badgeStyle: 'bg-cyan-100 text-cyan-800 font-bold' },
 ];
 
 const validateSelectedFile = (file: File | null): string | null => {
@@ -191,9 +191,9 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
       sortOrder: String((banners.length + 1) * 10),
       imageUrl: '',
       imageKey: '',
-      bgPreset: 'gradient-cyan',
+      bgPreset: 'gradient-emerald',
       badgeText: '',
-      badgeColor: 'cyan',
+      badgeColor: 'emerald',
       ctaActionType: 'none',
       ctaTarget: ''
     });
@@ -212,9 +212,9 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
       sortOrder: String(banner.sortOrder),
       imageUrl: banner.imageUrl || '',
       imageKey: banner.imageKey || '',
-      bgPreset: banner.bgPreset || 'gradient-cyan',
+      bgPreset: banner.bgPreset || 'gradient-emerald',
       badgeText: banner.badgeText || '',
-      badgeColor: banner.badgeColor || 'cyan',
+      badgeColor: banner.badgeColor || 'emerald',
       ctaActionType: banner.ctaActionType || 'none',
       ctaTarget: banner.ctaTarget || ''
     });
@@ -797,8 +797,8 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
                       subtitle: 'Participa por un año de combos en cada pedido',
                       ctaLabel: 'Ver Sorteo',
                       badgeText: '🎁 SORTEO',
-                      badgeColor: 'cyan',
-                      bgPreset: 'gradient-cyan'
+                      badgeColor: 'emerald',
+                      bgPreset: 'gradient-emerald'
                     })
                   }
                 >
@@ -1077,19 +1077,19 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
 
           {/* Interactive Schedule Editor Modal */}
           {editingSchedule && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-              <div className="w-full max-w-lg rounded-2xl border border-cyan-500/30 bg-zinc-950 p-6 shadow-2xl space-y-5">
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <div className="w-full max-w-lg rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-panel)] space-y-5">
+                <div className="flex items-center justify-between border-b border-[var(--color-line)] pb-3">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{editingSchedule.emoji}</span>
                     <div>
-                      <h3 className="font-extrabold text-base text-zinc-100">Editar Horario: {editingSchedule.towerName}</h3>
-                      <p className="text-xs text-zinc-400">Configura días de atención, toma de pedido y entrega</p>
+                      <h3 className="font-extrabold text-base text-[var(--color-text-primary)]">Editar Horario: {editingSchedule.towerName}</h3>
+                      <p className="text-xs text-[var(--color-text-secondary)]">Configura días de atención, toma de pedido y entrega</p>
                     </div>
                   </div>
                   <button
                     type="button"
-                    className="text-zinc-400 hover:text-zinc-100 text-lg font-bold"
+                    className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] text-lg font-bold"
                     onClick={() => setEditingSchedule(null)}
                   >
                     ✕
@@ -1098,14 +1098,14 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
 
                 {/* Emoji & Name */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-300 block">Icono Emoji & Nombre de Ubicación</label>
+                  <label className="text-xs font-bold text-[var(--color-text-primary)] block">Icono Emoji & Nombre de Ubicación</label>
                   <div className="flex gap-2 items-center">
-                    <div className="flex gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+                    <div className="flex gap-1 bg-[var(--color-surface-raised)] p-1 rounded-xl border border-[var(--color-line)]">
                       {['🏢', '🏙️', '🏬', '🗼', '🍔', '🚀'].map((em) => (
                         <button
                           key={em}
                           type="button"
-                          className={`p-1.5 text-lg rounded-lg transition-transform ${editingSchedule.emoji === em ? 'bg-cyan-500/20 border border-cyan-400 scale-110' : 'opacity-60 hover:opacity-100'}`}
+                          className={`p-1.5 text-lg rounded-lg transition-transform ${editingSchedule.emoji === em ? 'bg-[var(--color-accent-soft)] border border-[var(--color-accent)] scale-110' : 'opacity-60 hover:opacity-100'}`}
                           onClick={() => setEditingSchedule({ ...editingSchedule, emoji: em })}
                         >
                           {em}
@@ -1114,7 +1114,7 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
                     </div>
                     <input
                       type="text"
-                      className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-100 font-bold focus:border-cyan-400 outline-none"
+                      className="flex-1 bg-[var(--color-surface-raised)] border border-[var(--color-line)] rounded-xl px-3 py-2 text-xs text-[var(--color-text-primary)] font-bold focus:border-[var(--color-accent)] outline-none"
                       value={editingSchedule.towerName}
                       onChange={(e) => setEditingSchedule({ ...editingSchedule, towerName: e.target.value })}
                     />
@@ -1123,7 +1123,7 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
 
                 {/* Days Selection Chips */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-300 block">Días de Atención Habilitados</label>
+                  <label className="text-xs font-bold text-[var(--color-text-primary)] block">Días de Atención Habilitados</label>
                   <div className="grid grid-cols-7 gap-1.5">
                     {[
                       { d: 1, label: 'Lun' },
@@ -1141,8 +1141,8 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
                           type="button"
                           className={`py-2 text-xs font-black rounded-xl border transition-all ${
                             selected
-                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400 shadow-sm shadow-emerald-500/20 scale-105'
-                              : 'bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-700'
+                              ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 shadow-sm scale-105'
+                              : 'bg-[var(--color-surface-raised)] text-[var(--color-text-muted)] border-[var(--color-line)] hover:border-[var(--color-line-strong)]'
                           }`}
                           onClick={() => {
                             const nextDays = selected
@@ -1159,21 +1159,21 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
                 </div>
 
                 {/* Order Time Window */}
-                <div className="grid grid-cols-2 gap-3 bg-zinc-900/50 p-3 rounded-xl border border-zinc-800">
+                <div className="grid grid-cols-2 gap-3 bg-[var(--color-surface-raised)] p-3 rounded-xl border border-[var(--color-line)]">
                   <div>
-                    <label className="text-[11px] font-bold text-cyan-300 block mb-1">Hora Inicio Pedidos</label>
+                    <label className="text-[11px] font-bold text-[var(--color-accent)] block mb-1">Hora Inicio Pedidos</label>
                     <input
                       type="time"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-100 font-bold outline-none focus:border-cyan-400"
+                      className="w-full bg-[var(--color-surface)] border border-[var(--color-line)] rounded-lg px-2 py-1.5 text-xs text-[var(--color-text-primary)] font-bold outline-none focus:border-[var(--color-accent)]"
                       value={editingSchedule.orderStartTime}
                       onChange={(e) => setEditingSchedule({ ...editingSchedule, orderStartTime: e.target.value })}
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold text-cyan-300 block mb-1">Hora Límite Pedidos</label>
+                    <label className="text-[11px] font-bold text-[var(--color-accent)] block mb-1">Hora Límite Pedidos</label>
                     <input
                       type="time"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-100 font-bold outline-none focus:border-cyan-400"
+                      className="w-full bg-[var(--color-surface)] border border-[var(--color-line)] rounded-lg px-2 py-1.5 text-xs text-[var(--color-text-primary)] font-bold outline-none focus:border-[var(--color-accent)]"
                       value={editingSchedule.orderEndTime}
                       onChange={(e) => setEditingSchedule({ ...editingSchedule, orderEndTime: e.target.value })}
                     />
@@ -1181,21 +1181,21 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
                 </div>
 
                 {/* Delivery Time Window */}
-                <div className="grid grid-cols-2 gap-3 bg-zinc-900/50 p-3 rounded-xl border border-zinc-800">
+                <div className="grid grid-cols-2 gap-3 bg-[var(--color-surface-raised)] p-3 rounded-xl border border-[var(--color-line)]">
                   <div>
-                    <label className="text-[11px] font-bold text-amber-300 block mb-1">Hora Inicio Reparto</label>
+                    <label className="text-[11px] font-bold text-amber-700 dark:text-amber-300 block mb-1">Hora Inicio Reparto</label>
                     <input
                       type="time"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-100 font-bold outline-none focus:border-amber-400"
+                      className="w-full bg-[var(--color-surface)] border border-[var(--color-line)] rounded-lg px-2 py-1.5 text-xs text-[var(--color-text-primary)] font-bold outline-none focus:border-amber-400"
                       value={editingSchedule.deliveryStartTime}
                       onChange={(e) => setEditingSchedule({ ...editingSchedule, deliveryStartTime: e.target.value })}
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold text-amber-300 block mb-1">Hora Fin Reparto</label>
+                    <label className="text-[11px] font-bold text-amber-700 dark:text-amber-300 block mb-1">Hora Fin Reparto</label>
                     <input
                       type="time"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-100 font-bold outline-none focus:border-amber-400"
+                      className="w-full bg-[var(--color-surface)] border border-[var(--color-line)] rounded-lg px-2 py-1.5 text-xs text-[var(--color-text-primary)] font-bold outline-none focus:border-amber-400"
                       value={editingSchedule.deliveryEndTime}
                       onChange={(e) => setEditingSchedule({ ...editingSchedule, deliveryEndTime: e.target.value })}
                     />
@@ -1204,22 +1204,22 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
 
                 {/* Custom Label */}
                 <div>
-                  <label className="text-xs font-bold text-zinc-300 block mb-1">Etiqueta de Ventana (opcional)</label>
+                  <label className="text-xs font-bold text-[var(--color-text-primary)] block mb-1">Etiqueta de Ventana (opcional)</label>
                   <input
                     type="text"
                     placeholder="Ej. 1:30 PM a 2:00 PM"
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-100 font-medium outline-none focus:border-cyan-400"
+                    className="w-full bg-[var(--color-surface-raised)] border border-[var(--color-line)] rounded-xl px-3 py-2 text-xs text-[var(--color-text-primary)] font-medium outline-none focus:border-[var(--color-accent)]"
                     value={editingSchedule.deliveryLabel ?? ''}
                     onChange={(e) => setEditingSchedule({ ...editingSchedule, deliveryLabel: e.target.value || null })}
                   />
                 </div>
 
                 {/* Active Toggle & Modal Actions */}
-                <div className="flex items-center justify-between border-t border-zinc-800 pt-4">
+                <div className="flex items-center justify-between border-t border-[var(--color-line)] pt-4">
                   <button
                     type="button"
                     className={`text-xs font-black px-3 py-1.5 rounded-full border transition-colors ${
-                      editingSchedule.isActive ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400' : 'bg-rose-500/20 text-rose-300 border-rose-400'
+                      editingSchedule.isActive ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/40'
                     }`}
                     onClick={() => setEditingSchedule({ ...editingSchedule, isActive: !editingSchedule.isActive })}
                   >
@@ -1229,14 +1229,14 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
                   <div className="flex gap-2">
                     <Button
                       type="button"
-                      className="bg-zinc-800 text-zinc-300 text-xs py-1.5 px-4 min-h-0"
+                      className="border border-[var(--color-line)] bg-[var(--color-surface-raised)] text-[var(--color-text-primary)] text-xs py-1.5 px-4 min-h-0"
                       onClick={() => setEditingSchedule(null)}
                     >
                       Cancelar
                     </Button>
                     <Button
                       type="button"
-                      className="bg-cyan-400 text-zinc-950 font-extrabold text-xs py-1.5 px-5 min-h-0 disabled:opacity-40"
+                      className="bg-[var(--color-accent)] hover:opacity-90 text-white font-extrabold text-xs py-1.5 px-5 min-h-0 disabled:opacity-40"
                       disabled={savingScheduleId === editingSchedule.id}
                       onClick={() => handleSaveFullSchedule(editingSchedule)}
                     >

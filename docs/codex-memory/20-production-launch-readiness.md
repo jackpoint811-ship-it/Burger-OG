@@ -76,19 +76,20 @@ La autorizacion previa fue consumida. Todo nuevo despliegue requiere una nueva a
 
 ---
 
-## Lanzamiento Exitoso a Producción - 2026-08-13
-- **Autorización Usuario**: Recibida explícitamente ("Approved production_migration_plan.md").
+## Lanzamiento Exitoso a Producción - 2026-08-13 (Release PR #524)
+- **Autorización Usuario**: Recibida explícitamente ("Approved migration_preview_to_production_plan.md").
+- **Promoción de Código**:
+  - PR a `main`: [PR #524](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/524) (`release(production): Promoción de Chekeo V2 y Public Order V2 a Producción`).
+  - Cambios clave: Renovación integral de branding Premium Casual en Chekeo V2, filtro de calendario horizontal estricto ("Ver Todos" vs "Anteriores"), sticky header fix en Public Order V2, erradicación de temas neón/dark legacy.
 - **Compilación de Bundles**:
   - `npm run typecheck`: 0 errores de TypeScript.
-  - `npm run build:public`: `dist/public-order-v2` generado en 5.35s.
-  - `npm run build:internal`: `dist/internal-chekeo-v2` generado en 8.51s.
+  - `npm run build:public`: `dist/public-order-v2` generado en 5.67s.
+  - `npm run build:internal`: `dist/internal-chekeo-v2` generado en 8.61s.
 - **Despliegues Cloudflare Pages**:
-  - `burgers-exe`: `https://ae203d2c.burgers-exe.pages.dev` (Producción canónica `https://burgers-exe.pages.dev`).
-  - `chekeo2-0`: `https://92a46261.chekeo2-0.pages.dev` (Producción canónica `https://chekeo2-0.pages.dev`).
+  - `burgers-exe`: `https://2ba33818.burgers-exe.pages.dev` (Producción canónica `https://burgers-exe.pages.dev`).
+  - `chekeo2-0`: `https://36b5f36d.chekeo2-0.pages.dev` (Producción canónica `https://chekeo2-0.pages.dev`).
 - **Smoke Test HTTP Post-Deploy**:
   - `GET https://burgers-exe.pages.dev/api/menu-v2` ➡️ `200 OK` (`source: "d1"`, items=20, categories=5).
   - `GET https://burgers-exe.pages.dev/api/tower-schedules` ➡️ `200 OK` (`source: "d1"`, 2 torres activas).
   - `GET https://chekeo2-0.pages.dev/api/internal-v2-auth/status` ➡️ `200 OK` (`authenticated: false`).
-
-
 

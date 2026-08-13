@@ -319,7 +319,7 @@ button,
 input,
 textarea,
 select {
-  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon focus-visible:ring-offset-2 focus-visible:ring-offset-black;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black;
 }
 button {
   min-height: 44px;

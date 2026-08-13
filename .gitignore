@@ -27,3 +27,8 @@ agents/
 # Python cache
 __pycache__/
 *.pyc
+
+# Graphify
+graphify-out/
+.graphify/
+
