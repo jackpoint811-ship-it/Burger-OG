@@ -42,7 +42,7 @@ type CustomerDraft = {
   phone: string;
   notes: string;
   referralCode: string;
-  location: "" | "Torre GGA" | "Torre Valcob";
+  location: string;
   paymentMethod: OrderV2PaymentMethod;
   paymentTiming: PaymentTiming;
   wantsWhatsappGroup: boolean;
@@ -80,7 +80,7 @@ type CheckoutStepIndex = 0 | 1 | 2;
 
 const IDEMPOTENCY_KEY_STORAGE = "burgers-v2-order-draft-idempotency-key";
 const IDEMPOTENCY_DRAFT_STORAGE = "burgers-v2-order-draft-idempotency-fingerprint";
-const LOCATIONS = ["Torre GGA", "Torre Valcob"] as const;
+const DEFAULT_LOCATIONS = ["Torre GGA", "Torre Valcob"];
 const PAYMENT_METHODS = new Set<OrderV2PaymentMethod>(["cash", "transfer", "unknown"]);
 const orderModeForBackend: OrderV2Mode = "pickup";
 const MENU_GROUPS: Array<{ key: MenuCategory["key"] | "combos"; label: string }> = [
@@ -112,8 +112,7 @@ const createInitialCustomer = (): CustomerDraft => {
   try {
     storedName = localStorage.getItem("pov2-customer-name") || "";
     storedPhone = localStorage.getItem("pov2-customer-phone") || "";
-    const loc = localStorage.getItem("pov2-customer-location");
-    if (loc === "Torre GGA" || loc === "Torre Valcob") storedLocation = loc;
+    storedLocation = localStorage.getItem("pov2-customer-location") || "";
   } catch {
     /* noop */
   }
@@ -122,7 +121,7 @@ const createInitialCustomer = (): CustomerDraft => {
     phone: storedPhone ? formatPhoneForDisplay(storedPhone) : "",
     notes: "",
     referralCode: "",
-    location: (storedLocation as "" | "Torre GGA" | "Torre Valcob"),
+    location: storedLocation,
     paymentMethod: "unknown",
     paymentTiming: "",
     wantsWhatsappGroup: true,
@@ -394,7 +393,7 @@ const validateCheckout = (customer: CustomerDraft, cart: CartEntry[], items: Men
   if (customer.name.trim().length < 2) fields.name = "Escribe tu nombre con al menos dos caracteres.";
   const phoneError = getPhoneError(customer.phone);
   if (phoneError) fields.phone = phoneError;
-  if (!customer.location) fields.location = "Elige Torre GGA o Torre Valcob.";
+  if (!customer.location) fields.location = "Selecciona una ubicación de entrega.";
   if (!PAYMENT_METHODS.has(customer.paymentMethod)) fields.paymentMethod = "Elige un método de pago.";
   if (customer.paymentMethod === "transfer" && !customer.paymentTiming) fields.paymentTiming = "Elige si pagarás antes o después.";
   if (buildCheckoutNotes(customer).length > CHECKOUT_NOTES_MAX_LENGTH) fields.notes = "La nota general es demasiado larga. Deja espacio para los datos de pago.";
@@ -408,7 +407,7 @@ const validateCheckoutDataStep = (customer: CustomerDraft): CheckoutErrors => {
   if (customer.name.trim().length < 2) fields.name = "Escribe tu nombre con al menos dos caracteres.";
   const phoneError = getPhoneError(customer.phone);
   if (phoneError) fields.phone = phoneError;
-  if (!customer.location) fields.location = "Elige Torre GGA o Torre Valcob.";
+  if (!customer.location) fields.location = "Selecciona una ubicación de entrega.";
   return fields;
 };
 const checkoutStepForErrors = (fields: CheckoutErrors): CheckoutStepIndex => {
@@ -1558,7 +1557,8 @@ const downloadReferralShareImage = async (params: { code: string; raffleTitle?: 
 
 type CopyTransferStatus = "idle" | "copiedName" | "copiedAccount" | "error";
 
-const TransferDetailsModal = ({ onClose }: { onClose: () => void }) => {
+const TransferDetailsModal = ({ onClose, bankConfig }: { onClose: () => void; bankConfig?: any }) => {
+  const activeBankConfig = bankConfig || bankPaymentConfig;
   const [status, setStatus] = useState<CopyTransferStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const copyDetail = async (value: string, nextStatus: Exclude<CopyTransferStatus, "idle" | "error">) => {
@@ -1581,14 +1581,14 @@ const TransferDetailsModal = ({ onClose }: { onClose: () => void }) => {
           <p>Copia los datos clave y guarda tu comprobante para mandarlo por WhatsApp.</p>
         </header>
         <dl className="transfer-detail-list">
-          <div className="transfer-detail-row"><dt>Banco</dt><dd>{bankPaymentConfig.bankName}</dd></div>
+          <div className="transfer-detail-row"><dt>Banco</dt><dd>{activeBankConfig.bankName}</dd></div>
           <div className="transfer-detail-row with-action">
-            <div><dt>Nombre</dt><dd>{bankPaymentConfig.accountHolder}</dd></div>
-            <QuestButton className="ghost transfer-copy-button" onClick={() => copyDetail(bankPaymentConfig.accountHolder, "copiedName")}>Copiar nombre</QuestButton>
+            <div><dt>Nombre</dt><dd>{activeBankConfig.accountHolder}</dd></div>
+            <QuestButton className="ghost transfer-copy-button" onClick={() => copyDetail(activeBankConfig.accountHolder, "copiedName")}>Copiar nombre</QuestButton>
           </div>
           <div className="transfer-detail-row with-action">
-            <div><dt>{getBankPaymentPrimaryLabel(bankPaymentConfig)}</dt><dd>{getBankPaymentPrimaryValue(bankPaymentConfig)}</dd></div>
-            <QuestButton className="ghost transfer-copy-button" onClick={() => copyDetail(getBankPaymentPrimaryValue(bankPaymentConfig), "copiedAccount")}>Copiar cuenta</QuestButton>
+            <div><dt>{getBankPaymentPrimaryLabel(activeBankConfig)}</dt><dd>{getBankPaymentPrimaryValue(activeBankConfig)}</dd></div>
+            <QuestButton className="ghost transfer-copy-button" onClick={() => copyDetail(getBankPaymentPrimaryValue(activeBankConfig), "copiedAccount")}>Copiar cuenta</QuestButton>
           </div>
         </dl>
         <small className="transfer-modal-note">Si pagas antes, puedes enviar tu comprobante por WhatsApp.</small>
@@ -1605,7 +1605,7 @@ const TransferDetailsModal = ({ onClose }: { onClose: () => void }) => {
 
 const checkoutSteps = ["Resumen", "Datos", "Pago"] as const;
 
-const Checkout = ({ cart, items, total, customer, setCustomer, checkoutStep, setCheckoutStep, onDataStepBlocked, onBack, onSubmit, submitting, error, fieldErrors, clearFieldError, clearCheckoutError, onEdit, onDuplicate, onRemove }: { cart: CartEntry[]; items: MenuItem[]; total: number; customer: CustomerDraft; setCustomer: (customer: CustomerDraft) => void; checkoutStep: CheckoutStepIndex; setCheckoutStep: (step: CheckoutStepIndex) => void; onDataStepBlocked: (fields: CheckoutErrors) => void; onBack: () => void; onSubmit: () => void; submitting: boolean; error: string | null; fieldErrors: CheckoutErrors; clearFieldError: (field: CheckoutField) => void; clearCheckoutError: () => void; onEdit: (lineKey: string) => void; onDuplicate: (lineKey: string) => void; onRemove: (lineKey: string) => void }) => {
+const Checkout = ({ cart, items, total, customer, setCustomer, checkoutStep, setCheckoutStep, onDataStepBlocked, onBack, onSubmit, submitting, error, fieldErrors, clearFieldError, clearCheckoutError, onEdit, onDuplicate, onRemove, availableLocations = DEFAULT_LOCATIONS, bankConfig }: { cart: CartEntry[]; items: MenuItem[]; total: number; customer: CustomerDraft; setCustomer: (customer: CustomerDraft) => void; checkoutStep: CheckoutStepIndex; setCheckoutStep: (step: CheckoutStepIndex) => void; onDataStepBlocked: (fields: CheckoutErrors) => void; onBack: () => void; onSubmit: () => void; submitting: boolean; error: string | null; fieldErrors: CheckoutErrors; clearFieldError: (field: CheckoutField) => void; clearCheckoutError: () => void; onEdit: (lineKey: string) => void; onDuplicate: (lineKey: string) => void; onRemove: (lineKey: string) => void; availableLocations?: string[]; bankConfig?: any }) => {
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const updatePaymentMethod = (paymentMethod: OrderV2PaymentMethod) => {
     clearFieldError("paymentMethod");
@@ -1691,7 +1691,7 @@ const Checkout = ({ cart, items, total, customer, setCustomer, checkoutStep, set
           <div className="builder-block location-block" id="checkoutLocation" tabIndex={-1} aria-describedby={`checkoutLocationHelp${fieldErrors.location ? " checkoutLocationError" : ""}`} aria-invalid={fieldErrors.location ? "true" : "false"}>
             <h4>Ubicación <em>obligatoria</em></h4>
             <p className="field-helper" id="checkoutLocationHelp">Selecciona dónde recogerás o recibirás tu pedido.</p>
-            <div className="chip-grid location-chip-grid">{LOCATIONS.map((location) => <button type="button" key={location} className={customer.location === location ? "chip location-chip active" : "chip location-chip"} onClick={() => { clearFieldError("location"); clearCheckoutError(); setCustomer({ ...customer, location }); }} aria-pressed={customer.location === location}>{customer.location === location ? "✓ " : ""}{location}</button>)}</div>
+            <div className="chip-grid location-chip-grid">{availableLocations.map((location: string) => <button type="button" key={location} className={customer.location === location ? "chip location-chip active" : "chip location-chip"} onClick={() => { clearFieldError("location"); clearCheckoutError(); setCustomer({ ...customer, location }); }} aria-pressed={customer.location === location}>{customer.location === location ? "✓ " : ""}{location}</button>)}</div>
             {fieldErrors.location ? <p className="inline-error" id="checkoutLocationError" role="alert">{fieldErrors.location}</p> : null}
           </div>
         </div>
@@ -1724,7 +1724,7 @@ const Checkout = ({ cart, items, total, customer, setCustomer, checkoutStep, set
         <QuestButton className="checkout-cta" onClick={onSubmit} disabled={submitting || !cart.length}>{submitting ? "Enviando pedido..." : "Confirmar pedido"}</QuestButton>
         {error ? <p className="inline-error" role="alert">{error}</p> : null}
       </section> : null}
-      {transferModalOpen ? <TransferDetailsModal onClose={() => setTransferModalOpen(false)} /> : null}
+      {transferModalOpen ? <TransferDetailsModal onClose={() => setTransferModalOpen(false)} bankConfig={bankConfig} /> : null}
     </section>
   );
 };
@@ -1958,6 +1958,20 @@ export function PublicOrderApp() {
   const [loadingMenu, setLoadingMenu] = useState(true);
   const [showBoot, setShowBoot] = useState(true);
   const [customer, setCustomer] = useState<CustomerDraft>(() => createInitialCustomer());
+  const [availableLocations, setAvailableLocations] = useState<string[]>(DEFAULT_LOCATIONS);
+
+  useEffect(() => {
+    fetch("/api/tower-schedules")
+      .then((res) => res.json())
+      .then((data: any) => {
+        if (data?.ok && Array.isArray(data.towers) && data.towers.length > 0) {
+          setAvailableLocations(data.towers.map((t: any) => t.towerName));
+        }
+      })
+      .catch(() => {
+        /* silent fallback */
+      });
+  }, []);
 
   useEffect(() => {
     try {
@@ -2370,7 +2384,7 @@ export function PublicOrderApp() {
       {section === "workbench" ? <Workbench builder={builder} onBack={() => navigate("main")} onQuantity={updateBuilderQuantity} onContinue={() => navigate("customize")} /> : null}
       {section === "customize" ? (builder ? <CustomizationReview builder={builder} extras={extras} garnishes={garnishes} onBack={() => navigate("workbench")} onUnitChange={updateBuilderUnit} onContinue={confirmBuilder} /> : <CartCustomizationReview cart={cart} items={menuData.items} extras={extras} garnishes={garnishes} error={cartCustomizationError} onBack={() => navigate("burgers")} onUnitChange={updateCartUnit} onContinue={continueCartCustomization} />) : null}
       {section === "side" ? <SideQuest garnishes={garnishes} drinks={drinks} selected={extraGarnishQuantities} onQuantity={(sku, quantity) => { setSideQuestError(null); setExtraGarnishQuantities((prev) => ({ ...prev, [sku]: Math.min(10, Math.max(0, quantity)) })); }} onBack={() => navigate(sideQuestEntryMode === "direct" ? "main" : "customize")} canSkip={hasBurgerOrComboInCart} error={sideQuestError} reduce={reduce} entryMode={sideQuestEntryMode} /> : null}
-      {section === "checkout" && cart.length ? <Checkout cart={cart} items={menuData.items} total={total} customer={customer} setCustomer={setCustomer} checkoutStep={checkoutStep} setCheckoutStep={setCheckoutStep} onDataStepBlocked={blockCheckoutDataStep} onBack={() => navigate("side") } onSubmit={handleCheckout} submitting={submitting} error={checkoutError} fieldErrors={checkoutFieldErrors} clearFieldError={clearCheckoutFieldError} clearCheckoutError={clearCheckoutErrorMessage} onEdit={editLine} onDuplicate={duplicateLine} onRemove={removeLine} /> : null}
+      {section === "checkout" && cart.length ? <Checkout cart={cart} items={menuData.items} total={total} customer={customer} setCustomer={setCustomer} checkoutStep={checkoutStep} setCheckoutStep={setCheckoutStep} onDataStepBlocked={blockCheckoutDataStep} onBack={() => navigate("side") } onSubmit={handleCheckout} submitting={submitting} error={checkoutError} fieldErrors={checkoutFieldErrors} clearFieldError={clearCheckoutFieldError} clearCheckoutError={clearCheckoutErrorMessage} onEdit={editLine} onDuplicate={duplicateLine} onRemove={removeLine} availableLocations={availableLocations} bankConfig={menuData?.siteConfig?.bankPaymentConfig} /> : null}
       {section === "success" && orderConfirmation ? <Success order={orderConfirmation} campaign={raffleCampaign} onCreateAnother={handleCreateAnother} /> : null}
       <MenuInfoDialog item={infoItem} onClose={() => setInfoItem(null)} onChooseInFlow={chooseInfoDialogItemInFlow} />
       {showPersistentCta ? <PersistentCta section={section} count={count} total={total} disabled={primaryDisabled} submitting={submitting} onClick={primaryAction} builder={builder} sideHasSelection={sideHasSelection} hasBurgerOrCombo={hasBurgerOrComboInCart} /> : null}

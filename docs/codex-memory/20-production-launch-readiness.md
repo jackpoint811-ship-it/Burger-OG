@@ -76,14 +76,19 @@ La autorizacion previa fue consumida. Todo nuevo despliegue requiere una nueva a
 
 ---
 
-## Lanzamiento Exitoso a Producción - 2026-08-06
-- **Autorización Usuario**: Recibida explícitamente ("Procede").
-- **PR a Main**: [#465](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/465) mergeado a `main`.
+## Lanzamiento Exitoso a Producción - 2026-08-13
+- **Autorización Usuario**: Recibida explícitamente ("Approved production_migration_plan.md").
+- **Compilación de Bundles**:
+  - `npm run typecheck`: 0 errores de TypeScript.
+  - `npm run build:public`: `dist/public-order-v2` generado en 5.35s.
+  - `npm run build:internal`: `dist/internal-chekeo-v2` generado en 8.51s.
 - **Despliegues Cloudflare Pages**:
-  - `burgers-exe`: `https://0afab63d.burgers-exe.pages.dev` (Producción `https://burgers-exe.pages.dev`).
-  - `chekeo2-0`: `https://aa73984d.chekeo2-0.pages.dev` (Producción `https://chekeo2-0.pages.dev`).
+  - `burgers-exe`: `https://ae203d2c.burgers-exe.pages.dev` (Producción canónica `https://burgers-exe.pages.dev`).
+  - `chekeo2-0`: `https://92a46261.chekeo2-0.pages.dev` (Producción canónica `https://chekeo2-0.pages.dev`).
 - **Smoke Test HTTP Post-Deploy**:
-  - `GET https://burgers-exe.pages.dev/api/menu-v2` ➡️ `200 OK` (`source: "d1"`).
+  - `GET https://burgers-exe.pages.dev/api/menu-v2` ➡️ `200 OK` (`source: "d1"`, items=20, categories=5).
+  - `GET https://burgers-exe.pages.dev/api/tower-schedules` ➡️ `200 OK` (`source: "d1"`, 2 torres activas).
   - `GET https://chekeo2-0.pages.dev/api/internal-v2-auth/status` ➡️ `200 OK` (`authenticated: false`).
+
 
 

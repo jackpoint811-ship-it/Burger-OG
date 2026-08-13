@@ -25,31 +25,30 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 - Resumen K: debe mostrar burgers, ingredientes, extras y cantidades necesarias.
 - Sorteo: debe mostrar lo más importante sin saturar.
 
-- **Afinación de Vista de Cocina (Kitchen View V2)**:
-  - **Unificación de Conteo**: Un solo badge de progreso contextual (`🍔 0/1 Burgers` en Preparación vs `🍟 0/1 Sides · 🥤 0/1 Bebidas` en Side Quest). Removidos pills de conteo sintético duplicados bajo el nombre del cliente.
-  - **Notas Deduplicadas**: `NOTA DEL PEDIDO` concentrada únicamente en la cabecera de la orden activa, removiendo la concatenación redundante dentro de las tarjetas individuales de cada ítem.
-  - **Estandarización de Side Quest**: Chips de origen legibles (`De combo · [Nombre]` en dorado vs `Individual` en cyan).
-  - **Cola de Pedidos KDS**: Rediseño de la cola con tarjetas limpias de alto contraste, tiempo transcurrido en minutos y selección interactiva directa de la orden activa.
+## Hito reciente - 2026-08-13
 
+- **Despliegue Exitoso a Producción Cloudflare Pages**:
+  - `burgers-exe`: `https://ae203d2c.burgers-exe.pages.dev` (Producción `https://burgers-exe.pages.dev`).
+  - `chekeo2-0`: `https://92a46261.chekeo2-0.pages.dev` (Producción `https://chekeo2-0.pages.dev`).
+  - **Smoke Tests**: `/api/menu-v2` (`source: d1`, 20 items, 5 cats) y `/api/tower-schedules` (2 torres) operando en vivo al 100%.
+- **PR #521 Mergeado en `preview`**: Fix de posicionamiento sticky de cabecera de categorías (`.catalog-category-sticky-header`) en **Public Order V2**:
+  - **Causa raíz corregida**: Se cambió `overflow-x: hidden !important;` a `overflow-x: clip !important;` en `.catalog-shell` bajo media query móvil (<= 480px) para no destruir el contexto de scroll root (`window`) que requiere `position: sticky`.
+  - **Scroll Margin Top**: Añadido `scroll-margin-top: calc(112px + env(safe-area-inset-top))` a `.catalog-grid` para alineación precisa de scroll al hacer click en las píldoras de categorías.
+- **PR #520 Mergeado en `preview`**: Erradicación total de elementos hardcodeados, fallbacks sintéticos e identidad CSS legada en **Public Order V2** y **Chekeo V2**:
+  - **Torres & Checkout Dinámicos**: Mapeo 100% dinámico de `tower_schedules` en `CatalogCheckoutDrawer.tsx`, `TowerScheduleModal.tsx`, `CatalogModeApp.tsx` y `PublicOrderApp.tsx`.
+  - **Badges Sintéticos Eliminados**: Removido `fallbackBadges` en `LayoutEngine.tsx`.
+  - **Configuración Bancaria Dinámica**: Extendido `SiteConfig` en `packages/config/src/contracts.ts` con `bankPaymentConfig` y `whatsappTemplates` dinámicos desde D1.
+  - **Limpieza de Assets & Fallbacks**: Eliminados fallbacks `/placeholders/*.jpg` y strings hardcodeados en `kitchen-helpers.ts`.
+  - **Limpieza CSS Legada**: Reemplazados fondos e indicadores neón hardcodeados por variables del tema (`var(--color-surface)`, `var(--color-accent)`).
+- **PR #518 Mergeado en `preview`**: Se completó la refactorización integral de colores y branding en **Chekeo Preview** (`apps/internal-chekeo-v2` y `packages/ui`), erradicando clases legadas dark/cyberpunk (`bg-zinc-950`, `bg-cyan-400`, `border-zinc-800`) e implementando la estética **Premium Casual Vibe** (Light Mode `#F5F2EE` base background, `#FFFFFF` cards, `#16A34A` Forest Green accent; Dark Mode Slate `#121212` / `#1E1E1E`).
 - **Sincronización Local & PRs Recientes**:
   - **PR #438**: Reversión de cambios no solicitados en `InternalChekeoApp.tsx`, manteniendo estrictamente el fix de desbordamiento horizontal responsive en CSS (`styles.css`).
   - **PR #436**: Fix de desbordamiento horizontal en mobile para `.app-nav` y `.orders-board-shell__summary`.
   - **PR #431**: Habilitada la edición completa de texto (título, subtítulo, tag, CTA, color de fondo) para banners existentes en Central V3 (`CatalogV3Panel.tsx`).
   - **PR #432**: Bloqueada la adición al carrito de productos no disponibles (`isAvailable === false`) desde los botones de rápida adición `+` y el drawer de producto.
-  - **Restauración de Flujo WhatsApp**: Actualizado el checkbox de opt-in (`Quiero unirme al grupo oficial de promociones en WhatsApp`) e incorporado el botón directo de enlace al grupo oficial de WhatsApp (`chat.whatsapp.com/GycE5zALOypGPvJVaMfbPp`) en la pantalla de éxito de checkout (`CatalogCheckoutDrawer.tsx`).
+  - **Restauración de Flujo WhatsApp**: Actualizado el checkbox de opt-in (`Quiero unirme al grupo oficial de promociones en WhatsApp`) e incorporado el botón directo de enlace al grupo oficial de WhatsApp en la pantalla de éxito de checkout (`CatalogCheckoutDrawer.tsx`).
 - **Aislamiento de Entorno Preview**:
   - `burgers-exe-public-v2-preview` (App Pública) e `burgers-exe-internal-v2-preview` (Chekeo V2) están 100% conectados a D1 `burgers-exe-menu-v2-preview` y R2 `burgers-exe-assets-v2-preview`.
-  - La API de Preview responde `source: "d1"` sin depender de fallbacks locales ni mocks.
-  - Verificado el envío de pedidos reales en Preview (`POST /api/orders-v2`) con folio de prueba y persistencia en D1 Preview.
-  - Se confirmó **0% de contaminación** con el entorno de Producción (`burgers-exe-menu-live`).
-- **Autenticación Local Vite**: `apps/internal-chekeo-v2/src/lib/internal-auth.ts` ajustado para admitir autenticación local dev (`1234` o `0000`) cuando el dev server corre con Vite sin Functions.
-- **Persistencia End-to-End de Entrega (`delivery_json`)**:
-  - `POST /api/orders-v2` guarda `delivery_json` directamente en `orders_v2` de D1.
-  - `mapD1OrderToOrderV2` extrae metadatos de entrega desde `items[].snapshot.delivery` si `delivery_json` viniera nulo.
-  - `InternalChekeoApp.tsx` filtra con precisión las fechas (`all`, `today`, `past`, `YYYY-MM-DD`), garantizando que órdenes programadas (ej. día 10) se muestren correctamente.
-- **Rediseño V3 Centrado de Cuadros y Badges tipo Pill (PR #510)**:
-  - **Estructura Simétrica Centrada (`AdminModuleCard.tsx`)**: Maquetación vertical totalmente centrada con contenedor de ícono V3 de 56px (`w-14 h-14`), título en negrita (`text-base font-black`) y descripción acotada (`max-w-[240px]`).
-  - **Insignias de Estado tipo Pill**: Transformación de badges a "Pills" discretas con animación `animate-pulse` ubicadas al centro en la parte inferior de cada cuadro.
 - **Horarios por Torre y Cutoffs Dinámicos (PR #513 & PR #514 Mergeados a Preview)**:
   - **Sincronización Dinámica D1**: `CatalogModeApp.tsx` consulta `/api/tower-schedules` al cargar y propaga los horarios reales al sub-bar, `TowerScheduleModal` y `CatalogCheckoutDrawer`.
   - **Zona Horaria Estricta**: Todas las evaluaciones de tiempo en frontend y backend se realizan con `America/Mexico_City` evitando diferencias de zona horaria del cliente.
@@ -59,7 +58,5 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - **Submenú Cuadrado**: Vista inicial con 4 tarjetas de opciones (*Banners del Catálogo*, *Horarios por Torre*, *Estado de la Tienda*, *Sorteo Promocional*) al ingresar a Sucursal & Banners.
   - **Barra de Accesos Rápidos (Favoritos)**: Barra superior compacta con rectángulos de acceso rápido (*🎨 Banners*, *⏰ Horarios*, *📦 Productos*, *💳 Cierre de Caja*, *🏪 Tienda*).
   - **Marcado con Estrella ⭐**: Posibilidad de fijar/desfijar cualquier herramienta a los accesos rápidos con almacenamiento persistente en `localStorage` (`chekeo_admin_favorites`).
-
-
 
 

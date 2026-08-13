@@ -15,6 +15,8 @@
 - Sincronización de Favoritos de Admin V3 en Cloudflare D1 (Multi-dispositivo). El plan detallado ya está estructurado (Migración SQL `0004_v2_admin_favorites.sql`, actualización de `site-config.ts` y sincronización en `AdminWorkspaceV3.tsx`).
 ## Completados recientemente
 
+- [x] **PR #520**: Erradicación total de fallbacks hardcodeados, badges sintéticos, datos bancarios estáticos y estilos neón legados en Public Order V2 y Chekeo V2 (Mergeado en `preview`).
+- [x] **PR #518**: Refactorización integral de colores y branding en Chekeo Preview (Estética Premium Casual Vibe).
 - [x] **PR #507**: Rediseño Hub Admin V3 con Cuadrícula Modular 3x3 de 9 tarjetas táctiles compactas.
 - [x] **PR #507**: Componente `CollapsibleCustomerNote.tsx` (píldora plegada por defecto `[📝 Nota del cliente ▼]`) en Pedidos y Cocina.
 - [x] **PR #507**: Purga completa de estilos cyberpunk neón (`cyan-400`, `pink-500`, `zinc-950`) adoptando la paleta Premium Casual Vibe (`#16A34A` / `#22C55E`, tarjetas neutras).
