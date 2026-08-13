@@ -179,7 +179,147 @@ const getMexicoCityDate = () => {
   return { year, month, day, dayOfWeek, hours, minutes, dateStr };
 };
 
-const validatePayload = (body: Record<string, unknown>, request: Request): NormalizedPayload | Response => {
+type DbTowerScheduleRow = {
+  tower_key: string;
+  tower_name: string;
+  active_days_json: string;
+  order_end_time: string;
+  is_active: number;
+};
+
+export type ActiveTowerConfig = {
+  towerKey: string;
+  towerName: string;
+  activeDays: number[];
+  orderEndTime: string;
+  isActive: boolean;
+};
+
+const parseCutoffTimeStr = (timeStr: string) => {
+  const parts = (timeStr || '13:30').split(':');
+  const h = parseInt(parts[0] ?? '13', 10);
+  const m = parseInt(parts[1] ?? '30', 10);
+  return { hours: Number.isNaN(h) ? 13 : h, minutes: Number.isNaN(m) ? 30 : m };
+};
+
+const isTimePastCutoff = (mxNow: { hours: number; minutes: number }, cutoffStr: string) => {
+  const cutoff = parseCutoffTimeStr(cutoffStr);
+  return mxNow.hours > cutoff.hours || (mxNow.hours === cutoff.hours && mxNow.minutes >= cutoff.minutes);
+};
+
+const loadActiveTowerConfigs = async (db: D1Database): Promise<ActiveTowerConfig[]> => {
+  try {
+    const { results } = await db.prepare(
+      'SELECT tower_key, tower_name, active_days_json, order_end_time, is_active FROM tower_schedules WHERE is_active = 1'
+    ).all<DbTowerScheduleRow>();
+
+    return (results ?? []).map((row) => ({
+      towerKey: row.tower_key,
+      towerName: row.tower_name,
+      activeDays: (() => {
+        try {
+          const parsed = JSON.parse(row.active_days_json);
+          return Array.isArray(parsed) ? parsed.filter((d: unknown) => typeof d === 'number' && d >= 0 && d <= 6) : [];
+        } catch {
+          return [];
+        }
+      })(),
+      orderEndTime: row.order_end_time || '13:30',
+      isActive: Number(row.is_active) === 1,
+    }));
+  } catch {
+    return [];
+  }
+};
+
+const validateTowerSchedule = (
+  delivery: OrderV2DeliveryInfo,
+  mxNow: ReturnType<typeof getMexicoCityDate>,
+  towerConfigs: ActiveTowerConfig[]
+): Response | null => {
+  const locationStr = (delivery.location ?? '').toLowerCase();
+  const matchedTower = towerConfigs.find((t) =>
+    (t.towerKey && locationStr.includes(t.towerKey.toLowerCase())) ||
+    (t.towerName && locationStr.includes(t.towerName.toLowerCase()))
+  );
+
+  if (delivery.scheduledDate) {
+    const [sYear, sMonth, sDay] = delivery.scheduledDate.split('-').map((v) => parseInt(v, 10));
+    const scheduledObj = new Date(Date.UTC(sYear, sMonth - 1, sDay));
+    const scheduledDayOfWeek = scheduledObj.getUTCDay();
+
+    if (matchedTower) {
+      if (!matchedTower.activeDays.includes(scheduledDayOfWeek)) {
+        return errorResponse(
+          400,
+          'LOCATION_CLOSED_ON_DATE',
+          `${matchedTower.towerName} no recibe entregas en el día seleccionado. Por favor elige otro día.`
+        );
+      }
+    } else {
+      const allowedByAny = towerConfigs.some((t) => t.isActive && t.activeDays.includes(scheduledDayOfWeek));
+      const fallbackAllowed = scheduledDayOfWeek !== 0 && scheduledDayOfWeek !== 6;
+      if (towerConfigs.length > 0 ? !allowedByAny : !fallbackAllowed) {
+        return errorResponse(400, 'WEEKEND_ORDER_NOT_ALLOWED', 'No hay entregas disponibles para la fecha seleccionada.');
+      }
+    }
+  } else {
+    if (matchedTower) {
+      if (!matchedTower.activeDays.includes(mxNow.dayOfWeek)) {
+        return errorResponse(
+          400,
+          'LOCATION_CLOSED_TODAY',
+          `${matchedTower.towerName} no recibe entregas el día de hoy. Por favor programa tu pedido para el próximo día hábil.`
+        );
+      }
+      if (isTimePastCutoff(mxNow, matchedTower.orderEndTime)) {
+        return errorResponse(
+          400,
+          'SERVICE_CLOSED_FOR_TODAY',
+          `El servicio para ${matchedTower.towerName} cerró a las ${matchedTower.orderEndTime}. Por favor programa tu pedido para el próximo día hábil.`
+        );
+      }
+    } else {
+      if (towerConfigs.length > 0) {
+        const activeTowersToday = towerConfigs.filter((t) => t.isActive && t.activeDays.includes(mxNow.dayOfWeek));
+        if (activeTowersToday.length === 0) {
+          return errorResponse(
+            400,
+            'SERVICE_CLOSED_FOR_TODAY',
+            'No hay servicio disponible el día de hoy. Por favor programa tu pedido para el próximo día hábil.'
+          );
+        }
+        const openTowerAvailable = activeTowersToday.some((t) => !isTimePastCutoff(mxNow, t.orderEndTime));
+        if (!openTowerAvailable) {
+          return errorResponse(
+            400,
+            'SERVICE_CLOSED_FOR_TODAY',
+            'El servicio de hoy ha cerrado. Por favor programa tu pedido para el próximo día hábil.'
+          );
+        }
+      } else {
+        if (mxNow.dayOfWeek === 0 || mxNow.dayOfWeek === 6) {
+          return errorResponse(
+            400,
+            'WEEKEND_ORDER_NOT_ALLOWED',
+            'No hay servicio disponible en fines de semana (Sábados y Domingos). Por favor programa para el próximo día hábil.'
+          );
+        }
+        if (mxNow.hours > 13 || (mxNow.hours === 13 && mxNow.minutes >= 30)) {
+          return errorResponse(
+            400,
+            'SERVICE_CLOSED_FOR_TODAY',
+            'El servicio de hoy cerró a la 1:30 PM. Por favor programa tu pedido para el próximo día hábil.'
+          );
+        }
+      }
+    }
+  }
+
+  return null;
+};
+
+const validatePayload = (body: Record<string, unknown>, request: Request, towerConfigs: ActiveTowerConfig[] = []): NormalizedPayload | Response => {
   const customer = body.customer && typeof body.customer === 'object' && !Array.isArray(body.customer) ? body.customer as Record<string, unknown> : null;
   const rawCustomerName = normalizeString(customer?.name);
   const customerPhone = normalizePhone(customer?.phone);
@@ -205,22 +345,8 @@ const validatePayload = (body: Record<string, unknown>, request: Request): Norma
   };
 
   const mxNow = getMexicoCityDate();
-
-  if (delivery.scheduledDate) {
-    const [sYear, sMonth, sDay] = delivery.scheduledDate.split('-').map((v) => parseInt(v, 10));
-    const scheduledObj = new Date(Date.UTC(sYear, sMonth - 1, sDay));
-    const scheduledDayOfWeek = scheduledObj.getUTCDay();
-    if (scheduledDayOfWeek === 0 || scheduledDayOfWeek === 6) {
-      return errorResponse(400, 'WEEKEND_ORDER_NOT_ALLOWED', 'No hay entregas disponibles en fines de semana (Sábados y Domingos).');
-    }
-  } else {
-    if (mxNow.dayOfWeek === 0 || mxNow.dayOfWeek === 6) {
-      return errorResponse(400, 'WEEKEND_ORDER_NOT_ALLOWED', 'No hay servicio disponible en fines de semana (Sábados y Domingos). Por favor programa para el próximo día hábil.');
-    }
-    if (mxNow.hours > 13 || (mxNow.hours === 13 && mxNow.minutes >= 30)) {
-      return errorResponse(400, 'SERVICE_CLOSED_FOR_TODAY', 'El servicio de hoy cerró a la 1:30 PM. Por favor programa tu pedido para el próximo día hábil.');
-    }
-  }
+  const scheduleError = validateTowerSchedule(delivery, mxNow, towerConfigs);
+  if (scheduleError) return scheduleError;
 
   const orderMode = normalizeString(body.orderMode) as OrderV2Mode;
   if (!ORDER_MODES.has(orderMode)) return errorResponse(400, 'INVALID_ORDER_MODE', 'Modo de entrega inválido.');
@@ -511,7 +637,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const body = await parseJsonObject(request);
   if (!body) return errorResponse(400, 'INVALID_JSON', 'JSON inválido.');
 
-  const parsed = validatePayload(body, request);
+  const towerConfigs = await loadActiveTowerConfigs(env.BOG_MENU_DB);
+  const parsed = validatePayload(body, request, towerConfigs);
   if (parsed instanceof Response) return parsed;
   const orderSource = getOrderSourceForEnvironment(parsed.environment);
   const isPreviewOrder = parsed.environment === 'preview';

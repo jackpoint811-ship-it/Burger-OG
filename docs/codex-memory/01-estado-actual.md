@@ -47,12 +47,19 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - `POST /api/orders-v2` guarda `delivery_json` directamente en `orders_v2` de D1.
   - `mapD1OrderToOrderV2` extrae metadatos de entrega desde `items[].snapshot.delivery` si `delivery_json` viniera nulo.
   - `InternalChekeoApp.tsx` filtra con precisión las fechas (`all`, `today`, `past`, `YYYY-MM-DD`), garantizando que órdenes programadas (ej. día 10) se muestren correctamente.
-- **Diagnóstico y Solución Definitiva de Carga en Producción (Post-PR #493 / PR #497)**:
-  - **Causa Raíz Identificada**: La tabla `site_config` en el D1 de Producción no contaba con las columnas `public_mode` y `catalog_enabled`. La consulta SQL en `menu-v2.ts` fallaba con `SQLITE_ERROR: no such column: public_mode`, haciendo que `optionalFirst` retornara `null`.
-  - **Fallback Defectuoso**: Al retornar `null`, `resolvePublicConfigFromRow` utilizaba `DEFAULT_PUBLIC_CONFIG`, el cual tenía por defecto `publicMode: "flow"` y `catalogEnabled: false`. Esto obligaba al frontend a apagar el Modo Catálogo y conmutar a la vista Legacy Cyberpunk descontinuada, la cual se congelaba en la pantalla de carga.
-  - **Resolución Ejecutada**:
-    1. Ejecutada la migración `0027_add_catalog_config_to_site_config.sql` directamente en el D1 remoto de Producción (`burgers-exe-menu-live`), añadiendo las columnas `public_mode` ('catalog') y `catalog_enabled` (1).
-    2. Actualizado `DEFAULT_PUBLIC_CONFIG` en `packages/config/src/contracts.ts` a `publicMode: "catalog"` y `catalogEnabled: true` como valor predeterminado universal.
-    3. Añadida consulta de respaldo (fallback) en `functions/api/menu-v2.ts` para que `site_config` preserve `brand_name`, `currency` y teléfonos de contacto aún si faltan columnas.
-    4. Rediseñada la pantalla de carga inicial en `PublicOrderApp.tsx` con un spinner minimalista en estética Premium Casual.
+- **Rediseño V3 Centrado de Cuadros y Badges tipo Pill (PR #510)**:
+  - **Estructura Simétrica Centrada (`AdminModuleCard.tsx`)**: Maquetación vertical totalmente centrada con contenedor de ícono V3 de 56px (`w-14 h-14`), título en negrita (`text-base font-black`) y descripción acotada (`max-w-[240px]`).
+  - **Insignias de Estado tipo Pill**: Transformación de badges a "Pills" discretas con animación `animate-pulse` ubicadas al centro en la parte inferior de cada cuadro.
+- **Horarios por Torre y Cutoffs Dinámicos (PR #513 & PR #514 Mergeados a Preview)**:
+  - **Sincronización Dinámica D1**: `CatalogModeApp.tsx` consulta `/api/tower-schedules` al cargar y propaga los horarios reales al sub-bar, `TowerScheduleModal` y `CatalogCheckoutDrawer`.
+  - **Zona Horaria Estricta**: Todas las evaluaciones de tiempo en frontend y backend se realizan con `America/Mexico_City` evitando diferencias de zona horaria del cliente.
+  - **Validación Backend D1**: `functions/api/orders-v2.ts` consulta las reglas activas de `tower_schedules` en D1 para validar días activos y horarios de cierre por torre o globalmente.
+  - **Fix Payload Admin (PR #514)**: Alineadas las respuestas de `/api/menu-v2-admin/tower-schedules` y `StoreBannersTool.tsx` para cargar las tarjetas de configuración sin interrupciones.
+- **Submenú Cuadrado V3, Barra de Favoritos & Depuración en Admin (PR #512 Mergeado a Preview)**:
+  - **Submenú Cuadrado**: Vista inicial con 4 tarjetas de opciones (*Banners del Catálogo*, *Horarios por Torre*, *Estado de la Tienda*, *Sorteo Promocional*) al ingresar a Sucursal & Banners.
+  - **Barra de Accesos Rápidos (Favoritos)**: Barra superior compacta con rectángulos de acceso rápido (*🎨 Banners*, *⏰ Horarios*, *📦 Productos*, *💳 Cierre de Caja*, *🏪 Tienda*).
+  - **Marcado con Estrella ⭐**: Posibilidad de fijar/desfijar cualquier herramienta a los accesos rápidos con almacenamiento persistente en `localStorage` (`chekeo_admin_favorites`).
+
+
+
 

@@ -92,8 +92,14 @@ const getBadgeStyle = (colorKey?: string | null) => {
   return match ? match.badgeStyle : BADGE_COLORS[0]!.badgeStyle;
 };
 
-export function StoreBannersTool() {
-  const [activeTab, setActiveTab] = useState<'banners' | 'schedules' | 'status' | 'sorteos'>('banners');
+export interface StoreBannersToolProps {
+  initialSubView?: 'grid' | 'banners' | 'schedules' | 'status' | 'sorteos';
+  onBackToLauncher?: () => void;
+}
+
+export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: StoreBannersToolProps = {}) {
+  const [subMenuView, setSubMenuView] = useState<'grid' | 'banners' | 'schedules' | 'status' | 'sorteos'>(initialSubView);
+  const activeTab = subMenuView === 'grid' ? 'banners' : subMenuView;
 
   const [banners, setBanners] = useState<CatalogBanner[]>([]);
   const [loadingBanners, setLoadingBanners] = useState(true);
@@ -139,8 +145,8 @@ export function StoreBannersTool() {
     setLoadingSchedules(true);
     try {
       const res = await fetch('/api/menu-v2-admin/tower-schedules', { credentials: 'include' });
-      const data = (await res.json()) as { ok: boolean; schedules?: TowerSchedule[] };
-      setSchedules(data.schedules ?? []);
+      const data = (await res.json()) as { ok: boolean; schedules?: TowerSchedule[]; towers?: TowerSchedule[] };
+      setSchedules(data.schedules ?? data.towers ?? []);
     } catch {
       /* noop */
     } finally {
@@ -448,56 +454,137 @@ export function StoreBannersTool() {
     }
   };
 
+  // Submenu Cards config
+  const subMenuCards = [
+    {
+      id: 'banners',
+      title: 'Banners del Catálogo',
+      icon: '🎨',
+      description: 'Carruseles de imágenes y tarjetas de texto promocionales estilizadas.',
+      statusLabel: loadingBanners ? 'Cargando...' : `${banners.length} Banners`,
+    },
+    {
+      id: 'schedules',
+      title: 'Horarios por Torre',
+      icon: '⏰',
+      description: 'Configuración de días activos y ventanas de recepción/entrega por torre.',
+      statusLabel: loadingSchedules ? 'Cargando...' : `${schedules.length} Torres`,
+    },
+    {
+      id: 'status',
+      title: 'Estado de la Tienda',
+      icon: '🏪',
+      description: 'Interruptor general para abrir la tienda o pausar los pedidos en vivo.',
+      statusLabel: catalogEnabled ? 'Abierta' : 'Cerrada',
+    },
+    {
+      id: 'sorteos',
+      title: 'Sorteo Promocional',
+      icon: '🎁',
+      description: 'Gestión de sorteo activo, boletos digitales y asignación de códigos.',
+      statusLabel: raffleActive ? 'En Vivo' : 'Pausado',
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between border-b border-neutral-200 pb-4">
-        <div>
-          <h2 className="text-xl font-bold text-neutral-800 flex items-center gap-2">🎨 Tienda, Banners & Horarios Operativos</h2>
-          <p className="text-xs text-neutral-500">Gestiona banners visuales y de texto estilizado, horarios por Torre y estado de la tienda.</p>
-        </div>
-      </div>
-
       {notice ? <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-xs text-green-800">{notice}</div> : null}
       {error ? <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">{error}</div> : null}
 
-      <div className="flex gap-2 border-b border-neutral-200 pb-2 overflow-x-auto">
-        <button
-          type="button"
-          onClick={() => setActiveTab('banners')}
-          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 ${
-            activeTab === 'banners' ? 'bg-[#16A34A] text-white shadow-sm' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-          }`}
-        >
-          🎨 Banners del Catálogo ({banners.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('schedules')}
-          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 ${
-            activeTab === 'schedules' ? 'bg-[#16A34A] text-white shadow-sm' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-          }`}
-        >
-          ⏰ Horarios por Torre ({schedules.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('status')}
-          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 ${
-            activeTab === 'status' ? 'bg-[#16A34A] text-white shadow-sm' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-          }`}
-        >
-          🏪 Estado de Tienda
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('sorteos')}
-          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 ${
-            activeTab === 'sorteos' ? 'bg-[#16A34A] text-white shadow-sm' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-          }`}
-        >
-          🎁 Sorteo Activo
-        </button>
-      </div>
+      {/* ── VISTA 1: SUBMENÚ CUADRADO (GRID DE 4 OPCIONES) ── */}
+      {subMenuView === 'grid' ? (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <div>
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                Submenú Configuración
+              </span>
+              <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight mt-1.5">
+                Sucursal, Banners & Horarios
+              </h2>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                Selecciona una sección para administrar banners, disponibilidad o sorteos.
+              </p>
+            </div>
+            {onBackToLauncher && (
+              <Button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 font-bold px-3 py-1.5 text-xs hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all shrink-0"
+                onClick={onBackToLauncher}
+              >
+                ← Menú Principal
+              </Button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {subMenuCards.map((card) => (
+              <button
+                key={card.id}
+                type="button"
+                onClick={() => setSubMenuView(card.id as any)}
+                className="group relative flex flex-col items-center justify-center text-center p-6 rounded-2xl bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-emerald-500/50 dark:hover:border-emerald-500/50 transition-all duration-200 w-full min-h-[190px] focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform mb-3">
+                  {card.icon}
+                </div>
+                <h4 className="text-base font-black text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                  {card.title}
+                </h4>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 leading-relaxed font-normal max-w-[220px]">
+                  {card.description}
+                </p>
+                <span className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  {card.statusLabel}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        /* ── VISTA 2: NAVEGACIÓN Y DETALLE DE HERRAMIENTA SELECCIONADA ── */
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-extrabold px-3 py-1.5 text-xs hover:bg-emerald-500/20 transition-all shadow-sm"
+                onClick={() => setSubMenuView('grid')}
+              >
+                ← Volver al Submenú
+              </Button>
+              <h3 className="text-sm font-black text-zinc-900 dark:text-zinc-100">
+                {subMenuView === 'banners' && '🎨 Banners del Catálogo'}
+                {subMenuView === 'schedules' && '⏰ Horarios por Torre'}
+                {subMenuView === 'status' && '🏪 Estado de la Tienda'}
+                {subMenuView === 'sorteos' && '🎁 Sorteo Promocional'}
+              </h3>
+            </div>
+
+            {/* Quick Switch Pills */}
+            <div className="flex items-center gap-1 overflow-x-auto">
+              {subMenuCards.map((card) => {
+                const isActive = subMenuView === card.id;
+                return (
+                  <button
+                    key={card.id}
+                    type="button"
+                    onClick={() => setSubMenuView(card.id as any)}
+                    className={`px-3 py-1.5 rounded-xl text-[11px] font-extrabold transition-all shrink-0 ${
+                      isActive
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    {card.icon} {card.title.split(' ')[0]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {activeTab === 'banners' && (
         <div className="space-y-6">

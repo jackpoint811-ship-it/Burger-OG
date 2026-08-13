@@ -107,7 +107,7 @@ export type KitchenLocalSummary = {
 
 export type KitchenOrdersRuntime = {
   environment: OrderV2Environment;
-  source: "d1" | "mock" | "fallback";
+  source: "d1" | "mock" | "fallback" | "error";
   loading: boolean;
   actionOrderId: string | null;
   error: string | null;

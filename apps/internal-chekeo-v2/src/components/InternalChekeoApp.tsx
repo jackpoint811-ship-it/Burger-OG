@@ -52,7 +52,6 @@ import {
   getPublicOrderLabelForEnvironment,
   getPublicOrderUrlForEnvironment,
 } from "@config/index";
-import { mockOrders } from "@config/mock-data";
 import {
   bankPaymentConfig,
   getBankPaymentPrimaryLabel,
@@ -92,12 +91,17 @@ import {
   generateOrderTicketImage,
   ORDER_TICKET_RAFFLE_NOTE,
 } from "../lib/order-ticket-image";
-import { CatalogAdminPanel } from "./CatalogAdminPanel";
+import { AdminWorkspaceV3 } from "./v3/AdminWorkspaceV3";
+import { MenuStockTool } from "./v3/MenuStockTool";
+import { ComboBuilderTool } from "./v3/ComboBuilderTool";
+import { IngredientsMasterTool } from "./v3/IngredientsMasterTool";
+import { PromosManagementTool } from "./v3/PromosManagementTool";
+import { StoreBannersTool } from "./v3/StoreBannersTool";
 import { RafflesAdminPanel } from "./RafflesAdminPanel";
-import { CatalogV3Panel } from "./CatalogV3Panel";
 import { KitchenQueue } from "./kitchen/KitchenQueue";
 import { parseOrderCustomerDetails } from "../lib/order-parser";
 import { HorizontalDateCalendarFilter } from "./HorizontalDateCalendarFilter";
+import { CollapsibleCustomerNote } from "./CollapsibleCustomerNote";
 import {
   extractKitchenLocation,
   getKitchenLineKey,
@@ -113,6 +117,11 @@ type TabKey =
   | "admin";
 type AdminViewKey =
   | "launcher"
+  | "v3-stock"
+  | "v3-combos"
+  | "v3-ingredients"
+  | "v3-promos"
+  | "v3-store"
   | "banco"
   | "historial"
   | "basurero"
@@ -121,7 +130,7 @@ type AdminViewKey =
   | "catalogo-v3"
   | "sorteos"
   | "reportes";
-type OrdersSource = "d1" | "mock" | "fallback";
+type OrdersSource = "d1" | "mock" | "fallback" | "error";
 type BackHandler = () => boolean;
 type OrdersV2Summary = NonNullable<OrdersV2SummaryResponse["data"]>;
 type KitchenSummaryK = NonNullable<KitchenSummaryKResponse["data"]>;
@@ -2171,49 +2180,33 @@ const AdminWorkspace = ({
   authMode: InternalAuthMode;
   onArchiveCancelled: (order: InternalOrder) => Promise<void>;
 }) => {
-  const activeView = adminViews.find((option) => option.key === view) ?? adminViews[0];
   const publicOrderUrl = getPublicOrderUrlForEnvironment(runtimeEnvironment);
-  const publicOrderLabel = getPublicOrderLabelForEnvironment(runtimeEnvironment);
 
-  const renderModuleCard = (module: AdminModuleDefinition) => {
-    const Icon = module.icon;
-    const status = adminModuleStatusMeta[module.status];
-
+  if (view === "launcher") {
     return (
-      <button
-        key={module.key}
-        type="button"
-        className="admin-module-card"
-        onClick={() => setView(module.key)}
-      >
-        <span className="admin-module-card__top">
-          <span className="admin-module-card__icon">
-            <Icon size={18} aria-hidden="true" />
-          </span>
-          <StatusPill className={`admin-module-card__status ${status.className}`}>
-            {status.label}
-          </StatusPill>
-        </span>
-        <span className="admin-module-card__content">
-          <span className="admin-module-card__label">{module.label}</span>
-          <span className="admin-module-card__hint">{module.hint}</span>
-          <span className="admin-module-card__desc">{module.description}</span>
-        </span>
-        <span className="admin-module-card__footer">
-          <span>{module.cta}</span>
-          <span aria-hidden="true">→</span>
-        </span>
-      </button>
+      <AdminWorkspaceV3
+        onSelectModule={(key) => setView(key as AdminViewKey)}
+        publicOrderUrl={publicOrderUrl}
+      />
     );
-  };
+  }
 
   const content =
-    view === "banco" ? (
+    view === "v3-stock" || view === "catalogo" ? (
+      <MenuStockTool />
+    ) : view === "v3-combos" ? (
+      <ComboBuilderTool />
+    ) : view === "v3-ingredients" ? (
+      <IngredientsMasterTool />
+    ) : view === "v3-promos" ? (
+      <PromosManagementTool />
+    ) : view === "v3-store" || view.startsWith("v3-store:") || view === "catalogo-v3" ? (
+      <StoreBannersTool
+        initialSubView={view.startsWith("v3-store:") ? (view.split(":")[1] as any) : "grid"}
+        onBackToLauncher={() => setView("launcher")}
+      />
+    ) : view === "banco" ? (
       <BankConfigAdminPanel />
-    ) : view === "catalogo" ? (
-      <CatalogAdminPanel />
-    ) : view === "catalogo-v3" ? (
-      <CatalogV3Panel />
     ) : view === "sorteos" ? (
       <RafflesAdminPanel runtimeEnvironment={runtimeEnvironment} />
     ) : view === "historial" || view === "basurero" ? (
@@ -2231,126 +2224,24 @@ const AdminWorkspace = ({
     ) : view === "reportes" ? (
       <AdminReportsPanel runtime={runtime} authMode={authMode} />
     ) : (
-      <div className="admin-hub">
-        {adminModuleGroups.map((group) => {
-          const modules = adminModuleViews.filter((module) => module.category === group.key);
-          if (!modules.length) return null;
-
-          return (
-            <section
-              key={group.key}
-              className="admin-module-group"
-              aria-labelledby={`admin-module-group-${group.key}`}
-            >
-              <div className="admin-module-group__header">
-                <div>
-                  <h3 id={`admin-module-group-${group.key}`} className="admin-module-group__title">
-                    {group.title}
-                  </h3>
-                  <p className="admin-module-group__desc">{group.description}</p>
-                </div>
-                <span className="admin-module-group__count">
-                  {modules.length} módulo{modules.length === 1 ? "" : "s"}
-                </span>
-              </div>
-              <div className="admin-module-grid">
-                {modules.map(renderModuleCard)}
-              </div>
-            </section>
-          );
-        })}
-
-        <section className="admin-module-group" aria-labelledby="admin-module-group-public">
-          <div className="admin-module-group__header">
-            <div>
-              <h3 id="admin-module-group-public" className="admin-module-group__title">
-                Página pública
-              </h3>
-              <p className="admin-module-group__desc">
-                Enlace de estado a la experiencia de clientes; este PR no la modifica.
-              </p>
-            </div>
-            <StatusPill className="border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100">
-              Base lista
-            </StatusPill>
-          </div>
-          <a
-            className="admin-module-card admin-module-card--link"
-            href={publicOrderUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <span className="admin-module-card__top">
-              <span className="admin-module-card__icon">
-                <ExternalLink size={18} aria-hidden="true" />
-              </span>
-              <StatusPill className="admin-module-card__status border-emerald-400/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-100">
-                Base lista
-              </StatusPill>
-            </span>
-            <span className="admin-module-card__content">
-              <span className="admin-module-card__label">Página pública</span>
-              <span className="admin-module-card__hint">{publicOrderLabel}</span>
-              <span className="admin-module-card__desc">
-                Acceso rápido para revisar la ruta pública activa sin cambiar su implementación.
-              </span>
-            </span>
-            <span className="admin-module-card__footer">
-              <span>Abrir página</span>
-              <ExternalLink size={16} aria-hidden="true" />
-            </span>
-          </a>
-        </section>
-      </div>
+      <MenuStockTool />
     );
 
   return (
-    <section className="space-y-3">
-      <Card className="admin-workspace-header p-4">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <p className="home-section-label">Admin</p>
-            <h2 className="mt-1 text-xl font-black text-zinc-50">
-              {view === "launcher" ? "Módulos secundarios" : activeView.label}
-            </h2>
-            <p className="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
-              {view === "launcher"
-                ? "Datos bancarios, historial, cierre, catálogo, sorteos y reportes viven aquí para mantener la navegación principal enfocada en operación."
-                : activeView.description}
-            </p>
-          </div>
-          <div className="admin-workspace-header__actions">
-            {view !== "launcher" ? (
-              <Button
-                type="button"
-                className="admin-back-button border border-cyan-400/40 bg-cyan-400/10 text-cyan-900 dark:text-cyan-800 dark:text-cyan-100"
-                onClick={() => setView("launcher")}
-              >
-                Volver al hub
-              </Button>
-            ) : null}
-            {view !== "launcher" ? (
-              <label className="admin-compact-select">
-                Cambiar módulo
-                <select
-                  value={view}
-                  onChange={(event) => setView(event.target.value as AdminViewKey)}
-                >
-                  {adminViews.map((option) => (
-                    <option key={option.key} value={option.key}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-          </div>
-        </div>
-        <p className="mt-3 text-xs text-zinc-500">
-          {getAdminAuthModeHint(authMode)}
-        </p>
-      </Card>
-      {content}
+    <section className="space-y-4 font-sans max-w-7xl mx-auto px-4 py-2">
+      {/* Botón táctil para volver al Hub de Control Admin */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <Button
+          type="button"
+          className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-extrabold px-4 py-2 text-xs hover:bg-emerald-500/20 transition-all shadow-sm"
+          onClick={() => setView("launcher")}
+        >
+          <span className="text-base font-black">←</span>
+          <span>Volver al Hub Admin</span>
+        </Button>
+      </div>
+
+      <div>{content}</div>
     </section>
   );
 };
@@ -2947,9 +2838,7 @@ const CompactRow = ({
           <details className="orders-card__more">
             <summary>Más acciones</summary>
             <div className="orders-card__secondary-actions space-y-2 pt-2">
-              {details.cleanNotes ? (
-                <p className="orders-note">Nota: {details.cleanNotes}</p>
-              ) : null}
+              <CollapsibleCustomerNote note={details.cleanNotes} />
               {canDeliver ? (
                 <Button
                   className="orders-secondary-action w-full"
@@ -5666,7 +5555,7 @@ export function InternalChekeoApp() {
   const [selected, setSelected] = useState<InternalOrder | null>(null);
   const [cancellationRequest, setCancellationRequest] =
     useState<CancellationRequest>(null);
-  const [ordersSource, setOrdersSource] = useState<OrdersSource>("mock");
+  const [ordersSource, setOrdersSource] = useState<OrdersSource>("d1");
   const [checkingSession, setCheckingSession] = useState(true);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
@@ -5802,7 +5691,7 @@ export function InternalChekeoApp() {
     setLogged(false);
     setSessionState("expired");
     setOrders([]);
-    setOrdersSource("mock");
+    setOrdersSource("d1");
     setOrdersError("Sesión expirada. Vuelve a iniciar sesión.");
     setOrdersNotice(null);
     setSelected(null);
@@ -5924,7 +5813,7 @@ export function InternalChekeoApp() {
           return;
         }
         setOrders([]);
-        setOrdersSource("fallback");
+        setOrdersSource("error");
         setLimitWarning(null);
         setOrdersError(message);
       } finally {
@@ -6375,7 +6264,7 @@ export function InternalChekeoApp() {
           loggedRef.current = false;
           setLogged(false);
           setSessionState("inactive");
-          setOrdersSource("mock");
+          setOrdersSource("d1");
           setOrders([]);
           setOrdersNotice(null);
           setOrdersError(null);

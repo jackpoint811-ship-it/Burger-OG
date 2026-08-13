@@ -28,15 +28,37 @@ export function MenuStockTool() {
 
   // Availability toggle state
   const [togglingSku, setTogglingSku] = useState<string | null>(null);
+  const [hidingSku, setHidingSku] = useState<string | null>(null);
+  const [deletingSku, setDeletingSku] = useState<string | null>(null);
+  const [confirmDeleteSku, setConfirmDeleteSku] = useState<string | null>(null);
 
   const loadMenu = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/menu-v2', { credentials: 'include' });
-      const data = (await res.json()) as MenuV2Response;
-      setItems(data.items ?? []);
-      setCategories(data.categories ?? []);
+      let itemsList: MenuItem[] = [];
+      let categoriesList: MenuCategory[] = [];
+      try {
+        const adminRes = await fetch('/api/menu-v2-admin/items', { credentials: 'include' });
+        if (adminRes.ok) {
+          const adminData = (await adminRes.json()) as { ok: boolean; items?: MenuItem[] };
+          if (adminData.ok && Array.isArray(adminData.items)) {
+            itemsList = adminData.items;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not fetch admin items, falling back to public menu:', e);
+      }
+
+      const publicRes = await fetch('/api/menu-v2', { credentials: 'include' });
+      const publicData = (await publicRes.json()) as MenuV2Response;
+      categoriesList = publicData.categories ?? [];
+      if (!itemsList.length) {
+        itemsList = publicData.items ?? [];
+      }
+
+      setItems(itemsList);
+      setCategories(categoriesList);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al cargar el menú');
     } finally {
@@ -61,9 +83,9 @@ export function MenuStockTool() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ isAvailable: nextStatus }),
       });
-      const data = await res.json() as { ok: boolean; item?: MenuItem; error?: string };
+      const data = (await res.json()) as { ok: boolean; item?: MenuItem; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al actualizar disponibilidad');
-      
+
       setItems((prev) => prev.map((it) => (it.sku === item.sku ? { ...it, isAvailable: nextStatus } : it)));
       setNotice(`${item.name} (${item.sku}) marcado como ${nextStatus ? '✓ Disponible' : '✕ Agotado'}`);
       setTimeout(() => setNotice(null), 3000);
@@ -73,6 +95,57 @@ export function MenuStockTool() {
       setTogglingSku(null);
     }
   };
+
+  // Toggle visibility (isHidden)
+  const handleToggleHidden = async (item: MenuItem) => {
+    if (hidingSku) return;
+    setHidingSku(item.sku);
+    setNotice(null);
+    try {
+      const nextHidden = !item.isHidden;
+      const res = await fetch(`/api/menu-v2-admin/items/${encodeURIComponent(item.sku)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ isHidden: nextHidden }),
+      });
+      const data = (await res.json()) as { ok: boolean; item?: MenuItem; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al actualizar visibilidad');
+
+      setItems((prev) => prev.map((it) => (it.sku === item.sku ? { ...it, isHidden: nextHidden } : it)));
+      setNotice(`${item.name} (${item.sku}) marcado como ${nextHidden ? '👁️‍🗨️ Oculto del menú' : '👁️ Visible en el menú'}`);
+      setTimeout(() => setNotice(null), 3000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al actualizar visibilidad');
+    } finally {
+      setHidingSku(null);
+    }
+  };
+
+  // Delete item
+  const handleDeleteItem = async (item: MenuItem) => {
+    if (deletingSku) return;
+    setDeletingSku(item.sku);
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/menu-v2-admin/items/${encodeURIComponent(item.sku)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al eliminar producto');
+
+      setItems((prev) => prev.filter((it) => it.sku !== item.sku));
+      setNotice(`Producto ${item.name} (${item.sku}) eliminado permanentemente`);
+      setTimeout(() => setNotice(null), 3000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al eliminar producto');
+    } finally {
+      setDeletingSku(null);
+      setConfirmDeleteSku(null);
+    }
+  };
+
 
   // Filtered items
   const filteredItems = useMemo(() => {
@@ -184,20 +257,27 @@ export function MenuStockTool() {
                 }`}
               >
                 <div>
-                  {/* Top Row: SKU & Badge */}
-                  <div className="flex items-center justify-between gap-2 mb-2">
+                  {/* Top Row: SKU & Badges */}
+                  <div className="flex items-center justify-between gap-1.5 mb-2 flex-wrap">
                     <span className="text-[10px] font-mono font-semibold text-[#16A34A] bg-green-50 px-2 py-0.5 rounded border border-green-200">
                       {item.sku}
                     </span>
-                    <span
-                      className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
-                        item.isAvailable
-                          ? 'bg-green-100 text-green-700 border border-green-200'
-                          : 'bg-red-100 text-red-700 border border-red-200'
-                      }`}
-                    >
-                      {item.isAvailable ? '✓ Disponible' : '✕ Agotado'}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      {item.isHidden ? (
+                        <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                          👁️‍🗨️ Oculto
+                        </span>
+                      ) : null}
+                      <span
+                        className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                          item.isAvailable
+                            ? 'bg-green-100 text-green-700 border border-green-200'
+                            : 'bg-red-100 text-red-700 border border-red-200'
+                        }`}
+                      >
+                        {item.isAvailable ? '✓ Disponible' : '✕ Agotado'}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Item Image / Placeholder & Info */}
@@ -227,7 +307,7 @@ export function MenuStockTool() {
                     <span className="text-base font-bold text-[#16A34A]">${Number(item.price).toFixed(2)} MXN</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-1.5">
                     <button
                       type="button"
                       disabled={isBusy}
@@ -238,17 +318,48 @@ export function MenuStockTool() {
                           : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
                       }`}
                     >
-                      {isBusy ? '...' : item.isAvailable ? 'Marcar Agotado' : 'Marcar Disponible'}
+                      {isBusy ? '...' : item.isAvailable ? 'Agotado' : 'Disponible'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={hidingSku === item.sku}
+                      onClick={() => handleToggleHidden(item)}
+                      className={`px-2 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                        item.isHidden
+                          ? 'bg-amber-100 border-amber-300 text-amber-900 hover:bg-amber-200'
+                          : 'bg-neutral-100 border-neutral-300 text-neutral-700 hover:bg-neutral-200'
+                      }`}
+                    >
+                      {hidingSku === item.sku ? '...' : item.isHidden ? '👁️ Mostrar' : '👁️‍🗨️ Ocultar'}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleOpenEdit(item)}
                       className="px-2 py-1.5 rounded-xl text-xs font-semibold bg-neutral-100 border border-neutral-300 text-neutral-700 hover:bg-neutral-200 transition-colors"
                     >
-                      ✏️ Editar / Receta
+                      ✏️ Editar
                     </button>
+                    {confirmDeleteSku === item.sku ? (
+                      <button
+                        type="button"
+                        disabled={deletingSku === item.sku}
+                        onClick={() => handleDeleteItem(item)}
+                        className="px-2 py-1.5 rounded-xl text-xs font-bold bg-red-600 border border-red-700 text-white hover:bg-red-700 transition-colors"
+                      >
+                        {deletingSku === item.sku ? '...' : 'Confirmar'}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteSku(item.sku)}
+                        className="px-2 py-1.5 rounded-xl text-xs font-semibold bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-colors"
+                      >
+                        🗑️ Eliminar
+                      </button>
+                    )}
                   </div>
                 </div>
+
               </Card>
             );
           })}

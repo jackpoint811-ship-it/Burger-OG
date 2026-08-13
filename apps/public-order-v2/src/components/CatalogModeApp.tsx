@@ -10,7 +10,7 @@ import { DynamicRenderer } from "./DynamicRenderer";
 import { CatalogToast, type ToastMessage } from "./CatalogToast";
 import type { DesignSpecification } from "../types/design";
 import { DEFAULT_STUDIO_DESIGN_SPEC } from "../lib/default-design-spec";
-import { TowerScheduleModal, getTowerStatus } from "./TowerScheduleModal";
+import { TowerScheduleModal, getTowerStatus, type DynamicTowerSchedule } from "./TowerScheduleModal";
 import {
   type CatalogProduct,
   mapMenuItemsToCatalogProducts,
@@ -109,9 +109,23 @@ function CatalogModeAppInner({ items, categories, siteConfig, recipes, catalogBa
   const [activeToast, setActiveToast] = useState<ToastMessage | null>(null);
   const [isTowerModalOpen, setIsTowerModalOpen] = useState(false);
   const [selectedTowerKey, setSelectedTowerKey] = useState<string | null>(null);
+  const [towers, setTowers] = useState<DynamicTowerSchedule[]>([]);
   const { isDark, toggleDark } = useSystemTheme();
 
-  const towerStatus = useMemo(() => getTowerStatus(), []);
+  useEffect(() => {
+    fetch("/api/tower-schedules")
+      .then((res) => res.json())
+      .then((data: any) => {
+        if (data?.ok && Array.isArray(data.towers)) {
+          setTowers(data.towers);
+        }
+      })
+      .catch(() => {
+        /* silent fallback */
+      });
+  }, []);
+
+  const towerStatus = useMemo(() => getTowerStatus(towers), [towers]);
 
   const catalogProducts = useMemo(() => mapMenuItemsToCatalogProducts(items, categories), [items, categories]);
 
@@ -303,7 +317,7 @@ function CatalogModeAppInner({ items, categories, siteConfig, recipes, catalogBa
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {isCheckoutOpen && <CatalogCheckoutDrawer key="checkout-drawer" isOpen={isCheckoutOpen} onClose={closeCheckout} />}
+        {isCheckoutOpen && <CatalogCheckoutDrawer key="checkout-drawer" isOpen={isCheckoutOpen} onClose={closeCheckout} towers={towers} />}
       </AnimatePresence>
 
       {/* ── Modal de Horario por Edificio ────────────────────────────── */}
