@@ -11,6 +11,7 @@
 - `AGENTS.md` sigue siendo la regla dura.
 - Graphify debe usarse antes de modificar arquitectura o varios archivos, cuando este disponible.
 - Todo cambio debe terminar en Pull Request cuando el usuario apruebe el cierre.
+- El visor oficial del grafo del proyecto es `tools/graph-city/graph_city.html` (ciudad 3D con Three.js, autocontenido, sin CDN). Se regenera con `node tools/graph-city/compute_layout.cjs && node tools/graph-city/build_city.cjs` a partir de `graphify-out/graph.json`; los scripts fuente viven en `tools/graph-city/` (`.graphify/` está excluido localmente vía `.git/info/exclude` y solo tiene el workspace de desarrollo del experimento).
 
 ## Historial de decisiones
 
