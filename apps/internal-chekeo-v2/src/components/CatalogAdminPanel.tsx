@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { CatalogBanner, ComboOptionGroup, IngredientV2, MenuCategory, MenuCategoryBanner, MenuItem, MenuV2Response, ProductIngredientRecipeV2, PromoCard as PromoCardType, PublicConfig } from '@config/index';
+import type { CatalogBanner, IngredientV2, MenuCategory, MenuCategoryBanner, MenuItem, MenuV2Response, ProductIngredientRecipeV2, PromoCard as PromoCardType } from '@config/index';
 import { Button, Card } from '@ui/index';
 import { createIngredientV2Admin, fetchIngredientsV2Admin, fetchProductRecipeV2Admin, saveProductRecipeV2Admin, updateIngredientV2Admin } from '../lib/ingredients-v2-admin';
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
 const ACCEPTED_IMAGE_TYPES_LABEL = 'JPG, PNG, WebP o AVIF hasta 5 MB';
 
-type CatalogTab = 'items' | 'categories' | 'promos' | 'banners' | 'catalog-banners' | 'ingredients';
-type EditForm = { sku: string; name: string; description: string; price: string; promoPrice: string; isPromoActive: boolean; promoLabel: string; isCombo: boolean; bundlePrice: string; comboGroups: ComboOptionGroup[]; category: MenuCategory['key']; isAvailable: boolean; isFeatured: boolean; badge: string; comboLinks: string; sortOrder: string; imageUrl: string; imageKey: string; stockManaged: boolean; stockLimit: string; stockRemaining: string };
+type CatalogTab = 'items' | 'promos' | 'banners' | 'catalog-banners' | 'ingredients';
+type EditForm = { sku: string; name: string; description: string; price: string; category: MenuCategory['key']; isAvailable: boolean; isFeatured: boolean; badge: string; promoLabel: string; comboLinks: string; sortOrder: string; imageUrl: string; imageKey: string; stockManaged: boolean; stockLimit: string; stockRemaining: string };
 type PromoEditForm = { title: string; description: string; badge: string; promoLabel: string; isAvailable: boolean; isFeatured: boolean; sortOrder: string; comboLinks: string; imageUrl: string; imageKey: string };
 type ItemImageMutationResponse = { ok?: boolean; error?: string; warning?: string; item?: MenuItem; imageKey?: string; assetUrl?: string; removed?: boolean };
 type PromoMutationResponse = { ok?: boolean; error?: string; warning?: string; promo?: PromoCardType; imageKey?: string; assetUrl?: string; removed?: boolean };
@@ -24,15 +24,6 @@ const centsToPesoInput = (cents: number | null) => cents == null ? '' : String(c
 const pesoInputToCents = (value: string) => { const trimmed = value.trim(); if (!trimmed) return null; const parsed = Number(trimmed); return Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed * 100) : null; };
 const ingredientToForm = (ingredient: IngredientV2): IngredientForm => ({ id: ingredient.id, name: ingredient.name, unit: ingredient.unit, unitPrice: centsToPesoInput(ingredient.unitPriceCents), isActive: ingredient.isActive, sortOrder: String(ingredient.sortOrder) });
 const recipeToFormRow = (recipe: ProductIngredientRecipeV2): RecipeFormRow => ({ ingredientId: recipe.ingredientId, quantityPerUnit: String(recipe.quantityPerUnit) });
-
-const getCategoryEmoji = (key?: string, name?: string): string => {
-  if (key === "burgers" || name?.toLowerCase().includes("burger")) return "🍔";
-  if (key === "combos" || name?.toLowerCase().includes("combo")) return "🔥";
-  if (key === "guarniciones" || name?.toLowerCase().includes("papas")) return "🍟";
-  if (key === "drinks" || name?.toLowerCase().includes("bebida")) return "🥤";
-  if (key === "extras" || name?.toLowerCase().includes("extra")) return "🧀";
-  return "🏷️";
-};
 
 const ITEM_CATEGORY_ORDER: MenuCategory['key'][] = ['burgers', 'combos', 'guarniciones', 'drinks', 'extras'];
 const ITEM_CATEGORY_LABELS: Record<MenuCategory['key'], string> = {
@@ -120,107 +111,8 @@ export function CatalogAdminPanel() {
   const [selectedCatalogBannerFile, setSelectedCatalogBannerFile] = useState<File | null>(null);
   const [catalogBannerError, setCatalogBannerError] = useState<string | null>(null);
   const catalogBannerFileInputRef = useRef<HTMLInputElement | null>(null);
-  const [siteConfigSaving, setSiteConfigSaving] = useState(false);
-  const [siteConfigError, setSiteConfigError] = useState<string | null>(null);
   const [catalogBannersLoading, setCatalogBannersLoading] = useState(false);
   const [catalogBannersError, setCatalogBannersError] = useState<string | null>(null);
-
-  const [categoryList, setCategoryList] = useState<MenuCategory[]>([]);
-  const [categoriesSaving, setCategoriesSaving] = useState(false);
-  const [categoryError, setCategoryError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (menu?.categories) {
-      setCategoryList(menu.categories);
-    }
-  }, [menu?.categories]);
-
-  const updateCategoryItem = (index: number, patch: Partial<MenuCategory>) => {
-    setCategoryList((current) => {
-      const next = [...current];
-      next[index] = { ...next[index], ...patch };
-      return next;
-    });
-  };
-
-  const moveCategory = (index: number, delta: number) => {
-    setCategoryList((current) => {
-      const targetIndex = index + delta;
-      if (targetIndex < 0 || targetIndex >= current.length) return current;
-      const next = [...current];
-      const temp = next[index];
-      next[index] = next[targetIndex];
-      next[targetIndex] = temp;
-      return next.map((cat, i) => ({ ...cat, sortOrder: (i + 1) * 10 }));
-    });
-  };
-
-  const onSaveCategories = async () => {
-    if (!canEdit || categoriesSaving) return;
-    setCategoriesSaving(true);
-    setCategoryError(null);
-    try {
-      const res = await fetch('/api/menu-v2-admin/categories', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ categories: categoryList })
-      });
-      const data = (await res.json()) as { ok: boolean; categories?: MenuCategory[]; error?: string };
-      if (!res.ok || !data.ok || !data.categories) throw new Error(data.error ?? 'Error al guardar categorías');
-      setCategoryList(data.categories);
-      setMenu((current) => current ? { ...current, categories: data.categories! } : current);
-      setNotice('Categorías actualizadas');
-    } catch (e) {
-      setCategoryError(e instanceof Error ? e.message : 'Error al guardar categorías');
-    } finally {
-      setCategoriesSaving(false);
-    }
-  };
-
-  const onToggleCatalogEnabled = async (enabled: boolean) => {
-    if (!canEdit || siteConfigSaving) return;
-    setSiteConfigSaving(true);
-    setSiteConfigError(null);
-    try {
-      const res = await fetch('/api/menu-v2-admin/site-config', {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ catalogEnabled: enabled })
-      });
-      const data = (await res.json()) as { ok: boolean; publicConfig?: PublicConfig; error?: string };
-      if (!res.ok || !data.ok || !data.publicConfig) throw new Error(data.error ?? 'Error al actualizar Modo Catálogo');
-      setMenu((current) => current ? { ...current, publicConfig: data.publicConfig! } : current);
-      setNotice(enabled ? 'Modo Catálogo activado en D1' : 'Modo Catálogo desactivado (Modo Flujo activo)');
-    } catch (e) {
-      setSiteConfigError(e instanceof Error ? e.message : 'No se pudo guardar la configuración');
-    } finally {
-      setSiteConfigSaving(false);
-    }
-  };
-
-  const onChangePublicMode = async (mode: 'flow' | 'catalog') => {
-    if (!canEdit || siteConfigSaving) return;
-    setSiteConfigSaving(true);
-    setSiteConfigError(null);
-    try {
-      const res = await fetch('/api/menu-v2-admin/site-config', {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ publicMode: mode })
-      });
-      const data = (await res.json()) as { ok: boolean; publicConfig?: PublicConfig; error?: string };
-      if (!res.ok || !data.ok || !data.publicConfig) throw new Error(data.error ?? 'Error al actualizar modo público');
-      setMenu((current) => current ? { ...current, publicConfig: data.publicConfig! } : current);
-      setNotice(`Modo público cambiado a: ${mode === 'catalog' ? 'Catálogo' : 'Flujo'}`);
-    } catch (e) {
-      setSiteConfigError(e instanceof Error ? e.message : 'No se pudo guardar el modo público');
-    } finally {
-      setSiteConfigSaving(false);
-    }
-  };
 
   const loadCatalogBanners = async () => {
     setCatalogBannersLoading(true);
@@ -306,7 +198,7 @@ export function CatalogAdminPanel() {
     return (menu?.promos ?? []).filter((promo) => !q || [promo.id, promo.title, promo.description, promo.badge, promo.promoLabel].join(' ').toLowerCase().includes(q));
   }, [menu, promoQuery]);
 
-  const sourceLabel = menu?.source === 'd1' ? 'Listo para editar' : 'Menú Cloudflare D1';
+  const sourceLabel = menu?.source === 'd1' ? 'Listo para editar' : menu?.source === 'fallback' ? 'Vista local' : 'Vista local';
   const canEdit = Boolean(menu?.source === 'd1');
   const imagePreviewUrl = getAssetUrl(form?.imageUrl, form?.imageKey);
   const promoImagePreviewUrl = getAssetUrl(promoForm?.imageUrl, promoForm?.imageKey);
@@ -326,71 +218,21 @@ export function CatalogAdminPanel() {
     };
   }), [bannerForm.categoryKey, menu?.categoryBanners]);
 
-  const DEFAULT_COMBO_GROUPS: ComboOptionGroup[] = [
-    { id: 'grp-1', name: '1. Hamburguesa Principal', isRequired: true, minSelections: 1, maxSelections: 1, options: [{ sku: 'BRG-OG', upchargeCents: 0 }] },
-    { id: 'grp-2', name: '2. Guarnición', isRequired: true, minSelections: 1, maxSelections: 1, options: [{ sku: 'PAPAS_OG', upchargeCents: 0 }, { sku: 'AROS_CEBOLLA', upchargeCents: 500 }] },
-    { id: 'grp-3', name: '3. Bebida', isRequired: true, minSelections: 1, maxSelections: 1, options: [{ sku: 'DRK-COKE', upchargeCents: 0 }] },
-    { id: 'grp-4', name: '4. Extra u Opciones', isRequired: false, minSelections: 0, maxSelections: 1, options: [] }
-  ];
-
   const beginEdit = (item: MenuItem) => {
     setCreatingItem(false);
     setEditing(item);
-    setForm({
-      sku: item.sku,
-      name: item.name,
-      description: item.description,
-      price: String(item.price),
-      promoPrice: item.promoPrice == null ? '' : String(item.promoPrice),
-      isPromoActive: Boolean(item.isPromoActive),
-      promoLabel: item.promoLabel ?? 'Lanzamiento',
-      isCombo: Boolean(item.comboConfig?.isCombo || item.category === 'combos'),
-      bundlePrice: item.comboConfig?.bundlePriceCents ? String(item.comboConfig.bundlePriceCents / 100) : String(item.price),
-      comboGroups: item.comboConfig?.optionGroups?.length ? item.comboConfig.optionGroups : DEFAULT_COMBO_GROUPS,
-      category: item.category,
-      isAvailable: item.isAvailable,
-      isFeatured: item.isFeatured,
-      badge: item.badge ?? '',
-      sortOrder: String(item.sortOrder),
-      imageUrl: item.imageUrl ?? '',
-      imageKey: item.imageKey ?? '',
-      stockManaged: Boolean(item.stockManaged),
-      stockLimit: item.stockLimit == null ? '' : String(item.stockLimit),
-      stockRemaining: item.stockRemaining == null ? '' : String(item.stockRemaining),
-      comboLinks: linksToInput(item.comboLinks)
-    });
+    setForm({ sku: item.sku, name: item.name, description: item.description, price: String(item.price), category: item.category, isAvailable: item.isAvailable, isFeatured: item.isFeatured, badge: item.badge ?? '', promoLabel: item.promoLabel ?? '', sortOrder: String(item.sortOrder), imageUrl: item.imageUrl ?? '', imageKey: item.imageKey ?? '', stockManaged: Boolean(item.stockManaged), stockLimit: item.stockLimit == null ? '' : String(item.stockLimit), stockRemaining: item.stockRemaining == null ? '' : String(item.stockRemaining), comboLinks: linksToInput(item.comboLinks) });
     setSelectedFile(null);
     setSaveError(null);
     setImageError(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+
   const beginCreate = () => {
     setCreatingItem(true);
     setEditing(null);
-    setForm({
-      sku: '',
-      name: '',
-      description: '',
-      price: '85',
-      promoPrice: '',
-      isPromoActive: false,
-      promoLabel: 'Lanzamiento',
-      isCombo: false,
-      bundlePrice: '99',
-      comboGroups: DEFAULT_COMBO_GROUPS,
-      category: 'burgers',
-      isAvailable: true,
-      isFeatured: false,
-      badge: '',
-      sortOrder: '0',
-      imageUrl: '',
-      imageKey: '',
-      stockManaged: false,
-      stockLimit: '',
-      stockRemaining: '',
-      comboLinks: ''
-    });
+    setForm({ sku: '', name: '', description: '', price: '0', category: 'burgers', isAvailable: true, isFeatured: false, badge: '', promoLabel: '', sortOrder: '0', imageUrl: '', imageKey: '', stockManaged: false, stockLimit: '', stockRemaining: '', comboLinks: '' });
     setSelectedFile(null);
     setSaveError(null);
     setImageError(null);
@@ -427,13 +269,12 @@ export function CatalogAdminPanel() {
 
   const validationError = useMemo(() => {
     if (!form) return null;
-    const effectiveSku = form.sku ? form.sku.trim().toUpperCase() : form.name.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '-');
-    if (creatingItem && (!effectiveSku || effectiveSku.length < 2)) return 'Nombre de producto requerido';
-    if (!form.name.trim()) return 'Nombre del producto es requerido';
-    if (!form.description.trim()) return 'Descripción es requerida';
-    if (!(Number(form.price) >= 0)) return 'Precio debe ser $0 o mayor';
+    if (creatingItem && !/^[A-Z0-9][A-Z0-9-]{1,48}[A-Z0-9]$/.test(form.sku.trim().toUpperCase())) return 'SKU requerido en uppercase/kebab seguro';
+    if (!form.name.trim()) return 'Nombre requerido';
+    if (!form.description.trim()) return 'Descripción requerida';
+    if (!(Number(form.price) >= 0)) return 'Precio debe ser 0 o mayor';
     if (!isItemCategoryKey(form.category)) return 'Categoría inválida';
-    if (!Number.isInteger(Number(form.sortOrder))) return 'Orden debe ser un número entero';
+    if (!Number.isInteger(Number(form.sortOrder))) return 'Orden debe ser entero';
     if (form.stockManaged && (!Number.isInteger(Number(form.stockRemaining)) || Number(form.stockRemaining) < 0)) return 'Stock disponible debe ser entero >= 0';
     if (form.stockManaged && form.stockLimit && (!Number.isInteger(Number(form.stockLimit)) || Number(form.stockLimit) < 0)) return 'Stock límite debe ser entero >= 0';
     return validateImageRefs(form.imageUrl, form.imageKey);
@@ -616,98 +457,16 @@ export function CatalogAdminPanel() {
     }
   };
 
-  const setItemHidden = async (item: MenuItem, isHidden: boolean) => {
-    if (!canEdit || availabilitySavingSku) return;
-    setAvailabilitySavingSku(item.sku);
-    setNotice(null);
-    setError(null);
-    try {
-      const res = await fetch(`/api/menu-v2-admin/items/${encodeURIComponent(item.sku)}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ isHidden })
-      });
-      const data = (await res.json()) as { ok: boolean; item?: MenuItem; error?: string };
-      if (!res.ok || !data.ok || !data.item) throw new Error(data.error ?? 'Error al actualizar visibilidad');
-      const updatedItem = data.item;
-      setMenu((current) => current ? { ...current, items: current.items.map((entry) => (entry.sku === updatedItem.sku ? updatedItem : entry)), updatedAt: updatedItem.updatedAt ?? current.updatedAt } : current);
-      if (editing?.sku === updatedItem.sku) {
-        setEditing(updatedItem);
-        setForm((current) => current ? { ...current, isHidden: updatedItem.isHidden ?? false } : current);
-      }
-      setNotice(`${updatedItem.name} (${updatedItem.sku}) ${updatedItem.isHidden ? '👁️‍🗨️ oculto del menú público' : '👁️ visible en el menú público'}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al actualizar visibilidad');
-    } finally {
-      setAvailabilitySavingSku(null);
-    }
-  };
-
-  const [deletingItemSku, setDeletingItemSku] = useState<string | null>(null);
-  const [confirmDeleteItemSku, setConfirmDeleteItemSku] = useState<string | null>(null);
-
-  const deleteItem = async (item: MenuItem) => {
-    if (!canEdit || deletingItemSku) return;
-    setDeletingItemSku(item.sku);
-    setNotice(null);
-    setError(null);
-    try {
-      const res = await fetch(`/api/menu-v2-admin/items/${encodeURIComponent(item.sku)}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      const data = (await res.json()) as { ok: boolean; error?: string };
-      if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al eliminar producto');
-
-      setMenu((current) => current ? { ...current, items: current.items.filter((entry) => entry.sku !== item.sku) } : current);
-      if (editing?.sku === item.sku) {
-        closeEditor();
-      }
-      setNotice(`Producto ${item.name} (${item.sku}) eliminado permanentemente`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al eliminar producto');
-    } finally {
-      setDeletingItemSku(null);
-      setConfirmDeleteItemSku(null);
-    }
-  };
-
   const onSave = async () => {
     if ((!editing && !creatingItem) || !form || validationError) return;
     setSaving(true);
     setSaveError(null);
     try {
-      const autoSku = form.sku ? form.sku : form.name.toUpperCase().replace(/[^A-Z0-9]+/g, '-');
       const endpoint = creatingItem ? '/api/menu-v2-admin/items' : `/api/menu-v2-admin/items/${encodeURIComponent(editing!.sku)}`;
       const res = await fetch(endpoint, {
         method: creatingItem ? 'POST' : 'PATCH',
         credentials: 'include', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          sku: autoSku,
-          name: form.name,
-          description: form.description,
-          price: Number(form.price),
-          promoPrice: form.isPromoActive && form.promoPrice !== '' ? Number(form.promoPrice) : null,
-          isPromoActive: form.isPromoActive,
-          promoLabel: form.promoLabel || null,
-          comboConfig: form.isCombo ? {
-            isCombo: true,
-            bundlePriceCents: pesoInputToCents(form.bundlePrice) ?? Math.round(Number(form.price) * 100),
-            optionGroups: form.comboGroups
-          } : null,
-          category: form.category,
-          isAvailable: form.isAvailable,
-          isFeatured: form.isFeatured,
-          badge: form.badge || null,
-          comboLinks: inputToLinks(form.comboLinks),
-          sortOrder: Number(form.sortOrder),
-          imageUrl: form.imageUrl || null,
-          imageKey: form.imageKey || null,
-          stockManaged: form.stockManaged,
-          stockLimit: form.stockLimit === '' ? null : Number(form.stockLimit),
-          stockRemaining: form.stockRemaining === '' ? null : Number(form.stockRemaining)
-        })
+        body: JSON.stringify({ sku: form.sku, name: form.name, description: form.description, price: Number(form.price), category: form.category, isAvailable: form.isAvailable, isFeatured: form.isFeatured, badge: form.badge || null, promoLabel: form.promoLabel || null, comboLinks: inputToLinks(form.comboLinks), sortOrder: Number(form.sortOrder), imageUrl: form.imageUrl || null, imageKey: form.imageKey || null, stockManaged: form.stockManaged, stockLimit: form.stockLimit === '' ? null : Number(form.stockLimit), stockRemaining: form.stockRemaining === '' ? null : Number(form.stockRemaining) })
       });
       const data: unknown = await res.json();
       const response = (data && typeof data === 'object') ? (data as { ok?: boolean; error?: string }) : {};
@@ -856,16 +615,7 @@ export function CatalogAdminPanel() {
       return { ...current, catalogBanners: newBanners };
     });
     if (banner && catalogBannerForm?.id === banner.id) {
-      setCatalogBannerForm({
-        id: banner.id,
-        title: banner.title,
-        subtitle: banner.subtitle || '',
-        ctaLabel: banner.ctaLabel || '',
-        isActive: banner.isActive,
-        sortOrder: String(banner.sortOrder),
-        imageUrl: banner.imageUrl || '',
-        imageKey: banner.imageKey || ''
-      });
+      setCatalogBannerForm((f) => f ? { ...f, imageUrl: banner.imageUrl || '', imageKey: banner.imageKey || '' } : f);
     }
   };
 
@@ -890,7 +640,7 @@ export function CatalogAdminPanel() {
       if (!res.ok || !data.ok || !data.banner) throw new Error(data.error ?? 'Error al guardar banner del catálogo');
       updateCatalogBannerInMenu(data.banner);
       setNotice(id ? 'Banner actualizado' : 'Banner creado');
-      closeCatalogBannerEditor();
+      if (!id) closeCatalogBannerEditor();
     } catch (e) {
       setCatalogBannerError(e instanceof Error ? e.message : 'Error al guardar banner del catálogo');
     } finally {
@@ -970,9 +720,9 @@ export function CatalogAdminPanel() {
   const saveIngredient = async () => { const name = ingredientForm.name.trim(); const unitPriceCents = pesoInputToCents(ingredientForm.unitPrice); const sortOrder = Number(ingredientForm.sortOrder); if (name.length < 2) { setIngredientError('Captura un nombre de ingrediente.'); return; } if (ingredientForm.unitPrice.trim() && unitPriceCents === null) { setIngredientError('Precio por unidad inválido.'); return; } if (!Number.isInteger(sortOrder)) { setIngredientError('Orden inválido.'); return; } setIngredientSaving(true); setIngredientError(null); try { const payload = { name, unit: ingredientForm.unit, unitPriceCents, isActive: ingredientForm.isActive, sortOrder }; if (ingredientForm.id) await updateIngredientV2Admin(ingredientForm.id, payload); else await createIngredientV2Admin(payload); setIngredientForm(emptyIngredientForm()); setNotice('Ingrediente cuantificable guardado.'); await loadIngredients(); } catch (err) { setIngredientError(err instanceof Error ? err.message : 'No se pudo guardar ingrediente'); } finally { setIngredientSaving(false); } };
   const toggleIngredientActive = async (ingredient: IngredientV2) => { setIngredientError(null); try { await updateIngredientV2Admin(ingredient.id, { isActive: !ingredient.isActive }); await loadIngredients(); } catch (err) { setIngredientError(err instanceof Error ? err.message : 'No se pudo cambiar activo/inactivo'); } };
   const saveRecipe = async () => { if (!selectedRecipeSku) return; const recipes = recipeRows.map((row) => ({ ingredientId: row.ingredientId, quantityPerUnit: Number(row.quantityPerUnit) })).filter((row) => row.ingredientId && Number.isFinite(row.quantityPerUnit) && row.quantityPerUnit > 0); setRecipeSaving(true); setRecipeError(null); try { const saved = await saveProductRecipeV2Admin(selectedRecipeSku, recipes); setRecipeRows(saved.map(recipeToFormRow)); setNotice('Receta aproximada por producto guardada.'); } catch (err) { setRecipeError(err instanceof Error ? err.message : 'No se pudo guardar receta aproximada'); } finally { setRecipeSaving(false); } };
-  const ingredientsPanel = catalogTab === 'ingredients' ? <div className='grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'><Card className='border-emerald-500/20 bg-zinc-950/90 p-4'><h3 className='text-lg font-black text-emerald-100'>Ingredientes cuantificables</h3><p className='mt-1 text-sm text-zinc-400'>Administra insumos medibles como carne, pan, queso, tocino, papas o aros.</p><div className='mt-4 grid gap-3'><label className='text-xs uppercase tracking-widest text-zinc-300'>Nombre<input className='input md:mt-1' value={ingredientForm.name} onChange={(e) => setIngredientForm({ ...ingredientForm, name: e.target.value })} placeholder='Carne smash' /></label><div className='grid gap-3 sm:grid-cols-2'><label className='text-xs uppercase tracking-widest text-zinc-300'>Unidad<select className='input md:mt-1' value={ingredientForm.unit} onChange={(e) => setIngredientForm({ ...ingredientForm, unit: e.target.value })}>{INGREDIENT_UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}</select></label><label className='text-xs uppercase tracking-widest text-zinc-300'>Costo estimado<input className='input md:mt-1' inputMode='decimal' value={ingredientForm.unitPrice} onChange={(e) => setIngredientForm({ ...ingredientForm, unitPrice: e.target.value })} placeholder='0.00 opcional' /></label></div><div className='grid gap-3 sm:grid-cols-2'><label className='text-xs uppercase tracking-widest text-zinc-300'>Orden<input className='input md:mt-1' inputMode='numeric' value={ingredientForm.sortOrder} onChange={(e) => setIngredientForm({ ...ingredientForm, sortOrder: e.target.value })} /></label><label className='flex min-h-11 items-center gap-2 text-sm text-zinc-200'><input type='checkbox' checked={ingredientForm.isActive} onChange={(e) => setIngredientForm({ ...ingredientForm, isActive: e.target.checked })} /> Activo</label></div>{ingredientError ? <p className='rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs text-rose-100'>{ingredientError}</p> : null}<div className='flex gap-2'><Button className='flex-1 border border-zinc-700 bg-zinc-900' onClick={() => setIngredientForm(emptyIngredientForm())}>Limpiar</Button><Button className='flex-1 bg-emerald-300 text-emerald-950 disabled:opacity-40' disabled={ingredientSaving} onClick={saveIngredient}>{ingredientSaving ? 'Guardando…' : ingredientForm.id ? 'Guardar edición' : 'Crear ingrediente'}</Button></div></div><div className='mt-4 space-y-2'>{ingredientsLoading ? <p className='text-sm text-zinc-400'>Cargando ingredientes…</p> : ingredients.map((ingredient) => <div key={ingredient.id} className='rounded-xl border border-zinc-800 bg-zinc-900/70 p-3'><div className='flex items-start justify-between gap-2'><div><p className='font-bold text-zinc-100'>{ingredient.name}</p><p className='text-xs text-zinc-400'>{ingredient.unit} · {ingredient.unitPriceCents == null ? 'sin costo estimado' : `$${(ingredient.unitPriceCents / 100).toFixed(2)}`} · orden {ingredient.sortOrder}</p></div><span className={`rounded-full border px-2 py-1 text-[11px] font-bold ${ingredient.isActive ? 'border-emerald-400/40 text-emerald-200' : 'border-zinc-600 text-zinc-400'}`}>{ingredient.isActive ? 'Activo' : 'Inactivo'}</span></div><div className='mt-2 flex gap-2'><Button className='flex-1 border border-zinc-700 bg-zinc-950' onClick={() => setIngredientForm(ingredientToForm(ingredient))}>Editar</Button><Button className='flex-1 border border-zinc-700 bg-zinc-950' onClick={() => void toggleIngredientActive(ingredient)}>{ingredient.isActive ? 'Desactivar' : 'Activar'}</Button></div></div>)}</div></Card><Card className='border-cyan-500/20 bg-zinc-950/90 p-4'><h3 className='text-lg font-black text-cyan-100'>Receta aproximada por producto</h3><p className='mt-1 text-sm text-zinc-400'>Asigna ingredientes y cantidad por producto. No modifica stock ni precios del menú.</p><label className='mt-4 block text-xs uppercase tracking-widest text-zinc-300'>Producto<select className='input md:mt-1' value={selectedRecipeSku} onChange={(e) => setSelectedRecipeSku(e.target.value)}>{productOptions.map((item) => <option key={item.sku} value={item.sku}>{item.name} · {item.category}</option>)}</select></label><div className='mt-4 space-y-2'>{recipeLoading ? <p className='text-sm text-zinc-400'>Cargando receta…</p> : recipeRows.map((row, index) => <div key={`${row.ingredientId}-${index}`} className='grid gap-2 rounded-xl border border-zinc-800 bg-zinc-900/70 p-3 sm:grid-cols-[1fr_0.6fr_auto]'><label className='text-xs uppercase tracking-widest text-zinc-300'>Ingrediente<select className='input md:mt-1' value={row.ingredientId} onChange={(e) => setRecipeRows((rows) => rows.map((entry, i) => i === index ? { ...entry, ingredientId: e.target.value } : entry))}><option value=''>Selecciona</option>{ingredients.filter((ingredient) => ingredient.isActive).map((ingredient) => <option key={ingredient.id} value={ingredient.id}>{ingredient.name} · {ingredient.unit}</option>)}</select></label><label className='text-xs uppercase tracking-widest text-zinc-300'>Cantidad por producto<input className='input md:mt-1' inputMode='decimal' value={row.quantityPerUnit} onChange={(e) => setRecipeRows((rows) => rows.map((entry, i) => i === index ? { ...entry, quantityPerUnit: e.target.value } : entry))} placeholder='1' /></label><Button className='min-h-11 self-end border border-rose-700 bg-zinc-950 text-rose-200' onClick={() => setRecipeRows((rows) => rows.filter((_, i) => i !== index))}>Quitar</Button></div>)}</div>{recipeError ? <p className='mt-3 rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs text-rose-100'>{recipeError}</p> : null}<div className='mt-4 flex flex-col gap-2 sm:flex-row'><Button className='flex-1 border border-zinc-700 bg-zinc-900' onClick={() => setRecipeRows((rows) => [...rows, { ingredientId: '', quantityPerUnit: '' }])}>Agregar ingrediente</Button><Button className='flex-1 bg-cyan-300 text-cyan-950 disabled:opacity-40' disabled={recipeSaving || !selectedRecipeSku} onClick={saveRecipe}>{recipeSaving ? 'Guardando…' : 'Guardar receta'}</Button></div>{!recipeRows.length ? <p className='mt-4 rounded-xl border border-dashed border-zinc-700 p-4 text-sm text-zinc-400'>Este producto todavía no tiene receta aproximada.</p> : null}</Card></div> : null;
+  const ingredientsPanel = catalogTab === 'ingredients' ? <div className='grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'><Card className='p-4'><h3 className='text-lg font-black text-[var(--chekeo-text)]'>Ingredientes cuantificables</h3><p className='mt-1 text-sm text-[var(--chekeo-muted)]'>Administra insumos medibles como carne, pan, queso, tocino, papas o aros.</p><div className='mt-4 grid gap-3'><label className='text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Nombre<input className='input md:mt-1' value={ingredientForm.name} onChange={(e) => setIngredientForm({ ...ingredientForm, name: e.target.value })} placeholder='Carne smash' /></label><div className='grid gap-3 sm:grid-cols-2'><label className='text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Unidad<select className='input md:mt-1' value={ingredientForm.unit} onChange={(e) => setIngredientForm({ ...ingredientForm, unit: e.target.value })}>{INGREDIENT_UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}</select></label><label className='text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Costo estimado<input className='input md:mt-1' inputMode='decimal' value={ingredientForm.unitPrice} onChange={(e) => setIngredientForm({ ...ingredientForm, unitPrice: e.target.value })} placeholder='0.00 opcional' /></label></div><div className='grid gap-3 sm:grid-cols-2'><label className='text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Orden<input className='input md:mt-1' inputMode='numeric' value={ingredientForm.sortOrder} onChange={(e) => setIngredientForm({ ...ingredientForm, sortOrder: e.target.value })} /></label><label className='flex min-h-11 items-center gap-2 text-sm text-[var(--chekeo-text)]'><input type='checkbox' checked={ingredientForm.isActive} onChange={(e) => setIngredientForm({ ...ingredientForm, isActive: e.target.checked })} /> Activo</label></div>{ingredientError ? <p className='rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs text-rose-100'>{ingredientError}</p> : null}<div className='flex gap-2'><Button className='flex-1 btn' onClick={() => setIngredientForm(emptyIngredientForm())}>Limpiar</Button><Button className='flex-1 bg-[var(--chekeo-accent)] text-white disabled:opacity-40' disabled={ingredientSaving} onClick={saveIngredient}>{ingredientSaving ? 'Guardando…' : ingredientForm.id ? 'Guardar edición' : 'Crear ingrediente'}</Button></div></div><div className='mt-4 space-y-2'>{ingredientsLoading ? <p className='text-sm text-[var(--chekeo-muted)]'>Cargando ingredientes…</p> : ingredients.map((ingredient) => <div key={ingredient.id} className='rounded-xl border border-[var(--chekeo-border)] bg-[var(--chekeo-surface-raised)] p-3'><div className='flex items-start justify-between gap-2'><div><p className='font-bold text-[var(--chekeo-text)]'>{ingredient.name}</p><p className='text-xs text-[var(--chekeo-muted)]'>{ingredient.unit} · {ingredient.unitPriceCents == null ? 'sin costo estimado' : `$${(ingredient.unitPriceCents / 100).toFixed(2)}`} · orden {ingredient.sortOrder}</p></div><span className={`rounded-full border px-2 py-1 text-[11px] font-bold ${ingredient.isActive ? 'border-[var(--chekeo-accent)] text-[var(--chekeo-accent)]' : 'border-[var(--chekeo-border)] text-[var(--chekeo-muted)]'}`}>{ingredient.isActive ? 'Activo' : 'Inactivo'}</span></div><div className='mt-2 flex gap-2'><Button className='flex-1 btn' onClick={() => setIngredientForm(ingredientToForm(ingredient))}>Editar</Button><Button className='flex-1 btn' onClick={() => void toggleIngredientActive(ingredient)}>{ingredient.isActive ? 'Desactivar' : 'Activar'}</Button></div></div>)}</div></Card><Card className='p-4'><h3 className='text-lg font-black text-[var(--chekeo-text)]'>Receta aproximada por producto</h3><p className='mt-1 text-sm text-[var(--chekeo-muted)]'>Asigna ingredientes y cantidad por producto. No modifica stock ni precios del menú.</p><label className='mt-4 block text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Producto<select className='input md:mt-1' value={selectedRecipeSku} onChange={(e) => setSelectedRecipeSku(e.target.value)}>{productOptions.map((item) => <option key={item.sku} value={item.sku}>{item.name} · {item.category}</option>)}</select></label><div className='mt-4 space-y-2'>{recipeLoading ? <p className='text-sm text-[var(--chekeo-muted)]'>Cargando receta…</p> : recipeRows.map((row, index) => <div key={`${row.ingredientId}-${index}`} className='grid gap-2 rounded-xl border border-[var(--chekeo-border)] bg-[var(--chekeo-surface-raised)] p-3 sm:grid-cols-[1fr_0.6fr_auto]'><label className='text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Ingrediente<select className='input md:mt-1' value={row.ingredientId} onChange={(e) => setRecipeRows((rows) => rows.map((entry, i) => i === index ? { ...entry, ingredientId: e.target.value } : entry))}><option value=''>Selecciona</option>{ingredients.filter((ingredient) => ingredient.isActive).map((ingredient) => <option key={ingredient.id} value={ingredient.id}>{ingredient.name} · {ingredient.unit}</option>)}</select></label><label className='text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Cantidad por producto<input className='input md:mt-1' inputMode='decimal' value={row.quantityPerUnit} onChange={(e) => setRecipeRows((rows) => rows.map((entry, i) => i === index ? { ...entry, quantityPerUnit: e.target.value } : entry))} placeholder='1' /></label><Button className='min-h-11 self-end border border-rose-700 bg-rose-950/20 text-rose-300' onClick={() => setRecipeRows((rows) => rows.filter((_, i) => i !== index))}>Quitar</Button></div>)}</div>{recipeError ? <p className='mt-3 rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs text-rose-100'>{recipeError}</p> : null}<div className='mt-4 flex flex-col gap-2 sm:flex-row'><Button className='flex-1 btn' onClick={() => setRecipeRows((rows) => [...rows, { ingredientId: '', quantityPerUnit: '' }])}>Agregar ingrediente</Button><Button className='flex-1 bg-[var(--chekeo-accent)] text-white disabled:opacity-40' disabled={recipeSaving || !selectedRecipeSku} onClick={saveRecipe}>{recipeSaving ? 'Guardando…' : 'Guardar receta'}</Button></div>{!recipeRows.length ? <p className='mt-4 rounded-xl border border-dashed border-[var(--chekeo-border)] p-4 text-sm text-[var(--chekeo-muted)]'>Este producto todavía no tiene receta aproximada.</p> : null}</Card></div> : null;
 
-  const bannersPanel = <Card className='p-3'><div className='grid gap-4'><div><p className='text-xs font-black uppercase tracking-[0.2em] text-cyan-200'>Main Quest</p><h4 className='text-lg font-black text-cyan-50'>Banners de Main Quest</h4><p className='muted'>Estos banners aparecen en la pantalla Main Quest de la app pública.</p></div><div className='grid gap-3 md:grid-cols-3'>{mainQuestBannerCards.map((slot) => <button key={slot.categoryKey} type='button' className={`min-h-11 rounded-xl border p-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-400 ${slot.selected ? 'border-cyan-300 bg-cyan-500/15 shadow-[0_0_18px_rgba(34,211,238,0.18)]' : 'border-zinc-800 bg-zinc-900/70 hover:border-cyan-500/60'}`} onClick={() => selectBannerCategory(slot.categoryKey)} aria-pressed={slot.selected}><div className='image-preview sm:w-full'>{slot.previewUrl ? <img src={slot.previewUrl} alt={`Preview del banner de ${slot.label}`} loading='lazy' decoding='async' /> : <span>Sin banner</span>}</div><div className='mt-3 min-w-0 space-y-1'><div className='flex flex-wrap items-center gap-2'><span className='text-sm font-black text-zinc-100'>{slot.label}</span><span className={`rounded-full px-2 py-1 text-[11px] font-bold uppercase tracking-wide ${slot.configured ? 'bg-emerald-500/15 text-emerald-200' : 'bg-amber-500/15 text-amber-200'}`}>{slot.configured ? 'Banner configurado' : 'Sin banner, la app usará fallback'}</span></div><p className='text-xs text-zinc-400'>Categoría: {slot.categoryKey}</p><p className='truncate text-xs text-cyan-100'>Título: {slot.banner?.title || 'Sin título configurado'}</p><p className='line-clamp-2 text-xs text-zinc-400'>Subtítulo: {slot.banner?.subtitle || 'Sin subtítulo configurado'}</p><p className='text-xs text-emerald-200'>{slot.note}</p></div></button>)}</div><div className='rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-3'><div className='grid gap-3'><label className='text-xs uppercase tracking-widest text-zinc-300'>Slot Main Quest<select className='input md:mt-1' value={bannerForm.categoryKey} onChange={(e) => selectBannerCategory(e.target.value as MenuCategory['key'])}><option value='burgers'>Burgers</option><option value='combos'>Combos</option><option value='guarniciones'>Guarniciones</option></select></label><input className='input md:mt-0' value={bannerForm.title} onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })} placeholder='Título del banner' /><textarea className='input md:mt-0' value={bannerForm.subtitle} onChange={(e) => setBannerForm({ ...bannerForm, subtitle: e.target.value })} placeholder='Subtítulo / copy' /><div className='rounded-xl border border-cyan-500/30 bg-zinc-950/70 p-3'><div className='flex flex-col gap-3 sm:flex-row'><div className='image-preview'>{bannerImagePreviewUrl ? <img src={bannerImagePreviewUrl} alt={`Banner de ${bannerForm.categoryKey}`} loading='lazy' decoding='async' /> : <span>Sin imagen</span>}</div><div className='min-w-0 flex-1 space-y-2'><h5 className='text-sm font-bold text-cyan-100'>Imagen del banner</h5>{bannerForm.imageKey || bannerForm.imageUrl ? <p className='break-all text-xs text-cyan-200'>Banner configurado: {bannerForm.imageKey || bannerForm.imageUrl}</p> : <p className='text-xs text-zinc-400'>Sin banner, la app usará fallback del primer producto disponible en esta ruta.</p>}<input ref={bannerFileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={bannerImageBusy || bannerSaving} onChange={(e) => onBannerFileChange(e.target.files?.[0] ?? null)} /><p className='text-xs text-zinc-400'>{ACCEPTED_IMAGE_TYPES_LABEL}. Se verá en Public Order Main Quest.</p><div className='flex flex-col gap-2 sm:flex-row'><Button className='min-h-11 flex-1 bg-cyan-400 text-black disabled:opacity-40' disabled={bannerImageBusy || bannerSaving || !canEdit || !selectedBannerFile || Boolean(validateSelectedFile(selectedBannerFile))} onClick={onBannerUploadImage}>{bannerUploading ? 'Subiendo…' : bannerForm.imageKey || bannerForm.imageUrl ? 'Cambiar imagen' : 'Subir banner'}</Button><Button className='min-h-11 flex-1 border border-rose-700 bg-zinc-900 text-rose-200 disabled:opacity-40' disabled={bannerImageBusy || bannerSaving || !canEdit || (!bannerForm.imageKey && !bannerForm.imageUrl)} onClick={onBannerRemoveImage}>{bannerRemovingImage ? 'Quitando…' : 'Quitar imagen'}</Button></div></div></div></div><details className='rounded-xl border border-zinc-800 bg-zinc-900/50 p-3'><summary className='min-h-11 cursor-pointer text-xs uppercase tracking-widest text-zinc-300'>Opciones avanzadas</summary><div className='mt-2 grid gap-2'><input className='input md:mt-0' value={bannerForm.imageUrl} onChange={(e) => setBannerForm({ ...bannerForm, imageUrl: e.target.value })} placeholder='Image URL opcional' /><input className='input md:mt-0' value={bannerForm.imageKey} onChange={(e) => setBannerForm({ ...bannerForm, imageKey: e.target.value })} placeholder='Image key opcional' /><p className='text-xs text-zinc-400'>URL/key manual queda como opción avanzada. La administración principal debe usar upload directo.</p></div></details>{bannerError ? <p className='text-xs text-rose-300'>{bannerError}</p> : null}<Button disabled={!canEdit || bannerSaving || bannerImageBusy} className='min-h-11 bg-cyan-400 text-black disabled:opacity-40' onClick={onBannerSave}>{bannerSaving ? 'Guardando…' : 'Guardar banner de Main Quest'}</Button></div></div></div></Card>;
+  const bannersPanel = <Card className='p-3'><div className='grid gap-4'><div><p className='text-xs font-black uppercase tracking-[0.2em] text-[var(--chekeo-accent)]'>Main Quest</p><h4 className='text-lg font-black text-[var(--chekeo-text)]'>Banners de Main Quest</h4><p className='muted'>Estos banners aparecen en la pantalla Main Quest de la app pública.</p></div><div className='grid gap-3 md:grid-cols-3'>{mainQuestBannerCards.map((slot) => <button key={slot.categoryKey} type='button' className={`min-h-11 rounded-xl border p-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--chekeo-focus)] ${slot.selected ? 'border-[var(--chekeo-accent)] bg-[var(--color-accent-soft)]' : 'border-[var(--chekeo-border)] bg-[var(--chekeo-surface-raised)] hover:border-[var(--chekeo-accent)]'}`} onClick={() => selectBannerCategory(slot.categoryKey)} aria-pressed={slot.selected}><div className='image-preview sm:w-full'>{slot.previewUrl ? <img src={slot.previewUrl} alt={`Preview del banner de ${slot.label}`} loading='lazy' decoding='async' /> : <span>Sin banner</span>}</div><div className='mt-3 min-w-0 space-y-1'><div className='flex flex-wrap items-center gap-2'><span className='text-sm font-black text-[var(--chekeo-text)]'>{slot.label}</span><span className={`rounded-full px-2 py-1 text-[11px] font-bold uppercase tracking-wide ${slot.configured ? 'bg-[var(--color-accent-soft)] text-[var(--chekeo-accent)]' : 'bg-amber-500/15 text-amber-600 dark:text-amber-300'}`}>{slot.configured ? 'Banner configurado' : 'Sin banner, la app usará fallback'}</span></div><p className='text-xs text-[var(--chekeo-muted)]'>Categoría: {slot.categoryKey}</p><p className='truncate text-xs text-[var(--chekeo-text)]'>Título: {slot.banner?.title || 'Sin título configurado'}</p><p className='line-clamp-2 text-xs text-[var(--chekeo-muted)]'>Subtítulo: {slot.banner?.subtitle || 'Sin subtítulo configurado'}</p><p className='text-xs text-[var(--chekeo-accent)]'>{slot.note}</p></div></button>)}</div><div className='rounded-xl border border-[var(--chekeo-border)] bg-[var(--chekeo-surface-raised)] p-3'><div className='grid gap-3'><label className='text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Slot Main Quest<select className='input md:mt-1' value={bannerForm.categoryKey} onChange={(e) => selectBannerCategory(e.target.value as MenuCategory['key'])}><option value='burgers'>Burgers</option><option value='combos'>Combos</option><option value='guarniciones'>Guarniciones</option></select></label><input className='input md:mt-0' value={bannerForm.title} onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })} placeholder='Título del banner' /><textarea className='input md:mt-0' value={bannerForm.subtitle} onChange={(e) => setBannerForm({ ...bannerForm, subtitle: e.target.value })} placeholder='Subtítulo / copy' /><div className='rounded-xl border border-[var(--chekeo-border)] bg-[var(--chekeo-surface)] p-3'><div className='flex flex-col gap-3 sm:flex-row'><div className='image-preview'>{bannerImagePreviewUrl ? <img src={bannerImagePreviewUrl} alt={`Banner de ${bannerForm.categoryKey}`} loading='lazy' decoding='async' /> : <span>Sin imagen</span>}</div><div className='min-w-0 flex-1 space-y-2'><h5 className='text-sm font-bold text-[var(--chekeo-text)]'>Imagen del banner</h5>{bannerForm.imageKey || bannerForm.imageUrl ? <p className='break-all text-xs text-[var(--chekeo-accent)]'>Banner configurado: {bannerForm.imageKey || bannerForm.imageUrl}</p> : <p className='text-xs text-[var(--chekeo-muted)]'>Sin banner, la app usará fallback del primer producto disponible en esta ruta.</p>}<input ref={bannerFileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={bannerImageBusy || bannerSaving} onChange={(e) => onBannerFileChange(e.target.files?.[0] ?? null)} /><p className='text-xs text-[var(--chekeo-muted)]'>{ACCEPTED_IMAGE_TYPES_LABEL}. Se verá en Public Order Main Quest.</p><div className='flex flex-col gap-2 sm:flex-row'><Button className='min-h-11 flex-1 bg-[var(--chekeo-accent)] text-white disabled:opacity-40' disabled={bannerImageBusy || bannerSaving || !canEdit || !selectedBannerFile || Boolean(validateSelectedFile(selectedBannerFile))} onClick={onBannerUploadImage}>{bannerUploading ? 'Subiendo…' : bannerForm.imageKey || bannerForm.imageUrl ? 'Cambiar imagen' : 'Subir banner'}</Button><Button className='min-h-11 flex-1 border border-rose-700 bg-rose-950/20 text-rose-300 disabled:opacity-40' disabled={bannerImageBusy || bannerSaving || !canEdit || (!bannerForm.imageKey && !bannerForm.imageUrl)} onClick={onBannerRemoveImage}>{bannerRemovingImage ? 'Quitando…' : 'Quitar imagen'}</Button></div></div></div></div><details className='rounded-xl border border-[var(--chekeo-border)] bg-[var(--chekeo-surface-raised)] p-3'><summary className='min-h-11 cursor-pointer text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Opciones avanzadas</summary><div className='mt-2 grid gap-2'><input className='input md:mt-0' value={bannerForm.imageUrl} onChange={(e) => setBannerForm({ ...bannerForm, imageUrl: e.target.value })} placeholder='Image URL opcional' /><input className='input md:mt-0' value={bannerForm.imageKey} onChange={(e) => setBannerForm({ ...bannerForm, imageKey: e.target.value })} placeholder='Image key opcional' /><p className='text-xs text-[var(--chekeo-muted)]'>URL/key manual queda como opción avanzada. La administración principal debe usar upload directo.</p></div></details>{bannerError ? <p className='text-xs text-rose-300'>{bannerError}</p> : null}<Button disabled={!canEdit || bannerSaving || bannerImageBusy} className='min-h-11 bg-[var(--chekeo-accent)] text-white disabled:opacity-40' onClick={onBannerSave}>{bannerSaving ? 'Guardando…' : 'Guardar banner de Main Quest'}</Button></div></div></div></Card>;
 
   const catalogBannerImagePreviewUrl = getAssetUrl(catalogBannerForm?.imageUrl, catalogBannerForm?.imageKey);
   const catalogBannerImageBusy = catalogBannerUploading || catalogBannerRemovingImage;
@@ -1033,116 +783,36 @@ export function CatalogAdminPanel() {
     </Card>
   );
   return <section className='catalog-control-room space-y-2'>
-    <Card className='catalog-header border-emerald-500/20 bg-white dark:bg-zinc-900 p-4 shadow-sm'>
-      <div className='flex flex-wrap items-center justify-between gap-3'>
-        <div>
-          <div className='flex flex-wrap items-center gap-2'>
-            <h3 className='font-black text-zinc-900 dark:text-zinc-100 text-base'>Catálogo & Configuración Pública</h3>
-            <span className='rounded-full px-2.5 py-0.5 text-xs font-extrabold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40'>
-              MODO CATÁLOGO ÚNICO
-            </span>
-          </div>
-          <p className='muted text-xs mt-1 text-zinc-500 dark:text-zinc-400'>Fuente: {sourceLabel} · Control dinámico D1 en tiempo real</p>
-        </div>
-
-        <div className='flex flex-wrap items-center gap-3'>
-          <label className='flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 rounded-xl transition-colors hover:border-emerald-500/40'>
-            <input
-              type='checkbox'
-              className='h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-emerald-600 focus:ring-emerald-500'
-              checked={menu?.publicConfig?.catalogEnabled ?? true}
-              disabled={!canEdit || siteConfigSaving}
-              onChange={(e) => void onToggleCatalogEnabled(e.target.checked)}
-            />
-            <span>{siteConfigSaving ? 'Guardando…' : (menu?.publicConfig?.catalogEnabled ?? true) ? 'Tienda Abierta' : 'Tienda Cerrada'}</span>
-          </label>
-        </div>
+    <Card className='catalog-header p-3'>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
+        <div><h3 className='font-bold'>Catálogo</h3><p className='muted'>Estado: {sourceLabel}</p></div>
+        {menu?.source !== 'd1' ? <p className='text-xs text-amber-300'>Edición deshabilitada por el momento.</p> : null}
       </div>
-      {siteConfigError ? <p className='mt-2 text-xs text-rose-500 dark:text-rose-400'>{siteConfigError}</p> : null}
-      {menu?.source !== 'd1' ? <p className='mt-1 text-xs text-amber-600 dark:text-amber-400'>Edición deshabilitada por el momento.</p> : null}
+      <div className='mt-2 flex flex-wrap gap-2'><span className='chip'>Sesión activa</span><span className='chip'>Catálogo</span></div>
     </Card>
 
     <div className='catalog-tabs flex overflow-x-auto'>
       <Button className={`shrink-0 ${catalogTab === 'items' ? 'catalog-tab--active' : 'catalog-tab'}`} onClick={() => setCatalogTab('items')}>Productos</Button>
-      <Button className={`shrink-0 ${catalogTab === 'categories' ? 'catalog-tab--active' : 'catalog-tab'}`} onClick={() => setCatalogTab('categories')}>Categorías</Button>
       <Button className={`shrink-0 ${catalogTab === 'promos' ? 'catalog-tab--active' : 'catalog-tab'}`} onClick={() => setCatalogTab('promos')}>Promos</Button>
       <Button className={`shrink-0 ${catalogTab === 'catalog-banners' ? 'catalog-tab--active' : 'catalog-tab'}`} onClick={() => setCatalogTab('catalog-banners')}>Banners Catálogo</Button>
       <Button className={`shrink-0 ${catalogTab === 'banners' ? 'catalog-tab--active' : 'catalog-tab'}`} onClick={() => setCatalogTab('banners')}>Banners Main Quest</Button>
       <Button className={`shrink-0 ${catalogTab === 'ingredients' ? 'catalog-tab--active' : 'catalog-tab'}`} onClick={() => setCatalogTab('ingredients')}>Ingredientes</Button>
     </div>
 
-    {!loading && !error && catalogTab === 'categories' ? (
-      <Card className="p-4 border-zinc-800 bg-zinc-950/90">
-        <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3 mb-4">
-          <div>
-            <h3 className="text-lg font-black text-amber-100">Gestor de Categorías</h3>
-            <p className="text-xs text-zinc-400">Personaliza el nombre, icono emoji y el orden visual en la tienda pública.</p>
-          </div>
-          <Button
-            className="bg-amber-400 text-zinc-950 font-bold min-h-10 disabled:opacity-40"
-            disabled={!canEdit || categoriesSaving}
-            onClick={() => void onSaveCategories()}
-          >
-            {categoriesSaving ? "Guardando…" : "Guardar Cambios"}
-          </Button>
-        </div>
-
-        {categoryError ? <p className="text-xs text-rose-300 mb-3">{categoryError}</p> : null}
-
-        <div className="grid gap-3">
-          {categoryList.map((cat, index) => (
-            <div key={cat.key || index} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 p-3 rounded-xl border border-zinc-800 bg-zinc-900/60">
-              <input
-                className="input w-16 text-center text-xl p-1 md:mt-0"
-                value={cat.emoji || getCategoryEmoji(cat.key, cat.name)}
-                onChange={(e) => updateCategoryItem(index, { emoji: e.target.value })}
-                placeholder="🍔"
-              />
-              <div className="min-w-0">
-                <input
-                  className="input font-bold text-zinc-100 md:mt-0"
-                  value={cat.name}
-                  onChange={(e) => updateCategoryItem(index, { name: e.target.value })}
-                  placeholder="Nombre categoría"
-                />
-                <span className="text-xs text-zinc-500 font-mono">Key: {cat.key}</span>
-              </div>
-              <div className="flex gap-1">
-                <Button
-                  className="min-h-9 px-2 bg-zinc-800 border border-zinc-700 text-zinc-200"
-                  disabled={index === 0}
-                  onClick={() => moveCategory(index, -1)}
-                >
-                  ⬆️ Subir
-                </Button>
-                <Button
-                  className="min-h-9 px-2 bg-zinc-800 border border-zinc-700 text-zinc-200"
-                  disabled={index === categoryList.length - 1}
-                  onClick={() => moveCategory(index, 1)}
-                >
-                  ⬇️ Bajar
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-    ) : null}
-
     <Card className='p-3'>
       {ingredientsPanel}
-    {catalogTab === 'items' ? <div className='grid gap-2 md:grid-cols-4'><input className='input md:mt-0' placeholder='Buscar por SKU o texto' value={query} onChange={(e) => setQuery(e.target.value)} /><select className='input md:mt-0' value={category} onChange={(e) => setCategory(e.target.value)}><option value='all'>Todas categorías</option>{(menu?.categories ?? []).map((cat) => <option key={cat.key} value={cat.key}>{cat.name}</option>)}</select><select className='input md:mt-0' value={availability} onChange={(e) => setAvailability(e.target.value)}><option value='all'>Todos</option><option value='available'>Disponibles</option><option value='unavailable'>Agotados</option></select><Button onClick={() => void loadMenu()}>Recargar</Button><Button disabled={!canEdit} className='bg-cyan-400 text-black disabled:opacity-40' onClick={beginCreate}>Crear producto</Button></div> : <div className='grid gap-2 md:grid-cols-[1fr_auto]'><input className='input md:mt-0' placeholder='Buscar promos por ID, título o texto' value={promoQuery} onChange={(e) => setPromoQuery(e.target.value)} /><Button onClick={() => void loadMenu()}>Recargar</Button></div>}
+    {catalogTab === 'items' ? <div className='grid gap-2 md:grid-cols-4'><input className='input md:mt-0' placeholder='Buscar por SKU o texto' value={query} onChange={(e) => setQuery(e.target.value)} /><select className='input md:mt-0' value={category} onChange={(e) => setCategory(e.target.value)}><option value='all'>Todas categorías</option>{(menu?.categories ?? []).map((cat) => <option key={cat.key} value={cat.key}>{cat.name}</option>)}</select><select className='input md:mt-0' value={availability} onChange={(e) => setAvailability(e.target.value)}><option value='all'>Todos</option><option value='available'>Disponibles</option><option value='unavailable'>Agotados</option></select><Button onClick={() => void loadMenu()}>Recargar</Button><Button disabled={!canEdit} className='bg-[var(--chekeo-accent)] text-white disabled:opacity-40' onClick={beginCreate}>Crear producto</Button></div> : <div className='grid gap-2 md:grid-cols-[1fr_auto]'><input className='input md:mt-0' placeholder='Buscar promos por ID, título o texto' value={promoQuery} onChange={(e) => setPromoQuery(e.target.value)} /><Button onClick={() => void loadMenu()}>Recargar</Button></div>}
     </Card>
 
-    {notice ? <p className='text-xs text-emerald-300'>{notice}</p> : null}
+    {notice ? <p className='text-xs text-emerald-500 dark:text-emerald-300'>{notice}</p> : null}
     {loading ? <Card>Cargando catálogo…</Card> : null}
-    {error ? <Card className='text-rose-300'>{error}</Card> : null}
+    {error ? <Card className='text-rose-500 dark:text-rose-300'>{error}</Card> : null}
 
     {!loading && !error && catalogTab === 'items' ? <div className='grid gap-3'>{groupedFilteredItems.map((group) => (
       <section key={group.key} className='space-y-2'>
         <div className='flex items-center justify-between gap-2 px-1'>
-          <h4 className='text-sm font-bold uppercase tracking-widest text-zinc-300'>{group.label}</h4>
-          <span className='text-xs text-zinc-500'>{group.items.length} producto{group.items.length === 1 ? '' : 's'}</span>
+          <h4 className='text-sm font-bold uppercase tracking-widest text-[var(--chekeo-muted)]'>{group.label}</h4>
+          <span className='text-xs text-[var(--chekeo-muted)]'>{group.items.length} producto{group.items.length === 1 ? '' : 's'}</span>
         </div>
         {group.items.length ? <div className='grid gap-2'>{group.items.map((item) => {
           const availabilityBusy = availabilitySavingSku === item.sku;
@@ -1156,11 +826,6 @@ export function CatalogAdminPanel() {
                     <strong className={item.isAvailable ? 'catalog-status catalog-status--on' : 'catalog-status catalog-status--off'}>
                       {item.isAvailable ? 'Disponible' : 'Agotado'}
                     </strong>
-                    {item.isHidden ? (
-                      <strong className="catalog-status border border-amber-500/40 bg-amber-500/20 text-amber-300">
-                        👁️‍🗨️ Oculto del menú
-                      </strong>
-                    ) : null}
                   </div>
                   <p className='catalog-row__desc'>{item.description}</p>
                   <div className='catalog-row__meta'>
@@ -1184,335 +849,40 @@ export function CatalogAdminPanel() {
                 </div>
                 <div className='catalog-row__actions'>
                   <div className='catalog-row__availability' role='group' aria-label={`Disponibilidad de ${item.name}`}>
-                    <Button disabled={!canEdit || availabilityBusy || item.isAvailable} className={`min-h-11 border text-sm disabled:opacity-40 ${item.isAvailable ? 'border-emerald-500 bg-emerald-400 text-black' : 'border-zinc-700 bg-zinc-900 text-zinc-200'}`} onClick={() => void setItemAvailability(item, true)}>
+                    <Button disabled={!canEdit || availabilityBusy || item.isAvailable} className={`min-h-11 border text-sm disabled:opacity-40 ${item.isAvailable ? 'border-[var(--chekeo-accent)] bg-[var(--chekeo-accent)] text-white' : 'btn'}`} onClick={() => void setItemAvailability(item, true)}>
                       {availabilityBusy ? 'Guardando...' : 'Disponible'}
                     </Button>
-                    <Button disabled={!canEdit || availabilityBusy || !item.isAvailable} className={`min-h-11 border text-sm disabled:opacity-40 ${!item.isAvailable ? 'border-rose-500 bg-rose-500 text-white' : 'border-zinc-700 bg-zinc-900 text-zinc-200'}`} onClick={() => void setItemAvailability(item, false)}>
+                    <Button disabled={!canEdit || availabilityBusy || !item.isAvailable} className={`min-h-11 border text-sm disabled:opacity-40 ${!item.isAvailable ? 'border-rose-500 bg-rose-500 text-white' : 'btn'}`} onClick={() => void setItemAvailability(item, false)}>
                       {availabilityBusy ? 'Guardando...' : 'Agotado'}
                     </Button>
                   </div>
-                  <Button
-                    disabled={!canEdit || availabilityBusy}
-                    className={`min-h-11 border text-xs px-3 font-bold disabled:opacity-40 ${
-                      item.isHidden
-                        ? 'border-amber-500/60 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
-                        : 'border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-white'
-                    }`}
-                    onClick={() => void setItemHidden(item, !item.isHidden)}
-                  >
-                    {item.isHidden ? '👁️ Mostrar' : '👁️‍🗨️ Ocultar'}
-                  </Button>
-                  <Button disabled={!canEdit || availabilityBusy} className='min-h-11 border border-zinc-700 bg-zinc-900 disabled:opacity-40' onClick={() => beginEdit(item)}>
+                  <Button disabled={!canEdit || availabilityBusy} className='min-h-11 btn disabled:opacity-40' onClick={() => beginEdit(item)}>
                     Editar
                   </Button>
-                  {confirmDeleteItemSku === item.sku ? (
-                    <Button
-                      disabled={!canEdit || deletingItemSku === item.sku}
-                      className="min-h-11 border border-rose-600 bg-rose-600 text-white font-bold disabled:opacity-40"
-                      onClick={() => void deleteItem(item)}
-                    >
-                      {deletingItemSku === item.sku ? '...' : 'Confirmar'}
-                    </Button>
-                  ) : (
-                    <Button
-                      disabled={!canEdit || availabilityBusy}
-                      className="min-h-11 border border-rose-900/60 bg-rose-950/40 text-rose-300 hover:bg-rose-900/40 disabled:opacity-40"
-                      onClick={() => setConfirmDeleteItemSku(item.sku)}
-                    >
-                      🗑️ Eliminar
-                    </Button>
-                  )}
                 </div>
               </div>
             </Card>
           );
-        })}</div> : <Card className='border-dashed border-zinc-800 bg-zinc-950/50 p-3 text-sm text-zinc-500'>Sin productos en {group.label} para los filtros actuales.</Card>}
+        })}</div> : <Card className='border-dashed border-[var(--chekeo-border)] p-3 text-sm text-[var(--chekeo-muted)]'>Sin productos en {group.label} para los filtros actuales.</Card>}
       </section>
     ))}</div> : null}
 
     {!loading && !error && catalogTab === 'banners' ? bannersPanel : null}
     {!loading && !error && catalogTab === 'catalog-banners' ? catalogBannersPanel : null}
 
-    {!loading && !error && catalogTab === 'promos' ? <div className='grid gap-2'>{filteredPromos.map((promo) => <Card key={promo.id} className='catalog-row'><div className='catalog-row__main'><div className='min-w-0'><div className='catalog-row__title'><p>{promo.title}</p><span>{promo.id}</span><strong className={promo.isAvailable ? 'catalog-status catalog-status--on' : 'catalog-status catalog-status--off'}>{promo.isAvailable ? 'Disponible' : 'Oculta'}</strong></div><p className='catalog-row__desc'>{promo.description}</p><div className='catalog-row__meta'><span>{promo.isFeatured ? 'Destacada' : 'No destacada'}</span><span>Orden {promo.sortOrder}</span><span>Badge: {promo.badge || '-'}</span><span>Promo: {promo.promoLabel || '-'}</span></div><details className='catalog-row__details'><summary>Assets y datos técnicos</summary>{promo.asset.imageKey || promo.asset.imageUrl ? <p>{promo.asset.imageKey ?? promo.asset.imageUrl}</p> : <p>Sin asset configurado.</p>}</details></div><div className='catalog-row__actions'><Button disabled={!canEdit} className='min-h-11 border border-zinc-700 bg-zinc-900 disabled:opacity-40' onClick={() => beginPromoEdit(promo)}>Editar</Button></div></div></Card>)}</div> : null}
+    {!loading && !error && catalogTab === 'promos' ? <div className='grid gap-2'>{filteredPromos.map((promo) => <Card key={promo.id} className='catalog-row'><div className='catalog-row__main'><div className='min-w-0'><div className='catalog-row__title'><p>{promo.title}</p><span>{promo.id}</span><strong className={promo.isAvailable ? 'catalog-status catalog-status--on' : 'catalog-status catalog-status--off'}>{promo.isAvailable ? 'Disponible' : 'Oculta'}</strong></div><p className='catalog-row__desc'>{promo.description}</p><div className='catalog-row__meta'><span>{promo.isFeatured ? 'Destacada' : 'No destacada'}</span><span>Orden {promo.sortOrder}</span><span>Badge: {promo.badge || '-'}</span><span>Promo: {promo.promoLabel || '-'}</span></div><details className='catalog-row__details'><summary>Assets y datos técnicos</summary>{promo.asset.imageKey || promo.asset.imageUrl ? <p>{promo.asset.imageKey ?? promo.asset.imageUrl}</p> : <p>Sin asset configurado.</p>}</details></div><div className='catalog-row__actions'><Button disabled={!canEdit} className='min-h-11 btn disabled:opacity-40' onClick={() => beginPromoEdit(promo)}>Editar</Button></div></div></Card>)}</div> : null}
 
-    {(editing || creatingItem) && form ? (
-      <div className='overlay' onClick={closeEditor}>
-        <section className='modal modal--large' onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-3">
-            <div>
-              <h3 className='font-bold text-lg text-amber-100'>{creatingItem ? 'Crear Producto Nuevo' : `Editar ${editing?.name || editing?.sku}`}</h3>
-              <p className='text-xs text-zinc-400'>{creatingItem ? 'Asigna nombre, precio e imágenes' : `SKU: ${editing?.sku}`}</p>
-            </div>
-            <Button className="text-zinc-400 bg-transparent min-h-8 p-1" onClick={closeEditor}>✕</Button>
-          </div>
+    {(editing || creatingItem) && form ? <div className='overlay' onClick={closeEditor}><section className='modal' onClick={(e) => e.stopPropagation()}><h3 className='font-bold'>{creatingItem ? 'Crear producto' : `Editar ${editing?.sku}`}</h3><p className='muted'>{creatingItem ? 'SKU nuevo requerido' : 'SKU solo lectura'}</p><div className='mt-2 grid gap-2'><input className='input md:mt-0' value={form.sku} readOnly={!creatingItem} onChange={(e) => setForm({ ...form, sku: e.target.value.toUpperCase().replace(/[^A-Z0-9-]+/g, '-') })} placeholder='SKU' /><input className='input md:mt-0' value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder='Nombre' /><textarea className='input md:mt-0' value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder='Descripción' /><input className='input md:mt-0' value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder='Precio' /><select className='input md:mt-0' value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as MenuCategory['key'] })}><option value='burgers'>burger</option><option value='combos'>combo</option><option value='guarniciones'>guarnición</option><option value='drinks'>bebida</option><option value='extras'>extra</option></select><div className='grid gap-2 sm:grid-cols-2'><label className='flex min-h-11 items-center gap-2 text-sm'><input type='checkbox' checked={form.isAvailable} onChange={(e) => setForm({ ...form, isAvailable: e.target.checked })} /> Disponible</label><label className='flex min-h-11 items-center gap-2 text-sm'><input type='checkbox' checked={form.isFeatured} onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })} /> Destacado</label></div><input className='input md:mt-0' value={form.badge} onChange={(e) => setForm({ ...form, badge: e.target.value })} placeholder='Badge (opcional)' /><input className='input md:mt-0' value={form.promoLabel} onChange={(e) => setForm({ ...form, promoLabel: e.target.value })} placeholder='Promo label (opcional)' /><label className='text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Items incluidos / links<textarea className='input md:mt-1' value={form.comboLinks} onChange={(e) => setForm({ ...form, comboLinks: e.target.value })} placeholder='SKU-1, SKU-2 o PROMO-ID' /></label><input className='input md:mt-0' value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value })} placeholder='Orden' /><div className='rounded-xl border border-[var(--chekeo-border)] bg-[var(--chekeo-surface-raised)] p-3'><label className='flex items-center gap-2 text-sm'><input type='checkbox' checked={form.stockManaged} onChange={(e) => setForm({ ...form, stockManaged: e.target.checked, stockRemaining: e.target.checked ? form.stockRemaining : '', stockLimit: e.target.checked ? form.stockLimit : '' })} /> Stock gestionado</label>{form.stockManaged ? <div className='mt-2 grid gap-2 sm:grid-cols-2'><input className='input md:mt-0' value={form.stockRemaining} onChange={(e) => setForm({ ...form, stockRemaining: e.target.value })} placeholder='Stock disponible' /><input className='input md:mt-0' value={form.stockLimit} onChange={(e) => setForm({ ...form, stockLimit: e.target.value })} placeholder='Límite inicial opcional' /></div> : <p className='mt-2 text-xs text-[var(--chekeo-muted)]'>Sin stock gestionado: mantiene comportamiento actual.</p>}</div>
+        <div className='rounded-xl border border-[var(--chekeo-border)] bg-[var(--chekeo-surface-raised)] p-3'><div className='flex flex-col gap-3 sm:flex-row'><div className='image-preview'>{imagePreviewUrl ? <img src={imagePreviewUrl} alt={`Imagen de ${editing?.name ?? form.name}`} loading='lazy' decoding='async' /> : <span>Sin imagen</span>}</div><div className='min-w-0 flex-1 space-y-2'><h4 className='text-sm font-bold text-[var(--chekeo-text)]'>Imagen del producto</h4>{form.imageKey || form.imageUrl ? <p className='break-all text-xs text-[var(--chekeo-accent)]'>Imagen actual: {form.imageKey || form.imageUrl}</p> : <p className='text-xs text-[var(--chekeo-muted)]'>Sin imagen asignada: Public V2 usa una card compacta sin imagen.</p>}<input ref={fileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={imageBusy || saving} onChange={(e) => onFileChange(e.target.files?.[0] ?? null)} /><p className='text-xs text-[var(--chekeo-muted)]'>{ACCEPTED_IMAGE_TYPES_LABEL}. La ruta de imagen se genera automáticamente en <code>menu/</code>.</p><div className='flex flex-col gap-2 sm:flex-row'><Button className='flex-1 bg-[var(--chekeo-accent)] text-white disabled:opacity-40' disabled={imageBusy || saving || creatingItem || !canEdit || !selectedFile || Boolean(validateSelectedFile(selectedFile))} onClick={onUploadImage}>{uploading ? 'Subiendo…' : 'Subir imagen'}</Button><Button className='flex-1 border border-rose-700 bg-rose-950/20 text-rose-300 disabled:opacity-40' disabled={imageBusy || saving || creatingItem || !canEdit || (!form.imageKey && !form.imageUrl)} onClick={onRemoveImage}>{removingImage ? 'Quitando…' : 'Quitar imagen'}</Button></div>{imageError ? <p className='text-xs text-rose-300'>{imageError}</p> : null}</div></div></div>
+        <details className='rounded-xl border border-[var(--chekeo-border)] bg-[var(--chekeo-surface-raised)] p-3'><summary className='cursor-pointer text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Referencia manual avanzada</summary><div className='mt-2 grid gap-2'><label className='text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Image URL<input className='input md:mt-1' value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder='Image URL' /></label><label className='text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Image key<input className='input md:mt-1' value={form.imageKey} onChange={(e) => setForm({ ...form, imageKey: e.target.value })} placeholder='menu/burger-og.webp' /></label><p className='text-xs text-[var(--chekeo-muted)]'>Image URL puede ser /api/assets-v2/... o URL externa segura https://. Image key apunta a R2.</p></div></details>
+      </div>{validationError ? <p className='mt-2 text-xs text-rose-300'>{validationError}</p> : null}{saveError ? <p className='mt-2 text-xs text-rose-300'>{saveError}</p> : null}<div className='mt-3 flex gap-2'><Button className='flex-1 btn' onClick={closeEditor} disabled={saving || imageBusy}>Cancelar</Button><Button className='flex-1 bg-[var(--chekeo-accent)] text-white disabled:opacity-40' onClick={onSave} disabled={saving || imageBusy || Boolean(validationError)}>Guardar</Button></div></section></div> : null}
 
-          <div className="grid lg:grid-cols-[1fr_320px] gap-6 mt-4 max-h-[75vh] overflow-y-auto pr-1">
-            {/* Form Left Side */}
-            <div className="space-y-4">
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs uppercase tracking-widest text-zinc-400">SKU del Producto</label>
-                  <input className='input mt-1' value={form.sku} readOnly={!creatingItem} onChange={(e) => setForm({ ...form, sku: e.target.value.toUpperCase().replace(/[^A-Z0-9-]+/g, '-') })} placeholder='ej. BRG-OG' />
-                </div>
-                <div>
-                  <label className="text-xs uppercase tracking-widest text-zinc-400">Nombre del Producto</label>
-                  <input className='input mt-1' value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder='ej. Cheeseburger Doble' />
-                </div>
-              </div>
+    {editingPromo && promoForm ? <div className='overlay' onClick={closePromoEditor}><section className='modal' onClick={(e) => e.stopPropagation()}><h3 className='font-bold'>Editar promo {editingPromo.id}</h3><p className='muted'>ID solo lectura</p><div className='mt-2 grid gap-2'><label className='text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>ID<input className='input md:mt-1' value={editingPromo.id} readOnly /></label><input className='input md:mt-0' value={promoForm.title} onChange={(e) => setPromoForm({ ...promoForm, title: e.target.value })} placeholder='Título' /><textarea className='input md:mt-0' value={promoForm.description} onChange={(e) => setPromoForm({ ...promoForm, description: e.target.value })} placeholder='Descripción' /><input className='input md:mt-0' value={promoForm.badge} onChange={(e) => setPromoForm({ ...promoForm, badge: e.target.value })} placeholder='Badge (opcional)' /><input className='input md:mt-0' value={promoForm.promoLabel} onChange={(e) => setPromoForm({ ...promoForm, promoLabel: e.target.value })} placeholder='Promo label (opcional)' /><label className='text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Link a combo/producto<textarea className='input md:mt-1' value={promoForm.comboLinks} onChange={(e) => setPromoForm({ ...promoForm, comboLinks: e.target.value })} placeholder='COMBO-OG o BRG-OG' /></label><div className='grid gap-2 sm:grid-cols-2'><label className='flex min-h-11 items-center gap-2 text-sm'><input type='checkbox' checked={promoForm.isAvailable} onChange={(e) => setPromoForm({ ...promoForm, isAvailable: e.target.checked })} /> Disponible</label><label className='flex min-h-11 items-center gap-2 text-sm'><input type='checkbox' checked={promoForm.isFeatured} onChange={(e) => setPromoForm({ ...promoForm, isFeatured: e.target.checked })} /> Destacada</label></div><input className='input md:mt-0' value={promoForm.sortOrder} onChange={(e) => setPromoForm({ ...promoForm, sortOrder: e.target.value })} placeholder='Orden' />
+        <div className='rounded-xl border border-[var(--chekeo-border)] bg-[var(--chekeo-surface-raised)] p-3'><div className='flex flex-col gap-3 sm:flex-row'><div className='image-preview'>{promoImagePreviewUrl ? <img src={promoImagePreviewUrl} alt={`Imagen de ${editingPromo.title}`} loading='lazy' decoding='async' /> : <span>Sin imagen</span>}</div><div className='min-w-0 flex-1 space-y-2'><h4 className='text-sm font-bold text-[var(--chekeo-text)]'>Imagen de promo</h4>{promoForm.imageKey || promoForm.imageUrl ? <p className='break-all text-xs text-[var(--chekeo-accent)]'>Imagen actual: {promoForm.imageKey || promoForm.imageUrl}</p> : <p className='text-xs text-[var(--chekeo-muted)]'>Sin imagen asignada: Public V2 muestra la promo sin imagen.</p>}<input ref={promoFileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={promoImageBusy || promoSaving} onChange={(e) => onPromoFileChange(e.target.files?.[0] ?? null)} /><p className='text-xs text-[var(--chekeo-muted)]'>{ACCEPTED_IMAGE_TYPES_LABEL}. La ruta de imagen se genera automáticamente en <code>promos/</code>.</p><div className='flex flex-col gap-2 sm:flex-row'><Button className='flex-1 bg-[var(--chekeo-accent)] text-white disabled:opacity-40' disabled={promoImageBusy || promoSaving || !canEdit || !selectedPromoFile || Boolean(validateSelectedFile(selectedPromoFile))} onClick={onPromoUploadImage}>{promoUploading ? 'Subiendo…' : 'Subir imagen'}</Button><Button className='flex-1 border border-rose-700 bg-rose-950/20 text-rose-300 disabled:opacity-40' disabled={promoImageBusy || promoSaving || !canEdit || (!promoForm.imageKey && !promoForm.imageUrl)} onClick={onPromoRemoveImage}>{promoRemovingImage ? 'Quitando…' : 'Quitar imagen'}</Button></div>{promoImageError ? <p className='text-xs text-rose-300'>{promoImageError}</p> : null}</div></div></div>
+        <details className='rounded-xl border border-[var(--chekeo-border)] bg-[var(--chekeo-surface-raised)] p-3'><summary className='cursor-pointer text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Referencia manual avanzada</summary><div className='mt-2 grid gap-2'><label className='text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Image URL<input className='input md:mt-1' value={promoForm.imageUrl} onChange={(e) => setPromoForm({ ...promoForm, imageUrl: e.target.value })} placeholder='Image URL' /></label><label className='text-xs uppercase tracking-widest text-[var(--chekeo-muted)]'>Image key<input className='input md:mt-1' value={promoForm.imageKey} onChange={(e) => setPromoForm({ ...promoForm, imageKey: e.target.value })} placeholder='promos/combo-og.webp' /></label><p className='text-xs text-[var(--chekeo-muted)]'>Image URL puede ser /api/assets-v2/... o URL externa segura https://. Image key apunta a R2, ejemplo promos/combo-og.webp.</p></div></details>
+      </div>{promoValidationError ? <p className='mt-2 text-xs text-rose-300'>{promoValidationError}</p> : null}{promoSaveError ? <p className='mt-2 text-xs text-rose-300'>{promoSaveError}</p> : null}<div className='mt-3 flex gap-2'><Button className='flex-1 btn' onClick={closePromoEditor} disabled={promoSaving || promoImageBusy}>Cancelar</Button><Button className='flex-1 bg-[var(--chekeo-accent)] text-white disabled:opacity-40' onClick={onPromoSave} disabled={promoSaving || promoImageBusy || Boolean(promoValidationError) || !canEdit}>Guardar</Button></div></section></div> : null}
 
-              <div>
-                <label className="text-xs uppercase tracking-widest text-zinc-400">Descripción del Producto</label>
-                <textarea className='input mt-1 min-h-[70px]' value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder='Describe los ingredientes y sabor...' />
-              </div>
-
-              <div className="grid sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs uppercase tracking-widest text-zinc-400">Precio Regular ($ MXN)</label>
-                  <input className='input mt-1' value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder='105.00' />
-                </div>
-                <div>
-                  <label className="text-xs uppercase tracking-widest text-zinc-400">Categoría</label>
-                  <select className='input mt-1' value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as MenuCategory['key'] })}>
-                    <option value='burgers'>🍔 Hamburguesas</option>
-                    <option value='combos'>🔥 Combos</option>
-                    <option value='guarniciones'>🍟 Guarniciones</option>
-                    <option value='drinks'>🥤 Bebidas</option>
-                    <option value='extras'>🧀 Extras</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs uppercase tracking-widest text-zinc-400">Orden Visual</label>
-                  <input className='input mt-1' value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value })} placeholder='10' />
-                </div>
-              </div>
-
-              <div className='grid gap-2 sm:grid-cols-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-3'>
-                <label className='flex items-center gap-2 text-sm font-bold text-zinc-200 cursor-pointer'>
-                  <input type='checkbox' checked={form.isAvailable} onChange={(e) => setForm({ ...form, isAvailable: e.target.checked })} /> ✓ Disponible
-                </label>
-                <label className='flex items-center gap-2 text-sm font-bold text-amber-200 cursor-pointer'>
-                  <input type='checkbox' checked={form.isFeatured} onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })} /> ⭐ Destacado
-                </label>
-                <label className='flex items-center gap-2 text-sm font-bold text-fuchsia-200 cursor-pointer'>
-                  <input type='checkbox' checked={form.isCombo} onChange={(e) => setForm({ ...form, isCombo: e.target.checked })} /> 🔥 Es Combo
-                </label>
-              </div>
-
-              {/* Accordion 1: ⚡ Producto Especial / Oferta Temporal */}
-              <details className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3" open={form.isPromoActive}>
-                <summary className="cursor-pointer font-bold text-amber-200 flex items-center justify-between text-sm">
-                  <span>⚡ Módulo de Producto Especial (Promoción)</span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded ${form.isPromoActive ? "bg-amber-400 text-amber-950" : "bg-zinc-800 text-zinc-400"}`}>
-                    {form.isPromoActive ? "OFERTA ACTIVA" : "INACTIVO"}
-                  </span>
-                </summary>
-                <div className="mt-3 grid gap-3">
-                  <label className="flex items-center gap-2 text-xs font-bold text-amber-100 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={form.isPromoActive}
-                      onChange={(e) => setForm({ ...form, isPromoActive: e.target.checked })}
-                    />
-                    Activar Precio Promocional (Muestra precio original tachado)
-                  </label>
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs uppercase tracking-widest text-zinc-400">Precio Oferta ($ MXN)</label>
-                      <input
-                        className="input mt-1"
-                        value={form.promoPrice}
-                        onChange={(e) => setForm({ ...form, promoPrice: e.target.value })}
-                        placeholder="85.00"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs uppercase tracking-widest text-zinc-400">Etiqueta Oferta</label>
-                      <input
-                        className="input mt-1"
-                        value={form.promoLabel}
-                        onChange={(e) => setForm({ ...form, promoLabel: e.target.value })}
-                        placeholder="Lanzamiento / Especial"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </details>
-
-              {/* Accordion 2: 🔥 Creador de Combos (4 Grupos) */}
-              {(form.category === 'combos' || form.isCombo) && (
-                <details className="rounded-xl border border-fuchsia-500/30 bg-fuchsia-500/5 p-3" open={form.isCombo}>
-                  <summary className="cursor-pointer font-bold text-fuchsia-200 flex items-center justify-between text-sm">
-                    <span>🔥 Creador de Combos (4 Grupos + Upcharges)</span>
-                    <span className="text-[10px] font-black bg-fuchsia-400/20 text-fuchsia-300 px-2 py-0.5 rounded">
-                      {form.comboGroups.length} GRUPOS
-                    </span>
-                  </summary>
-                  <div className="mt-3 space-y-3">
-                    <div className="space-y-2">
-                      {form.comboGroups.map((grp, gIdx) => (
-                        <div key={grp.id || gIdx} className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
-                          <input
-                            className="input font-bold text-zinc-100 text-xs mb-2 md:mt-0"
-                            value={grp.name}
-                            onChange={(e) => {
-                              const next = [...form.comboGroups];
-                              next[gIdx] = { ...next[gIdx], name: e.target.value };
-                              setForm({ ...form, comboGroups: next });
-                            }}
-                            placeholder="Nombre del Grupo"
-                          />
-                          <div className="space-y-1.5">
-                            {grp.options.map((opt, oIdx) => (
-                              <div key={oIdx} className="flex gap-2 items-center text-xs">
-                                <input
-                                  className="input text-xs font-mono py-1 md:mt-0"
-                                  value={opt.sku}
-                                  onChange={(e) => {
-                                    const nextGrp = [...form.comboGroups];
-                                    const nextOpt = [...nextGrp[gIdx].options];
-                                    nextOpt[oIdx] = { ...nextOpt[oIdx], sku: e.target.value.toUpperCase() };
-                                    nextGrp[gIdx].options = nextOpt;
-                                    setForm({ ...form, comboGroups: nextGrp });
-                                  }}
-                                  placeholder="SKU"
-                                />
-                                <span className="text-zinc-400 shrink-0">+$</span>
-                                <input
-                                  className="input text-xs w-20 py-1 md:mt-0"
-                                  value={opt.upchargeCents / 100}
-                                  onChange={(e) => {
-                                    const nextGrp = [...form.comboGroups];
-                                    const nextOpt = [...nextGrp[gIdx].options];
-                                    nextOpt[oIdx] = { ...nextOpt[oIdx], upchargeCents: Math.round(Number(e.target.value) * 100) || 0 };
-                                    nextGrp[gIdx].options = nextOpt;
-                                    setForm({ ...form, comboGroups: nextGrp });
-                                  }}
-                                  placeholder="0"
-                                />
-                                <Button
-                                  className="px-2 py-1 text-xs bg-rose-950 border border-rose-700 text-rose-200 shrink-0 min-h-0"
-                                  onClick={() => {
-                                    const nextGrp = [...form.comboGroups];
-                                    nextGrp[gIdx].options = nextGrp[gIdx].options.filter((_, i) => i !== oIdx);
-                                    setForm({ ...form, comboGroups: nextGrp });
-                                  }}
-                                >
-                                  Quitar
-                                </Button>
-                              </div>
-                            ))}
-                            <Button
-                              className="mt-1 text-xs bg-zinc-800 border border-zinc-700 text-zinc-200 py-1 min-h-0"
-                              onClick={() => {
-                                const nextGrp = [...form.comboGroups];
-                                nextGrp[gIdx].options.push({ sku: "", upchargeCents: 0 });
-                                setForm({ ...form, comboGroups: nextGrp });
-                              }}
-                            >
-                              + Agregar SKU Opcion
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </details>
-              )}
-
-              {/* Upload image block */}
-              <div className='rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-3'>
-                <div className='flex flex-col gap-3 sm:flex-row'>
-                  <div className='image-preview'>
-                    {imagePreviewUrl ? <img src={imagePreviewUrl} alt={`Imagen de ${editing?.name ?? form.name}`} loading='lazy' decoding='async' /> : <span>Sin imagen</span>}
-                  </div>
-                  <div className='min-w-0 flex-1 space-y-2'>
-                    <h4 className='text-xs font-bold text-cyan-100 uppercase tracking-widest'>Imagen del producto</h4>
-                    {form.imageKey || form.imageUrl ? <p className='break-all text-xs text-cyan-200'>Imagen actual: {form.imageKey || form.imageUrl}</p> : <p className='text-xs text-zinc-400'>Sin imagen asignada: Public V2 usa una card compacta sin imagen.</p>}
-                    <input ref={fileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={imageBusy || saving} onChange={(e) => onFileChange(e.target.files?.[0] ?? null)} />
-                    <div className='flex flex-col gap-2 sm:flex-row'>
-                      <Button className='flex-1 bg-cyan-400 text-black disabled:opacity-40' disabled={imageBusy || saving || creatingItem || !canEdit || !selectedFile || Boolean(validateSelectedFile(selectedFile))} onClick={onUploadImage}>
-                        {uploading ? 'Subiendo…' : 'Subir imagen'}
-                      </Button>
-                      <Button className='flex-1 border border-rose-700 bg-zinc-900 text-rose-200 disabled:opacity-40' disabled={imageBusy || saving || creatingItem || !canEdit || (!form.imageKey && !form.imageUrl)} onClick={onRemoveImage}>
-                        {removingImage ? 'Quitando…' : 'Quitar imagen'}
-                      </Button>
-                    </div>
-                    {imageError ? <p className='text-xs text-rose-300'>{imageError}</p> : null}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Live Preview Side Panel */}
-            <div className="space-y-3">
-              <div className="rounded-2xl border border-emerald-500/30 bg-zinc-950 p-3 sticky top-0">
-                <div className="flex items-center justify-between mb-3 border-b border-zinc-800 pb-2">
-                  <span className="text-xs font-black uppercase tracking-widest text-emerald-400">👁️ Live Preview</span>
-                  <span className="text-[10px] bg-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded font-bold">Vista Cliente</span>
-                </div>
-
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden shadow-lg">
-                  <div className="relative h-36 bg-zinc-950 flex items-center justify-center border-b border-zinc-800">
-                    {imagePreviewUrl ? (
-                      <img src={imagePreviewUrl} alt="Preview" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="text-4xl">{getCategoryEmoji(form.category, form.name)}</div>
-                    )}
-                    {form.isPromoActive && (
-                      <div className="absolute top-2 left-2 bg-emerald-500 text-emerald-950 text-[10px] font-black uppercase px-2 py-0.5 rounded shadow">
-                        {form.promoLabel || "⚡ OFERTA"}
-                      </div>
-                    )}
-                    {form.badge && !form.isPromoActive && (
-                      <div className="absolute top-2 left-2 bg-amber-400 text-amber-950 text-[10px] font-black uppercase px-2 py-0.5 rounded shadow">
-                        {form.badge}
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3 space-y-2">
-                    <h4 className="font-bold text-zinc-100 text-sm leading-snug">{form.name || "Nombre del producto"}</h4>
-                    <p className="text-xs text-zinc-400 line-clamp-2">{form.description || "Descripción del producto..."}</p>
-
-                    <div className="pt-2 border-t border-zinc-800 flex items-center justify-between">
-                      <div>
-                        {form.isPromoActive && form.promoPrice ? (
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="text-xs line-through opacity-50 text-zinc-400">${Number(form.price).toFixed(2)}</span>
-                            <span className="font-black text-emerald-400 text-base">${Number(form.promoPrice).toFixed(2)} MXN</span>
-                          </div>
-                        ) : (
-                          <span className="font-black text-emerald-400 text-base">${Number(form.price).toFixed(2)} MXN</span>
-                        )}
-                      </div>
-                      <button type="button" className="px-3 py-1.5 rounded-lg bg-emerald-400 text-emerald-950 text-xs font-black">
-                        ➕ Agregar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {validationError ? <p className='mt-2 text-xs text-rose-300'>{validationError}</p> : null}
-          {saveError ? <p className='mt-2 text-xs text-rose-300'>{saveError}</p> : null}
-
-          <div className='mt-4 flex gap-2 border-t border-zinc-800 pt-3'>
-            <Button className='flex-1 border border-zinc-700 bg-zinc-900' onClick={closeEditor} disabled={saving || imageBusy}>Cancelar</Button>
-            <Button className='flex-1 bg-cyan-400 text-black font-bold disabled:opacity-40' onClick={() => void onSave()} disabled={saving || imageBusy || Boolean(validationError)}>
-              {saving ? "Guardando…" : "Guardar Producto"}
-            </Button>
-          </div>
-        </section>
-      </div>
-    ) : null}
-
-    {editingPromo && promoForm ? <div className='overlay' onClick={closePromoEditor}><section className='modal' onClick={(e) => e.stopPropagation()}><h3 className='font-bold'>Editar promo {editingPromo.id}</h3><p className='muted'>ID solo lectura</p><div className='mt-2 grid gap-2'><label className='text-xs uppercase tracking-widest text-zinc-300'>ID<input className='input md:mt-1' value={editingPromo.id} readOnly /></label><input className='input md:mt-0' value={promoForm.title} onChange={(e) => setPromoForm({ ...promoForm, title: e.target.value })} placeholder='Título' /><textarea className='input md:mt-0' value={promoForm.description} onChange={(e) => setPromoForm({ ...promoForm, description: e.target.value })} placeholder='Descripción' /><input className='input md:mt-0' value={promoForm.badge} onChange={(e) => setPromoForm({ ...promoForm, badge: e.target.value })} placeholder='Badge (opcional)' /><input className='input md:mt-0' value={promoForm.promoLabel} onChange={(e) => setPromoForm({ ...promoForm, promoLabel: e.target.value })} placeholder='Promo label (opcional)' /><label className='text-xs uppercase tracking-widest text-zinc-300'>Link a combo/producto<textarea className='input md:mt-1' value={promoForm.comboLinks} onChange={(e) => setPromoForm({ ...promoForm, comboLinks: e.target.value })} placeholder='COMBO-OG o BRG-OG' /></label><div className='grid gap-2 sm:grid-cols-2'><label className='flex min-h-11 items-center gap-2 text-sm'><input type='checkbox' checked={promoForm.isAvailable} onChange={(e) => setPromoForm({ ...promoForm, isAvailable: e.target.checked })} /> Disponible</label><label className='flex min-h-11 items-center gap-2 text-sm'><input type='checkbox' checked={promoForm.isFeatured} onChange={(e) => setPromoForm({ ...promoForm, isFeatured: e.target.checked })} /> Destacada</label></div><input className='input md:mt-0' value={promoForm.sortOrder} onChange={(e) => setPromoForm({ ...promoForm, sortOrder: e.target.value })} placeholder='Orden' />
-        <div className='rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-3'><div className='flex flex-col gap-3 sm:flex-row'><div className='image-preview'>{promoImagePreviewUrl ? <img src={promoImagePreviewUrl} alt={`Imagen de ${editingPromo.title}`} loading='lazy' decoding='async' /> : <span>Sin imagen</span>}</div><div className='min-w-0 flex-1 space-y-2'><h4 className='text-sm font-bold text-cyan-100'>Imagen de promo</h4>{promoForm.imageKey || promoForm.imageUrl ? <p className='break-all text-xs text-cyan-200'>Imagen actual: {promoForm.imageKey || promoForm.imageUrl}</p> : <p className='text-xs text-zinc-400'>Sin imagen asignada: Public V2 muestra la promo sin imagen.</p>}<input ref={promoFileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={promoImageBusy || promoSaving} onChange={(e) => onPromoFileChange(e.target.files?.[0] ?? null)} /><p className='text-xs text-zinc-400'>{ACCEPTED_IMAGE_TYPES_LABEL}. La ruta de imagen se genera automáticamente en <code>promos/</code>.</p><div className='flex flex-col gap-2 sm:flex-row'><Button className='flex-1 bg-cyan-400 text-black disabled:opacity-40' disabled={promoImageBusy || promoSaving || !canEdit || !selectedPromoFile || Boolean(validateSelectedFile(selectedPromoFile))} onClick={onPromoUploadImage}>{promoUploading ? 'Subiendo…' : 'Subir imagen'}</Button><Button className='flex-1 border border-rose-700 bg-zinc-900 text-rose-200 disabled:opacity-40' disabled={promoImageBusy || promoSaving || !canEdit || (!promoForm.imageKey && !promoForm.imageUrl)} onClick={onPromoRemoveImage}>{promoRemovingImage ? 'Quitando…' : 'Quitar imagen'}</Button></div>{promoImageError ? <p className='text-xs text-rose-300'>{promoImageError}</p> : null}</div></div></div>
-        <details className='rounded-xl border border-zinc-800 bg-zinc-900/50 p-3'><summary className='cursor-pointer text-xs uppercase tracking-widest text-zinc-300'>Referencia manual avanzada</summary><div className='mt-2 grid gap-2'><label className='text-xs uppercase tracking-widest text-zinc-300'>Image URL<input className='input md:mt-1' value={promoForm.imageUrl} onChange={(e) => setPromoForm({ ...promoForm, imageUrl: e.target.value })} placeholder='Image URL' /></label><label className='text-xs uppercase tracking-widest text-zinc-300'>Image key<input className='input md:mt-1' value={promoForm.imageKey} onChange={(e) => setPromoForm({ ...promoForm, imageKey: e.target.value })} placeholder='promos/combo-og.webp' /></label><p className='text-xs text-zinc-400'>Image URL puede ser /api/assets-v2/... o URL externa segura https://. Image key apunta a R2, ejemplo promos/combo-og.webp.</p></div></details>
-      </div>{promoValidationError ? <p className='mt-2 text-xs text-rose-300'>{promoValidationError}</p> : null}{promoSaveError ? <p className='mt-2 text-xs text-rose-300'>{promoSaveError}</p> : null}<div className='mt-3 flex gap-2'><Button className='flex-1 border border-zinc-700 bg-zinc-900' onClick={closePromoEditor} disabled={promoSaving || promoImageBusy}>Cancelar</Button><Button className='flex-1 bg-cyan-400 text-black disabled:opacity-40' onClick={onPromoSave} disabled={promoSaving || promoImageBusy || Boolean(promoValidationError) || !canEdit}>Guardar</Button></div></section></div> : null}
-
-    {catalogBannerForm ? <div className='overlay' onClick={closeCatalogBannerEditor}><section className='modal modal--large' onClick={(e) => e.stopPropagation()}><div className='flex items-center justify-between'><h3 className='font-bold text-pink-100'>{catalogBannerForm.id ? 'Editar Banner' : 'Crear Banner de Catálogo'}</h3><Button className='text-zinc-400 bg-transparent min-h-8 p-1' onClick={closeCatalogBannerEditor}>X</Button></div><div className='mt-4 grid gap-3'><div className='flex flex-wrap items-center gap-1.5 p-2 rounded-lg bg-zinc-900/60 border border-zinc-800 text-xs text-zinc-300'><span className='font-semibold text-zinc-400 mr-1'>Presets de texto (opcional):</span><button type='button' className='px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors' onClick={() => setCatalogBannerForm({ ...catalogBannerForm, title: '⚡ ENVÍO GRATIS $0', subtitle: 'En tu primer pedido mayor a $150 con código BURGERS', ctaLabel: 'Copiar código BURGERS' })}>⚡ Envío Gratis</button><button type='button' className='px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors' onClick={() => setCatalogBannerForm({ ...catalogBannerForm, title: '🔥 DOBLE SMASH 2x1', subtitle: 'Aprovecha 2 hamburguesas dobles al precio de 1', ctaLabel: 'Ver Combos' })}>🔥 2x1 Smash</button><button type='button' className='px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors' onClick={() => setCatalogBannerForm({ ...catalogBannerForm, title: '🏆 COMBOS GRATIS', subtitle: 'Participa por un año de combos en cada pedido', ctaLabel: 'Ver Sorteo' })}>🏆 Sorteo Combos</button></div><input className='input' value={catalogBannerForm.title} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, title: e.target.value })} placeholder='Título (Requerido)' /><textarea className='input' value={catalogBannerForm.subtitle} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, subtitle: e.target.value })} placeholder='Subtítulo (Opcional)' /><input className='input' value={catalogBannerForm.ctaLabel} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, ctaLabel: e.target.value })} placeholder='Texto CTA (Opcional)' /><div className='grid grid-cols-2 gap-2'><label className='text-xs uppercase tracking-widest text-zinc-300'>Orden<input className='input md:mt-1' inputMode='numeric' value={catalogBannerForm.sortOrder} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, sortOrder: e.target.value })} /></label><label className='flex items-center gap-2 text-sm pt-5'><input type='checkbox' checked={catalogBannerForm.isActive} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, isActive: e.target.checked })} /> Activo</label></div>{catalogBannerForm.id && <div className='rounded-xl border border-pink-500/30 bg-zinc-950/70 p-3 mt-2'><div className='flex flex-col gap-3 sm:flex-row'><div className='image-preview'>{catalogBannerImagePreviewUrl ? <img src={catalogBannerImagePreviewUrl} alt='Banner visual' loading='lazy' decoding='async' /> : <span>Sin imagen</span>}</div><div className='min-w-0 flex-1 space-y-2'><h5 className='text-sm font-bold text-pink-100'>Imagen del banner</h5><input ref={catalogBannerFileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={catalogBannerImageBusy || catalogBannerSaving} onChange={(e) => setSelectedCatalogBannerFile(e.target.files?.[0] ?? null)} /><p className='text-xs text-zinc-400'>{ACCEPTED_IMAGE_TYPES_LABEL}</p><div className='flex flex-col gap-2 sm:flex-row'><Button className='min-h-11 flex-1 bg-pink-400 text-black disabled:opacity-40' disabled={catalogBannerImageBusy || catalogBannerSaving || !canEdit || !selectedCatalogBannerFile || Boolean(validateSelectedFile(selectedCatalogBannerFile))} onClick={onCatalogBannerUploadImage}>{catalogBannerUploading ? 'Subiendo…' : catalogBannerForm.imageKey || catalogBannerForm.imageUrl ? 'Cambiar imagen' : 'Subir imagen'}</Button><Button className='min-h-11 flex-1 border border-rose-700 bg-zinc-900 text-rose-200 disabled:opacity-40' disabled={catalogBannerImageBusy || catalogBannerSaving || !canEdit || (!catalogBannerForm.imageKey && !catalogBannerForm.imageUrl)} onClick={onCatalogBannerRemoveImage}>{catalogBannerRemovingImage ? 'Quitando…' : 'Quitar imagen'}</Button></div></div></div></div>}{catalogBannerError ? <p className='text-xs text-rose-300 mt-2'>{catalogBannerError}</p> : null}<div className='flex flex-wrap gap-2 mt-2'><Button disabled={!canEdit || catalogBannerSaving || catalogBannerImageBusy} className='min-h-11 bg-pink-400 text-black disabled:opacity-40 flex-1' onClick={onCatalogBannerSave}>{catalogBannerSaving ? 'Guardando…' : 'Guardar Banner'}</Button>{catalogBannerForm.id && <Button disabled={!canEdit || catalogBannerSaving || catalogBannerImageBusy} className='min-h-11 border border-rose-700 bg-zinc-900 text-rose-300 disabled:opacity-40' onClick={onCatalogBannerDelete}>Eliminar</Button>}</div></div></section></div> : null}
+    {catalogBannerForm ? <div className='overlay' onClick={closeCatalogBannerEditor}><section className='modal modal--large' onClick={(e) => e.stopPropagation()}><div className='flex items-center justify-between'><h3 className='font-bold text-pink-100'>{catalogBannerForm.id ? 'Editar Banner' : 'Crear Banner de Catálogo'}</h3><Button className='text-zinc-400 bg-transparent min-h-8 p-1' onClick={closeCatalogBannerEditor}>X</Button></div><div className='mt-4 grid gap-3'><input className='input' value={catalogBannerForm.title} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, title: e.target.value })} placeholder='Título (Requerido)' /><textarea className='input' value={catalogBannerForm.subtitle} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, subtitle: e.target.value })} placeholder='Subtítulo (Opcional)' /><input className='input' value={catalogBannerForm.ctaLabel} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, ctaLabel: e.target.value })} placeholder='Texto CTA (Opcional)' /><div className='grid grid-cols-2 gap-2'><label className='text-xs uppercase tracking-widest text-zinc-300'>Orden<input className='input md:mt-1' inputMode='numeric' value={catalogBannerForm.sortOrder} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, sortOrder: e.target.value })} /></label><label className='flex items-center gap-2 text-sm pt-5'><input type='checkbox' checked={catalogBannerForm.isActive} onChange={(e) => setCatalogBannerForm({ ...catalogBannerForm, isActive: e.target.checked })} /> Activo</label></div>{catalogBannerForm.id && <div className='rounded-xl border border-pink-500/30 bg-zinc-950/70 p-3 mt-2'><div className='flex flex-col gap-3 sm:flex-row'><div className='image-preview'>{catalogBannerImagePreviewUrl ? <img src={catalogBannerImagePreviewUrl} alt='Banner visual' loading='lazy' decoding='async' /> : <span>Sin imagen</span>}</div><div className='min-w-0 flex-1 space-y-2'><h5 className='text-sm font-bold text-pink-100'>Imagen del banner</h5><input ref={catalogBannerFileInputRef} className='input md:mt-0' type='file' accept={ACCEPTED_IMAGE_TYPES.join(',')} disabled={catalogBannerImageBusy || catalogBannerSaving} onChange={(e) => setSelectedCatalogBannerFile(e.target.files?.[0] ?? null)} /><p className='text-xs text-zinc-400'>{ACCEPTED_IMAGE_TYPES_LABEL}</p><div className='flex flex-col gap-2 sm:flex-row'><Button className='min-h-11 flex-1 bg-pink-400 text-black disabled:opacity-40' disabled={catalogBannerImageBusy || catalogBannerSaving || !canEdit || !selectedCatalogBannerFile || Boolean(validateSelectedFile(selectedCatalogBannerFile))} onClick={onCatalogBannerUploadImage}>{catalogBannerUploading ? 'Subiendo…' : catalogBannerForm.imageKey || catalogBannerForm.imageUrl ? 'Cambiar imagen' : 'Subir imagen'}</Button><Button className='min-h-11 flex-1 border border-rose-700 bg-zinc-900 text-rose-200 disabled:opacity-40' disabled={catalogBannerImageBusy || catalogBannerSaving || !canEdit || (!catalogBannerForm.imageKey && !catalogBannerForm.imageUrl)} onClick={onCatalogBannerRemoveImage}>{catalogBannerRemovingImage ? 'Quitando…' : 'Quitar imagen'}</Button></div></div></div></div>}{catalogBannerError ? <p className='text-xs text-rose-300 mt-2'>{catalogBannerError}</p> : null}<div className='flex flex-wrap gap-2 mt-2'><Button disabled={!canEdit || catalogBannerSaving || catalogBannerImageBusy} className='min-h-11 bg-pink-400 text-black disabled:opacity-40 flex-1' onClick={onCatalogBannerSave}>{catalogBannerSaving ? 'Guardando…' : 'Guardar Banner'}</Button>{catalogBannerForm.id && <Button disabled={!canEdit || catalogBannerSaving || catalogBannerImageBusy} className='min-h-11 border border-rose-700 bg-zinc-900 text-rose-300 disabled:opacity-40' onClick={onCatalogBannerDelete}>Eliminar</Button>}</div></div></section></div> : null}
 
   </section>;
 }
