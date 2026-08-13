@@ -231,33 +231,22 @@ function CatalogModeAppInner({ items, categories, siteConfig, recipes, catalogBa
           </span>
 
           <div className="site-header__towers-bar">
-            <button
-              type="button"
-              className={`tower-pill-btn ${towerStatus.gga.active ? "tower-pill-btn--active" : "tower-pill-btn--off"}`}
-              onClick={() => {
-                setSelectedTowerKey("gga");
-                setIsTowerModalOpen(true);
-              }}
-              aria-label={`Ver horario de ${towerStatus.gga.name} (${towerStatus.gga.active ? "Disponible hoy" : "Inactivo hoy"})`}
-            >
-              <span className="tower-pill-btn__emoji">🏢</span>
-              <span className="tower-pill-btn__label">Torre GGA</span>
-              <span className={`tower-pill-btn__dot ${towerStatus.gga.active ? "tower-pill-btn__dot--active" : "tower-pill-btn__dot--off"}`} />
-            </button>
-
-            <button
-              type="button"
-              className={`tower-pill-btn ${towerStatus.valcob.active ? "tower-pill-btn--active" : "tower-pill-btn--off"}`}
-              onClick={() => {
-                setSelectedTowerKey("valcob");
-                setIsTowerModalOpen(true);
-              }}
-              aria-label={`Ver horario de ${towerStatus.valcob.name} (${towerStatus.valcob.active ? "Disponible hoy" : "Inactivo hoy"})`}
-            >
-              <span className="tower-pill-btn__emoji">🏢</span>
-              <span className="tower-pill-btn__label">Torre Valcob</span>
-              <span className={`tower-pill-btn__dot ${towerStatus.valcob.active ? "tower-pill-btn__dot--active" : "tower-pill-btn__dot--off"}`} />
-            </button>
+            {towerStatus.towersList.map((t) => (
+              <button
+                key={t.key || t.name}
+                type="button"
+                className={`tower-pill-btn ${t.active ? "tower-pill-btn--active" : "tower-pill-btn--off"}`}
+                onClick={() => {
+                  setSelectedTowerKey(t.key);
+                  setIsTowerModalOpen(true);
+                }}
+                aria-label={`Ver horario de ${t.name} (${t.active ? "Disponible hoy" : "Inactivo hoy"})`}
+              >
+                <span className="tower-pill-btn__emoji">{t.emoji}</span>
+                <span className="tower-pill-btn__label">{t.name}</span>
+                <span className={`tower-pill-btn__dot ${t.active ? "tower-pill-btn__dot--active" : "tower-pill-btn__dot--off"}`} />
+              </button>
+            ))}
           </div>
         </div>
       </div>
