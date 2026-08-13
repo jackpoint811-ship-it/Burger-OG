@@ -39,10 +39,14 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - **Estética Burgers.exe Premium Casual**: Light mode cálido con tarjetas blancas y acento Verde Bosque (`#16A34A`), Dark mode Slate/Carbón limpio (`#121212` / `#1E1E1E`), bordes sutiles y sombras de elevación.
   - **Limpieza de Iconografía**: Reemplazados emojis por iconos SVG semánticos de Lucide (`Clock`, `Calendar`, `ChevronLeft`, `ChevronRight`, `Filter`, etc.).
   - **Checks 100% en Verde**: `git diff --check`, `npm run typecheck`, `npm run build:internal` y `npm run build:public` completados sin errores.
-- **Despliegue Exitoso a Producción Cloudflare Pages**:
-  - `burgers-exe`: `https://ae203d2c.burgers-exe.pages.dev` (Producción `https://burgers-exe.pages.dev`).
-  - `chekeo2-0`: `https://92a46261.chekeo2-0.pages.dev` (Producción `https://chekeo2-0.pages.dev`).
-  - **Smoke Tests**: `/api/menu-v2` (`source: d1`, 20 items, 5 cats) y `/api/tower-schedules` (2 torres) operando en vivo al 100%.
+- **Despliegue Exitoso a Producción Cloudflare Pages (PR #524)**:
+  - `burgers-exe`: `https://2ba33818.burgers-exe.pages.dev` (Producción canónica `https://burgers-exe.pages.dev`).
+  - `chekeo2-0`: `https://36b5f36d.chekeo2-0.pages.dev` (Producción canónica `https://chekeo2-0.pages.dev`).
+  - **Smoke Tests Post-Deploy**:
+    - `/api/menu-v2` (`source: d1`, 20 items, 5 categorías) ➡️ `200 OK`.
+    - `/api/tower-schedules` (2 torres: GGA y Valcob) ➡️ `200 OK`.
+    - `/api/internal-v2-auth/status` (`authenticated: false`) ➡️ `200 OK`.
+  - **PR #524 Creado para Main**: `https://github.com/jackpoint811-ship-it/Burgers-exe/pull/524` promovido desde `preview`.
 - **PR #521 Mergeado en `preview`**: Fix de posicionamiento sticky de cabecera de categorías (`.catalog-category-sticky-header`) en **Public Order V2**:
   - **Causa raíz corregida**: Se cambió `overflow-x: hidden !important;` a `overflow-x: clip !important;` en `.catalog-shell` bajo media query móvil (<= 480px) para no destruir el contexto de scroll root (`window`) que requiere `position: sticky`.
   - **Scroll Margin Top**: Añadido `scroll-margin-top: calc(112px + env(safe-area-inset-top))` a `.catalog-grid` para alineación precisa de scroll al hacer click en las píldoras de categorías.
