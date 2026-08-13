@@ -59,7 +59,10 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - **Submenú Cuadrado**: Vista inicial con 4 tarjetas de opciones (*Banners del Catálogo*, *Horarios por Torre*, *Estado de la Tienda*, *Sorteo Promocional*) al ingresar a Sucursal & Banners.
   - **Barra de Accesos Rápidos (Favoritos)**: Barra superior compacta con rectángulos de acceso rápido (*🎨 Banners*, *⏰ Horarios*, *📦 Productos*, *💳 Cierre de Caja*, *🏪 Tienda*).
   - **Marcado con Estrella ⭐**: Posibilidad de fijar/desfijar cualquier herramienta a los accesos rápidos con almacenamiento persistente en `localStorage` (`chekeo_admin_favorites`).
-
-
-
-
+- **Transformación Total de UI y Branding Premium Casual (Preview)**:
+  - **Paleta y Temas**: Implementado Light Mode por defecto (`#F5F2EE`, `#FFFFFF`, `#1C1917`, Verde Bosque `#16A34A`) y Dark Mode slate (`#121212`, `#1E1E1E`, Verde `#22C55E`). Erradicados legados neón (`#00FF66`, `#0B0B0B`).
+  - **Studio Design Spec (`default-design-spec.ts`)**: Estandarizados los valores globales a `#16A34A` / `#F5F2EE` y `var(--color-surface)`.
+  - **Header e Isotipo**: Incorporado el Isotipo SVG de Smash Burger Artesanal + tipografía `Inter` en negrita.
+  - **Tarjetas y Botón Quick Add**: Conteo de ítems acumulados en el botón de adición rápida `+` cuando `cartQty > 0`.
+  - **Pie de Página (Footer)**: Añadido pie de página oficial ("Burgers.exe — Hecho con ❤️ para ti") con accesos directos a Tickets y WhatsApp.
+  - **Verificación**: `npm run typecheck` y `npm run build:public` validados en verde (exit code 0).

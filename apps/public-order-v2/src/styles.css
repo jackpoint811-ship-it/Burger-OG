@@ -9527,3 +9527,92 @@ html {
     font-size: 11px !important;
   }
 }
+
+/* ── Quick Add Button Has Quantity Badge ───────────────── */
+.catalog-card__btn-add--has-qty {
+  background-color: var(--color-accent) !important;
+  color: var(--color-text-on-accent) !important;
+  box-shadow: var(--shadow-cta) !important;
+  border-color: var(--color-accent) !important;
+}
+
+/* ── Site Footer (Premium Casual Vibe) ─────────────────── */
+.site-footer {
+  margin-top: 48px;
+  padding: 32px 16px 80px 16px;
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-line-soft);
+  text-align: center;
+}
+
+.site-footer__container {
+  max-width: var(--catalog-max-width, 768px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.site-footer__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.site-footer__logo-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--color-text-primary);
+}
+
+.site-footer__logo-ext {
+  color: var(--color-accent);
+}
+
+.site-footer__tagline {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  max-width: 380px;
+  line-height: 1.4;
+}
+
+.site-footer__links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.site-footer__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill, 9999px);
+  background-color: var(--color-bg-base);
+  border: 1px solid var(--color-line);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--motion-base) var(--motion-ease);
+}
+
+.site-footer__link:hover,
+.site-footer__link:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.site-footer__copy {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 8px;
+}

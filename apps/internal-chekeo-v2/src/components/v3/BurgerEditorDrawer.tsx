@@ -26,11 +26,15 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
   const [price, setPrice] = useState(item?.price ? String(item.price) : '85');
   const [category, setCategory] = useState<MenuCategory['key']>(item?.category ?? 'burgers');
   const [isAvailable, setIsAvailable] = useState(item?.isAvailable ?? true);
+  const [isHidden, setIsHidden] = useState(item?.isHidden ?? false);
   const [isFeatured, setIsFeatured] = useState(item?.isFeatured ?? false);
   const [badge, setBadge] = useState(item?.badge ?? '');
   const [sortOrder, setSortOrder] = useState(item?.sortOrder ? String(item.sortOrder) : '10');
-  
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
   // Image state
+
   const [imageUrl, setImageUrl] = useState(item?.imageUrl ?? '');
   const [imageKey, setImageKey] = useState(item?.imageKey ?? '');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -151,6 +155,7 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
           price: Number(price),
           category,
           isAvailable,
+          isHidden,
           isFeatured,
           badge: badge.trim() || null,
           sortOrder: Number(sortOrder) || 10,
@@ -179,6 +184,27 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
       setSavingRecipe(false);
     }
   };
+
+  const handleDelete = async () => {
+    if (isCreating || !sku) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/menu-v2-admin/items/${encodeURIComponent(sku)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await res.json() as { ok: boolean; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "Error al eliminar producto");
+      onSaved();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al eliminar producto");
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
+
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm transition-opacity">
@@ -269,10 +295,14 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 p-3 rounded-xl border border-neutral-200 bg-[#F5F2EE]">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 rounded-xl border border-neutral-200 bg-[#F5F2EE]">
               <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer text-neutral-700">
                 <input type="checkbox" checked={isAvailable} onChange={(e) => setIsAvailable(e.target.checked)} className="rounded" />
                 ✓ Disponible
+              </label>
+              <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer text-amber-700">
+                <input type="checkbox" checked={isHidden} onChange={(e) => setIsHidden(e.target.checked)} className="rounded" />
+                👁️‍🗨️ Oculto
               </label>
               <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer text-[#16A34A]">
                 <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="rounded" />
@@ -386,14 +416,34 @@ export function BurgerEditorDrawer({ item, isCreating, categories, onClose, onSa
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center gap-3 px-6 py-4 border-t border-neutral-200 bg-[#F5F2EE]">
-          <Button type="button" className="flex-1 border border-neutral-300 bg-white text-neutral-700" onClick={onClose} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button type="button" className="flex-1 bg-[#16A34A] text-white font-semibold disabled:opacity-40" onClick={handleSave} disabled={saving || savingRecipe}>
-            {saving || savingRecipe ? "Guardando…" : "Guardar Producto"}
-          </Button>
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-neutral-200 bg-[#F5F2EE]">
+          {!isCreating && (
+            confirmDelete ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-red-600">¿Eliminar {sku}?</span>
+                <Button type="button" className="bg-red-600 text-white text-xs font-semibold py-1 px-3 min-h-0" onClick={handleDelete} disabled={deleting}>
+                  {deleting ? '...' : 'Sí, Eliminar'}
+                </Button>
+                <Button type="button" className="border border-neutral-300 bg-white text-neutral-700 text-xs py-1 px-2 min-h-0" onClick={() => setConfirmDelete(false)} disabled={deleting}>
+                  No
+                </Button>
+              </div>
+            ) : (
+              <Button type="button" className="border border-red-300 bg-red-50 text-red-700 text-xs font-semibold hover:bg-red-100 min-h-0 py-1.5 px-3" onClick={() => setConfirmDelete(true)} disabled={saving || deleting}>
+                🗑️ Eliminar
+              </Button>
+            )
+          )}
+          <div className="flex items-center gap-3 ml-auto">
+            <Button type="button" className="border border-neutral-300 bg-white text-neutral-700 text-xs" onClick={onClose} disabled={saving || deleting}>
+              Cancelar
+            </Button>
+            <Button type="button" className="bg-[#16A34A] text-white text-xs font-semibold disabled:opacity-40" onClick={handleSave} disabled={saving || savingRecipe || deleting}>
+              {saving || savingRecipe ? "Guardando…" : "Guardar Producto"}
+            </Button>
+          </div>
         </div>
+
       </div>
     </div>
   );

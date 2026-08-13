@@ -644,6 +644,35 @@ export function CatalogAdminPanel() {
     }
   };
 
+  const [deletingItemSku, setDeletingItemSku] = useState<string | null>(null);
+  const [confirmDeleteItemSku, setConfirmDeleteItemSku] = useState<string | null>(null);
+
+  const deleteItem = async (item: MenuItem) => {
+    if (!canEdit || deletingItemSku) return;
+    setDeletingItemSku(item.sku);
+    setNotice(null);
+    setError(null);
+    try {
+      const res = await fetch(`/api/menu-v2-admin/items/${encodeURIComponent(item.sku)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al eliminar producto');
+
+      setMenu((current) => current ? { ...current, items: current.items.filter((entry) => entry.sku !== item.sku) } : current);
+      if (editing?.sku === item.sku) {
+        closeEditor();
+      }
+      setNotice(`Producto ${item.name} (${item.sku}) eliminado permanentemente`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al eliminar producto');
+    } finally {
+      setDeletingItemSku(null);
+      setConfirmDeleteItemSku(null);
+    }
+  };
+
   const onSave = async () => {
     if ((!editing && !creatingItem) || !form || validationError) return;
     setSaving(true);
@@ -1176,6 +1205,23 @@ export function CatalogAdminPanel() {
                   <Button disabled={!canEdit || availabilityBusy} className='min-h-11 border border-zinc-700 bg-zinc-900 disabled:opacity-40' onClick={() => beginEdit(item)}>
                     Editar
                   </Button>
+                  {confirmDeleteItemSku === item.sku ? (
+                    <Button
+                      disabled={!canEdit || deletingItemSku === item.sku}
+                      className="min-h-11 border border-rose-600 bg-rose-600 text-white font-bold disabled:opacity-40"
+                      onClick={() => void deleteItem(item)}
+                    >
+                      {deletingItemSku === item.sku ? '...' : 'Confirmar'}
+                    </Button>
+                  ) : (
+                    <Button
+                      disabled={!canEdit || availabilityBusy}
+                      className="min-h-11 border border-rose-900/60 bg-rose-950/40 text-rose-300 hover:bg-rose-900/40 disabled:opacity-40"
+                      onClick={() => setConfirmDeleteItemSku(item.sku)}
+                    >
+                      🗑️ Eliminar
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>

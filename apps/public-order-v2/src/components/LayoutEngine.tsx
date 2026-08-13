@@ -985,28 +985,35 @@ export function LayoutEngine({
                         {formatCurrency(item.price)}
                       </span>
                     )}
-                    <button
-                      type="button"
-                      disabled={item.isAvailable === false}
-                      aria-label={item.isAvailable === false ? `${item.name} agotado` : `Agregar ${item.name}`}
-                      className={`catalog-card__btn-add ${item.isAvailable === false ? "catalog-card__btn-add--disabled" : ""} ${pulsingItemIds[item.sku] ? "catalog-card__btn-add--pulse" : ""}`}
-                      onClick={(e) => {
-                        if (item.isAvailable === false) {
-                          e.stopPropagation();
-                          return;
-                        }
-                        handleQuickAdd(item, e);
-                      }}
-                    >
-                      {item.isAvailable === false ? (
-                        <span style={{ fontSize: "11px", fontWeight: 800 }} aria-hidden="true">✕</span>
-                      ) : (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <line x1="12" y1="5" x2="12" y2="19" />
-                          <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                      )}
-                    </button>
+                    {(() => {
+                      const cartQty = cartQtyByProductId[(item as any).id || item.sku] || cartQtyByProductId[item.sku] || 0;
+                      return (
+                        <button
+                          type="button"
+                          disabled={item.isAvailable === false}
+                          aria-label={item.isAvailable === false ? `${item.name} agotado` : `Agregar ${item.name}`}
+                          className={`catalog-card__btn-add ${item.isAvailable === false ? "catalog-card__btn-add--disabled" : ""} ${pulsingItemIds[item.sku] ? "catalog-card__btn-add--pulse" : ""} ${cartQty > 0 ? "catalog-card__btn-add--has-qty" : ""}`}
+                          onClick={(e) => {
+                            if (item.isAvailable === false) {
+                              e.stopPropagation();
+                              return;
+                            }
+                            handleQuickAdd(item, e);
+                          }}
+                        >
+                          {item.isAvailable === false ? (
+                            <span style={{ fontSize: "11px", fontWeight: 800 }} aria-hidden="true">✕</span>
+                          ) : cartQty > 0 ? (
+                            <span style={{ fontSize: "12px", fontFamily: "'Inter', sans-serif", fontWeight: 800 }} aria-hidden="true">{cartQty}</span>
+                          ) : (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <line x1="12" y1="5" x2="12" y2="19" />
+                              <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               </motion.article>
