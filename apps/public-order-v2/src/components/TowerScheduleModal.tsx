@@ -32,77 +32,137 @@ function formatActiveDaysText(activeDays: number[]): string {
   return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
 }
 
+export function getMxNow(): { day: number; hours: number; minutes: number; dateStr: string } {
+  const now = new Date();
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: "America/Mexico_City",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  };
+  const parts = new Intl.DateTimeFormat("en-US", options).formatToParts(now);
+  const findPart = (type: string) => parts.find((p) => p.type === type)?.value ?? "0";
+
+  const year = parseInt(findPart("year"), 10);
+  const month = parseInt(findPart("month"), 10);
+  const day = parseInt(findPart("day"), 10);
+  let hours = parseInt(findPart("hour"), 10);
+  if (hours === 24) hours = 0;
+  const minutes = parseInt(findPart("minute"), 10);
+
+  const dateObj = new Date(Date.UTC(year, month - 1, day));
+  const dayOfWeek = dateObj.getUTCDay();
+  const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+  return { day: dayOfWeek, hours, minutes, dateStr };
+}
+
+export function parseCutoffTime(timeStr: string = "13:30"): { hours: number; minutes: number } {
+  const parts = timeStr.split(":");
+  const hours = parseInt(parts[0] ?? "13", 10);
+  const minutes = parseInt(parts[1] ?? "30", 10);
+  return { hours: Number.isNaN(hours) ? 13 : hours, minutes: Number.isNaN(minutes) ? 30 : minutes };
+}
+
+export function isPastTowerCutoff(orderEndTime: string = "13:30"): boolean {
+  const mxNow = getMxNow();
+  const cutoff = parseCutoffTime(orderEndTime);
+  return mxNow.hours > cutoff.hours || (mxNow.hours === cutoff.hours && mxNow.minutes >= cutoff.minutes);
+}
+
 export function isPastServiceCutoffTime(date: Date = new Date()): boolean {
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
-  return hours > 13 || (hours === 13 && minutes >= 30);
+  return isPastTowerCutoff("13:30");
 }
 
 export function getTowerStatus(dynamicTowers?: DynamicTowerSchedule[]) {
-  const now = new Date();
-  const day = now.getDay();
-  const pastCutoff = isPastServiceCutoffTime(now);
-
-  const isWeekend = day === 0 || day === 6;
+  const mxNow = getMxNow();
+  const day = mxNow.day;
 
   if (dynamicTowers && dynamicTowers.length > 0) {
     const ggaTower = dynamicTowers.find((t) => t.towerKey === "gga");
     const valcobTower = dynamicTowers.find((t) => t.towerKey === "valcob");
 
-    const ggaActive = !isWeekend && !pastCutoff && Boolean(ggaTower ? ggaTower.isActive && ggaTower.activeDays.includes(day) : (day === 1 || day === 3 || day === 5));
-    const valcobActive = !isWeekend && !pastCutoff && Boolean(valcobTower ? valcobTower.isActive && valcobTower.activeDays.includes(day) : (day === 2 || day === 4 || day === 5));
+    const isGgaPastCutoff = isPastTowerCutoff(ggaTower?.orderEndTime ?? "13:30");
+    const isValcobPastCutoff = isPastTowerCutoff(valcobTower?.orderEndTime ?? "13:30");
+
+    const ggaActive = Boolean(
+      ggaTower
+        ? ggaTower.isActive && ggaTower.activeDays.includes(day) && !isGgaPastCutoff
+        : (day === 1 || day === 3 || day === 5) && !isPastTowerCutoff("13:30")
+    );
+
+    const valcobActive = Boolean(
+      valcobTower
+        ? valcobTower.isActive && valcobTower.activeDays.includes(day) && !isValcobPastCutoff
+        : (day === 2 || day === 4 || day === 5) && !isPastTowerCutoff("13:30")
+    );
 
     return {
       day,
-      pastCutoff,
+      pastCutoff: isGgaPastCutoff && isValcobPastCutoff,
       gga: {
         name: ggaTower?.towerName ?? "Torre GGA",
         emoji: ggaTower?.emoji ?? "🏢",
         active: ggaActive,
         daysText: ggaTower ? formatActiveDaysText(ggaTower.activeDays) : "Lunes, Miércoles y Viernes",
+        orderEndTime: ggaTower?.orderEndTime ?? "13:30",
       },
       valcob: {
         name: valcobTower?.towerName ?? "Torre Valcob",
         emoji: valcobTower?.emoji ?? "🏢",
         active: valcobActive,
         daysText: valcobTower ? formatActiveDaysText(valcobTower.activeDays) : "Martes, Jueves y Viernes",
+        orderEndTime: valcobTower?.orderEndTime ?? "13:30",
       },
     };
   }
 
-  const isGgaActive = !isWeekend && !pastCutoff && (day === 1 || day === 3 || day === 5);
-  const isValcobActive = !isWeekend && !pastCutoff && (day === 2 || day === 4 || day === 5);
+  const defaultCutoff = isPastTowerCutoff("13:30");
+  const isGgaActive = !defaultCutoff && (day === 1 || day === 3 || day === 5);
+  const isValcobActive = !defaultCutoff && (day === 2 || day === 4 || day === 5);
 
   return {
     day,
-    pastCutoff,
+    pastCutoff: defaultCutoff,
     gga: {
       name: "Torre GGA",
       emoji: "🏢",
       active: isGgaActive,
       daysText: "Lunes, Miércoles y Viernes",
+      orderEndTime: "13:30",
     },
     valcob: {
       name: "Torre Valcob",
       emoji: "🏢",
       active: isValcobActive,
       daysText: "Martes, Jueves y Viernes",
+      orderEndTime: "13:30",
     },
   };
 }
 
-export function getNextAvailableDeliveryDate(location: "Torre GGA" | "Torre Valcob"): string {
-  const today = new Date();
+export function getNextAvailableDeliveryDate(
+  location: "Torre GGA" | "Torre Valcob",
+  dynamicTowers?: DynamicTowerSchedule[]
+): string {
+  const mxNow = getMxNow();
+  const [year, month, day] = mxNow.dateStr.split("-").map((v) => parseInt(v, 10));
+
+  const ggaTower = dynamicTowers?.find((t) => t.towerKey === "gga");
+  const valcobTower = dynamicTowers?.find((t) => t.towerKey === "valcob");
+
+  const ggaActiveDays = ggaTower?.activeDays ?? [1, 3, 5];
+  const valcobActiveDays = valcobTower?.activeDays ?? [2, 4, 5];
 
   for (let offset = 1; offset <= 14; offset++) {
-    const candidate = new Date(today);
-    candidate.setDate(today.getDate() + offset);
-    const day = candidate.getDay();
+    const candidate = new Date(Date.UTC(year, month - 1, day + offset));
+    const dayOfWeek = candidate.getUTCDay();
 
-    if (day === 0 || day === 6) continue;
-
-    const isValidGga = day === 1 || day === 3 || day === 5;
-    const isValidValcob = day === 2 || day === 4 || day === 5;
+    const isValidGga = ggaActiveDays.includes(dayOfWeek);
+    const isValidValcob = valcobActiveDays.includes(dayOfWeek);
 
     if (location === "Torre GGA" && isValidGga) {
       return candidate.toISOString().split("T")[0] ?? "";
@@ -111,7 +171,7 @@ export function getNextAvailableDeliveryDate(location: "Torre GGA" | "Torre Valc
       return candidate.toISOString().split("T")[0] ?? "";
     }
   }
-  return today.toISOString().split("T")[0] ?? "";
+  return mxNow.dateStr;
 }
 
 export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({

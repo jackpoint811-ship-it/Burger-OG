@@ -7,7 +7,7 @@ import { useCatalogCart } from "./CatalogCartContext";
 import { createOrderV2 } from "../lib/orders-v2";
 import { motion, useReducedMotion } from "framer-motion";
 import type { CatalogProductType } from "../lib/catalog-mode";
-import { getTowerStatus, getNextAvailableDeliveryDate } from "./TowerScheduleModal";
+import { getTowerStatus, getNextAvailableDeliveryDate, type DynamicTowerSchedule } from "./TowerScheduleModal";
 
 /** Map catalog product types to backend OrderV2ItemKind values. */
 const catalogTypeToItemKind: Record<CatalogProductType, OrderV2ItemKind> = {
@@ -21,6 +21,7 @@ const catalogTypeToItemKind: Record<CatalogProductType, OrderV2ItemKind> = {
 type CatalogCheckoutDrawerProps = {
   isOpen: boolean;
   onClose: () => void;
+  towers?: DynamicTowerSchedule[];
 };
 
 const focusableSelector = [
@@ -43,7 +44,7 @@ const normalizePhoneDigits = (phone: string) => {
   } else if (digits.length > 10 && digits.startsWith("52")) {
     digits = digits.slice(2);
   }
-  return digits.slice(0, 10);
+  return digits;
 };
 
 type CheckoutState = {
@@ -58,7 +59,7 @@ const generateIdempotencyKey = () =>
     ? crypto.randomUUID()
     : `catalog-${Date.now()}-${Math.random()}`;
 
-export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawerProps) {
+export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogCheckoutDrawerProps) {
   const { items, total, setQty, removeItem, clear } = useCatalogCart();
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
@@ -69,7 +70,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
 
   const [step, setStep] = useState<1 | 2>(1);
 
-  const [location, setLocation] = useState<"Torre GGA" | "Torre Valcob">(() => {
+  const [location, setLocation] = useState<"Torre GGA" | "Torre Valcob">((): any => {
     try {
       return (localStorage.getItem("pov2-customer-location") as any) || "Torre GGA";
     } catch {
@@ -99,7 +100,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
   const [wantsWhatsapp, setWantsWhatsapp] = useState(true);
   const [checkoutState, setCheckoutState] = useState<CheckoutState>({ status: "idle" });
 
-  const towerStatus = useMemo(() => getTowerStatus(), []);
+  const towerStatus = useMemo(() => getTowerStatus(towers), [towers]);
   const isGgaActiveToday = towerStatus.gga.active;
   const isValcobActiveToday = towerStatus.valcob.active;
 
@@ -113,19 +114,19 @@ export function CatalogCheckoutDrawer({ isOpen, onClose }: CatalogCheckoutDrawer
   });
 
   const minScheduledDate = useMemo(() => {
-    return getNextAvailableDeliveryDate(location);
-  }, [location]);
+    return getNextAvailableDeliveryDate(location, towers);
+  }, [location, towers]);
 
   const [scheduledDate, setScheduledDate] = useState<string>(minScheduledDate);
 
   useEffect(() => {
     const active = (location === "Torre GGA" && isGgaActiveToday) || (location === "Torre Valcob" && isValcobActiveToday);
-    const nextDate = getNextAvailableDeliveryDate(location);
+    const nextDate = getNextAvailableDeliveryDate(location, towers);
     setScheduledDate(nextDate);
     if (!active) {
       setDateMode("scheduled");
     }
-  }, [location, isGgaActiveToday, isValcobActiveToday]);
+  }, [location, isGgaActiveToday, isValcobActiveToday, towers]);
 
   const shouldReduceMotion = useReducedMotion();
 
