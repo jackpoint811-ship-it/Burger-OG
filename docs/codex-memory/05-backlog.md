@@ -12,6 +12,7 @@
 - Mejorar Corte.
 - Reacomodar Sorteo.
 - Agregar tickets extra a participantes.
+- Sincronización de Favoritos de Admin V3 en Cloudflare D1 (Multi-dispositivo). El plan detallado ya está estructurado (Migración SQL `0004_v2_admin_favorites.sql`, actualización de `site-config.ts` y sincronización en `AdminWorkspaceV3.tsx`).
 ## Completados recientemente
 
 - [x] **PR #507**: Rediseño Hub Admin V3 con Cuadrícula Modular 3x3 de 9 tarjetas táctiles compactas.
