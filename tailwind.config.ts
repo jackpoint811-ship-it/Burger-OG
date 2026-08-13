@@ -6,11 +6,7 @@ export default {
     './packages/**/*.{ts,tsx}'
   ],
   theme: {
-    extend: {
-      colors: {
-        neon: '#57f287'
-      }
-    }
+    extend: {}
   },
   plugins: []
 } satisfies Config;
