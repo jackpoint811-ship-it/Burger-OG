@@ -82,41 +82,30 @@ export function getTowerStatus(dynamicTowers?: DynamicTowerSchedule[]) {
   const day = mxNow.day;
 
   if (dynamicTowers && dynamicTowers.length > 0) {
-    const ggaTower = dynamicTowers.find((t) => t.towerKey === "gga");
-    const valcobTower = dynamicTowers.find((t) => t.towerKey === "valcob");
+    const towersList = dynamicTowers.map((t) => {
+      const isPastCutoff = isPastTowerCutoff(t.orderEndTime);
+      const active = Boolean(t.isActive && t.activeDays.includes(day) && !isPastCutoff);
+      return {
+        key: t.towerKey,
+        name: t.towerName,
+        emoji: t.emoji || "🏢",
+        active,
+        daysText: formatActiveDaysText(t.activeDays),
+        orderEndTime: t.orderEndTime,
+        deliveryLabel: t.deliveryLabel || "1:30 PM",
+      };
+    });
 
-    const isGgaPastCutoff = isPastTowerCutoff(ggaTower?.orderEndTime ?? "13:30");
-    const isValcobPastCutoff = isPastTowerCutoff(valcobTower?.orderEndTime ?? "13:30");
-
-    const ggaActive = Boolean(
-      ggaTower
-        ? ggaTower.isActive && ggaTower.activeDays.includes(day) && !isGgaPastCutoff
-        : (day === 1 || day === 3 || day === 5) && !isPastTowerCutoff("13:30")
-    );
-
-    const valcobActive = Boolean(
-      valcobTower
-        ? valcobTower.isActive && valcobTower.activeDays.includes(day) && !isValcobPastCutoff
-        : (day === 2 || day === 4 || day === 5) && !isPastTowerCutoff("13:30")
-    );
+    const ggaTower = towersList.find((t) => t.key === "gga") || towersList[0];
+    const valcobTower = towersList.find((t) => t.key === "valcob") || towersList[1] || towersList[0];
+    const pastCutoff = towersList.every((t) => isPastTowerCutoff(t.orderEndTime));
 
     return {
       day,
-      pastCutoff: isGgaPastCutoff && isValcobPastCutoff,
-      gga: {
-        name: ggaTower?.towerName ?? "Torre GGA",
-        emoji: ggaTower?.emoji ?? "🏢",
-        active: ggaActive,
-        daysText: ggaTower ? formatActiveDaysText(ggaTower.activeDays) : "Lunes, Miércoles y Viernes",
-        orderEndTime: ggaTower?.orderEndTime ?? "13:30",
-      },
-      valcob: {
-        name: valcobTower?.towerName ?? "Torre Valcob",
-        emoji: valcobTower?.emoji ?? "🏢",
-        active: valcobActive,
-        daysText: valcobTower ? formatActiveDaysText(valcobTower.activeDays) : "Martes, Jueves y Viernes",
-        orderEndTime: valcobTower?.orderEndTime ?? "13:30",
-      },
+      pastCutoff,
+      towersList,
+      gga: ggaTower,
+      valcob: valcobTower,
     };
   }
 
@@ -124,50 +113,55 @@ export function getTowerStatus(dynamicTowers?: DynamicTowerSchedule[]) {
   const isGgaActive = !defaultCutoff && (day === 1 || day === 3 || day === 5);
   const isValcobActive = !defaultCutoff && (day === 2 || day === 4 || day === 5);
 
-  return {
-    day,
-    pastCutoff: defaultCutoff,
-    gga: {
+  const defaultList = [
+    {
+      key: "gga",
       name: "Torre GGA",
       emoji: "🏢",
       active: isGgaActive,
       daysText: "Lunes, Miércoles y Viernes",
       orderEndTime: "13:30",
+      deliveryLabel: "1:30 PM",
     },
-    valcob: {
+    {
+      key: "valcob",
       name: "Torre Valcob",
       emoji: "🏢",
       active: isValcobActive,
       daysText: "Martes, Jueves y Viernes",
       orderEndTime: "13:30",
+      deliveryLabel: "1:30 PM",
     },
+  ];
+
+  return {
+    day,
+    pastCutoff: defaultCutoff,
+    towersList: defaultList,
+    gga: defaultList[0],
+    valcob: defaultList[1],
   };
 }
 
 export function getNextAvailableDeliveryDate(
-  location: "Torre GGA" | "Torre Valcob",
+  location: string,
   dynamicTowers?: DynamicTowerSchedule[]
 ): string {
   const mxNow = getMxNow();
   const [year, month, day] = mxNow.dateStr.split("-").map((v) => parseInt(v, 10));
 
-  const ggaTower = dynamicTowers?.find((t) => t.towerKey === "gga");
-  const valcobTower = dynamicTowers?.find((t) => t.towerKey === "valcob");
-
-  const ggaActiveDays = ggaTower?.activeDays ?? [1, 3, 5];
-  const valcobActiveDays = valcobTower?.activeDays ?? [2, 4, 5];
+  const targetTower = dynamicTowers?.find((t) => t.towerName === location || t.towerKey === location);
+  const activeDays = targetTower
+    ? targetTower.activeDays
+    : location === "Torre Valcob" || location === "valcob"
+    ? [2, 4, 5]
+    : [1, 3, 5];
 
   for (let offset = 1; offset <= 14; offset++) {
     const candidate = new Date(Date.UTC(year, month - 1, day + offset));
     const dayOfWeek = candidate.getUTCDay();
 
-    const isValidGga = ggaActiveDays.includes(dayOfWeek);
-    const isValidValcob = valcobActiveDays.includes(dayOfWeek);
-
-    if (location === "Torre GGA" && isValidGga) {
-      return candidate.toISOString().split("T")[0] ?? "";
-    }
-    if (location === "Torre Valcob" && isValidValcob) {
+    if (activeDays.includes(dayOfWeek)) {
       return candidate.toISOString().split("T")[0] ?? "";
     }
   }
@@ -196,7 +190,9 @@ export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
   }, [isOpen]);
 
   const status = getTowerStatus(towers);
-  const focusedTower = selectedTowerKey === "valcob" ? status.valcob : status.gga;
+  const focusedTower = selectedTowerKey
+    ? status.towersList.find((t) => t.key === selectedTowerKey || t.name === selectedTowerKey) || status.towersList[0]
+    : status.towersList[0];
 
   return (
     <AnimatePresence>
@@ -232,7 +228,7 @@ export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
             {/* Content Body */}
             <div className="tower-modal-body">
               {/* Highlight notice if target tower clicked */}
-              {selectedTowerKey && (
+              {selectedTowerKey && focusedTower && (
                 <div className={`tower-modal-status-banner ${focusedTower.active ? "tower-modal-status-banner--active" : "tower-modal-status-banner--inactive"}`}>
                   <span className="tower-modal-status-dot" />
                   <span>
@@ -247,33 +243,20 @@ export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
 
               {/* Towers Schedule Grid */}
               <div className="tower-schedule-list">
-                {/* Torre GGA */}
-                <div className={`tower-schedule-item ${status.gga.active ? "tower-schedule-item--active" : "tower-schedule-item--inactive"}`}>
-                  <div className="tower-item-left">
-                    <span className="tower-item-emoji">{status.gga.emoji}</span>
-                    <div>
-                      <h4 className="tower-item-name">{status.gga.name}</h4>
-                      <span className="tower-item-days">{status.gga.daysText}</span>
+                {status.towersList.map((t) => (
+                  <div key={t.key || t.name} className={`tower-schedule-item ${t.active ? "tower-schedule-item--active" : "tower-schedule-item--inactive"}`}>
+                    <div className="tower-item-left">
+                      <span className="tower-item-emoji">{t.emoji}</span>
+                      <div>
+                        <h4 className="tower-item-name">{t.name}</h4>
+                        <span className="tower-item-days">{t.daysText}</span>
+                      </div>
                     </div>
+                    <span className={`tower-badge-pill ${t.active ? "tower-badge-pill--active" : "tower-badge-pill--off"}`}>
+                      {t.active ? "🟢 Disponible Hoy" : "⚪ Inactivo Hoy"}
+                    </span>
                   </div>
-                  <span className={`tower-badge-pill ${status.gga.active ? "tower-badge-pill--active" : "tower-badge-pill--off"}`}>
-                    {status.gga.active ? "🟢 Disponible Hoy" : "⚪ Inactivo Hoy"}
-                  </span>
-                </div>
-
-                {/* Torre Valcob */}
-                <div className={`tower-schedule-item ${status.valcob.active ? "tower-schedule-item--active" : "tower-schedule-item--inactive"}`}>
-                  <div className="tower-item-left">
-                    <span className="tower-item-emoji">{status.valcob.emoji}</span>
-                    <div>
-                      <h4 className="tower-item-name">{status.valcob.name}</h4>
-                      <span className="tower-item-days">{status.valcob.daysText}</span>
-                    </div>
-                  </div>
-                  <span className={`tower-badge-pill ${status.valcob.active ? "tower-badge-pill--active" : "tower-badge-pill--off"}`}>
-                    {status.valcob.active ? "🟢 Disponible Hoy" : "⚪ Inactivo Hoy"}
-                  </span>
-                </div>
+                ))}
               </div>
 
               <div className="tower-modal-footer-note">

@@ -198,7 +198,7 @@ export function CatalogAdminPanel() {
     return (menu?.promos ?? []).filter((promo) => !q || [promo.id, promo.title, promo.description, promo.badge, promo.promoLabel].join(' ').toLowerCase().includes(q));
   }, [menu, promoQuery]);
 
-  const sourceLabel = menu?.source === 'd1' ? 'Listo para editar' : menu?.source === 'fallback' ? 'Vista local' : 'Vista local';
+  const sourceLabel = menu?.source === 'd1' ? 'Listo para editar' : 'Menú Cloudflare D1';
   const canEdit = Boolean(menu?.source === 'd1');
   const imagePreviewUrl = getAssetUrl(form?.imageUrl, form?.imageKey);
   const promoImagePreviewUrl = getAssetUrl(promoForm?.imageUrl, promoForm?.imageKey);
@@ -457,6 +457,62 @@ export function CatalogAdminPanel() {
     }
   };
 
+  const setItemHidden = async (item: MenuItem, isHidden: boolean) => {
+    if (!canEdit || availabilitySavingSku) return;
+    setAvailabilitySavingSku(item.sku);
+    setNotice(null);
+    setError(null);
+    try {
+      const res = await fetch(`/api/menu-v2-admin/items/${encodeURIComponent(item.sku)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ isHidden })
+      });
+      const data = (await res.json()) as { ok: boolean; item?: MenuItem; error?: string };
+      if (!res.ok || !data.ok || !data.item) throw new Error(data.error ?? 'Error al actualizar visibilidad');
+      const updatedItem = data.item;
+      setMenu((current) => current ? { ...current, items: current.items.map((entry) => (entry.sku === updatedItem.sku ? updatedItem : entry)), updatedAt: updatedItem.updatedAt ?? current.updatedAt } : current);
+      if (editing?.sku === updatedItem.sku) {
+        setEditing(updatedItem);
+        setForm((current) => current ? { ...current, isHidden: updatedItem.isHidden ?? false } : current);
+      }
+      setNotice(`${updatedItem.name} (${updatedItem.sku}) ${updatedItem.isHidden ? '👁️‍🗨️ oculto del menú público' : '👁️ visible en el menú público'}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al actualizar visibilidad');
+    } finally {
+      setAvailabilitySavingSku(null);
+    }
+  };
+
+  const [deletingItemSku, setDeletingItemSku] = useState<string | null>(null);
+  const [confirmDeleteItemSku, setConfirmDeleteItemSku] = useState<string | null>(null);
+
+  const deleteItem = async (item: MenuItem) => {
+    if (!canEdit || deletingItemSku) return;
+    setDeletingItemSku(item.sku);
+    setNotice(null);
+    setError(null);
+    try {
+      const res = await fetch(`/api/menu-v2-admin/items/${encodeURIComponent(item.sku)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error al eliminar producto');
+
+      setMenu((current) => current ? { ...current, items: current.items.filter((entry) => entry.sku !== item.sku) } : current);
+      if (editing?.sku === item.sku) {
+        closeEditor();
+      }
+      setNotice(`Producto ${item.name} (${item.sku}) eliminado permanentemente`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al eliminar producto');
+    } finally {
+      setDeletingItemSku(null);
+      setConfirmDeleteItemSku(null);
+    }
+  };
   const onSave = async () => {
     if ((!editing && !creatingItem) || !form || validationError) return;
     setSaving(true);
@@ -859,6 +915,23 @@ export function CatalogAdminPanel() {
                   <Button disabled={!canEdit || availabilityBusy} className='min-h-11 btn disabled:opacity-40' onClick={() => beginEdit(item)}>
                     Editar
                   </Button>
+                  {confirmDeleteItemSku === item.sku ? (
+                    <Button
+                      disabled={!canEdit || deletingItemSku === item.sku}
+                      className="min-h-11 border border-rose-600 bg-rose-600 text-white font-bold disabled:opacity-40"
+                      onClick={() => void deleteItem(item)}
+                    >
+                      {deletingItemSku === item.sku ? '...' : 'Confirmar'}
+                    </Button>
+                  ) : (
+                    <Button
+                      disabled={!canEdit || availabilityBusy}
+                      className="min-h-11 border border-rose-900/60 bg-rose-950/40 text-rose-300 hover:bg-rose-900/40 disabled:opacity-40"
+                      onClick={() => setConfirmDeleteItemSku(item.sku)}
+                    >
+                      🗑️ Eliminar
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>

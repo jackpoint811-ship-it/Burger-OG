@@ -238,6 +238,7 @@ const AccordionItemRow = ({
   glowing,
   onExpand,
   onToggle,
+  items,
 }: {
   entry: KitchenProductionItem;
   busy: boolean;
@@ -245,8 +246,9 @@ const AccordionItemRow = ({
   glowing: boolean;
   onExpand: () => void;
   onToggle: (entry: KitchenProductionItem, done: boolean) => void;
+  items?: Array<{ name: string; imageUrl?: string; imageKey?: string }>;
 }) => {
-  const itemImage = getKitchenItemImage(entry.item.parentItemName || entry.item.name);
+  const itemImage = getKitchenItemImage(entry.item.parentItemName || entry.item.name, items);
   return (
   <div
     className={`kitchen-accordion-item ${entry.done ? "kitchen-accordion-item--done" : ""} ${expanded ? "kitchen-accordion-item--open" : ""} ${glowing ? "kitchen-accordion-item--glow" : ""}`}
