@@ -178,3 +178,26 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, params, request 
 
   return json(200, { ok: true, item: mapD1ItemToMenuItem(updatedRow) });
 };
+
+export const onRequestDelete: PagesFunction<Env> = async ({ env, params, request }) => {
+  if (!env.BOG_MENU_DB) return json(503, { ok: false, error: 'Admin disabled' });
+  const authError = await requireAdminToken(request, env);
+  if (authError) return authError;
+
+  const sku = String(params.sku ?? '').trim();
+  if (!sku) return json(400, { ok: false, error: 'SKU inválido' });
+
+  const existing = await env.BOG_MENU_DB.prepare('SELECT sku FROM menu_items WHERE sku = ? LIMIT 1').bind(sku).first();
+  if (!existing) return json(404, { ok: false, error: 'Producto no encontrado' });
+
+  try {
+    await env.BOG_MENU_DB.prepare('DELETE FROM product_ingredient_recipes_v2 WHERE product_sku = ?').bind(sku).run();
+  } catch (e) {
+    console.error('Error al limpiar recetas vinculadas:', e);
+  }
+
+  const deleteResult = await env.BOG_MENU_DB.prepare('DELETE FROM menu_items WHERE sku = ?').bind(sku).run();
+  if (!deleteResult.success) return json(500, { ok: false, error: 'No se pudo eliminar el producto de la base de datos' });
+
+  return json(200, { ok: true, sku });
+};
