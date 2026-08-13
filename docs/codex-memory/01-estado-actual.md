@@ -27,6 +27,10 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 
 ## Hito reciente - 2026-08-13
 
+- **Despliegue Exitoso a Producción Cloudflare Pages**:
+  - `burgers-exe`: `https://ae203d2c.burgers-exe.pages.dev` (Producción `https://burgers-exe.pages.dev`).
+  - `chekeo2-0`: `https://92a46261.chekeo2-0.pages.dev` (Producción `https://chekeo2-0.pages.dev`).
+  - **Smoke Tests**: `/api/menu-v2` (`source: d1`, 20 items, 5 cats) y `/api/tower-schedules` (2 torres) operando en vivo al 100%.
 - **PR #521 Mergeado en `preview`**: Fix de posicionamiento sticky de cabecera de categorías (`.catalog-category-sticky-header`) en **Public Order V2**:
   - **Causa raíz corregida**: Se cambió `overflow-x: hidden !important;` a `overflow-x: clip !important;` en `.catalog-shell` bajo media query móvil (<= 480px) para no destruir el contexto de scroll root (`window`) que requiere `position: sticky`.
   - **Scroll Margin Top**: Añadido `scroll-margin-top: calc(112px + env(safe-area-inset-top))` a `.catalog-grid` para alineación precisa de scroll al hacer click en las píldoras de categorías.
