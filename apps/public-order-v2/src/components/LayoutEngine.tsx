@@ -167,11 +167,55 @@ export function LayoutEngine({
             icon: dbBanner.badgeText ? "⭐" : "🍔",
             gradient: resolveBannerGradient(dbBanner.bgPreset, idx),
             action: () => {
-              if (dbBanner.ctaActionType === "category" && dbBanner.ctaTarget) {
-                if (onSelectCategory) onSelectCategory(dbBanner.ctaTarget);
+              const rawType = dbBanner.ctaActionType?.toLowerCase()?.trim();
+              const target = dbBanner.ctaTarget?.trim();
+
+              // 1. Navegación a Categorías (ej. "combos", "burgers", "bebidas", "menu", "all")
+              if (
+                rawType === "category" ||
+                rawType === "cat" ||
+                target === "combos" ||
+                target === "burgers" ||
+                target === "bebidas" ||
+                target === "menu" ||
+                target === "all"
+              ) {
+                const catKey = target && target !== "menu" ? target : "combos";
+                if (onSelectCategory) onSelectCategory(catKey);
                 document.getElementById("catalog-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
-              } else if (dbBanner.ctaActionType === "url" && dbBanner.ctaTarget) {
-                window.location.href = dbBanner.ctaTarget;
+                return;
+              }
+
+              // 2. Subpáginas Internas (ej. /tickets, /sorteo, etc.)
+              if (rawType === "page" || rawType === "internal" || (target && target.startsWith("/"))) {
+                if (target === "/menu" || target === "/") {
+                  document.getElementById("catalog-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                } else if (target) {
+                  window.location.href = target;
+                }
+                return;
+              }
+
+              // 3. Links Externos (ej. http://... o https://...)
+              if (
+                rawType === "url" ||
+                rawType === "external" ||
+                (target && (target.startsWith("http://") || target.startsWith("https://")))
+              ) {
+                if (target) window.open(target, "_blank", "noopener,noreferrer");
+                return;
+              }
+
+              // 4. Mensajes Toast explícitos
+              if (rawType === "toast" || rawType === "message") {
+                if (onAction) onAction(`TOAST:⭐|${target || dbBanner.title}`);
+                return;
+              }
+
+              // 5. Mapeo genérico por target
+              if (target) {
+                if (onSelectCategory) onSelectCategory(target);
+                document.getElementById("catalog-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
               } else if (onAction) {
                 onAction(`TOAST:⭐|${dbBanner.title}`);
               }
