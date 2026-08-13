@@ -6893,6 +6893,7 @@ html {
   gap: 1rem;
   max-width: 1120px;
   margin: 0 auto;
+  scroll-margin-top: calc(112px + env(safe-area-inset-top));
 }
 
 @media (min-width: 640px) {
@@ -9487,7 +9488,15 @@ html {
 
 /* ── Mobile-First Responsive Safety & Overflow Protections ── */
 @media (max-width: 480px) {
-  .catalog-shell,
+  .catalog-shell {
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    overflow-x: clip !important;
+  }
+
   .catalog-drawer,
   .catalog-checkout-drawer,
   .catalog-cart-drawer {
