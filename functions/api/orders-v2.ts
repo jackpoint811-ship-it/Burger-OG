@@ -660,7 +660,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       ...item.sideQuestExtras.map((extra) => extra.sku).filter((sku): sku is string => Boolean(sku)),
       ...item.comboBurgers.flatMap((burger) => burger.extras.map((extra) => extra.sku).filter((sku): sku is string => Boolean(sku)))
     ]);
-    const skus = [...new Set([...primarySkus, ...customizationSkus])];
+    const fallbackSkus = ['PAPAS_OG', 'OG', 'BBQ'];
+    const skus = [...new Set([...primarySkus, ...customizationSkus, ...fallbackSkus])];
     const catalogRows = await loadCatalogRows(env.BOG_MENU_DB, skus);
     const catalogBySku = new Map(catalogRows.map((row) => [row.sku, row]));
     for (const item of parsed.items) {
@@ -670,6 +671,24 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       }
       if (item.itemKind === 'combo' && item.qty !== 1) {
         return errorResponse(400, 'INVALID_ITEMS', 'Cada combo debe armarse individualmente.');
+      }
+      if (item.itemKind === 'combo' && !item.garnish) {
+        const defaultGarnish = catalogBySku.get('PAPAS_OG');
+        if (defaultGarnish && Number(defaultGarnish.is_available) === 1) {
+          item.garnish = { sku: defaultGarnish.sku, name: defaultGarnish.name, upcharge: 0 };
+        }
+      }
+      if (item.itemKind === 'combo' && (!item.comboBurgers || item.comboBurgers.length === 0)) {
+        const fallbackSku = item.sku === 'COMBO-BBQ' ? 'BBQ' : 'OG';
+        const defaultBurger = catalogBySku.get(fallbackSku);
+        if (defaultBurger) {
+          item.comboBurgers = [{
+            sku: defaultBurger.sku,
+            name: defaultBurger.name,
+            removedIngredients: [],
+            extras: [],
+          }];
+        }
       }
       const validExtras = [];
       for (const extra of item.extras) {

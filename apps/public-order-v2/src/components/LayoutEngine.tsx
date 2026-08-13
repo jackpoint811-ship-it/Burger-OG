@@ -78,6 +78,12 @@ export function LayoutEngine({
     if (item.isAvailable === false) return;
     const mappedProduct = mapMenuItemsToCatalogProducts([item], chekeoCategories)[0];
     if (mappedProduct && mappedProduct.isAvailable !== false) {
+      if (mappedProduct.type === "combo" || item.category === "combos") {
+        if (onProductSelect) {
+          onProductSelect(item);
+          return;
+        }
+      }
       addItem(mappedProduct, [], []);
       setPulsingItemIds((prev) => ({ ...prev, [item.sku]: true }));
       setTimeout(() => {
@@ -419,7 +425,7 @@ export function LayoutEngine({
         if (menuItem) {
           const mapped = mapMenuItemsToCatalogProducts([menuItem], chekeoCategories)[0];
           for (let i = 0; i < cartItem.qty; i++) {
-            if (mapped) addItem(mapped, cartItem.mods);
+            if (mapped) addItem(mapped, cartItem.mods, cartItem.upgrades, cartItem.comboSide, cartItem.comboBurgers);
           }
         }
       });

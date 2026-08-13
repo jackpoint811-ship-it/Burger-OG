@@ -113,11 +113,25 @@ Garantizar que la aplicación pública jamás vuelva a sufrir un congelamiento d
 - Cero inconsistencias de tipos MIME por HTMLs cacheados en CDN.
 3. **Manejo de errores no bloqueante**: La app pública debe ofrecer reintentos limpios y fallbacks seguros antes de mostrar pantallas de error totales al usuario final.
 
+### Fecha
+
+2026-08-13
+
+### Decisión
+
+**Intercepción Obligatoria de Quick Add para Combos y Fallbacks Defensivos en Checkout / Backend**:
+
+1. **Intercepción de Quick Add para Combos (`LayoutEngine.tsx`)**: Al hacer click en el botón `+` (Quick Add) de un combo, la app pública debe abrir el Drawer de Producto (`onProductSelect(item)`) en lugar de agregarlo directamente vacío. Esto garantiza que el cliente elija explícitamente su guarnición (Papas OG, Aros, etc.) y burger.
+2. **Preservación en 1-Click Reorder (`LayoutEngine.tsx`)**: El reordenar 1-click debe pasar íntegramente `upgrades`, `comboSide` y `comboBurgers` a `addItem`.
+3. **Fallback Defensivo en Checkout y Backend (`CatalogCheckoutDrawer.tsx`, `orders-v2.ts`)**: Si por cualquier excepción un combo llega a checkout o a la API sin `comboSide` / `garnish` o sin `comboBurgers`, se asignan por defecto `PAPAS_OG` (Papas OG) y la burger principal del combo en lugar de enviar `null` o listas vacías.
+4. **Claridad en Cocina (`kitchen-helpers.ts`)**: Si existiese algún pedido antiguo sin guarnición, la cola de cocina rotula explícitamente `Papas OG (Guarnición estándar)` en lugar de un genérico confuso.
+
 ### Motivo
 
-En el PR #485 (`pr480-clean-v3`), la remoción de los fallbacks de `loadMenuV2()` y el lanzamiento de excepciones no controladas causaron que latencias de borde en `/api/menu-v2` dejaran inoperable la página pública de producción con la pantalla "No se pudo cargar el menú".
+Evitar que combos agregados vía Quick Add se registren sin guarnición ni burger en D1, lo cual causaba que en cocina el Side Quest se mostrara como "Guarnición estándar" o "Guarnición regular" sin especificar qué papas preparar (incidente `PB-I8319`).
 
 ### Impacto
 
-- Regla activa de resiliencia documentada en `docs/codex-memory/07-decisiones.md`, `09-checklists.md` y `19-risk-hardening-plan.md`.
-- Todo PR que afecte la capa de datos pública debe validar la tolerancia a fallas y cold-starts de API.
+- Cero pedidos de combo con `garnish: null` o `comboBurgers: []`.
+- Experiencia de compra guiada al armar combos desde cualquier botón `+` de la interfaz.
+- Consistencia total de tickets, cocina y D1.

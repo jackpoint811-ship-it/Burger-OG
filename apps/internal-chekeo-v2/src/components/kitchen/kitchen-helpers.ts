@@ -564,7 +564,7 @@ export const buildKitchenProductionItems = (
               id: `${order.id}-${lineKey}-sidequest-combo-default`,
               lane: "sideQuest",
               itemLabel: "Side Quest",
-              detailLabel: "Guarnición estándar",
+              detailLabel: "Papas OG (Guarnición estándar)",
             });
           }
         } else if (hasSideQuestWork(item)) {
