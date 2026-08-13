@@ -70,9 +70,9 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
 
   const [step, setStep] = useState<1 | 2>(1);
 
-  const [location, setLocation] = useState<"Torre GGA" | "Torre Valcob">((): any => {
+  const [location, setLocation] = useState<string>(() => {
     try {
-      return (localStorage.getItem("pov2-customer-location") as any) || "Torre GGA";
+      return localStorage.getItem("pov2-customer-location") || (towers && towers[0] ? towers[0].towerName : "Torre GGA");
     } catch {
       return "Torre GGA";
     }
@@ -101,16 +101,20 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
   const [checkoutState, setCheckoutState] = useState<CheckoutState>({ status: "idle" });
 
   const towerStatus = useMemo(() => getTowerStatus(towers), [towers]);
-  const isGgaActiveToday = towerStatus.gga.active;
-  const isValcobActiveToday = towerStatus.valcob.active;
 
-  const isSelectedLocationActive =
-    (location === "Torre GGA" && isGgaActiveToday) ||
-    (location === "Torre Valcob" && isValcobActiveToday);
+  const activeTowersList = useMemo(() => {
+    return towerStatus.towersList;
+  }, [towerStatus]);
+
+  const selectedTowerInfo = useMemo(() => {
+    return activeTowersList.find((t) => t.name === location || t.key === location) || activeTowersList[0];
+  }, [activeTowersList, location]);
+
+  const isSelectedLocationActive = selectedTowerInfo?.active ?? false;
+  const deliveryTimeDisplay = selectedTowerInfo?.deliveryLabel || "1:30 PM";
 
   const [dateMode, setDateMode] = useState<"today" | "scheduled">(() => {
-    const active = (location === "Torre GGA" && isGgaActiveToday) || (location === "Torre Valcob" && isValcobActiveToday);
-    return active ? "today" : "scheduled";
+    return isSelectedLocationActive ? "today" : "scheduled";
   });
 
   const minScheduledDate = useMemo(() => {
@@ -120,13 +124,12 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
   const [scheduledDate, setScheduledDate] = useState<string>(minScheduledDate);
 
   useEffect(() => {
-    const active = (location === "Torre GGA" && isGgaActiveToday) || (location === "Torre Valcob" && isValcobActiveToday);
     const nextDate = getNextAvailableDeliveryDate(location, towers);
     setScheduledDate(nextDate);
-    if (!active) {
+    if (!isSelectedLocationActive) {
       setDateMode("scheduled");
     }
-  }, [location, isGgaActiveToday, isValcobActiveToday, towers]);
+  }, [location, isSelectedLocationActive, towers]);
 
   const shouldReduceMotion = useReducedMotion();
 
@@ -567,31 +570,27 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
                     </ul>
                   </div>
 
-                  {/* 📍 SELECCIONA LA UBICACIÓN (2 botones: Torre GGA / Torre Valcob) */}
+                  {/* 📍 SELECCIONA LA UBICACIÓN */}
                   <div className="catalog-checkout-field">
                     <span id="location-label">Selecciona la ubicación *</span>
                     <div className="catalog-checkout-location-grid">
-                      <button
-                        type="button"
-                        className={`catalog-checkout-location-btn ${location === "Torre GGA" ? "catalog-checkout-location-btn--active" : ""}`}
-                        onClick={() => setLocation("Torre GGA")}
-                      >
-                        🏢 Torre GGA {isGgaActiveToday ? "🟢" : "⚪"}
-                      </button>
-                      <button
-                        type="button"
-                        className={`catalog-checkout-location-btn ${location === "Torre Valcob" ? "catalog-checkout-location-btn--active" : ""}`}
-                        onClick={() => setLocation("Torre Valcob")}
-                      >
-                        🏢 Torre Valcob {isValcobActiveToday ? "🟢" : "⚪"}
-                      </button>
+                      {activeTowersList.map((t) => (
+                        <button
+                          key={t.key || t.name}
+                          type="button"
+                          className={`catalog-checkout-location-btn ${location === t.name ? "catalog-checkout-location-btn--active" : ""}`}
+                          onClick={() => setLocation(t.name)}
+                        >
+                          {t.emoji} {t.name} {t.active ? "🟢" : "⚪"}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
-                  {/* ⏰ FECHA Y HORARIO DE ENTREGA (Fijo 1:30 PM + Programar fecha futura) */}
+                  {/* ⏰ FECHA Y HORARIO DE ENTREGA */}
                   <div className="catalog-checkout-field">
                     <div className="catalog-checkout-fixed-time-banner">
-                      <span>⏰ Horario de entrega único: <strong>1:30 PM</strong> (Fijo todos los días)</span>
+                      <span>⏰ Horario de entrega: <strong>{deliveryTimeDisplay}</strong> (Fijo todos los días)</span>
                     </div>
 
                     <div className="catalog-checkout-date-grid">
@@ -602,7 +601,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
                           if (isSelectedLocationActive) setDateMode("today");
                         }}
                       >
-                        ⚡ Entregar Hoy (1:30 PM) {!isSelectedLocationActive && "❌"}
+                        ⚡ Entregar Hoy ({deliveryTimeDisplay}) {!isSelectedLocationActive && "❌"}
                       </button>
                       <button
                         type="button"
