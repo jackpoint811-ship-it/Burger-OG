@@ -45,8 +45,7 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - **Smoke Tests Post-Deploy**:
     - `/api/menu-v2` (`source: d1`, 20 items, 5 categorías) ➡️ `200 OK`.
     - `/api/tower-schedules` (2 torres: GGA y Valcob) ➡️ `200 OK`.
-    - `/api/internal-v2-auth/status` (`authenticated: false`) ➡️ `200 OK`.
-  - **PR #524 Creado para Main**: `https://github.com/jackpoint811-ship-it/Burgers-exe/pull/524` promovido desde `preview`.
+  - **PR #524 Mergeado en Main (Producción Oficial)**: `https://github.com/jackpoint811-ship-it/Burgers-exe/pull/524` promovido exitosamente desde `preview` a `main`.
 - **PR #521 Mergeado en `preview`**: Fix de posicionamiento sticky de cabecera de categorías (`.catalog-category-sticky-header`) en **Public Order V2**:
   - **Causa raíz corregida**: Se cambió `overflow-x: hidden !important;` a `overflow-x: clip !important;` en `.catalog-shell` bajo media query móvil (<= 480px) para no destruir el contexto de scroll root (`window`) que requiere `position: sticky`.
   - **Scroll Margin Top**: Añadido `scroll-margin-top: calc(112px + env(safe-area-inset-top))` a `.catalog-grid` para alineación precisa de scroll al hacer click en las píldoras de categorías.
