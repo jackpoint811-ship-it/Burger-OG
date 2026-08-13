@@ -1,5 +1,4 @@
-import { menuItems } from "@config/mock-data";
-import type { OrderV2ItemKind } from "@config/index";
+import { resolveCatalogAssetUrl, type OrderV2ItemKind } from "@config/index";
 import type {
   KitchenItemKind,
   KitchenLocalBreakdownItem,
@@ -131,32 +130,31 @@ export const getKitchenItemLabel = (item: KitchenOrderItem) => {
   return "Burger";
 };
 
-export const getKitchenItemImage = (itemName: string): string | undefined => {
-  // Try exact match
-  let matched = menuItems.find(
+type CatalogImageItem = { name: string; imageUrl?: string; imageKey?: string };
+
+export const getKitchenItemImage = (itemName: string, items?: CatalogImageItem[]): string | undefined => {
+  if (!items || !items.length) return undefined;
+
+  let matched = items.find(
     (m) => m.name.toLowerCase() === itemName.toLowerCase()
   );
   
-  // Try partial match if no exact match
   if (!matched) {
     const cleanName = itemName.toLowerCase()
       .replace("burger", "")
       .replace("combo", "")
       .trim();
       
-    matched = menuItems.find((m) => 
+    matched = items.find((m) =>
       m.name.toLowerCase().includes(cleanName)
     );
   }
 
-  // Fallbacks based on category/name if not found in menuItems
   if (!matched) {
-    if (itemName.toLowerCase().includes("papas") || itemName.toLowerCase().includes("fries")) return "/placeholders/fries-classic.jpg";
-    if (itemName.toLowerCase().includes("aros")) return "/placeholders/onion-rings.jpg";
-    if (itemName.toLowerCase().includes("burger")) return "/placeholders/burger-og.jpg";
+    return undefined;
   }
 
-  return matched?.imageUrl;
+  return resolveCatalogAssetUrl(matched.imageUrl, matched.imageKey);
 };
 
 export const getKitchenItemNotes = (item: KitchenOrderItem) => {
@@ -566,7 +564,7 @@ export const buildKitchenProductionItems = (
               id: `${order.id}-${lineKey}-sidequest-combo-default`,
               lane: "sideQuest",
               itemLabel: "Side Quest",
-              detailLabel: "Papas Clásicas",
+              detailLabel: "Guarnición estándar",
             });
           }
         } else if (hasSideQuestWork(item)) {

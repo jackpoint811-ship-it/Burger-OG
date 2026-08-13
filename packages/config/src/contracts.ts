@@ -105,6 +105,14 @@ export type SiteConfig = {
   supportPhone: string;
   heroCta: string;
   notice: string;
+  bankPaymentConfig?: {
+    bankName: string;
+    accountHolder: string;
+    clabe: string;
+    editable?: boolean;
+    cardHolder?: string;
+  };
+  whatsappTemplates?: Record<string, string>;
   updatedAt?: string;
 };
 

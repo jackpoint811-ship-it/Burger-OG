@@ -449,10 +449,10 @@ p {
 }
 .window-tabs button.active,
 .terminal-button:not(:disabled) {
-  background: linear-gradient(135deg, var(--neon), #9affc4);
-  color: #021207;
+  background: var(--color-accent);
+  color: var(--color-text-on-accent);
   border-color: transparent;
-  box-shadow: 0 0 24px rgba(57, 255, 136, 0.2);
+  box-shadow: var(--shadow-cta);
 }
 .window-tabs button:disabled,
 .terminal-button:disabled {

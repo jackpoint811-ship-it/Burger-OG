@@ -777,8 +777,6 @@ export function LayoutEngine({
       ? chekeoItems.filter((i) => i.category !== "extras")
       : chekeoItems.filter((i) => i.category === activeCategoryKey);
 
-    const fallbackBadges = ["🔥 TOP 1", "2x1 FLASH", "ULTRA", "CRISPY", "REFRESH"];
-
     const activeCategoryObj = chekeoCategories.find((c) => c.key === activeCategoryKey);
     const selectedCategoryName = (activeCategoryKey === "all" || !activeCategoryKey)
       ? "Todo"
@@ -820,7 +818,7 @@ export function LayoutEngine({
           }}
         >
           {filteredItems.map((item, idx) => {
-            const badgeText = item.badge || item.promoLabel || fallbackBadges[idx % fallbackBadges.length];
+            const badgeText = item.badge || item.promoLabel;
             const assetUrl = resolveCatalogAssetUrl(item.imageUrl, item.imageKey);
 
             return (
@@ -846,25 +844,27 @@ export function LayoutEngine({
                 onClick={() => onProductSelect && onProductSelect(item)}
               >
                 {/* Top-left green badge pill */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "10px",
-                    left: "10px",
-                    zIndex: 10,
-                    backgroundColor: "var(--color-accent-soft)",
-                    color: "var(--color-accent)",
-                    border: "1px solid var(--color-accent-line)",
-                    fontSize: "9px",
-                    fontFamily: "'Inter', sans-serif",
-                    fontWeight: 800,
-                    padding: "3px 7px",
-                    borderRadius: "6px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {badgeText}
-                </div>
+                {badgeText && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "10px",
+                      left: "10px",
+                      zIndex: 10,
+                      backgroundColor: "var(--color-accent-soft)",
+                      color: "var(--color-accent)",
+                      border: "1px solid var(--color-accent-line)",
+                      fontSize: "9px",
+                      fontFamily: "'Inter', sans-serif",
+                      fontWeight: 800,
+                      padding: "3px 7px",
+                      borderRadius: "6px",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {badgeText}
+                  </div>
+                )}
 
                 {/* Badge Qty */}
                 {(() => {
