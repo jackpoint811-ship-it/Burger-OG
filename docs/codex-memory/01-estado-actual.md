@@ -27,6 +27,18 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 
 ## Hito reciente - 2026-08-13
 
+- **Refactor Integral de Branding, Color, UX/UI y Calendario Horizontal en Chekeo V2 (Rama `preview`)**:
+  - **Erradicación Total Legacy & Hardcodeado**: Eliminadas todas las clases de estética anterior (`bg-black`, `border-cyan-400`, `text-violet-100`, `bg-zinc-950`, `text-zinc-50`) en `InternalChekeoApp.tsx`, `HorizontalDateCalendarFilter.tsx`, `RafflesAdminPanel.tsx`, `KitchenQueue.tsx`, `KitchenSummaryK.tsx`, `StoreBannersTool.tsx`, `InternalV2ErrorBoundary.tsx` y `styles.css`.
+  - **Unificación de Tokens Semánticos**: Toda la app ahora consume variables `:root` / `.theme-dark` (`--color-surface`, `--color-surface-raised`, `--color-accent`, `--color-accent-soft`, `--color-text-primary`, `--color-text-secondary`, `--color-text-muted`, `--color-line`, `--shadow-card`, `--shadow-panel`).
+  - **Filtro Estricto de Calendario Horizontal**:
+    - "Ver Todos" (`all`): Muestra exclusivamente pedidos de **Hoy y futuros** (`targetDateStr >= todayStr`).
+    - "Anteriores" (`past`): Filtra pedidos de **fechas pasadas** (`targetDateStr < todayStr`).
+    - Píldoras de fecha individual: `YYYY-MM-DD` y `today`.
+    - Conteo semántico de pendientes futuros vs pasados (`totalPendingUpcoming` vs `pastPendingCount`).
+    - Controles de desplazamiento lateral (botones de navegación y auto-scroll centrado con `scrollIntoView`).
+  - **Estética Burgers.exe Premium Casual**: Light mode cálido con tarjetas blancas y acento Verde Bosque (`#16A34A`), Dark mode Slate/Carbón limpio (`#121212` / `#1E1E1E`), bordes sutiles y sombras de elevación.
+  - **Limpieza de Iconografía**: Reemplazados emojis por iconos SVG semánticos de Lucide (`Clock`, `Calendar`, `ChevronLeft`, `ChevronRight`, `Filter`, etc.).
+  - **Checks 100% en Verde**: `git diff --check`, `npm run typecheck`, `npm run build:internal` y `npm run build:public` completados sin errores.
 - **Despliegue Exitoso a Producción Cloudflare Pages**:
   - `burgers-exe`: `https://ae203d2c.burgers-exe.pages.dev` (Producción `https://burgers-exe.pages.dev`).
   - `chekeo2-0`: `https://92a46261.chekeo2-0.pages.dev` (Producción `https://chekeo2-0.pages.dev`).

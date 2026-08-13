@@ -38,19 +38,19 @@ const SummaryMetric = ({
   label: string;
   value: string | number;
 }) => (
-  <Card className="border-cyan-300 dark:border-cyan-500/20 bg-white dark:bg-zinc-950 p-4">
-    <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-600 dark:text-zinc-400">
+  <Card className="border border-[var(--color-line)] bg-[var(--color-surface)] p-4 shadow-sm">
+    <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
       {label}
     </p>
-    <p className="mt-2 text-3xl font-black text-cyan-900 dark:text-cyan-100">
+    <p className="mt-2 text-3xl font-black text-[var(--color-text-primary)]">
       {value}
     </p>
   </Card>
 );
 
 const KitchenEmptyState = ({ title }: { title: string }) => (
-  <Card className="border-dashed border-zinc-700/90 p-5 text-center">
-    <p className="text-base font-black text-zinc-900 dark:text-zinc-100">{title}</p>
+  <Card className="border-dashed border-[var(--color-line)] p-5 text-center bg-[var(--color-surface-raised)]">
+    <p className="text-base font-black text-[var(--color-text-primary)]">{title}</p>
   </Card>
 );
 
@@ -144,18 +144,18 @@ export const KitchenSummaryK = ({
       </div>
 
       {loading ? (
-        <Card className="border-cyan-300 dark:border-cyan-500/20 bg-white dark:bg-zinc-950 p-4">
-          <p className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">
+        <Card className="border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
             Cargando Resumen K...
           </p>
         </Card>
       ) : null}
 
       {error ? (
-        <Card className="border-rose-400/30 bg-rose-50 dark:bg-rose-950/30 p-4">
-          <p className="text-sm font-bold text-rose-100">{error}</p>
+        <Card className="border border-rose-500/30 bg-rose-500/10 p-4">
+          <p className="text-sm font-bold text-rose-800 dark:text-rose-200">{error}</p>
           <Button
-            className="mt-3 border border-rose-300/30 bg-white dark:bg-zinc-950"
+            className="mt-3 border border-rose-500/40 bg-[var(--color-surface)] text-rose-800 dark:text-rose-200"
             onClick={load}
           >
             Reintentar
@@ -164,8 +164,8 @@ export const KitchenSummaryK = ({
       ) : null}
 
       {summary && !summary.hasRecipes ? (
-        <Card className="border-amber-400/30 bg-amber-50 dark:bg-amber-950/20 p-4">
-          <p className="text-sm font-bold text-amber-100">
+        <Card className="border border-amber-500/30 bg-amber-500/10 p-4">
+          <p className="text-sm font-bold text-amber-800 dark:text-amber-200">
             Configura recetas aproximadas en Chekeo para desbloquear el cálculo
             de ingredientes.
           </p>
@@ -175,8 +175,8 @@ export const KitchenSummaryK = ({
       {summary ? (
         <>
           <div className="grid gap-4 lg:grid-cols-2">
-            <Card className="border-emerald-300 dark:border-emerald-500/20 bg-white dark:bg-zinc-950 p-4">
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-200">
+            <Card className="border border-[var(--color-line)] bg-[var(--color-surface)] p-4 shadow-sm">
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-[var(--color-accent)]">
                 {orderEnvironmentLabel[environment]} · burgers
               </h3>
               <div className="mt-3 space-y-2">
@@ -195,8 +195,8 @@ export const KitchenSummaryK = ({
                 )}
               </div>
             </Card>
-            <Card className="border-amber-300 dark:border-amber-500/20 bg-white dark:bg-zinc-950 p-4">
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-amber-200">
+            <Card className="border border-[var(--color-line)] bg-[var(--color-surface)] p-4 shadow-sm">
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-amber-700 dark:text-amber-300">
                 {orderEnvironmentLabel[environment]} · guarniciones
               </h3>
               <div className="mt-3 space-y-2">
@@ -216,8 +216,8 @@ export const KitchenSummaryK = ({
               </div>
             </Card>
           </div>
-          <Card className="border-cyan-300 dark:border-cyan-500/20 bg-white dark:bg-zinc-950 p-4">
-            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-cyan-200">
+          <Card className="border border-[var(--color-line)] bg-[var(--color-surface)] p-4 shadow-sm">
+            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-[var(--color-accent)]">
               Ingredientes estimados
             </h3>
             <div className="mt-3 space-y-2">
@@ -228,20 +228,20 @@ export const KitchenSummaryK = ({
                     className="kitchen-ingredient-row"
                   >
                     <div>
-                      <p className="font-bold text-zinc-900 dark:text-zinc-100">
+                      <p className="font-bold text-[var(--color-text-primary)]">
                         {ingredient.name}
                       </p>
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                      <p className="text-xs text-[var(--color-text-secondary)]">
                         Precio unitario:{" "}
                         {ingredient.unitPriceCents == null
                           ? "—"
                           : formatCurrency(ingredient.unitPriceCents / 100)}
                       </p>
                     </div>
-                    <p className="font-black text-cyan-900 dark:text-cyan-100">
+                    <p className="font-black text-[var(--color-accent)]">
                       {ingredient.quantity.toFixed(2)} {ingredient.unit}
                     </p>
-                    <p className="font-black text-emerald-700 dark:text-emerald-200">
+                    <p className="font-black text-emerald-700 dark:text-emerald-300">
                       {ingredient.estimatedCostCents == null
                         ? "—"
                         : formatCurrency(ingredient.estimatedCostCents / 100)}

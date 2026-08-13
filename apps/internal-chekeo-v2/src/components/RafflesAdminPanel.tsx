@@ -197,28 +197,28 @@ const RaffleShareImageModal = ({ data, onClose }: { data: RaffleShareImageData; 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="raffle-share-title">
-      <div className="max-h-[96vh] w-full max-w-5xl overflow-y-auto rounded-t-3xl border border-emerald-400/30 bg-zinc-950 p-4 shadow-2xl shadow-emerald-950/40 sm:rounded-3xl sm:p-5">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="raffle-share-title">
+      <div className="max-h-[96vh] w-full max-w-5xl overflow-y-auto rounded-t-3xl border border-[var(--color-line)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-panel)] sm:rounded-3xl sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-200">Imagen para compartir</p>
-            <h3 id="raffle-share-title" className="text-xl font-black text-zinc-50">Imagen para WhatsApp</h3>
-            <p className="mt-1 text-xs text-zinc-400">WhatsApp no permite adjuntar imagen automáticamente desde este botón. Descarga la imagen y adjúntala manualmente.</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.25em] text-[var(--color-accent)]">Imagen para compartir</p>
+            <h3 id="raffle-share-title" className="text-xl font-black text-[var(--color-text-primary)]">Imagen para WhatsApp</h3>
+            <p className="mt-1 text-xs text-[var(--color-text-secondary)]">WhatsApp no permite adjuntar imagen automáticamente desde este botón. Descarga la imagen y adjúntala manualmente.</p>
           </div>
-          <Button type="button" className="border border-zinc-700 px-3 py-2 text-sm" onClick={onClose}>Cerrar</Button>
+          <Button type="button" className="border border-[var(--color-line)] bg-[var(--color-surface-raised)] px-3 py-2 text-sm text-[var(--color-text-primary)]" onClick={onClose}>Cerrar</Button>
         </div>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]">
-          <div className="rounded-2xl border border-zinc-800 bg-black p-3">
-            {loadingImage ? <div className="grid min-h-[380px] place-items-center text-sm font-bold text-emerald-200">Generando imagen…</div> : null}
+          <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+            {loadingImage ? <div className="grid min-h-[380px] place-items-center text-sm font-bold text-[var(--color-accent)]">Generando imagen…</div> : null}
             {!loadingImage && previewUrl ? <img src={previewUrl} alt={`Imagen de tickets de ${data.customerName}`} className="mx-auto max-h-[72vh] w-full rounded-xl object-contain" /> : null}
-            {!loadingImage && !previewUrl ? <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-100">No se pudo mostrar la imagen.</div> : null}
+            {!loadingImage && !previewUrl ? <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-800 dark:text-rose-200">No se pudo mostrar la imagen.</div> : null}
           </div>
 
           <div className="space-y-3">
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-3">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">Datos incluidos</p>
-              <div className="mt-2 grid gap-2 text-sm text-zinc-200 sm:grid-cols-2">
+            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Datos incluidos</p>
+              <div className="mt-2 grid gap-2 text-sm text-[var(--color-text-primary)] sm:grid-cols-2">
                 <span>Nombre: <strong>{data.customerName}</strong></span>
                 <span>Teléfono: <strong>{data.customerPhoneMasked}</strong></span>
                 <span>Base tickets: <strong>{data.baseTickets}</strong></span>
@@ -231,15 +231,15 @@ const RaffleShareImageModal = ({ data, onClose }: { data: RaffleShareImageData; 
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2">
-              <Button type="button" className="bg-emerald-400 px-4 py-3 font-black text-emerald-950 disabled:opacity-50" disabled={!blob || loadingImage} onClick={downloadImage}>Descargar PNG</Button>
-              <Button type="button" className="border border-cyan-400/40 bg-cyan-400/10 px-4 py-3 font-black text-cyan-100" onClick={() => void copyText()}>Copiar texto</Button>
-              <Button type="button" className="border border-emerald-500/40 bg-zinc-900 px-4 py-3 font-black text-emerald-100" onClick={openWhatsApp}>Abrir WhatsApp</Button>
-              {canShareFiles ? <Button type="button" className="border border-violet-400/40 bg-violet-400/10 px-4 py-3 font-black text-violet-100 disabled:opacity-50" disabled={!blob || loadingImage} onClick={() => void shareImage()}>Compartir imagen</Button> : null}
+              <Button type="button" className="bg-[var(--color-accent)] hover:opacity-90 px-4 py-3 font-black text-white disabled:opacity-50" disabled={!blob || loadingImage} onClick={downloadImage}>Descargar PNG</Button>
+              <Button type="button" className="border border-[var(--color-line)] bg-[var(--color-surface-raised)] hover:bg-[var(--color-surface)] px-4 py-3 font-black text-[var(--color-text-primary)]" onClick={() => void copyText()}>Copiar texto</Button>
+              <Button type="button" className="border border-[var(--color-accent)]/40 bg-[var(--color-accent-soft)] px-4 py-3 font-black text-[var(--color-accent)]" onClick={openWhatsApp}>Abrir WhatsApp</Button>
+              {canShareFiles ? <Button type="button" className="border border-[var(--color-line)] bg-[var(--color-surface-raised)] px-4 py-3 font-black text-[var(--color-text-primary)] disabled:opacity-50" disabled={!blob || loadingImage} onClick={() => void shareImage()}>Compartir imagen</Button> : null}
             </div>
 
-            {!canShareFiles ? <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-100">Compartir imagen no está disponible en este navegador. Descarga la imagen y compártela manualmente.</p> : null}
-            {actionMessage ? <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-100">{actionMessage}</p> : null}
-            {shareError ? <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-100">{shareError}</p> : null}
+            {!canShareFiles ? <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-200">Compartir imagen no está disponible en este navegador. Descarga la imagen y compártela manualmente.</p> : null}
+            {actionMessage ? <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-800 dark:text-emerald-200">{actionMessage}</p> : null}
+            {shareError ? <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-800 dark:text-rose-200">{shareError}</p> : null}
             <textarea className="input min-h-44 text-sm" readOnly value={shareText} aria-label="Texto para WhatsApp" />
           </div>
         </div>
@@ -265,8 +265,8 @@ const ParticipantList = ({
 }) => (
   <Card className="p-3">
     <div className="flex items-center justify-between gap-3">
-      <h3 className="text-sm font-black text-zinc-100">{title}</h3>
-      <span className="rounded-full border border-zinc-800 bg-zinc-900/70 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-400">
+      <h3 className="text-sm font-black text-[var(--color-text-primary)]">{title}</h3>
+      <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface-raised)] px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
         {participants.length} participante{participants.length === 1 ? "" : "s"}
       </span>
     </div>
@@ -275,56 +275,56 @@ const ParticipantList = ({
         const baseTickets = participant.burgerTickets + participant.referralTickets;
         const isSelected = selectedKey === participant.participantKey;
         const statusLabel = participant.totalTickets > 0 ? "Elegible" : "No elegible";
-        const statusClass = participant.totalTickets > 0 ? "border-emerald-400/40 text-emerald-200" : "border-zinc-700 text-zinc-400";
+        const statusClass = participant.totalTickets > 0 ? "border-emerald-400/40 text-emerald-700 dark:text-emerald-300" : "border-[var(--color-line)] text-[var(--color-text-muted)]";
         return (
           <article
             key={participant.participantKey}
-            className={`rounded-2xl border p-3 ${isSelected ? "border-emerald-400/50 bg-emerald-400/10" : "border-zinc-800 bg-zinc-950/70"}`}
+            className={`rounded-2xl border p-3 ${isSelected ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)]" : "border-[var(--color-line)] bg-[var(--color-surface)]"}`}
           >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="min-w-0 text-sm font-black text-zinc-50">{participant.customerName}</p>
+                  <p className="min-w-0 text-sm font-black text-[var(--color-text-primary)]">{participant.customerName}</p>
                   <StatusPill className={statusClass}>{statusLabel}</StatusPill>
                   {participant.referralCode ? (
-                    <StatusPill className={participant.referralCodeIsActive ? "border-cyan-400/40 text-cyan-200" : "border-zinc-700 text-zinc-400"}>
+                    <StatusPill className={participant.referralCodeIsActive ? "border-[var(--color-accent)]/40 text-[var(--color-accent)]" : "border-[var(--color-line)] text-[var(--color-text-muted)]"}>
                       {participant.referralCodeIsActive ? "Código activo" : "Código inactivo"}
                     </StatusPill>
                   ) : null}
                 </div>
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-[var(--color-text-secondary)]">
                   {participant.customerPhoneMasked} · Último folio {participant.lastOrderFolio || "—"}
                 </p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-[var(--color-text-muted)]">
                   Último cambio: {formatDateTime(participant.lastAdjustmentAt || participant.lastOrderAt)}
                 </p>
-                {participant.referralCode ? <p className="text-xs text-cyan-100">Código: {participant.referralCode}</p> : null}
-                {participant.lastAdjustmentReason ? <p className="text-xs text-amber-100">Último ajuste: {participant.lastAdjustmentReason}</p> : null}
+                {participant.referralCode ? <p className="text-xs text-[var(--color-accent)]">Código: {participant.referralCode}</p> : null}
+                {participant.lastAdjustmentReason ? <p className="text-xs text-amber-700 dark:text-amber-300">Último ajuste: {participant.lastAdjustmentReason}</p> : null}
               </div>
               <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
                 <div className="text-right">
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">Tickets totales</p>
-                  <strong className="block text-3xl font-black text-emerald-300">{participant.totalTickets}</strong>
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Tickets totales</p>
+                  <strong className="block text-3xl font-black text-[var(--color-accent)]">{participant.totalTickets}</strong>
                 </div>
-                <Button type="button" className="border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-black text-emerald-100" onClick={() => onAddTickets(participant)}>+ tickets</Button>
+                <Button type="button" className="border border-[var(--color-accent)]/40 bg-[var(--color-accent-soft)] px-3 py-2 text-xs font-black text-[var(--color-accent)]" onClick={() => onAddTickets(participant)}>+ tickets</Button>
               </div>
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
-              <span className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-center text-[11px] font-bold text-zinc-200">Base: {baseTickets}</span>
-              <span className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3 py-2 text-center text-[11px] font-bold text-cyan-100">Extra manual: {participant.manualExtraTickets}</span>
-              <span className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-center text-[11px] font-bold text-emerald-100">Total: {participant.totalTickets}</span>
+              <span className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] px-3 py-2 text-center text-[11px] font-bold text-[var(--color-text-secondary)]">Base: {baseTickets}</span>
+              <span className="rounded-xl border border-[var(--color-accent)]/30 bg-[var(--color-accent-soft)] px-3 py-2 text-center text-[11px] font-bold text-[var(--color-accent)]">Extra manual: {participant.manualExtraTickets}</span>
+              <span className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-center text-[11px] font-bold text-emerald-800 dark:text-emerald-200">Total: {participant.totalTickets}</span>
             </div>
             <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.14em]">
-              {participant.burgerTickets > 0 ? <span className="rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-zinc-200">Pedidos</span> : null}
-              {participant.referralTickets > 0 ? <span className="rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-zinc-200">Referidos</span> : null}
-              {participant.manualExtraTickets > 0 ? <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-1 text-cyan-100">Extras manuales</span> : null}
+              {participant.burgerTickets > 0 ? <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface-raised)] px-2.5 py-1 text-[var(--color-text-secondary)]">Pedidos</span> : null}
+              {participant.referralTickets > 0 ? <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface-raised)] px-2.5 py-1 text-[var(--color-text-secondary)]">Referidos</span> : null}
+              {participant.manualExtraTickets > 0 ? <span className="rounded-full border border-[var(--color-accent)]/30 bg-[var(--color-accent-soft)] px-2.5 py-1 text-[var(--color-accent)]">Extras manuales</span> : null}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button type="button" className="border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-black text-zinc-100" onClick={() => onSelect(participant)}>Ver</Button>
+              <Button type="button" className="border border-[var(--color-line)] bg-[var(--color-surface-raised)] px-3 py-2 text-xs font-black text-[var(--color-text-primary)]" onClick={() => onSelect(participant)}>Ver</Button>
             </div>
           </article>
         );
-      }) : <p className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 text-sm text-zinc-400">{empty}</p>}
+      }) : <p className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-4 text-sm text-[var(--color-text-muted)]">{empty}</p>}
     </div>
   </Card>
 );
@@ -738,9 +738,9 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
           <h4 className="font-black text-zinc-100">{options.title}</h4>
           <p className="text-xs text-zinc-500">Recomendado: {options.recommendation}. JPG, PNG, WebP o AVIF hasta 5 MB.</p>
         </div>
-        {options.currentKey ? <span className="break-all rounded-lg bg-zinc-900 px-2 py-1 text-[10px] text-zinc-400">{options.currentKey}</span> : null}
+        {options.currentKey ? <span className="break-all rounded-lg bg-[var(--color-surface-raised)] border border-[var(--color-line)] px-2 py-1 text-[10px] text-[var(--color-text-muted)]">{options.currentKey}</span> : null}
       </div>
-      <div className="mt-3 overflow-hidden rounded-xl border border-zinc-800 bg-black/40">
+      <div className="mt-3 overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-raised)]">
         {options.preview ? (
           <>
             <img
@@ -758,19 +758,19 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
             </div>
           </>
         ) : (
-          <div className="grid min-h-32 place-items-center px-4 py-8 text-center text-sm text-zinc-500">Sin imagen cargada.</div>
+          <div className="grid min-h-32 place-items-center px-4 py-8 text-center text-sm text-[var(--color-text-muted)]">Sin imagen cargada.</div>
         )}
       </div>
       <div className="mt-3 grid gap-2">
         <input className="input" type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={(event) => handleImageFileChange(options.kind, event)} disabled={options.state.uploading || !form.id} />
-        {options.state.file ? <p className="text-xs text-zinc-400">Listo para subir: {options.state.file.name}</p> : null}
+        {options.state.file ? <p className="text-xs text-[var(--color-text-muted)]">Listo para subir: {options.state.file.name}</p> : null}
         <div className="grid gap-2 sm:grid-cols-2">
-          <Button type="button" className="bg-emerald-400 px-4 py-3 font-black text-emerald-950 disabled:opacity-50" disabled={!form.id || !options.state.file || options.state.uploading} onClick={() => void uploadImage(options.kind)}>{options.state.uploading ? "Subiendo…" : "Subir"}</Button>
-          <Button type="button" className="border border-rose-500/40 bg-rose-500/10 px-4 py-3 font-black text-rose-100 disabled:opacity-50" disabled={!form.id || !options.preview || options.state.uploading} onClick={() => void removeImage(options.kind)}>Quitar</Button>
+          <Button type="button" className="bg-[var(--color-accent)] hover:opacity-90 px-4 py-3 font-black text-white disabled:opacity-50" disabled={!form.id || !options.state.file || options.state.uploading} onClick={() => void uploadImage(options.kind)}>{options.state.uploading ? "Subiendo…" : "Subir"}</Button>
+          <Button type="button" className="border border-rose-500/40 bg-rose-500/10 px-4 py-3 font-black text-rose-800 dark:text-rose-200 disabled:opacity-50" disabled={!form.id || !options.preview || options.state.uploading} onClick={() => void removeImage(options.kind)}>Quitar</Button>
         </div>
-        {!form.id ? <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-100">Primero guarda o selecciona un sorteo para habilitar uploads.</p> : null}
-        {options.state.error ? <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-100">{options.state.error}</p> : null}
-        {options.state.message ? <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">{options.state.message}</p> : null}
+        {!form.id ? <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">Primero guarda o selecciona un sorteo para habilitar uploads.</p> : null}
+        {options.state.error ? <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-800 dark:text-rose-200">{options.state.error}</p> : null}
+        {options.state.message ? <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200">{options.state.message}</p> : null}
       </div>
     </div>
   );
@@ -781,14 +781,14 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
         <Card className="p-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0">
-              <p className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-200">Sorteos</p>
-              <h2 className="mt-1 text-2xl font-black text-zinc-50">
+              <p className="text-[11px] font-black uppercase tracking-[0.25em] text-[var(--color-accent)]">Sorteos</p>
+              <h2 className="mt-1 text-2xl font-black text-[var(--color-text-primary)]">
                 {selectedCampaign?.title ?? "Sin campaña activa"}
               </h2>
-              <p className="mt-1 text-sm text-zinc-300">
+              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
                 {selectedCampaign?.description || "La campaña activa todavía no tiene descripción visible."}
               </p>
-              <p className="mt-2 text-xs text-zinc-500">
+              <p className="mt-2 text-xs text-[var(--color-text-muted)]">
                 {selectedCampaign ? `Actualizado: ${formatDateTime(selectedCampaign.updatedAt)}` : "Activa una campaña para ver participantes y ajustes."}
               </p>
             </div>
@@ -796,10 +796,10 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
               <StatusPill className={environmentMeta.badge}>
                 {environmentMeta.label} · {environmentMeta.helper}
               </StatusPill>
-              <StatusPill className={selectedCampaign?.isActive ? "border-emerald-400/40 text-emerald-200" : "border-zinc-700 text-zinc-400"}>
+              <StatusPill className={selectedCampaign?.isActive ? "border-emerald-400/40 text-emerald-700 dark:text-emerald-300" : "border-[var(--color-line)] text-[var(--color-text-muted)]"}>
                 {selectedCampaign?.isActive ? "Campaña activa" : "Sin campaña activa"}
               </StatusPill>
-              <Button className="border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs" onClick={() => void reload()} disabled={loading}>
+              <Button className="border border-[var(--color-line)] bg-[var(--color-surface-raised)] px-3 py-2 text-xs text-[var(--color-text-primary)]" onClick={() => void reload()} disabled={loading}>
                 {loading ? "Cargando…" : "Recargar"}
               </Button>
             </div>
@@ -807,44 +807,44 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
 
           {selectedCampaign ? (
             <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-3">
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-100">Premio visible</p>
-                <p className="mt-1 text-lg font-black text-zinc-50">{selectedCampaign.title}</p>
-                {selectedCampaign.rulesText ? <p className="mt-2 line-clamp-4 text-sm text-zinc-300">{selectedCampaign.rulesText}</p> : null}
+              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-800 dark:text-emerald-200">Premio visible</p>
+                <p className="mt-1 text-lg font-black text-[var(--color-text-primary)]">{selectedCampaign.title}</p>
+                {selectedCampaign.rulesText ? <p className="mt-2 line-clamp-4 text-sm text-[var(--color-text-secondary)]">{selectedCampaign.rulesText}</p> : null}
               </div>
               <div className="grid gap-2 min-[520px]:grid-cols-2 lg:grid-cols-1">
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
-                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">Ticket por burger</p>
-                  <strong className="mt-2 block text-2xl font-black text-emerald-200">{selectedCampaign.ticketPerBurger}</strong>
+                <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Ticket por burger</p>
+                  <strong className="mt-2 block text-2xl font-black text-emerald-700 dark:text-emerald-300">{selectedCampaign.ticketPerBurger}</strong>
                 </div>
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
-                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">Ticket por referido</p>
-                  <strong className="mt-2 block text-2xl font-black text-cyan-200">{selectedCampaign.ticketPerReferral}</strong>
+                <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Ticket por referido</p>
+                  <strong className="mt-2 block text-2xl font-black text-[var(--color-accent)]">{selectedCampaign.ticketPerReferral}</strong>
                 </div>
               </div>
             </div>
           ) : (
-            <p className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 text-sm text-zinc-400">
+            <p className="mt-4 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-4 text-sm text-[var(--color-text-muted)]">
               No hay campaña activa; el panel seguirá mostrando campañas históricas hasta que actives una.
             </p>
           )}
 
           <div className="mt-4 grid gap-2 min-[520px]:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">Participantes</p>
-              <strong className="mt-2 block text-2xl font-black text-cyan-200">{summary?.totalParticipants ?? 0}</strong>
+            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Participantes</p>
+              <strong className="mt-2 block text-2xl font-black text-[var(--color-accent)]">{summary?.totalParticipants ?? 0}</strong>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">Tickets base</p>
-              <strong className="mt-2 block text-2xl font-black text-emerald-200">{summary?.baseTickets ?? 0}</strong>
+            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Tickets base</p>
+              <strong className="mt-2 block text-2xl font-black text-emerald-700 dark:text-emerald-300">{summary?.baseTickets ?? 0}</strong>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">Tickets extra</p>
-              <strong className="mt-2 block text-2xl font-black text-cyan-200">{summary?.extraTickets ?? 0}</strong>
+            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Tickets extra</p>
+              <strong className="mt-2 block text-2xl font-black text-[var(--color-accent)]">{summary?.extraTickets ?? 0}</strong>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">Tickets totales</p>
-              <strong className="mt-2 block text-2xl font-black text-emerald-300">{summary?.totalTickets ?? 0}</strong>
+            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Tickets totales</p>
+              <strong className="mt-2 block text-2xl font-black text-emerald-700 dark:text-emerald-300">{summary?.totalTickets ?? 0}</strong>
             </div>
           </div>
         </Card>
@@ -1001,13 +1001,13 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
                 <input className="input mt-1" type="number" min="1" max="100" step="1" value={referralCodeForm.number} onChange={(event) => setReferralCodeForm((current) => ({ ...current, number: event.target.value }))} />
               </label>
             </div>
-            <Button className="bg-cyan-300 px-4 py-3 font-black text-cyan-950 disabled:opacity-50" disabled={saving || !selectedCampaign}>Crear código</Button>
+            <Button className="bg-[var(--color-accent)] hover:opacity-90 px-4 py-3 font-black text-white disabled:opacity-50" disabled={saving || !selectedCampaign}>Crear código</Button>
           </form>
           {generatedCode ? (
-            <div className="mt-3 rounded-xl border border-cyan-400/40 bg-cyan-400/10 p-3 text-center">
-              <p className="text-xs text-cyan-100">Código generado</p>
-              <strong className="text-2xl text-cyan-200">{generatedCode}</strong>
-              <Button type="button" className="mt-2 border border-cyan-400/40 px-3 py-2 text-xs" onClick={() => void navigator.clipboard?.writeText(generatedCode)}>Copiar código</Button>
+            <div className="mt-3 rounded-xl border border-[var(--color-accent)]/40 bg-[var(--color-accent-soft)] p-3 text-center">
+              <p className="text-xs text-[var(--color-text-secondary)]">Código generado</p>
+              <strong className="text-2xl text-[var(--color-accent)]">{generatedCode}</strong>
+              <Button type="button" className="mt-2 border border-[var(--color-accent)]/40 bg-[var(--color-surface)] px-3 py-2 text-xs text-[var(--color-accent)]" onClick={() => void navigator.clipboard?.writeText(generatedCode)}>Copiar código</Button>
             </div>
           ) : null}
           <label className="mt-3 block text-xs font-bold text-zinc-300">
@@ -1016,17 +1016,17 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
           </label>
           <div className="mt-3 space-y-2">
             {referralCodes.length ? referralCodes.map((code) => (
-              <div key={code.id} className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-3">
+              <div key={code.id} className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-black text-zinc-50">{code.code}</p>
-                    <p className="text-xs text-zinc-400">{code.ownerName} · {code.ownerPhoneMasked}</p>
+                    <p className="font-black text-[var(--color-text-primary)]">{code.code}</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">{code.ownerName} · {code.ownerPhoneMasked}</p>
                   </div>
-                  <StatusPill className={code.isActive ? "border-emerald-400/40 text-emerald-200" : "border-zinc-700 text-zinc-400"}>{code.isActive ? "Activo" : "Inactivo"}</StatusPill>
+                  <StatusPill className={code.isActive ? "border-emerald-400/40 text-emerald-700 dark:text-emerald-300" : "border-[var(--color-line)] text-[var(--color-text-muted)]"}>{code.isActive ? "Activo" : "Inactivo"}</StatusPill>
                 </div>
-                <Button type="button" className="mt-2 border border-zinc-700 px-3 py-2 text-xs" disabled={saving} onClick={() => void toggleReferralCode(code)}>{code.isActive ? "Desactivar" : "Activar"}</Button>
+                <Button type="button" className="mt-2 border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-xs text-[var(--color-text-primary)]" disabled={saving} onClick={() => void toggleReferralCode(code)}>{code.isActive ? "Desactivar" : "Activar"}</Button>
               </div>
-            )) : <p className="rounded-xl border border-zinc-800 p-3 text-sm text-zinc-400">Sin códigos para este sorteo.</p>}
+            )) : <p className="rounded-xl border border-[var(--color-line)] p-3 text-sm text-[var(--color-text-muted)]">Sin códigos para este sorteo.</p>}
           </div>
         </Card>
         ) : null}
@@ -1035,9 +1035,9 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
         <Card className="p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-200">Ajustes</p>
-              <h3 className="text-lg font-black text-zinc-50">Estado del módulo</h3>
-              <p className="mt-1 text-sm text-zinc-400">
+              <p className="text-[11px] font-black uppercase tracking-[0.25em] text-[var(--color-accent)]">Ajustes</p>
+              <h3 className="text-lg font-black text-[var(--color-text-primary)]">Estado del módulo</h3>
+              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
                 Reglas, fechas y activación se editan en Campaña. Este panel concentra el estado operativo para evitar mezclarlo con tickets manuales.
               </p>
             </div>
@@ -1046,20 +1046,20 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
             </StatusPill>
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-3">
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">Campaña</p>
-              <strong className="mt-2 block text-sm text-zinc-100">{selectedCampaign?.title ?? "Sin campaña"}</strong>
+            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Campaña</p>
+              <strong className="mt-2 block text-sm text-[var(--color-text-primary)]">{selectedCampaign?.title ?? "Sin campaña"}</strong>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">Ticket por burger</p>
-              <strong className="mt-2 block text-2xl font-black text-emerald-200">{selectedCampaign?.ticketPerBurger ?? "-"}</strong>
+            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Ticket por burger</p>
+              <strong className="mt-2 block text-2xl font-black text-emerald-700 dark:text-emerald-300">{selectedCampaign?.ticketPerBurger ?? "-"}</strong>
             </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">Ticket por referido</p>
-              <strong className="mt-2 block text-2xl font-black text-cyan-200">{selectedCampaign?.ticketPerReferral ?? "-"}</strong>
+            <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Ticket por referido</p>
+              <strong className="mt-2 block text-2xl font-black text-[var(--color-accent)]">{selectedCampaign?.ticketPerReferral ?? "-"}</strong>
             </div>
           </div>
-          <Button type="button" className="mt-4 border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs" onClick={() => setModule("campaign")}>
+          <Button type="button" className="mt-4 border border-[var(--color-line)] bg-[var(--color-surface-raised)] px-3 py-2 text-xs text-[var(--color-text-primary)]" onClick={() => setModule("campaign")}>
             Editar campaña
           </Button>
         </Card>
@@ -1104,27 +1104,27 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
         <Card className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-200">Detalle</p>
-              <h3 className="text-lg font-black text-zinc-50">
+              <p className="text-[11px] font-black uppercase tracking-[0.25em] text-[var(--color-accent)]">Detalle</p>
+              <h3 className="text-lg font-black text-[var(--color-text-primary)]">
                 {selectedParticipant ? selectedParticipant.customerName : "Selecciona un participante"}
               </h3>
               {selectedParticipant ? (
-                <p className="mt-1 text-xs text-zinc-400">
+                <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
                   {selectedParticipant.customerPhoneMasked} · Folio {selectedParticipant.lastOrderFolio || "—"} · {selectedParticipant.referralCode ? `Código ${selectedParticipant.referralCode}` : "Sin código"}
                 </p>
               ) : (
-                <p className="mt-1 text-xs text-zinc-400">Abre un participante desde resultados o top para agregar tickets extras o revisar ajustes.</p>
+                <p className="mt-1 text-xs text-[var(--color-text-muted)]">Abre un participante desde resultados o top para agregar tickets extras o revisar ajustes.</p>
               )}
             </div>
             {selectedParticipant ? (
               <div className="flex flex-wrap items-center justify-end gap-2">
-                <StatusPill className={selectedParticipant.totalTickets > 0 ? "border-emerald-400/40 text-emerald-200" : "border-zinc-700 text-zinc-400"}>
+                <StatusPill className={selectedParticipant.totalTickets > 0 ? "border-emerald-400/40 text-emerald-700 dark:text-emerald-300" : "border-[var(--color-line)] text-[var(--color-text-muted)]"}>
                   {selectedParticipant.totalTickets > 0 ? "Elegible" : "No elegible"}
                 </StatusPill>
-                <Button type="button" className="border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-black text-emerald-100" onClick={() => openQuickAdjustment(selectedParticipant)}>
+                <Button type="button" className="border border-[var(--color-accent)]/40 bg-[var(--color-accent-soft)] px-3 py-2 text-xs font-black text-[var(--color-accent)]" onClick={() => openQuickAdjustment(selectedParticipant)}>
                   + tickets
                 </Button>
-                <Button type="button" className="border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-xs font-black text-cyan-100" onClick={() => setShareParticipant(selectedParticipant)}>
+                <Button type="button" className="border border-[var(--color-line)] bg-[var(--color-surface-raised)] px-3 py-2 text-xs font-black text-[var(--color-text-primary)]" onClick={() => setShareParticipant(selectedParticipant)}>
                   Imagen
                 </Button>
               </div>
@@ -1134,56 +1134,56 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
           {selectedParticipant ? (
             <>
               <div className="mt-4 grid gap-2 min-[520px]:grid-cols-3">
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
-                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">Tickets base</p>
-                  <strong className="mt-2 block text-2xl font-black text-emerald-200">{selectedParticipantBaseTickets}</strong>
+                <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Tickets base</p>
+                  <strong className="mt-2 block text-2xl font-black text-emerald-700 dark:text-emerald-300">{selectedParticipantBaseTickets}</strong>
                 </div>
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
-                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">Tickets extra</p>
-                  <strong className="mt-2 block text-2xl font-black text-cyan-200">{selectedParticipant.manualExtraTickets}</strong>
+                <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Tickets extra</p>
+                  <strong className="mt-2 block text-2xl font-black text-[var(--color-accent)]">{selectedParticipant.manualExtraTickets}</strong>
                 </div>
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-3">
-                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">Tickets totales</p>
-                  <strong className="mt-2 block text-2xl font-black text-emerald-300">{selectedParticipant.totalTickets}</strong>
+                <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Tickets totales</p>
+                  <strong className="mt-2 block text-2xl font-black text-emerald-700 dark:text-emerald-300">{selectedParticipant.totalTickets}</strong>
                 </div>
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.14em]">
-                {selectedParticipant.burgerTickets > 0 ? <span className="rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-zinc-200">Pedidos</span> : null}
-                {selectedParticipant.referralTickets > 0 ? <span className="rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-zinc-200">Referidos</span> : null}
-                {selectedParticipant.manualExtraTickets > 0 ? <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-1 text-cyan-100">Extras manuales</span> : null}
+                {selectedParticipant.burgerTickets > 0 ? <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface-raised)] px-2.5 py-1 text-[var(--color-text-secondary)]">Pedidos</span> : null}
+                {selectedParticipant.referralTickets > 0 ? <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface-raised)] px-2.5 py-1 text-[var(--color-text-secondary)]">Referidos</span> : null}
+                {selectedParticipant.manualExtraTickets > 0 ? <span className="rounded-full border border-[var(--color-accent)]/30 bg-[var(--color-accent-soft)] px-2.5 py-1 text-[var(--color-accent)]">Extras manuales</span> : null}
                 {selectedParticipant.referralCode ? (
-                  <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-emerald-100">Código {selectedParticipant.referralCodeIsActive ? "activo" : "inactivo"}</span>
+                  <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-800 dark:text-emerald-200">Código {selectedParticipant.referralCodeIsActive ? "activo" : "inactivo"}</span>
                 ) : null}
               </div>
 
-              <div className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-3">
+              <div className="mt-4 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-zinc-500">Historial de ajustes</p>
-                    <p className="mt-1 text-sm text-zinc-400">{selectedParticipantAdjustments.length ? "Revisa y revierte si hace falta." : "Sin ajustes manuales para este participante."}</p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Historial de ajustes</p>
+                    <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{selectedParticipantAdjustments.length ? "Revisa y revierte si hace falta." : "Sin ajustes manuales para este participante."}</p>
                   </div>
-                  <span className="rounded-full border border-zinc-800 bg-zinc-900/70 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-400">
+                  <span className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
                     Actor: internal-v2
                   </span>
                 </div>
                 <div className="mt-3 space-y-2">
                   {selectedParticipantAdjustments.length ? selectedParticipantAdjustments.map((adjustment) => (
-                    <div key={adjustment.id} className="rounded-xl border border-zinc-800 bg-zinc-950/80 p-3">
+                    <div key={adjustment.id} className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3 shadow-sm">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="font-black text-zinc-50">{adjustment.ticketsDelta} tickets</p>
-                            <StatusPill className={adjustment.status === "reverted" ? "border-zinc-700 text-zinc-400" : "border-cyan-400/40 text-cyan-200"}>
+                            <p className="font-black text-[var(--color-text-primary)]">{adjustment.ticketsDelta} tickets</p>
+                            <StatusPill className={adjustment.status === "reverted" ? "border-[var(--color-line)] text-[var(--color-text-muted)]" : "border-[var(--color-accent)]/40 text-[var(--color-accent)]"}>
                               {adjustment.status === "reverted" ? "Revertido" : "Activo"}
                             </StatusPill>
                           </div>
-                          <p className="mt-1 text-xs text-zinc-400">{adjustment.reason}</p>
-                          <p className="mt-1 text-xs text-zinc-500">{formatDateTime(adjustment.createdAt)} · {adjustment.actor}</p>
+                          <p className="mt-1 text-xs text-[var(--color-text-secondary)]">{adjustment.reason}</p>
+                          <p className="mt-1 text-xs text-[var(--color-text-muted)]">{formatDateTime(adjustment.createdAt)} · {adjustment.actor}</p>
                         </div>
                         <Button
                           type="button"
-                          className="border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs font-black text-rose-100 disabled:opacity-50"
+                          className="border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs font-black text-rose-800 dark:text-rose-200 disabled:opacity-50"
                           disabled={saving || adjustment.status === "reverted"}
                           onClick={() => void revertAdjustment(adjustment)}
                         >
@@ -1191,12 +1191,12 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
                         </Button>
                       </div>
                     </div>
-                  )) : <p className="rounded-xl border border-zinc-800 p-3 text-sm text-zinc-400">Sin ajustes manuales para este participante.</p>}
+                  )) : <p className="rounded-xl border border-[var(--color-line)] p-3 text-sm text-[var(--color-text-muted)]">Sin ajustes manuales para este participante.</p>}
                 </div>
               </div>
 
-              {error ? <p className="mt-4 rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-100">{error}</p> : null}
-              {notice ? <p className="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">{notice}</p> : null}
+              {error ? <p className="mt-4 rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-800 dark:text-rose-200">{error}</p> : null}
+              {notice ? <p className="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200">{notice}</p> : null}
 
               <form className="mt-4 grid gap-3" onSubmit={(event) => void createAdjustment(event)}>
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -1214,17 +1214,17 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
                   <textarea className="input mt-1 min-h-20" required value={adjustmentForm.reason} onChange={(event) => setAdjustmentForm((current) => ({ ...current, reason: event.target.value }))} placeholder="Ajuste operativo, regalo, corrección, etc." />
                 </label>
                 <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button className="bg-emerald-400 px-4 py-3 font-black text-emerald-950 disabled:opacity-50" disabled={saving || !selectedParticipant}>
+                  <Button className="bg-[var(--color-accent)] hover:opacity-90 px-4 py-3 font-black text-white disabled:opacity-50" disabled={saving || !selectedParticipant}>
                     {saving ? "Guardando…" : "Guardar ajuste"}
                   </Button>
-                  <Button type="button" className="border border-zinc-700 bg-zinc-900 px-4 py-3 font-black text-zinc-100" onClick={() => setAdjustmentForm(emptyAdjustmentForm())}>
+                  <Button type="button" className="border border-[var(--color-line)] bg-[var(--color-surface-raised)] px-4 py-3 font-black text-[var(--color-text-primary)]" onClick={() => setAdjustmentForm(emptyAdjustmentForm())}>
                     Limpiar
                   </Button>
                 </div>
               </form>
             </>
           ) : (
-            <p className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950/70 p-3 text-sm text-zinc-400">
+            <p className="mt-4 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3 text-sm text-[var(--color-text-muted)]">
               Selecciona un participante para ver su detalle y agregar tickets manuales.
             </p>
           )}
@@ -1235,29 +1235,29 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
         <Card className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-200">Cambios recientes</p>
-              <h3 className="text-lg font-black text-zinc-50">Últimos ajustes</h3>
+              <p className="text-[11px] font-black uppercase tracking-[0.25em] text-[var(--color-accent)]">Cambios recientes</p>
+              <h3 className="text-lg font-black text-[var(--color-text-primary)]">Últimos ajustes</h3>
             </div>
-            <StatusPill className="border-zinc-700 text-zinc-300">{recentAdjustments.length}</StatusPill>
+            <StatusPill className="border-[var(--color-line)] text-[var(--color-text-secondary)]">{recentAdjustments.length}</StatusPill>
           </div>
           <div className="mt-3 space-y-2">
             {recentAdjustments.length ? recentAdjustments.slice(0, 5).map((adjustment) => (
-              <div key={adjustment.id} className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-3">
+              <div key={adjustment.id} className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-black text-zinc-50">{adjustment.participantName}</p>
-                      <StatusPill className={adjustment.status === "reverted" ? "border-zinc-700 text-zinc-400" : "border-cyan-400/40 text-cyan-200"}>
+                      <p className="font-black text-[var(--color-text-primary)]">{adjustment.participantName}</p>
+                      <StatusPill className={adjustment.status === "reverted" ? "border-[var(--color-line)] text-[var(--color-text-muted)]" : "border-[var(--color-accent)]/40 text-[var(--color-accent)]"}>
                         {adjustment.status === "reverted" ? "Revertido" : "Activo"}
                       </StatusPill>
                     </div>
-                    <p className="mt-1 text-xs text-zinc-400">{adjustment.participantPhoneMasked} · {adjustment.ticketsDelta} tickets</p>
-                    <p className="mt-1 text-xs text-zinc-500">{adjustment.reason}</p>
-                    <p className="mt-1 text-xs text-zinc-500">{formatDateTime(adjustment.createdAt)} · {adjustment.actor}</p>
+                    <p className="mt-1 text-xs text-[var(--color-text-secondary)]">{adjustment.participantPhoneMasked} · {adjustment.ticketsDelta} tickets</p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">{adjustment.reason}</p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">{formatDateTime(adjustment.createdAt)} · {adjustment.actor}</p>
                   </div>
                   <Button
                     type="button"
-                    className="border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs font-black text-rose-100 disabled:opacity-50"
+                    className="border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs font-black text-rose-800 dark:text-rose-200 disabled:opacity-50"
                     disabled={saving || adjustment.status === "reverted"}
                     onClick={() => void revertAdjustment(adjustment)}
                   >
@@ -1265,7 +1265,7 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
                   </Button>
                 </div>
               </div>
-            )) : <p className="rounded-xl border border-zinc-800 p-3 text-sm text-zinc-400">Aún no hay cambios manuales.</p>}
+            )) : <p className="rounded-xl border border-[var(--color-line)] p-3 text-sm text-[var(--color-text-muted)]">Aún no hay cambios manuales.</p>}
           </div>
         </Card>
         ) : null}
@@ -1289,36 +1289,36 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
           </div>
           <div className="mt-3 space-y-2">
             {referrals.length ? referrals.map((referral) => (
-              <article key={referral.id} className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-3">
+              <article key={referral.id} className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-raised)] p-3">
                 <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
                   <div className="min-w-0">
-                    <p className="font-black text-zinc-50">{referral.code} · {referral.referredOrderFolio}</p>
-                    <p className="text-xs text-zinc-400">Dueño: {referral.referrerName} ({referral.referrerPhoneMasked})</p>
-                    <p className="text-xs text-zinc-400">Cliente referido: {referral.referredCustomerName} ({referral.referredCustomerPhoneMasked})</p>
-                    <p className="text-xs text-zinc-500">{formatDateTime(referral.createdAt)} · {referral.ticketsAwarded} tickets</p>
-                    {referral.invalidReason ? <p className="text-xs text-rose-200">Razón: {referral.invalidReason}</p> : null}
+                    <p className="font-black text-[var(--color-text-primary)]">{referral.code} · {referral.referredOrderFolio}</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">Dueño: {referral.referrerName} ({referral.referrerPhoneMasked})</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">Cliente referido: {referral.referredCustomerName} ({referral.referredCustomerPhoneMasked})</p>
+                    <p className="text-xs text-[var(--color-text-muted)]">{formatDateTime(referral.createdAt)} · {referral.ticketsAwarded} tickets</p>
+                    {referral.invalidReason ? <p className="text-xs text-rose-800 dark:text-rose-200">Razón: {referral.invalidReason}</p> : null}
                   </div>
-                  <StatusPill className={referral.status === "invalid" ? "border-rose-400/40 text-rose-200" : referral.status === "valid" ? "border-emerald-400/40 text-emerald-200" : "border-amber-400/40 text-amber-200"}>
+                  <StatusPill className={referral.status === "invalid" ? "border-rose-500/40 text-rose-800 dark:text-rose-200" : referral.status === "valid" ? "border-emerald-400/40 text-emerald-700 dark:text-emerald-300" : "border-amber-500/40 text-amber-800 dark:text-amber-200"}>
                     {referral.status}
                   </StatusPill>
                 </div>
                 <div className="mt-2 grid gap-2 sm:grid-cols-3">
-                  <Button type="button" className="border border-emerald-500/40 px-3 py-2 text-xs" disabled={saving} onClick={() => void setReferralState(referral, "valid")}>Marcar válido</Button>
-                  <Button type="button" className="border border-amber-500/40 px-3 py-2 text-xs" disabled={saving} onClick={() => void setReferralState(referral, "pending")}>Reabrir pendiente</Button>
+                  <Button type="button" className="border border-emerald-500/40 bg-[var(--color-surface)] text-emerald-800 dark:text-emerald-200 px-3 py-2 text-xs" disabled={saving} onClick={() => void setReferralState(referral, "valid")}>Marcar válido</Button>
+                  <Button type="button" className="border border-amber-500/40 bg-[var(--color-surface)] text-amber-800 dark:text-amber-200 px-3 py-2 text-xs" disabled={saving} onClick={() => void setReferralState(referral, "pending")}>Reabrir pendiente</Button>
                   <div>
                     <input className="input" placeholder="Razón para invalidar" value={invalidReasons[referral.id] ?? ""} onChange={(event) => setInvalidReasons((current) => ({ ...current, [referral.id]: event.target.value }))} />
-                    <Button type="button" className="mt-1 w-full border border-rose-500/40 px-3 py-2 text-xs" disabled={saving} onClick={() => void setReferralState(referral, "invalid")}>Invalidar</Button>
+                    <Button type="button" className="mt-1 w-full border border-rose-500/40 bg-[var(--color-surface)] text-rose-800 dark:text-rose-200 px-3 py-2 text-xs" disabled={saving} onClick={() => void setReferralState(referral, "invalid")}>Invalidar</Button>
                   </div>
                 </div>
               </article>
-            )) : <p className="rounded-xl border border-zinc-800 p-3 text-sm text-zinc-400">Sin pedidos referidos con esos filtros.</p>}
+            )) : <p className="rounded-xl border border-[var(--color-line)] p-3 text-sm text-[var(--color-text-muted)]">Sin pedidos referidos con esos filtros.</p>}
           </div>
         </Card>
         ) : null}
 
-        <Card className="p-4 text-xs text-zinc-400">
-          <p className="font-bold text-zinc-200">Notas operativas</p>
-          <p className="mt-1">Tickets base = pedidos + referidos. Tickets extra = ajustes manuales activos. <span className="font-bold text-zinc-200">Real</span> solo cuando el entorno es producción; <span className="font-bold text-zinc-200">Prueba</span> cubre preview/local.</p>
+        <Card className="p-4 text-xs text-[var(--color-text-secondary)]">
+          <p className="font-bold text-[var(--color-text-primary)]">Notas operativas</p>
+          <p className="mt-1">Tickets base = pedidos + referidos. Tickets extra = ajustes manuales activos. <span className="font-bold text-[var(--color-text-primary)]">Real</span> solo cuando el entorno es producción; <span className="font-bold text-[var(--color-text-primary)]">Prueba</span> cubre preview/local.</p>
         </Card>
       </div>
       ) : null}
@@ -1337,11 +1337,11 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-200">Tickets extra</p>
-                <h3 id="raffle-ticket-sheet-title" className="text-lg font-black text-zinc-50">
+                <p className="text-[11px] font-black uppercase tracking-[0.25em] text-[var(--color-accent)]">Tickets extra</p>
+                <h3 id="raffle-ticket-sheet-title" className="text-lg font-black text-[var(--color-text-primary)]">
                   {quickAdjustmentParticipant.customerName}
                 </h3>
-                <p className="mt-1 text-xs text-zinc-400">
+                <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
                   {quickAdjustmentParticipant.customerPhoneMasked} · Total actual {quickAdjustmentParticipant.totalTickets}
                 </p>
               </div>
@@ -1364,13 +1364,13 @@ export const RafflesAdminPanel = ({ runtimeEnvironment }: { runtimeEnvironment: 
                 Motivo
                 <textarea className="input mt-1 min-h-20" required value={adjustmentForm.reason} onChange={(event) => setAdjustmentForm((current) => ({ ...current, reason: event.target.value }))} placeholder="Ajuste operativo, regalo, corrección, etc." />
               </label>
-              {error ? <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-100">{error}</p> : null}
-              {notice ? <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">{notice}</p> : null}
+              {error ? <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-800 dark:text-rose-200">{error}</p> : null}
+              {notice ? <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200">{notice}</p> : null}
               <div className="grid gap-2 sm:grid-cols-2">
-                <Button className="bg-emerald-400 px-4 py-3 font-black text-emerald-950 disabled:opacity-50" disabled={saving}>
+                <Button className="bg-[var(--color-accent)] hover:opacity-90 px-4 py-3 font-black text-white disabled:opacity-50" disabled={saving}>
                   {saving ? "Guardando…" : "Guardar tickets"}
                 </Button>
-                <Button type="button" className="border border-zinc-700 bg-zinc-900 px-4 py-3 font-black text-zinc-100" onClick={() => setQuickAdjustmentParticipantKey(null)}>
+                <Button type="button" className="border border-[var(--color-line)] bg-[var(--color-surface-raised)] px-4 py-3 font-black text-[var(--color-text-primary)]" onClick={() => setQuickAdjustmentParticipantKey(null)}>
                   Cancelar
                 </Button>
               </div>
