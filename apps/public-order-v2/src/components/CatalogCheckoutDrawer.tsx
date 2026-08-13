@@ -272,7 +272,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
 
         const lineKey = item.cartItemId || `line-${item.productId}-${index + 1}`;
 
-        const garnish =
+        let garnish =
           item.type === "combo" && item.comboSide
             ? {
                 sku: item.comboSide.sku,
@@ -281,7 +281,14 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
               }
             : undefined;
 
-        const comboBurgers =
+        if (item.type === "combo" && !garnish) {
+          garnish = {
+            sku: "PAPAS_OG",
+            name: "Papas OG",
+          };
+        }
+
+        let comboBurgers =
           item.type === "combo" && item.comboBurgers && item.comboBurgers.length > 0
             ? item.comboBurgers.map((burger) => ({
                 sku: burger.sku,
@@ -297,6 +304,19 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
                 ...(burger.burgerNote?.trim() ? { burgerNote: burger.burgerNote.trim() } : {}),
               }))
             : undefined;
+
+        if (item.type === "combo" && (!comboBurgers || comboBurgers.length === 0)) {
+          const fallbackBurgerSku = item.productId === "COMBO-BBQ" ? "BBQ" : "OG";
+          const fallbackBurgerName = item.productId === "COMBO-BBQ" ? "Burger BBQ" : "Burger OG";
+          comboBurgers = [
+            {
+              sku: fallbackBurgerSku,
+              name: fallbackBurgerName,
+              removedIngredients: [],
+              extras: [],
+            },
+          ];
+        }
 
         return {
           lineKey,

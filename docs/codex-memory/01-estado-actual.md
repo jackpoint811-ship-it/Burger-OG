@@ -42,10 +42,15 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 - **Despliegue Exitoso a Producción Cloudflare Pages (PR #524)**:
   - `burgers-exe`: `https://2ba33818.burgers-exe.pages.dev` (Producción canónica `https://burgers-exe.pages.dev`).
   - `chekeo2-0`: `https://36b5f36d.chekeo2-0.pages.dev` (Producción canónica `https://chekeo2-0.pages.dev`).
-  - **Smoke Tests Post-Deploy**:
-    - `/api/menu-v2` (`source: d1`, 20 items, 5 categorías) ➡️ `200 OK`.
-    - `/api/tower-schedules` (2 torres: GGA y Valcob) ➡️ `200 OK`.
+    - `/api/internal-v2-auth/status` (`authenticated: false`) ➡️ `200 OK`.
   - **PR #524 Mergeado en Main (Producción Oficial)**: `https://github.com/jackpoint811-ship-it/Burgers-exe/pull/524` promovido exitosamente desde `preview` a `main`.
+- **Hotfix Producción - Combos Quick Add & Guarniciones (PR #525 - 2026-08-13)**:
+  - **Incidente PB-I8319 Resuelto**: En la orden `PB-I8319`, el Combo BBQ Master agregado vía Quick Add no registraba guarnición ni burger, mostrando "Guarnición estándar" en cocina.
+  - **Ajuste D1 Producción**: Se corrigió el snapshot del ítem en `burgers-exe-menu-live` para asociar `Papas OG` y `Burger BBQ`.
+  - **Intercepción Quick Add en Public Order V2 (`LayoutEngine.tsx`)**: El botón `+` en combos ahora abre el drawer (`onProductSelect`) para obligar a seleccionar guarnición y burger.
+  - **1-Click Reorder Preservado (`LayoutEngine.tsx`)**: Pasa `comboSide`, `comboBurgers` y `upgrades` completos.
+  - **Fallbacks Defensivos (`CatalogCheckoutDrawer.tsx`, `orders-v2.ts`)**: Si un combo omitiera guarnición o burger, se asignan por defecto `PAPAS_OG` y la burger principal.
+  - **PR #525 Mergeado en Main**: `https://github.com/jackpoint811-ship-it/Burgers-exe/pull/525`.
 - **PR #521 Mergeado en `preview`**: Fix de posicionamiento sticky de cabecera de categorías (`.catalog-category-sticky-header`) en **Public Order V2**:
   - **Causa raíz corregida**: Se cambió `overflow-x: hidden !important;` a `overflow-x: clip !important;` en `.catalog-shell` bajo media query móvil (<= 480px) para no destruir el contexto de scroll root (`window`) que requiere `position: sticky`.
   - **Scroll Margin Top**: Añadido `scroll-margin-top: calc(112px + env(safe-area-inset-top))` a `.catalog-grid` para alineación precisa de scroll al hacer click en las píldoras de categorías.
