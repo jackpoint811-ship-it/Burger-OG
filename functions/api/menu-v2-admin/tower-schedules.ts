@@ -63,7 +63,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     const { results } = await env.BOG_MENU_DB.prepare(
       'SELECT * FROM tower_schedules ORDER BY tower_key ASC',
     ).all<TowerRow>();
-    return json(200, { ok: true, towers: (results ?? []).map(mapTower) });
+    const mapped = (results ?? []).map(mapTower);
+    return json(200, { ok: true, towers: mapped, schedules: mapped });
   } catch {
     return json(500, { ok: false, error: 'No se pudieron consultar las torres' });
   }

@@ -145,8 +145,8 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
     setLoadingSchedules(true);
     try {
       const res = await fetch('/api/menu-v2-admin/tower-schedules', { credentials: 'include' });
-      const data = (await res.json()) as { ok: boolean; schedules?: TowerSchedule[] };
-      setSchedules(data.schedules ?? []);
+      const data = (await res.json()) as { ok: boolean; schedules?: TowerSchedule[]; towers?: TowerSchedule[] };
+      setSchedules(data.schedules ?? data.towers ?? []);
     } catch {
       /* noop */
     } finally {
