@@ -27,6 +27,9 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 
 ## Hito reciente - 2026-08-13
 
+- **PR #521 Creado hacia `preview`**: Fix de posicionamiento sticky de cabecera de categorías (\`.catalog-category-sticky-header\`) en **Public Order V2**:
+  - **Causa raíz corregida**: Se cambió \`overflow-x: hidden !important;\` a \`overflow-x: clip !important;\` en \`.catalog-shell\` bajo media query móvil (<= 480px) para no destruir el contexto de scroll root (\`window\`) que requiere \`position: sticky\`.
+  - **Scroll Margin Top**: Añadido \`scroll-margin-top: calc(112px + env(safe-area-inset-top))\` a \`.catalog-grid\` para alineación precisa de scroll al hacer click en las píldoras de categorías.
 - **PR #520 Mergeado en `preview`**: Erradicación total de elementos hardcodeados, fallbacks sintéticos e identidad CSS legada en **Public Order V2** y **Chekeo V2**:
   - **Torres & Checkout Dinámicos**: Mapeo 100% dinámico de `tower_schedules` en `CatalogCheckoutDrawer.tsx`, `TowerScheduleModal.tsx`, `CatalogModeApp.tsx` y `PublicOrderApp.tsx`.
   - **Badges Sintéticos Eliminados**: Removido `fallbackBadges` en `LayoutEngine.tsx`.
