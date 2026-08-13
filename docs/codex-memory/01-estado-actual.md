@@ -27,6 +27,12 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 
 ## Hito reciente - 2026-08-13
 
+- **PR #520 Mergeado en `preview`**: Erradicación total de elementos hardcodeados, fallbacks sintéticos e identidad CSS legada en **Public Order V2** y **Chekeo V2**:
+  - **Torres & Checkout Dinámicos**: Mapeo 100% dinámico de `tower_schedules` en `CatalogCheckoutDrawer.tsx`, `TowerScheduleModal.tsx`, `CatalogModeApp.tsx` y `PublicOrderApp.tsx`.
+  - **Badges Sintéticos Eliminados**: Removido `fallbackBadges` en `LayoutEngine.tsx`.
+  - **Configuración Bancaria Dinámica**: Extendido `SiteConfig` en `packages/config/src/contracts.ts` con `bankPaymentConfig` y `whatsappTemplates` dinámicos desde D1.
+  - **Limpieza de Assets & Fallbacks**: Eliminados fallbacks `/placeholders/*.jpg` y strings hardcodeados en `kitchen-helpers.ts`.
+  - **Limpieza CSS Legada**: Reemplazados fondos e indicadores neón hardcodeados por variables del tema (`var(--color-surface)`, `var(--color-accent)`).
 - **PR #518 Mergeado en `preview`**: Se completó la refactorización integral de colores y branding en **Chekeo Preview** (`apps/internal-chekeo-v2` y `packages/ui`), erradicando clases legadas dark/cyberpunk (`bg-zinc-950`, `bg-cyan-400`, `border-zinc-800`) e implementando la estética **Premium Casual Vibe** (Light Mode `#F5F2EE` base background, `#FFFFFF` cards, `#16A34A` Forest Green accent; Dark Mode Slate `#121212` / `#1E1E1E`).
 - **Sincronización Local & PRs Recientes**:
   - **PR #438**: Reversión de cambios no solicitados en `InternalChekeoApp.tsx`, manteniendo estrictamente el fix de desbordamiento horizontal responsive en CSS (`styles.css`).
