@@ -513,6 +513,7 @@ export function CatalogAdminPanel() {
       setConfirmDeleteItemSku(null);
     }
   };
+
   const onSave = async () => {
     if ((!editing && !creatingItem) || !form || validationError) return;
     setSaving(true);

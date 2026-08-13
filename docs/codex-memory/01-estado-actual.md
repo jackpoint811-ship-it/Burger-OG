@@ -51,7 +51,12 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - `burgers-exe-public-v2-preview` (App Pública) e `burgers-exe-internal-v2-preview` (Chekeo V2) están 100% conectados a D1 `burgers-exe-menu-v2-preview` y R2 `burgers-exe-assets-v2-preview`.
 - **Horarios por Torre y Cutoffs Dinámicos (PR #513 & PR #514 Mergeados a Preview)**:
   - **Sincronización Dinámica D1**: `CatalogModeApp.tsx` consulta `/api/tower-schedules` al cargar y propaga los horarios reales al sub-bar, `TowerScheduleModal` y `CatalogCheckoutDrawer`.
+  - **Zona Horaria Estricta**: Todas las evaluaciones de tiempo en frontend y backend se realizan con `America/Mexico_City` evitando diferencias de zona horaria del cliente.
+  - **Validación Backend D1**: `functions/api/orders-v2.ts` consulta las reglas activas de `tower_schedules` en D1 para validar días activos y horarios de cierre por torre o globalmente.
+  - **Fix Payload Admin (PR #514)**: Alineadas las respuestas de `/api/menu-v2-admin/tower-schedules` y `StoreBannersTool.tsx` para cargar las tarjetas de configuración sin interrupciones.
 - **Submenú Cuadrado V3, Barra de Favoritos & Depuración en Admin (PR #512 Mergeado a Preview)**:
-  - **Submenú Cuadrado**: Vista inicial con 4 tarjetas de opciones en Central V3.
-  - **Barra de Accesos Rápidos (Favoritos)**: Barra superior compacta con accesos rápidos personalizables.
+  - **Submenú Cuadrado**: Vista inicial con 4 tarjetas de opciones (*Banners del Catálogo*, *Horarios por Torre*, *Estado de la Tienda*, *Sorteo Promocional*) al ingresar a Sucursal & Banners.
+  - **Barra de Accesos Rápidos (Favoritos)**: Barra superior compacta con rectángulos de acceso rápido (*🎨 Banners*, *⏰ Horarios*, *📦 Productos*, *💳 Cierre de Caja*, *🏪 Tienda*).
+  - **Marcado con Estrella ⭐**: Posibilidad de fijar/desfijar cualquier herramienta a los accesos rápidos con almacenamiento persistente en `localStorage` (`chekeo_admin_favorites`).
+
 
