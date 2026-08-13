@@ -93,6 +93,3 @@ La autorizacion previa fue consumida. Todo nuevo despliegue requiere una nueva a
   - `GET https://burgers-exe.pages.dev/api/tower-schedules` ➡️ `200 OK` (`source: "d1"`, 2 torres activas).
   - `GET https://chekeo2-0.pages.dev/api/internal-v2-auth/status` ➡️ `200 OK` (`authenticated: false`).
 
-
-
-
