@@ -2364,6 +2364,7 @@ export function PublicOrderApp() {
         items={menuData.items}
         categories={menuData.categories}
         siteConfig={menuData.siteConfig}
+        publicConfig={publicConfig}
         recipes={menuData.recipes}
         catalogBanners={menuData.catalogBanners}
         source={menuData.source}
