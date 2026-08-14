@@ -258,7 +258,7 @@ export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
             <div className="tower-modal-body">
               {/* Highlight notice if target tower clicked */}
               {selectedTowerKey && focusedTower && (
-                <div className={`tower-modal-status-banner ${focusedTower.active ? "tower-modal-status-banner--active" : "tower-modal-status-banner--inactive"}`}>
+                <div className={`tower-modal-status-banner ${focusedTower.isPaused ? "tower-modal-status-banner--inactive" : focusedTower.active ? "tower-modal-status-banner--active" : "tower-modal-status-banner--scheduled"}`}>
                   <span className="tower-modal-status-dot" />
                   <span>
                     {focusedTower.isPaused ? (
@@ -266,7 +266,7 @@ export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
                     ) : focusedTower.active ? (
                       <><strong>{focusedTower.name}</strong> recibe pedidos hoy 🎉 (hasta las {focusedTower.orderEndTime})</>
                     ) : (
-                      <><strong>{focusedTower.name}</strong> no recibe pedidos hoy ({focusedTower.daysText})</>
+                      <><strong>{focusedTower.name}</strong> recibe pedidos programados ({focusedTower.daysText}) 📅</>
                     )}
                   </span>
                 </div>
@@ -289,8 +289,8 @@ export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
                         </span>
                       </div>
                     </div>
-                    <span className={`tower-badge-pill ${t.isPaused ? "tower-badge-pill--off" : t.active ? "tower-badge-pill--active" : "tower-badge-pill--off"}`}>
-                      {t.isPaused ? "🔴 Pausado" : t.active ? "🟢 Disponible Hoy" : "⚪ Inactivo Hoy"}
+                    <span className={`tower-badge-pill ${t.isPaused ? "tower-badge-pill--off" : t.active ? "tower-badge-pill--active" : "tower-badge-pill--scheduled"}`}>
+                      {t.isPaused ? "🔴 Pausado" : t.active ? "🟢 Disponible Hoy" : "📅 Programar Entrega"}
                     </span>
                   </div>
                 ))}
@@ -299,7 +299,7 @@ export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
               <div className="tower-modal-footer-note">
                 <span aria-hidden="true">💡</span>
                 <p>
-                  Si tu edificio no recibe pedidos hoy, puedes programar tu pedido con anticipación durante la confirmación de la orden.
+                  ¿Tu edificio no recibe pedidos hoy? ¡No te preocupes! Puedes armar y programar tu pedido con anticipación las 24 horas y lo entregamos puntual en su próxima ruta.
                 </p>
               </div>
             </div>

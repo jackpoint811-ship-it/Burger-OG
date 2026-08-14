@@ -133,21 +133,21 @@ function CatalogModeAppInner({ items, categories, siteConfig, publicConfig, reci
     if (!isCatalogEnabled) {
       return {
         className: "store-status-badge store-status-badge--closed",
-        text: "Tienda cerrada temporalmente",
-        ariaLabel: "Estado del servicio: Tienda cerrada temporalmente",
+        text: "Tienda en mantenimiento",
+        ariaLabel: "Estado del servicio: Tienda temporalmente en mantenimiento",
       };
     }
     if (!towerStatus.isAnyTowerOpen) {
       return {
-        className: "store-status-badge store-status-badge--closed",
-        text: "Servicio cerrado por hoy",
-        ariaLabel: "Estado del servicio: Servicio cerrado por hoy",
+        className: "store-status-badge store-status-badge--scheduled",
+        text: "📅 Programa tu pedido",
+        ariaLabel: "Estado del servicio: Pedidos programados disponibles para próximas entregas",
       };
     }
     return {
       className: "store-status-badge store-status-badge--open",
-      text: "Tomando pedidos",
-      ariaLabel: "Estado del servicio: Tomando pedidos",
+      text: "Tomando pedidos hoy",
+      ariaLabel: "Estado del servicio: Tomando pedidos para entrega hoy",
     };
   }, [isCatalogEnabled, towerStatus.isAnyTowerOpen]);
 
@@ -250,10 +250,19 @@ function CatalogModeAppInner({ items, categories, siteConfig, publicConfig, reci
       {/* ── Sub-barra de entregas por edificio (desplaza naturalmente con la página) ── */}
       <div className="site-header__sub-bar">
         <div className="site-header__sub-bar-container">
-          <span className={storeStatusBadgeConfig.className} role="status" aria-label={storeStatusBadgeConfig.ariaLabel}>
+          <button
+            type="button"
+            className={storeStatusBadgeConfig.className}
+            onClick={() => {
+              setSelectedTowerKey(null);
+              setIsTowerModalOpen(true);
+            }}
+            aria-label={storeStatusBadgeConfig.ariaLabel}
+            title="Ver horarios y disponibilidad de entregas"
+          >
             <span className="store-status-badge__dot" aria-hidden="true" />
             <span>{storeStatusBadgeConfig.text}</span>
-          </span>
+          </button>
 
           <div className="site-header__towers-bar">
             {towerStatus.towersList.map((t) => (
@@ -265,7 +274,7 @@ function CatalogModeAppInner({ items, categories, siteConfig, publicConfig, reci
                   setSelectedTowerKey(t.key);
                   setIsTowerModalOpen(true);
                 }}
-                aria-label={`Ver horario de ${t.name} (${t.isPaused ? "Pausado" : t.active ? "Disponible hoy" : "Inactivo hoy"})`}
+                aria-label={`Ver horario de ${t.name} (${t.isPaused ? "Pausado" : t.active ? "Disponible hoy" : "Programar entrega"})`}
               >
                 <span className="tower-pill-btn__emoji">{t.emoji}</span>
                 <span className="tower-pill-btn__label">{t.name}</span>
