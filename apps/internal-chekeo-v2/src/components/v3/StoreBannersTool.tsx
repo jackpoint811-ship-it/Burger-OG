@@ -1,21 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import type { CatalogBanner, PublicConfig } from '@config/index';
+import type { CatalogBanner, PublicConfig, TowerSchedule } from '@config/index';
 import { Button, Card } from '@ui/index';
 import { fetchRaffleCampaignsV2, updateRaffleCampaignV2 } from '../../lib/raffles-v2-admin';
-
-type TowerSchedule = {
-  id: string;
-  towerKey: string;
-  towerName: string;
-  emoji: string;
-  activeDays: number[];
-  orderStartTime: string;
-  orderEndTime: string;
-  deliveryStartTime: string;
-  deliveryEndTime: string;
-  deliveryLabel: string | null;
-  isActive: boolean;
-};
 
 type CatalogBannerForm = {
   id?: string;
@@ -371,6 +357,7 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
       setSchedules((prev) => prev.map((s) => s.id === schedule.id ? { ...s, isActive: !s.isActive } : s));
       setNotice(`Horario de ${schedule.towerName} ${schedule.isActive ? 'pausado' : 'activado'}`);
       setTimeout(() => setNotice(null), 3000);
+      loadSchedules();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al actualizar horario');
     } finally {
@@ -388,14 +375,14 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          towerName: draft.towerName,
-          emoji: draft.emoji,
+          towerName: draft.towerName.trim(),
+          emoji: draft.emoji.trim(),
           activeDays: draft.activeDays,
-          orderStartTime: draft.orderStartTime,
-          orderEndTime: draft.orderEndTime,
-          deliveryStartTime: draft.deliveryStartTime,
-          deliveryEndTime: draft.deliveryEndTime,
-          deliveryLabel: draft.deliveryLabel,
+          orderStartTime: draft.orderStartTime.trim(),
+          orderEndTime: draft.orderEndTime.trim(),
+          deliveryStartTime: draft.deliveryStartTime.trim(),
+          deliveryEndTime: draft.deliveryEndTime.trim(),
+          deliveryLabel: draft.deliveryLabel?.trim() || null,
           isActive: draft.isActive,
         })
       });
@@ -406,6 +393,7 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
       setEditingSchedule(null);
       setNotice(`🎉 Horario de ${draft.towerName} actualizado exitosamente`);
       setTimeout(() => setNotice(null), 3000);
+      loadSchedules();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al guardar horario');
     } finally {

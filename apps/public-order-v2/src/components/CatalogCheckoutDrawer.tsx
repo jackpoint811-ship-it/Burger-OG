@@ -72,7 +72,10 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
 
   const [location, setLocation] = useState<string>(() => {
     try {
-      return localStorage.getItem("pov2-customer-location") || (towers && towers[0] ? towers[0].towerName : "Torre GGA");
+      const stored = localStorage.getItem("pov2-customer-location");
+      if (stored) return stored;
+      if (towers && towers.length > 0 && towers[0]) return towers[0].towerName;
+      return "Torre GGA";
     } catch {
       return "Torre GGA";
     }
@@ -100,7 +103,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
   const [wantsWhatsapp, setWantsWhatsapp] = useState(true);
   const [checkoutState, setCheckoutState] = useState<CheckoutState>({ status: "idle" });
 
-  const towerStatus = useMemo(() => getTowerStatus(towers), [towers]);
+  const towerStatus = useMemo(() => getTowerStatus(towers && towers.length > 0 ? towers : undefined), [towers]);
 
   const activeTowersList = useMemo(() => {
     return towerStatus.towersList;
@@ -217,9 +220,12 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
     e.preventDefault();
     if (items.length === 0) return;
     if (dateMode === "today" && !isSelectedLocationActive) {
+      const pauseReason = selectedTowerInfo?.isPaused
+        ? `${location} se encuentra temporalmente pausada por la cocina.`
+        : `${location} no recibe entregas el día de hoy.`;
       setCheckoutState({
         status: "error",
-        error: `${location} no recibe entregas el día de hoy. Elige 'Programar pedido' para agendar tu entrega.`,
+        error: `${pauseReason} Elige 'Programar fecha futura' para agendar tu entrega o selecciona otra ubicación.`,
       });
       return;
     }
@@ -601,7 +607,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
                           className={`catalog-checkout-location-btn ${location === t.name ? "catalog-checkout-location-btn--active" : ""}`}
                           onClick={() => setLocation(t.name)}
                         >
-                          {t.emoji} {t.name} {t.active ? "🟢" : "⚪"}
+                          {t.emoji} {t.name} {t.isPaused ? "🔴" : t.active ? "🟢" : "⚪"}
                         </button>
                       ))}
                     </div>
@@ -634,7 +640,11 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
 
                     {!isSelectedLocationActive && dateMode === "today" && (
                       <div className="catalog-checkout-tower-warning">
-                        ⚠️ <strong>{location}</strong> no recibe entregas el día de hoy. Por favor selecciona <strong>Programar fecha futura</strong>.
+                        {selectedTowerInfo?.isPaused ? (
+                          <>⚠️ <strong>{location}</strong> se encuentra temporalmente pausada por la cocina. Por favor selecciona <strong>Programar fecha futura</strong> o elige otra ubicación.</>
+                        ) : (
+                          <>⚠️ <strong>{location}</strong> no recibe entregas el día de hoy ({selectedTowerInfo?.daysText || "fuera de horario"}). Por favor selecciona <strong>Programar fecha futura</strong>.</>
+                        )}
                       </div>
                     )}
 

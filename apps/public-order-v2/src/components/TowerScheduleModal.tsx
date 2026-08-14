@@ -1,24 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import type { TowerSchedule, TowerSchedulePublic } from "@config/index";
 
 export interface TowerScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedTowerKey?: string | null;
+  towers?: (TowerSchedule | TowerSchedulePublic)[];
 }
 
-export type DynamicTowerSchedule = {
-  towerKey: string;
-  towerName: string;
-  emoji: string;
-  activeDays: number[];
-  orderStartTime: string;
-  orderEndTime: string;
-  deliveryStartTime: string;
-  deliveryEndTime: string;
-  deliveryLabel: string | null;
-  isActive: boolean;
-};
+export type DynamicTowerSchedule = TowerSchedulePublic;
 
 const DAY_NAMES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
@@ -77,32 +68,57 @@ export function isPastServiceCutoffTime(date: Date = new Date()): boolean {
   return isPastTowerCutoff("13:30");
 }
 
-export function getTowerStatus(dynamicTowers?: DynamicTowerSchedule[]) {
+export type ComputedTowerItem = {
+  key: string;
+  name: string;
+  emoji: string;
+  active: boolean;
+  isPaused: boolean;
+  isActiveConfig: boolean;
+  daysText: string;
+  orderStartTime: string;
+  orderEndTime: string;
+  deliveryStartTime: string;
+  deliveryEndTime: string;
+  deliveryLabel: string;
+};
+
+export function getTowerStatus(dynamicTowers?: (TowerSchedule | TowerSchedulePublic)[]) {
   const mxNow = getMxNow();
   const day = mxNow.day;
 
-  if (dynamicTowers && dynamicTowers.length > 0) {
-    const towersList = dynamicTowers.map((t) => {
-      const isPastCutoff = isPastTowerCutoff(t.orderEndTime);
-      const active = Boolean(t.isActive && t.activeDays.includes(day) && !isPastCutoff);
+  if (dynamicTowers !== undefined) {
+    const towersList: ComputedTowerItem[] = dynamicTowers.map((t) => {
+      const isPastCutoff = isPastTowerCutoff(t.orderEndTime || "13:30");
+      const isConfigActive = t.isActive !== false;
+      const isDayActive = Array.isArray(t.activeDays) && t.activeDays.includes(day);
+      const active = Boolean(isConfigActive && isDayActive && !isPastCutoff);
+
       return {
         key: t.towerKey,
         name: t.towerName,
         emoji: t.emoji || "🏢",
         active,
+        isPaused: !isConfigActive,
+        isActiveConfig: isConfigActive,
         daysText: formatActiveDaysText(t.activeDays),
-        orderEndTime: t.orderEndTime,
+        orderStartTime: t.orderStartTime || "09:00",
+        orderEndTime: t.orderEndTime || "13:30",
+        deliveryStartTime: t.deliveryStartTime || "13:30",
+        deliveryEndTime: t.deliveryEndTime || "14:00",
         deliveryLabel: t.deliveryLabel || "1:30 PM",
       };
     });
 
+    const isAnyTowerOpen = towersList.some((t) => t.active);
+    const pastCutoff = towersList.length > 0 ? towersList.every((t) => isPastTowerCutoff(t.orderEndTime)) : isPastTowerCutoff("13:30");
     const ggaTower = towersList.find((t) => t.key === "gga") || towersList[0];
     const valcobTower = towersList.find((t) => t.key === "valcob") || towersList[1] || towersList[0];
-    const pastCutoff = towersList.every((t) => isPastTowerCutoff(t.orderEndTime));
 
     return {
       day,
       pastCutoff,
+      isAnyTowerOpen,
       towersList,
       gga: ggaTower,
       valcob: valcobTower,
@@ -113,14 +129,19 @@ export function getTowerStatus(dynamicTowers?: DynamicTowerSchedule[]) {
   const isGgaActive = !defaultCutoff && (day === 1 || day === 3 || day === 5);
   const isValcobActive = !defaultCutoff && (day === 2 || day === 4 || day === 5);
 
-  const defaultList = [
+  const defaultList: ComputedTowerItem[] = [
     {
       key: "gga",
       name: "Torre GGA",
       emoji: "🏢",
       active: isGgaActive,
+      isPaused: false,
+      isActiveConfig: true,
       daysText: "Lunes, Miércoles y Viernes",
+      orderStartTime: "09:00",
       orderEndTime: "13:30",
+      deliveryStartTime: "13:30",
+      deliveryEndTime: "14:00",
       deliveryLabel: "1:30 PM",
     },
     {
@@ -128,8 +149,13 @@ export function getTowerStatus(dynamicTowers?: DynamicTowerSchedule[]) {
       name: "Torre Valcob",
       emoji: "🏢",
       active: isValcobActive,
+      isPaused: false,
+      isActiveConfig: true,
       daysText: "Martes, Jueves y Viernes",
+      orderStartTime: "09:00",
       orderEndTime: "13:30",
+      deliveryStartTime: "13:30",
+      deliveryEndTime: "14:00",
       deliveryLabel: "1:30 PM",
     },
   ];
@@ -137,6 +163,7 @@ export function getTowerStatus(dynamicTowers?: DynamicTowerSchedule[]) {
   return {
     day,
     pastCutoff: defaultCutoff,
+    isAnyTowerOpen: defaultList.some((t) => t.active),
     towersList: defaultList,
     gga: defaultList[0],
     valcob: defaultList[1],
@@ -172,24 +199,26 @@ export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
   isOpen,
   onClose,
   selectedTowerKey,
+  towers: propTowers,
 }) => {
-  const [towers, setTowers] = useState<DynamicTowerSchedule[]>([]);
+  const [internalTowers, setInternalTowers] = useState<DynamicTowerSchedule[]>([]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || propTowers) return;
     fetch("/api/tower-schedules")
       .then((res) => res.json())
       .then((data: any) => {
         if (data?.ok && Array.isArray(data.towers)) {
-          setTowers(data.towers);
+          setInternalTowers(data.towers);
         }
       })
       .catch(() => {
         /* silent fallback */
       });
-  }, [isOpen]);
+  }, [isOpen, propTowers]);
 
-  const status = getTowerStatus(towers);
+  const effectiveTowers = propTowers ?? internalTowers;
+  const status = getTowerStatus(effectiveTowers.length ? effectiveTowers : undefined);
   const focusedTower = selectedTowerKey
     ? status.towersList.find((t) => t.key === selectedTowerKey || t.name === selectedTowerKey) || status.towersList[0]
     : status.towersList[0];
@@ -232,7 +261,13 @@ export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
                 <div className={`tower-modal-status-banner ${focusedTower.active ? "tower-modal-status-banner--active" : "tower-modal-status-banner--inactive"}`}>
                   <span className="tower-modal-status-dot" />
                   <span>
-                    <strong>{focusedTower.name}</strong> {focusedTower.active ? "recibe pedidos hoy 🎉" : "no recibe pedidos hoy"}
+                    {focusedTower.isPaused ? (
+                      <><strong>{focusedTower.name}</strong> se encuentra temporalmente pausada por la cocina</>
+                    ) : focusedTower.active ? (
+                      <><strong>{focusedTower.name}</strong> recibe pedidos hoy 🎉 (hasta las {focusedTower.orderEndTime})</>
+                    ) : (
+                      <><strong>{focusedTower.name}</strong> no recibe pedidos hoy ({focusedTower.daysText})</>
+                    )}
                   </span>
                 </div>
               )}
@@ -249,11 +284,13 @@ export const TowerScheduleModal: React.FC<TowerScheduleModalProps> = ({
                       <span className="tower-item-emoji">{t.emoji}</span>
                       <div>
                         <h4 className="tower-item-name">{t.name}</h4>
-                        <span className="tower-item-days">{t.daysText}</span>
+                        <span className="tower-item-days">
+                          {t.isPaused ? "Servicio temporalmente pausado" : `${t.daysText} (${t.orderStartTime} a ${t.orderEndTime})`}
+                        </span>
                       </div>
                     </div>
-                    <span className={`tower-badge-pill ${t.active ? "tower-badge-pill--active" : "tower-badge-pill--off"}`}>
-                      {t.active ? "🟢 Disponible Hoy" : "⚪ Inactivo Hoy"}
+                    <span className={`tower-badge-pill ${t.isPaused ? "tower-badge-pill--off" : t.active ? "tower-badge-pill--active" : "tower-badge-pill--off"}`}>
+                      {t.isPaused ? "🔴 Pausado" : t.active ? "🟢 Disponible Hoy" : "⚪ Inactivo Hoy"}
                     </span>
                   </div>
                 ))}

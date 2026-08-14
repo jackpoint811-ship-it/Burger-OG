@@ -6281,19 +6281,48 @@ html {
   font-size: 11px;
   font-family: 'Inter', sans-serif;
   font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  transition: all var(--motion-fast) var(--motion-ease);
+}
+
+.store-status-badge--open {
   background-color: var(--color-accent-soft);
   color: var(--color-accent);
   border: 1px solid var(--color-accent-line);
-  white-space: nowrap;
-  letter-spacing: 0.02em;
+}
+
+.store-status-badge--open .store-status-badge__dot {
+  background-color: var(--color-accent);
+  box-shadow: 0 0 8px var(--color-accent);
+}
+
+.store-status-badge--closed {
+  background-color: rgba(220, 38, 38, 0.08);
+  color: #b91c1c;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.store-status-badge--closed .store-status-badge__dot {
+  background-color: #dc2626;
+  box-shadow: 0 0 6px rgba(220, 38, 38, 0.4);
+}
+
+.theme-dark .store-status-badge--closed {
+  background-color: rgba(248, 113, 113, 0.12);
+  color: #fca5a5;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.theme-dark .store-status-badge--closed .store-status-badge__dot {
+  background-color: #f87171;
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.6);
 }
 
 .store-status-badge__dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background-color: var(--color-accent);
-  box-shadow: 0 0 8px var(--color-accent);
 }
 
 .site-header__sub-bar {

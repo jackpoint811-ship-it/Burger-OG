@@ -22,6 +22,7 @@ type TowerRow = {
 };
 
 export type TowerSchedulePublic = {
+  id?: string;
   towerKey: string;
   towerName: string;
   emoji: string;
@@ -39,7 +40,7 @@ const json = (status: number, body: unknown) =>
     status,
     headers: {
       'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'public, max-age=60',
+      'cache-control': 'no-store, no-cache, must-revalidate',
     },
   });
 
@@ -54,6 +55,7 @@ const parseDays = (raw: string | null): number[] => {
 };
 
 const mapRow = (row: TowerRow): TowerSchedulePublic => ({
+  id: row.id,
   towerKey: row.tower_key,
   towerName: row.tower_name,
   emoji: row.emoji || '🏢',
@@ -73,7 +75,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
 
   try {
     const { results } = await env.BOG_MENU_DB.prepare(
-      'SELECT * FROM tower_schedules WHERE is_active = 1 ORDER BY tower_key ASC',
+      'SELECT * FROM tower_schedules ORDER BY tower_key ASC',
     ).all<TowerRow>();
 
     const towers = (results ?? []).map(mapRow);

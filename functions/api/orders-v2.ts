@@ -183,6 +183,7 @@ type DbTowerScheduleRow = {
   tower_key: string;
   tower_name: string;
   active_days_json: string;
+  order_start_time: string;
   order_end_time: string;
   is_active: number;
 };
@@ -191,6 +192,7 @@ export type ActiveTowerConfig = {
   towerKey: string;
   towerName: string;
   activeDays: number[];
+  orderStartTime: string;
   orderEndTime: string;
   isActive: boolean;
 };
@@ -202,6 +204,11 @@ const parseCutoffTimeStr = (timeStr: string) => {
   return { hours: Number.isNaN(h) ? 13 : h, minutes: Number.isNaN(m) ? 30 : m };
 };
 
+const isTimeBeforeStart = (mxNow: { hours: number; minutes: number }, startStr: string) => {
+  const start = parseCutoffTimeStr(startStr || '09:00');
+  return mxNow.hours < start.hours || (mxNow.hours === start.hours && mxNow.minutes < start.minutes);
+};
+
 const isTimePastCutoff = (mxNow: { hours: number; minutes: number }, cutoffStr: string) => {
   const cutoff = parseCutoffTimeStr(cutoffStr);
   return mxNow.hours > cutoff.hours || (mxNow.hours === cutoff.hours && mxNow.minutes >= cutoff.minutes);
@@ -210,7 +217,7 @@ const isTimePastCutoff = (mxNow: { hours: number; minutes: number }, cutoffStr: 
 const loadActiveTowerConfigs = async (db: D1Database): Promise<ActiveTowerConfig[]> => {
   try {
     const { results } = await db.prepare(
-      'SELECT tower_key, tower_name, active_days_json, order_end_time, is_active FROM tower_schedules WHERE is_active = 1'
+      'SELECT tower_key, tower_name, active_days_json, order_start_time, order_end_time, is_active FROM tower_schedules'
     ).all<DbTowerScheduleRow>();
 
     return (results ?? []).map((row) => ({
@@ -224,6 +231,7 @@ const loadActiveTowerConfigs = async (db: D1Database): Promise<ActiveTowerConfig
           return [];
         }
       })(),
+      orderStartTime: row.order_start_time || '09:00',
       orderEndTime: row.order_end_time || '13:30',
       isActive: Number(row.is_active) === 1,
     }));
@@ -249,6 +257,13 @@ const validateTowerSchedule = (
     const scheduledDayOfWeek = scheduledObj.getUTCDay();
 
     if (matchedTower) {
+      if (!matchedTower.isActive) {
+        return errorResponse(
+          400,
+          'LOCATION_PAUSED',
+          `El servicio para ${matchedTower.towerName} se encuentra temporalmente pausado y no está aceptando pedidos.`
+        );
+      }
       if (!matchedTower.activeDays.includes(scheduledDayOfWeek)) {
         return errorResponse(
           400,
@@ -265,11 +280,25 @@ const validateTowerSchedule = (
     }
   } else {
     if (matchedTower) {
+      if (!matchedTower.isActive) {
+        return errorResponse(
+          400,
+          'LOCATION_PAUSED',
+          `El servicio para ${matchedTower.towerName} se encuentra temporalmente pausado y no está aceptando pedidos.`
+        );
+      }
       if (!matchedTower.activeDays.includes(mxNow.dayOfWeek)) {
         return errorResponse(
           400,
           'LOCATION_CLOSED_TODAY',
           `${matchedTower.towerName} no recibe entregas el día de hoy. Por favor programa tu pedido para el próximo día hábil.`
+        );
+      }
+      if (isTimeBeforeStart(mxNow, matchedTower.orderStartTime)) {
+        return errorResponse(
+          400,
+          'SERVICE_NOT_STARTED_YET',
+          `El servicio para ${matchedTower.towerName} inicia a las ${matchedTower.orderStartTime}. Por favor realiza tu pedido dentro del horario de atención.`
         );
       }
       if (isTimePastCutoff(mxNow, matchedTower.orderEndTime)) {
@@ -281,6 +310,14 @@ const validateTowerSchedule = (
       }
     } else {
       if (towerConfigs.length > 0) {
+        const anyActiveTower = towerConfigs.some((t) => t.isActive);
+        if (!anyActiveTower) {
+          return errorResponse(
+            400,
+            'LOCATION_PAUSED',
+            'El servicio de pedidos se encuentra temporalmente pausado.'
+          );
+        }
         const activeTowersToday = towerConfigs.filter((t) => t.isActive && t.activeDays.includes(mxNow.dayOfWeek));
         if (activeTowersToday.length === 0) {
           return errorResponse(
@@ -289,12 +326,14 @@ const validateTowerSchedule = (
             'No hay servicio disponible el día de hoy. Por favor programa tu pedido para el próximo día hábil.'
           );
         }
-        const openTowerAvailable = activeTowersToday.some((t) => !isTimePastCutoff(mxNow, t.orderEndTime));
+        const openTowerAvailable = activeTowersToday.some(
+          (t) => !isTimeBeforeStart(mxNow, t.orderStartTime) && !isTimePastCutoff(mxNow, t.orderEndTime)
+        );
         if (!openTowerAvailable) {
           return errorResponse(
             400,
             'SERVICE_CLOSED_FOR_TODAY',
-            'El servicio de hoy ha cerrado. Por favor programa tu pedido para el próximo día hábil.'
+            'El servicio de hoy ha cerrado o aún no inicia. Por favor programa tu pedido para el próximo día hábil.'
           );
         }
       } else {
@@ -303,6 +342,13 @@ const validateTowerSchedule = (
             400,
             'WEEKEND_ORDER_NOT_ALLOWED',
             'No hay servicio disponible en fines de semana (Sábados y Domingos). Por favor programa para el próximo día hábil.'
+          );
+        }
+        if (mxNow.hours < 9) {
+          return errorResponse(
+            400,
+            'SERVICE_NOT_STARTED_YET',
+            'El servicio inicia a las 9:00 AM. Por favor realiza tu pedido dentro del horario de atención.'
           );
         }
         if (mxNow.hours > 13 || (mxNow.hours === 13 && mxNow.minutes >= 30)) {

@@ -47,10 +47,13 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 - **Hotfix Producción - Combos Quick Add & Guarniciones (PR #525 - 2026-08-13)**:
   - **Incidente PB-I8319 Resuelto**: En la orden `PB-I8319`, el Combo BBQ Master agregado vía Quick Add no registraba guarnición ni burger, mostrando "Guarnición estándar" en cocina.
   - **Ajuste D1 Producción**: Se corrigió el snapshot del ítem en `burgers-exe-menu-live` para asociar `Papas OG` y `Burger BBQ`.
-  - **Intercepción Quick Add en Public Order V2 (`LayoutEngine.tsx`)**: El botón `+` en combos ahora abre el drawer (`onProductSelect`) para obligar a seleccionar guarnición y burger.
-  - **1-Click Reorder Preservado (`LayoutEngine.tsx`)**: Pasa `comboSide`, `comboBurgers` y `upgrades` completos.
-  - **Fallbacks Defensivos (`CatalogCheckoutDrawer.tsx`, `orders-v2.ts`)**: Si un combo omitiera guarnición o burger, se asignan por defecto `PAPAS_OG` y la burger principal.
-  - **PR #525 Mergeado en Main**: `https://github.com/jackpoint811-ship-it/Burgers-exe/pull/525`.
+- **Sincronización y Validación Integral de Horarios y Pausa de Torres (Chekeo ↔ Public Order V2)**:
+  - **Single Source of Truth**: `/api/tower-schedules` devuelve el estado real de todas las torres configuradas (`isActive: boolean`) con cabeceras `no-store, no-cache, must-revalidate` para actualización inmediata.
+  - **Erradicación de Fallbacks Sintéticos**: `TowerScheduleModal.tsx` (`getTowerStatus`) evalúa torres reales de D1, soportando torres pausadas administrativamente (`isPaused`) e impidiendo fallbacks sintéticos que reactiven torres pausadas.
+  - **Motor Dinámico de Estado de Tienda**: `CatalogModeApp.tsx` calcula reactivamente el badge de la tienda (`🔴 Tienda cerrada temporalmente`, `⚪ Servicio cerrado por hoy`, `🟢 Tomando pedidos`) respetando `publicConfig.catalogEnabled` y la disponibilidad real de las torres.
+  - **Validación Estricta en Checkout y Backend**: `CatalogCheckoutDrawer.tsx` bloquea *"⚡ Entregar Hoy"* para ubicaciones pausadas, y `functions/api/orders-v2.ts` rechaza en backend cualquier orden para torres con `is_active = 0` con código `400 LOCATION_PAUSED`.
+  - **Normalización Robusta en Admin**: `functions/api/menu-v2-admin/tower-schedules/[id].ts` normaliza formatos de hora (`H:MM` y `HH:MM`) a `HH:MM` (`09:00`) y soporta matching por `id` y `tower_key`.
+- **PR #525 Mergeado en Main**: `https://github.com/jackpoint811-ship-it/Burgers-exe/pull/525`.
 - **PR #521 Mergeado en `preview`**: Fix de posicionamiento sticky de cabecera de categorías (`.catalog-category-sticky-header`) en **Public Order V2**:
   - **Causa raíz corregida**: Se cambió `overflow-x: hidden !important;` a `overflow-x: clip !important;` en `.catalog-shell` bajo media query móvil (<= 480px) para no destruir el contexto de scroll root (`window`) que requiere `position: sticky`.
   - **Scroll Margin Top**: Añadido `scroll-margin-top: calc(112px + env(safe-area-inset-top))` a `.catalog-grid` para alineación precisa de scroll al hacer click en las píldoras de categorías.
