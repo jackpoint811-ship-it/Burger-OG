@@ -1,4 +1,4 @@
-import type { MenuCategory, MenuItem, SiteConfig, CatalogBanner } from "@config/index";
+import type { MenuCategory, MenuItem, SiteConfig, CatalogBanner, PublicConfig } from "@config/index";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CatalogProductDrawer } from "./CatalogProductDrawer";
 import { CatalogCartDrawer } from "./CatalogCartDrawer";
@@ -21,6 +21,7 @@ type CatalogModeAppProps = {
   items: MenuItem[];
   categories: MenuCategory[];
   siteConfig: SiteConfig;
+  publicConfig?: PublicConfig;
   recipes?: Record<string, string[]>;
   catalogBanners?: CatalogBanner[];
   categoryBanners?: any[];
@@ -100,7 +101,7 @@ function useSystemTheme() {
 
 
 
-function CatalogModeAppInner({ items, categories, siteConfig, recipes, catalogBanners = [], categoryBanners = [], source, designSpec }: CatalogModeAppProps) {
+function CatalogModeAppInner({ items, categories, siteConfig, publicConfig, recipes, catalogBanners = [], categoryBanners = [], source, designSpec }: CatalogModeAppProps) {
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
   const [editingCartItem, setEditingCartItem] = useState<any>(null);
   const [activeCategoryKey, setActiveCategoryKey] = useState<string>("all");
@@ -125,7 +126,30 @@ function CatalogModeAppInner({ items, categories, siteConfig, recipes, catalogBa
       });
   }, []);
 
-  const towerStatus = useMemo(() => getTowerStatus(towers), [towers]);
+  const towerStatus = useMemo(() => getTowerStatus(towers.length ? towers : undefined), [towers]);
+
+  const isCatalogEnabled = publicConfig?.catalogEnabled !== false;
+  const storeStatusBadgeConfig = useMemo(() => {
+    if (!isCatalogEnabled) {
+      return {
+        className: "store-status-badge store-status-badge--closed",
+        text: "Tienda cerrada temporalmente",
+        ariaLabel: "Estado del servicio: Tienda cerrada temporalmente",
+      };
+    }
+    if (!towerStatus.isAnyTowerOpen) {
+      return {
+        className: "store-status-badge store-status-badge--closed",
+        text: "Servicio cerrado por hoy",
+        ariaLabel: "Estado del servicio: Servicio cerrado por hoy",
+      };
+    }
+    return {
+      className: "store-status-badge store-status-badge--open",
+      text: "Tomando pedidos",
+      ariaLabel: "Estado del servicio: Tomando pedidos",
+    };
+  }, [isCatalogEnabled, towerStatus.isAnyTowerOpen]);
 
   const catalogProducts = useMemo(() => mapMenuItemsToCatalogProducts(items, categories), [items, categories]);
 
@@ -226,9 +250,9 @@ function CatalogModeAppInner({ items, categories, siteConfig, recipes, catalogBa
       {/* ── Sub-barra de entregas por edificio (desplaza naturalmente con la página) ── */}
       <div className="site-header__sub-bar">
         <div className="site-header__sub-bar-container">
-          <span className="store-status-badge store-status-badge--open" role="status" aria-label="Estado del servicio: Tomando pedidos">
+          <span className={storeStatusBadgeConfig.className} role="status" aria-label={storeStatusBadgeConfig.ariaLabel}>
             <span className="store-status-badge__dot" aria-hidden="true" />
-            <span>Tomando pedidos</span>
+            <span>{storeStatusBadgeConfig.text}</span>
           </span>
 
           <div className="site-header__towers-bar">
@@ -236,16 +260,16 @@ function CatalogModeAppInner({ items, categories, siteConfig, recipes, catalogBa
               <button
                 key={t.key || t.name}
                 type="button"
-                className={`tower-pill-btn ${t.active ? "tower-pill-btn--active" : "tower-pill-btn--off"}`}
+                className={`tower-pill-btn ${t.isPaused ? "tower-pill-btn--off" : t.active ? "tower-pill-btn--active" : "tower-pill-btn--off"}`}
                 onClick={() => {
                   setSelectedTowerKey(t.key);
                   setIsTowerModalOpen(true);
                 }}
-                aria-label={`Ver horario de ${t.name} (${t.active ? "Disponible hoy" : "Inactivo hoy"})`}
+                aria-label={`Ver horario de ${t.name} (${t.isPaused ? "Pausado" : t.active ? "Disponible hoy" : "Inactivo hoy"})`}
               >
                 <span className="tower-pill-btn__emoji">{t.emoji}</span>
                 <span className="tower-pill-btn__label">{t.name}</span>
-                <span className={`tower-pill-btn__dot ${t.active ? "tower-pill-btn__dot--active" : "tower-pill-btn__dot--off"}`} />
+                <span className={`tower-pill-btn__dot ${t.isPaused ? "tower-pill-btn__dot--off" : t.active ? "tower-pill-btn__dot--active" : "tower-pill-btn__dot--off"}`} />
               </button>
             ))}
           </div>
@@ -332,6 +356,7 @@ function CatalogModeAppInner({ items, categories, siteConfig, recipes, catalogBa
         isOpen={isTowerModalOpen}
         onClose={() => setIsTowerModalOpen(false)}
         selectedTowerKey={selectedTowerKey}
+        towers={towers}
       />
     </>
   );

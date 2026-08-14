@@ -18,9 +18,15 @@ const isValidDaysArray = (value: unknown): value is number[] => {
   return value.every((d) => typeof d === 'number' && Number.isInteger(d) && d >= 0 && d <= 6);
 };
 
-const isValidTime = (value: unknown): value is string => {
-  if (typeof value !== 'string') return false;
-  return /^\d{2}:\d{2}$/.test(value.trim());
+const normalizeTime = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  const match = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  const hours = parseInt(match[1]!, 10);
+  const minutes = parseInt(match[2]!, 10);
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 };
 
 export const onRequestPatch: PagesFunction<Env, 'id'> = async ({ env, request, params }) => {
@@ -61,32 +67,36 @@ export const onRequestPatch: PagesFunction<Env, 'id'> = async ({ env, request, p
   }
 
   if ('orderStartTime' in body) {
-    if (!isValidTime(body.orderStartTime)) return json(400, { ok: false, error: 'orderStartTime must be HH:MM' });
+    const normalized = normalizeTime(body.orderStartTime);
+    if (!normalized) return json(400, { ok: false, error: 'orderStartTime must be valid HH:MM' });
     updates.push('order_start_time = ?');
-    bindings.push((body.orderStartTime as string).trim());
+    bindings.push(normalized);
   }
 
   if ('orderEndTime' in body) {
-    if (!isValidTime(body.orderEndTime)) return json(400, { ok: false, error: 'orderEndTime must be HH:MM' });
+    const normalized = normalizeTime(body.orderEndTime);
+    if (!normalized) return json(400, { ok: false, error: 'orderEndTime must be valid HH:MM' });
     updates.push('order_end_time = ?');
-    bindings.push((body.orderEndTime as string).trim());
+    bindings.push(normalized);
   }
 
   if ('deliveryStartTime' in body) {
-    if (!isValidTime(body.deliveryStartTime)) return json(400, { ok: false, error: 'deliveryStartTime must be HH:MM' });
+    const normalized = normalizeTime(body.deliveryStartTime);
+    if (!normalized) return json(400, { ok: false, error: 'deliveryStartTime must be valid HH:MM' });
     updates.push('delivery_start_time = ?');
-    bindings.push((body.deliveryStartTime as string).trim());
+    bindings.push(normalized);
   }
 
   if ('deliveryEndTime' in body) {
-    if (!isValidTime(body.deliveryEndTime)) return json(400, { ok: false, error: 'deliveryEndTime must be HH:MM' });
+    const normalized = normalizeTime(body.deliveryEndTime);
+    if (!normalized) return json(400, { ok: false, error: 'deliveryEndTime must be valid HH:MM' });
     updates.push('delivery_end_time = ?');
-    bindings.push((body.deliveryEndTime as string).trim());
+    bindings.push(normalized);
   }
 
-  if (typeof body.deliveryLabel === 'string') {
+  if ('deliveryLabel' in body) {
     updates.push('delivery_label = ?');
-    bindings.push(body.deliveryLabel.trim() || null);
+    bindings.push(typeof body.deliveryLabel === 'string' && body.deliveryLabel.trim() ? body.deliveryLabel.trim() : null);
   }
 
   if (typeof body.isActive === 'boolean') {
@@ -97,11 +107,11 @@ export const onRequestPatch: PagesFunction<Env, 'id'> = async ({ env, request, p
   if (updates.length === 0) return json(400, { ok: false, error: 'No fields to update' });
 
   updates.push('updated_at = CURRENT_TIMESTAMP');
-  bindings.push(id);
+  bindings.push(id, id);
 
   try {
     const result = await env.BOG_MENU_DB.prepare(
-      `UPDATE tower_schedules SET ${updates.join(', ')} WHERE id = ?`,
+      `UPDATE tower_schedules SET ${updates.join(', ')} WHERE id = ? OR tower_key = ?`,
     )
       .bind(...bindings)
       .run();
@@ -110,8 +120,8 @@ export const onRequestPatch: PagesFunction<Env, 'id'> = async ({ env, request, p
       return json(404, { ok: false, error: 'Tower not found' });
     }
 
-    const row = await env.BOG_MENU_DB.prepare('SELECT * FROM tower_schedules WHERE id = ? LIMIT 1')
-      .bind(id)
+    const row = await env.BOG_MENU_DB.prepare('SELECT * FROM tower_schedules WHERE id = ? OR tower_key = ? LIMIT 1')
+      .bind(id, id)
       .first<any>();
 
     if (!row) return json(500, { ok: false, error: 'Error fetching updated tower' });

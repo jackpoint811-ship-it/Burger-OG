@@ -127,6 +127,25 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
 
 export type PublicMode = "flow" | "catalog";
 
+export type TowerSchedule = {
+  id: string;
+  towerKey: string;
+  towerName: string;
+  emoji: string;
+  activeDays: number[];
+  orderStartTime: string;
+  orderEndTime: string;
+  deliveryStartTime: string;
+  deliveryEndTime: string;
+  deliveryLabel: string | null;
+  isActive: boolean;
+  updatedAt?: string;
+};
+
+export type TowerSchedulePublic = Omit<TowerSchedule, "id"> & {
+  id?: string;
+};
+
 export type PublicConfig = {
   publicMode: PublicMode;
   catalogEnabled: boolean;
