@@ -607,7 +607,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
                           className={`catalog-checkout-location-btn ${location === t.name ? "catalog-checkout-location-btn--active" : ""}`}
                           onClick={() => setLocation(t.name)}
                         >
-                          {t.emoji} {t.name} {t.isPaused ? "🔴" : t.active ? "🟢" : "⚪"}
+                          {t.emoji} {t.name} {t.isPaused ? "🔴" : t.active ? "🟢" : "📅"}
                         </button>
                       ))}
                     </div>
@@ -626,24 +626,25 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
                         onClick={() => {
                           if (isSelectedLocationActive) setDateMode("today");
                         }}
+                        disabled={!isSelectedLocationActive}
                       >
-                        ⚡ Entregar Hoy ({deliveryTimeDisplay}) {!isSelectedLocationActive && "❌"}
+                        ⚡ Entregar Hoy ({deliveryTimeDisplay}) {!isSelectedLocationActive && "(Cerrado hoy)"}
                       </button>
                       <button
                         type="button"
                         className={`catalog-checkout-date-btn ${dateMode === "scheduled" ? "catalog-checkout-date-btn--active" : ""}`}
                         onClick={() => setDateMode("scheduled")}
                       >
-                        📅 Programar fecha futura
+                        📅 Programar pedido {!isSelectedLocationActive && "(Recomendado)"}
                       </button>
                     </div>
 
                     {!isSelectedLocationActive && dateMode === "today" && (
                       <div className="catalog-checkout-tower-warning">
                         {selectedTowerInfo?.isPaused ? (
-                          <>⚠️ <strong>{location}</strong> se encuentra temporalmente pausada por la cocina. Por favor selecciona <strong>Programar fecha futura</strong> o elige otra ubicación.</>
+                          <>⚠️ <strong>{location}</strong> se encuentra temporalmente pausada por la cocina. Por favor selecciona <strong>Programar pedido</strong> o elige otra ubicación.</>
                         ) : (
-                          <>⚠️ <strong>{location}</strong> no recibe entregas el día de hoy ({selectedTowerInfo?.daysText || "fuera de horario"}). Por favor selecciona <strong>Programar fecha futura</strong>.</>
+                          <>💡 Hoy ya concluyó la ruta inmediata para <strong>{location}</strong> ({selectedTowerInfo?.daysText || "fuera de horario"}). Selecciona <strong>Programar pedido</strong> para recibirlo caliente y puntual en su próxima entrega.</>
                         )}
                       </div>
                     )}
@@ -651,7 +652,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
                     {dateMode === "scheduled" && (
                       <div className="catalog-checkout-schedule-box">
                         <label style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
-                          <span style={{ fontSize: "12px", fontWeight: 700 }}>Elige la fecha programada (Entrega 1:30 PM):</span>
+                          <span style={{ fontSize: "12px", fontWeight: 700 }}>Elige la fecha programada (Entrega {deliveryTimeDisplay}):</span>
                           <input
                             type="date"
                             value={scheduledDate}
@@ -662,7 +663,7 @@ export function CatalogCheckoutDrawer({ isOpen, onClose, towers }: CatalogChecko
                           />
                         </label>
                         <p className="catalog-checkout-schedule-note">
-                          💡 Tu pedido será entregado en <strong>{location}</strong> el día <strong>{scheduledDate || minScheduledDate}</strong> puntualmente a las <strong>1:30 PM</strong>.
+                          💡 Tu pedido será preparado y entregado en <strong>{location}</strong> el día <strong>{scheduledDate || minScheduledDate}</strong> puntualmente a las <strong>{deliveryTimeDisplay}</strong>.
                         </p>
                       </div>
                     )}
