@@ -17,12 +17,13 @@ const rawTarget = process.env.APP_TARGET ?? 'public-v3';
 const target = targetMap[rawTarget] ?? rawTarget;
 
 const isInternal = target.includes('internal') || target.includes('chekeo');
+const isV3 = target.endsWith('-v3');
 
 export default defineConfig({
   root: path.resolve(__dirname, `apps/${target}`),
   plugins: [
     react(),
-    tailwindcss(),
+    ...(isV3 ? [tailwindcss()] : []),
   ],
   resolve: {
     alias: {
