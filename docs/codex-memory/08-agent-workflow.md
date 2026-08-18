@@ -40,21 +40,22 @@ Antes de iniciar cualquier fase de la migracion V2 Clean Architecture, el agente
 
 ## Durante el cambio
 
-1. Crear rama nueva desde la rama base correcta.
-2. Hacer cambios minimos suficientes para resolver el objetivo.
-3. No hacer refactors oportunistas.
-4. No introducir dependencias nuevas sin autorizacion explicita.
-5. No cambiar contratos de datos, precios, tickets, promociones, payloads ni reglas comerciales sin autorizacion explicita.
-6. Actualizar memoria si el cambio crea una decision nueva, cambia backlog o modifica reglas de trabajo.
+1. Crear rama nueva desde `v3` (`git checkout -b feat/v3-xx-... v3`). **NUNCA abrir ramas de feature V3 desde `main`**.
+2. Hacer cambios mínimos suficientes para resolver el objetivo.
+3. No hacer refactors oportunistas fuera del alcance del PR.
+4. No introducir dependencias nuevas sin autorización explícita.
+5. No cambiar contratos de datos, precios, tickets, promociones, payloads ni reglas comerciales sin autorización explícita.
+6. Actualizar memoria si el cambio crea una decisión nueva, cambia backlog o modifica reglas de trabajo.
 
 ## Antes de abrir PR
 
 1. Revisar diff completo.
 2. Ejecutar `git diff --check`.
-3. Ejecutar checks tecnicos aplicables:
-   - `npm run typecheck` si se toca TypeScript, configuracion o codigo de app.
-   - `npm run build:public` si se toca `apps/public-order-v2` o codigo compartido que pueda afectarlo.
-   - `npm run build:internal` si se toca `apps/internal-chekeo-v2` o codigo compartido que pueda afectarlo.
+3. Ejecutar checks técnicos aplicables:
+   - `npm run typecheck` si se toca TypeScript, configuración o código de app.
+   - `npm run build:public` (V3 Public Order)
+   - `npm run build:chekeo` (V3 Internal Chekeo)
+   - `npm run build` (compila ambas apps V3)
 4. Si un check no aplica o no pudo ejecutarse, reportarlo claramente.
 5. Preparar resumen de PR con:
    - Summary,
@@ -67,10 +68,13 @@ Antes de iniciar cualquier fase de la migracion V2 Clean Architecture, el agente
 - AUTORIZACIÓN PERMANENTE (2026-08-10): al terminar una tarea con resultado positivo, el agente prepara rama limpia, commit, push y PR automáticamente; el usuario revisa y mergea.
 
 1. Commit con mensaje claro.
-2. Push de la rama.
-3. Crear Pull Request.
+2. Push de la rama (`git push origin feat/v3-xx-...`).
+3. Crear Pull Request **OBLIGATORIAMENTE con base en `v3`**:
+   ```bash
+   gh pr create --base v3 --head feat/v3-xx-... --title "..." --body "..."
+   ```
 4. Reportar link del PR.
-5. No hacer merge automatico salvo instruccion explicita.
+5. No hacer merge automático salvo instrucción explícita.
 
 ## Regla de memoria viva
 

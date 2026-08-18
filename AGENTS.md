@@ -15,12 +15,17 @@ Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más especí
 - No tocar carpetas legacy, especialmente `legacy/`, salvo que el prompt lo autorice.
 - Reportar siempre archivos modificados, riesgos, testing ejecutado y checklist manual de QA sugerido.
 
+- **REGLA PERMANENTE DE BRANCHING V3 (MIGRACIÓN EN CURSO):**
+  - Todas las ramas de feature para la migración V3 deben crearse exclusivamente a partir de la rama `v3` (`git checkout -b feat/v3-xx-... v3`).
+  - **TODOS los Pull Requests de V3 deben abrirse obligatoriamente con base en `v3`** (`gh pr create --base v3 --head feat/v3-xx-...`).
+  - `main` permanece congelado y protegido en producción. **Bajo ninguna circunstancia se debe abrir un PR hacia `main` ni hacer push a `main` hasta el cutover final (PR-V3-13)**, el cual requerirá autorización explícita del usuario.
+
 ## Workflow automático para agentes
-- Antes de cambios reales, leer `docs/codex-memory/00-indice.md`.
-- Seguir `docs/codex-memory/08-agent-workflow.md` para rama, cambios, checks, memoria, commit, push y PR.
+- Antes de cambios reales, leer `docs/codex-memory/00-indice.md` y `docs/codex-memory/22-v3-bitacora.md`.
+- Seguir `docs/codex-memory/08-agent-workflow.md` para rama (base `v3`), cambios, checks, memoria, commit, push y PR.
 - Usar `docs/codex-memory/09-checklists.md` para validar el área tocada y preparar la descripción del PR.
 - Usar Graphify antes de cambios grandes, arquitectura, varios archivos o flujos conectados.
-- Actualizar `docs/codex-memory/05-backlog.md`, `06-prompts-buenos.md` o `07-decisiones.md` cuando el cambio altere backlog, prompts reutilizables o decisiones.
+- Actualizar `docs/codex-memory/05-backlog.md`, `06-prompts-buenos.md`, `07-decisiones.md` y `22-v3-bitacora.md` al completar cada fase.
 - No dejar cambios locales sin PR salvo instrucción explícita.
 - El asistente puede preparar rama, commit, push y PR solo cuando el usuario apruebe el cierre; el usuario revisa y mergea.
 

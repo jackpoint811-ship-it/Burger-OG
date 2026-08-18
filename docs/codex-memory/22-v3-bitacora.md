@@ -97,12 +97,12 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 ## 🔴 Reglas Permanentes V3 (de AGENTS.md)
 
-- Nunca merge a `main` sin aprobación explícita del usuario
-- Nunca push directo a `main`
-- Cada PR tiene un único objetivo
-- `npm run typecheck` + `npm run build` en cada PR con código
-- Bitácora se actualiza al cierre de cada PR
-- Graphify se corre antes de cambios de arquitectura
+- **Base de PRs Obligatoria**: Todos los PRs del roadmap V3 (PR-V3-02 hasta PR-V3-12) se crean con base en `v3` (`gh pr create --base v3 --head feat/v3-xx-...`).
+- **Protección de `main`**: Nunca abrir PR hacia `main` ni hacer push a `main` hasta el cutover final (PR-V3-13), previa autorización explícita.
+- **Atomicidad**: Cada PR tiene un único objetivo acotado y verificable.
+- **Checks Obligatorios**: `git diff --check`, `npm run typecheck` y `npm run build` en cada PR.
+- **Bitácora**: Se actualiza al cierre de cada PR.
+- **Graphify**: Se corre antes de cambios de arquitectura o flujos conectados.
 
 ---
 
