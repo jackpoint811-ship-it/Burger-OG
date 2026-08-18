@@ -54,8 +54,8 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | PR | Nombre | Estado | PR URL | Fecha inicio | Fecha cierre |
 |---|---|:---:|---|---|---|
 | V3-00 | Branch v3 + Limpieza total del repo | ✅ Mergeado | [#530](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/530) | 2026-08-18 | 2026-08-18 |
-| V3-01 | Dependencias + Scaffold estructura V3 | 🔄 En progreso | — | 2026-08-18 | — |
-| V3-02 | packages/config (Zod) + packages/ui (shadcn) | ⏳ Pendiente | — | — | — |
+| V3-01 | Dependencias + Scaffold estructura V3 | ✅ Mergeado | [#531](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/531) | 2026-08-18 | 2026-08-18 |
+| V3-02 | packages/config (Zod) + packages/ui (shadcn) | 🔄 En progreso | — | 2026-08-18 | — |
 | V3-03 | Backend: Hono.js router centralizado | ⏳ Pendiente | — | — | — |
 | V3-04 | Public Order: Zustand stores | ⏳ Pendiente | — | — | — |
 | V3-05 | Public Order: Features (TanStack Query) | ⏳ Pendiente | — | — | — |
@@ -77,13 +77,13 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 ### 📅 2026-08-18 — Sesión 1: Planificación + PR-V3-00 (Mergeado #530)
 - PR-V3-00 completado y mergeado a main: eliminación de `legacy/` y 28 archivos obsoletos.
 
-### 📅 2026-08-18 — Sesión 2: PR-V3-01 Dependencias & Scaffold V3
-- Instaladas dependencias V3: `@tanstack/react-query`, `zustand`, `zod`, `react-hook-form`, `@hookform/resolvers`, `hono`, `tailwindcss@4`, `@tailwindcss/vite`.
-- Eliminados `postcss.config.js` y `tailwind.config.ts` (Tailwind v4 utiliza `@import "tailwindcss"` nativo sin build config legacy).
-- Creada estructura limpia para `apps/public-order-v3/` y `apps/internal-chekeo-v3/` con `index.html`, `public/_headers`, `styles/globals.css`, `app/` y `main.tsx`.
-- Actualizado `vite.config.ts` para soporte dinámico de targets v3 (`public-v3`, `chekeo-v3`) y v2 para transición segura.
-- Actualizado `package.json` con nombre `burgers-exe-v3`, versión `3.0.0` y scripts correspondientes.
-- Verificaciones: `npm run typecheck` (0 errores) y `npm run build` (ambas apps v3 compilan en ~2s).
+### 📅 2026-08-18 — Sesión 2: PR-V3-01 Dependencias & Scaffold V3 (Mergeado #531)
+- Instaladas dependencias V3 y creados esqueletos `apps/public-order-v3/` e `apps/internal-chekeo-v3/`.
+
+### 📅 2026-08-18 — Sesión 3: PR-V3-02 Packages Compartidos (Zod & UI Base)
+- Creado `packages/config/src/schemas.ts` con validadores y schemas Zod completos (MenuItem, CreateOrder, OrderV2, TowerSchedules, Raffles, Ingredients) y helpers de validación con tipos inferidos.
+- Creados componentes accesibles de UI en `packages/ui/src/` (Button con variantes, Badge, Card, Input, Textarea, Label, Skeleton, Dialog, Drawer, Tabs).
+- Verificaciones: `typecheck` (0 errores), `build` (ambas apps v3), `build:public:v2` y `build:internal:v2` 100% en verde.
 
 ---
 
