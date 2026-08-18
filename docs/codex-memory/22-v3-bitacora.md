@@ -3,7 +3,7 @@
 
 # 📋 Bitácora V3 — Burgers.exe
 
-> **Estado**: 🟡 En progreso (PR-V3-00)
+> **Estado**: 🟡 En progreso (PR-V3-04)
 > **Inicio**: 2026-08-18
 > **Última actualización**: 2026-08-18
 
@@ -55,9 +55,9 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 |---|---|:---:|---|---|---|
 | V3-00 | Branch v3 + Limpieza total del repo | ✅ Mergeado | [#530](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/530) | 2026-08-18 | 2026-08-18 |
 | V3-01 | Dependencias + Scaffold estructura V3 | ✅ Mergeado | [#531](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/531) | 2026-08-18 | 2026-08-18 |
-| V3-02 | packages/config (Zod) + packages/ui (shadcn) | 🔄 En progreso | — | 2026-08-18 | — |
-| V3-03 | Backend: Hono.js router centralizado | ⏳ Pendiente | — | — | — |
-| V3-04 | Public Order: Zustand stores | ⏳ Pendiente | — | — | — |
+| V3-02 | packages/config (Zod) + packages/ui (shadcn) | ✅ Mergeado | [#533](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/533) | 2026-08-18 | 2026-08-18 |
+| V3-03 | Backend: Hono.js router centralizado | ✅ Mergeado | [#534](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/534) | 2026-08-18 | 2026-08-18 |
+| V3-04 | Public Order: Zustand stores | 🔄 En progreso | [#535](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/535) | 2026-08-18 | — |
 | V3-05 | Public Order: Features (TanStack Query) | ⏳ Pendiente | — | — | — |
 | V3-06 | Public Order: UI components (catálogo, drawers) | ⏳ Pendiente | — | — | — |
 | V3-07 | Public Order: Checkout + integración final | ⏳ Pendiente | — | — | — |
@@ -84,6 +84,11 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - Creado `packages/config/src/schemas.ts` con validadores y schemas Zod completos (MenuItem, CreateOrder, OrderV2, TowerSchedules, Raffles, Ingredients) y helpers de validación con tipos inferidos.
 - Creados componentes accesibles de UI en `packages/ui/src/` (Button con variantes, Badge, Card, Input, Textarea, Label, Skeleton, Dialog, Drawer, Tabs).
 - Verificaciones: `typecheck` (0 errores), `build` (ambas apps v3), `build:public:v2` y `build:internal:v2` 100% en verde.
+
+### 📅 2026-08-18 — Sesión 4: PR-V3-04 Zustand Stores ([#535](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/535))
+- Creados 3 stores Zustand centralizados: `cart.store.ts` (carrito con persist), `ui.store.ts` (drawers, toasts, categoría activa), `checkout.store.ts` (formulario con persist parcial de datos del cliente).
+- Barrel export en `stores/index.ts`.
+- Checks: `typecheck` ✅ (0 errores), `build` ✅ (public-v3 + chekeo-v3), `git diff --check` ✅.
 
 ---
 
