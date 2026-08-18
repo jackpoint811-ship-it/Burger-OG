@@ -135,3 +135,32 @@ Evitar que combos agregados vía Quick Add se registren sin guarnición ni burge
 - Cero pedidos de combo con `garnish: null` o `comboBurgers: []`.
 - Experiencia de compra guiada al armar combos desde cualquier botón `+` de la interfaz.
 - Consistencia total de tickets, cocina y D1.
+
+### Fecha
+
+2026-08-18
+
+### Decisión
+
+**Migración completa V2 → V3 con stack moderno y reescritura total.**
+
+1. **Branch `v3`**: Todo el desarrollo V3 en branch dedicado. V2 sigue en producción (`main`) sin interrupciones hasta cutover explícito.
+2. **Stack V3**: React 19 + TanStack Query v5 + Zustand v5 + shadcn/ui + Tailwind CSS v4 + Zod v3 + React Hook Form v7 + Hono.js v4.
+3. **Reescritura completa**: Ambas apps (Public Order y Internal Chekeo) se reescriben desde cero con arquitectura feature-based modular. God components eliminados.
+4. **Backend Hono.js**: Las 30+ Cloudflare Functions individuales se centralizan en un router Hono tipado con middleware reutilizable. Mismas URLs de API, mismos contratos D1/R2.
+5. **Limpieza total del repo**: `legacy/` eliminado, docs obsoletas eliminadas, `package.json` renombrado a v3.
+6. **13 PRs secuenciales**: PR-V3-00 (limpieza) → PR-V3-13 (cutover). Cada PR tiene un único objetivo.
+7. **Bitácora viva**: `docs/codex-memory/22-v3-bitacora.md` registra sesiones, decisiones y métricas.
+
+### Motivo
+
+V2 acumuló deuda técnica masiva: `InternalChekeoApp.tsx` con 6,336 líneas, `styles.css` con 9,711 líneas de CSS monolítico, 0 gestión de estado estructurada, 0 caché de servidor, ~50 archivos legacy contaminando el repo. La refactorización incremental ya no es viable para una transformación real.
+
+### Impacto
+
+- Repo limpio sin `legacy/`, sin docs de fases cerradas, sin archivos basura en la raíz.
+- Componentes de ~200-400 líneas reemplazando god components de 6,000+.
+- CSS de ~150 líneas (Tailwind tokens) reemplazando 9,711 líneas de CSS monolítico.
+- Estado del carrito centralizado en Zustand, server state cacheado con TanStack Query.
+- Backend organizado con Hono.js + Zod validation.
+- Producción protegida hasta cutover final aprobado.

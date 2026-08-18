@@ -3,7 +3,16 @@
 
 # Backlog
 
-## Pendientes importantes
+## Pendientes importantes — V3
+
+- PR-V3-01: Instalar dependencias V3 + scaffold de estructura vacía
+- PR-V3-02: Migrar packages/config a Zod + instalar shadcn/ui en packages/ui
+- PR-V3-03: Migrar backend a Hono.js router
+- PR-V3-04 a V3-07: Reescribir Public Order V3
+- PR-V3-08 a V3-12: Reescribir Internal Chekeo V3
+- PR-V3-13: Cutover final (requiere aprobación explícita)
+
+## Pendientes heredados de V2 (migrar a V3)
 
 - Afinar ticket pequeño vertical.
 - Mejorar ticket en Pagos.
@@ -12,15 +21,14 @@
 - Mejorar Corte.
 - Reacomodar Sorteo.
 - Agregar tickets extra a participantes.
-- Sincronización de Favoritos de Admin V3 en Cloudflare D1 (Multi-dispositivo). El plan detallado ya está estructurado (Migración SQL `0004_v2_admin_favorites.sql`, actualización de `site-config.ts` y sincronización en `AdminWorkspaceV3.tsx`).
+
 ## Completados recientemente
 
-- [x] **PR #520**: Erradicación total de fallbacks hardcodeados, badges sintéticos, datos bancarios estáticos y estilos neón legados en Public Order V2 y Chekeo V2 (Mergeado en `preview`).
-- [x] **PR #518**: Refactorización integral de colores y branding en Chekeo Preview (Estética Premium Casual Vibe).
-- [x] **PR #507**: Rediseño Hub Admin V3 con Cuadrícula Modular 3x3 de 9 tarjetas táctiles compactas.
-- [x] **PR #507**: Componente `CollapsibleCustomerNote.tsx` (píldora plegada por defecto `[📝 Nota del cliente ▼]`) en Pedidos y Cocina.
-- [x] **PR #507**: Purga completa de estilos cyberpunk neón (`cyan-400`, `pink-500`, `zinc-950`) adoptando la paleta Premium Casual Vibe (`#16A34A` / `#22C55E`, tarjetas neutras).
-- [x] **PR #507**: Interruptor dinámico para activar/desactivar la tienda pública directamente desde Chekeo V2 (`site_config` en D1) con badge permanente `MODO CATÁLOGO ÚNICO`.
+- [x] **PR-V3-00**: Branch v3 + limpieza total del repo (legacy, docs obsoletas, archivos raíz).
+- [x] **PR #525**: Hotfix Producción — Combos Quick Add & Guarniciones.
+- [x] **PR #524**: Despliegue exitoso a producción Cloudflare Pages.
+- [x] **PR #520**: Erradicación total de fallbacks hardcodeados y estilos legados.
+- [x] **PR #518**: Refactorización integral de colores y branding.
 
 ## Ideas futuras
 
