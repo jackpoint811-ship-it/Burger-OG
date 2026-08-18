@@ -53,8 +53,8 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 | PR | Nombre | Estado | PR URL | Fecha inicio | Fecha cierre |
 |---|---|:---:|---|---|---|
-| V3-00 | Branch v3 + Limpieza total del repo | 🔄 En progreso | — | 2026-08-18 | — |
-| V3-01 | Dependencias + Scaffold estructura V3 | ⏳ Pendiente | — | — | — |
+| V3-00 | Branch v3 + Limpieza total del repo | ✅ Mergeado | [#530](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/530) | 2026-08-18 | 2026-08-18 |
+| V3-01 | Dependencias + Scaffold estructura V3 | 🔄 En progreso | — | 2026-08-18 | — |
 | V3-02 | packages/config (Zod) + packages/ui (shadcn) | ⏳ Pendiente | — | — | — |
 | V3-03 | Backend: Hono.js router centralizado | ⏳ Pendiente | — | — | — |
 | V3-04 | Public Order: Zustand stores | ⏳ Pendiente | — | — | — |
@@ -74,23 +74,16 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 ## 📝 Log de Sesiones
 
-### 📅 2026-08-18 — Sesión 1: Planificación + PR-V3-00
+### 📅 2026-08-18 — Sesión 1: Planificación + PR-V3-00 (Mergeado #530)
+- PR-V3-00 completado y mergeado a main: eliminación de `legacy/` y 28 archivos obsoletos.
 
-**Investigación realizada:**
-- Leída toda la memoria del proyecto (`docs/codex-memory/00-indice.md` a `21-*.md`)
-- Medidos los archivos críticos con `wc -l` (InternalChekeoApp: 6,336 líneas; styles.css: 9,711 líneas)
-- Graphify actualizado: **4,033 nodos · 6,539 edges · 277 comunidades**
-- Revisados todos los PRs mergeados (PR #518 → PR #525) y sus aprendizajes
-
-**Acciones ejecutadas en PR-V3-00:**
-- Branch `v3` creado desde `main` (commit `1cd4a79`)
-- `legacy/` eliminado completamente (~130 archivos)
-- 6 archivos obsoletos en la raíz eliminados (`implementation_plan BASURA.md`, etc.)
-- 22 docs de fases V2 cerradas eliminados de `docs/`
-- Memoria actualizada: `01-estado-actual.md`, `07-decisiones.md`, `00-indice.md`, `05-backlog.md`
-- Bitácora V3 creada: `docs/codex-memory/22-v3-bitacora.md`
-
-**Próximo paso:** Completar checks, commit, push y abrir PR para V3-00.
+### 📅 2026-08-18 — Sesión 2: PR-V3-01 Dependencias & Scaffold V3
+- Instaladas dependencias V3: `@tanstack/react-query`, `zustand`, `zod`, `react-hook-form`, `@hookform/resolvers`, `hono`, `tailwindcss@4`, `@tailwindcss/vite`.
+- Eliminados `postcss.config.js` y `tailwind.config.ts` (Tailwind v4 utiliza `@import "tailwindcss"` nativo sin build config legacy).
+- Creada estructura limpia para `apps/public-order-v3/` y `apps/internal-chekeo-v3/` con `index.html`, `public/_headers`, `styles/globals.css`, `app/` y `main.tsx`.
+- Actualizado `vite.config.ts` para soporte dinámico de targets v3 (`public-v3`, `chekeo-v3`) y v2 para transición segura.
+- Actualizado `package.json` con nombre `burgers-exe-v3`, versión `3.0.0` y scripts correspondientes.
+- Verificaciones: `npm run typecheck` (0 errores) y `npm run build` (ambas apps v3 compilan en ~2s).
 
 ---
 
