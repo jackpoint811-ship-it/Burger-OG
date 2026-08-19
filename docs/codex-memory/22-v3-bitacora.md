@@ -64,7 +64,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-08 | Chekeo: Auth + AppShell + tabs | ✅ Mergeado | [#539](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/539) | 2026-08-19 | 2026-08-19 |
 
 
-| V3-09 | Chekeo: Feature Pedidos | 🔄 En PR | — | 2026-08-19 | — |
+| V3-09 | Chekeo: Feature Pedidos | 🔄 En PR | [#540](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/540) | 2026-08-19 | — |
 | V3-10 | Chekeo: Feature Cocina | ⏳ Pendiente | — | — | — |
 | V3-11 | Chekeo: Feature Pagos | ⏳ Pendiente | — | — | — |
 | V3-12 | Chekeo: Feature Admin completo | ⏳ Pendiente | — | — | — |
