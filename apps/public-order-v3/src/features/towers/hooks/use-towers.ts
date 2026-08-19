@@ -236,3 +236,34 @@ export function useTowerAvailability(towerKey?: string, scheduledDate?: string):
     },
   };
 }
+
+/**
+ * Helper para calcular la próxima fecha disponible de entrega para una torre (o lista de torres).
+ */
+export function getNextAvailableDeliveryDate(
+  towerKeyOrName?: string,
+  towers?: TowerSchedulePublic[]
+): string {
+  const mxNow = getMexicoCityDateTime();
+  const [year, month, day] = mxNow.dateStr.split('-').map((v) => parseInt(v, 10));
+
+  const targetTower = towers?.find(
+    (t) =>
+      t.towerKey.toLowerCase() === towerKeyOrName?.toLowerCase() ||
+      t.towerName.toLowerCase() === towerKeyOrName?.toLowerCase()
+  );
+
+  const activeDays = targetTower?.activeDays && targetTower.activeDays.length > 0
+    ? targetTower.activeDays
+    : [1, 2, 3, 4, 5];
+
+  for (let offset = 1; offset <= 14; offset++) {
+    const candidate = new Date(Date.UTC(year, month - 1, day + offset));
+    const dayOfWeek = candidate.getUTCDay();
+
+    if (activeDays.includes(dayOfWeek)) {
+      return candidate.toISOString().split('T')[0] ?? '';
+    }
+  }
+  return mxNow.dateStr;
+}

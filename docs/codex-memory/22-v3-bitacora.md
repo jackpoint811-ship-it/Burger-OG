@@ -60,8 +60,9 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-04 | Public Order: Zustand stores | ✅ Mergeado | [#535](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/535) | 2026-08-18 | 2026-08-18 |
 | V3-05 | Public Order: Features (TanStack Query) | ✅ Mergeado | [#536](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/536) | 2026-08-19 | 2026-08-19 |
 | V3-06 | Public Order: UI components (catálogo, drawers) | ✅ Mergeado | [#537](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/537) | 2026-08-19 | 2026-08-19 |
-| V3-07 | Public Order: Checkout + integración final | ⏳ Pendiente | — | — | — |
+| V3-07 | Public Order: Checkout + integración final | 🔄 En PR | — | 2026-08-19 | — |
 | V3-08 | Chekeo: Auth + AppShell + tabs | ⏳ Pendiente | — | — | — |
+
 | V3-09 | Chekeo: Feature Pedidos | ⏳ Pendiente | — | — | — |
 | V3-10 | Chekeo: Feature Cocina | ⏳ Pendiente | — | — | — |
 | V3-11 | Chekeo: Feature Pagos | ⏳ Pendiente | — | — | — |
@@ -111,7 +112,23 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `shared/`: `ProductFallbackSvg` con fallbacks visuales vectoriales para burgers, combos, guarniciones y bebidas.
   - Master barrel export en `components/index.ts`.
 - Conectado en `PublicApp.tsx` integrando TanStack Query hooks y Zustand stores.
+### 📅 2026-08-19 — Sesión 7: PR-V3-07 Public Order Checkout Drawer, Validación & Integración Final
+- Creado `CheckoutDrawer.tsx` en `apps/public-order-v3/src/components/drawers/`:
+  - Integración completa con React Hook Form v7 y Zod resolver (`@hookform/resolvers/zod`).
+  - Validación inline estricta de nombre (mínimo 2 caracteres) y teléfono WhatsApp (10 dígitos).
+  - Selector interactivo de torre con disponibilidad operativa y aviso si está fuera de horario.
+  - Soporte de pedidos para hoy vs. fechas programadas con cálculo dinámico (`getNextAvailableDeliveryDate`).
+  - Métodos de pago (efectivo, transferencia SPEI y WhatsApp) con tarjeta de datos bancarios (`useSiteConfig`), CLABE y botón de copiado rápido con 1-tap.
+  - Soporte de código de referido / sorteo y opt-in para grupo de WhatsApp.
+- Creado `OrderSuccessModal.tsx` en `apps/public-order-v3/src/components/orders/`:
+  - Modal de confirmación con animación y folio de seguimiento (`#FOLIO`) con botón de copiado rápido.
+  - Resumen detallado del pedido (torre, horario de entrega, forma de pago y total financiero).
+  - Enlaces directos a WhatsApp para enviar comprobante de pago y unirse a la comunidad oficial.
+  - Notificación de boletos ganados para el sorteo activo (`earnedTickets`).
+- Conexión de `useCreateOrderMutation` para persistencia en backend e invalidación automática de caché de catálogo.
+- Integración completa en `apps/public-order-v3/src/app/PublicApp.tsx` (Header + Banners + Categorías + Catálogo + CartBar + Drawers + Checkout + SuccessModal).
 - Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
+
 
 
 ---
