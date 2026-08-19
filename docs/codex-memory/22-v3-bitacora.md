@@ -57,8 +57,8 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-01 | Dependencias + Scaffold estructura V3 | ✅ Mergeado | [#531](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/531) | 2026-08-18 | 2026-08-18 |
 | V3-02 | packages/config (Zod) + packages/ui (shadcn) | ✅ Mergeado | [#533](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/533) | 2026-08-18 | 2026-08-18 |
 | V3-03 | Backend: Hono.js router centralizado | ✅ Mergeado | [#534](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/534) | 2026-08-18 | 2026-08-18 |
-| V3-04 | Public Order: Zustand stores | 🔄 En progreso | [#535](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/535) | 2026-08-18 | — |
-| V3-05 | Public Order: Features (TanStack Query) | ⏳ Pendiente | — | — | — |
+| V3-04 | Public Order: Zustand stores | ✅ Mergeado | [#535](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/535) | 2026-08-18 | 2026-08-18 |
+| V3-05 | Public Order: Features (TanStack Query) | 🔄 En progreso | — | 2026-08-19 | — |
 | V3-06 | Public Order: UI components (catálogo, drawers) | ⏳ Pendiente | — | — | — |
 | V3-07 | Public Order: Checkout + integración final | ⏳ Pendiente | — | — | — |
 | V3-08 | Chekeo: Auth + AppShell + tabs | ⏳ Pendiente | — | — | — |
@@ -85,10 +85,22 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - Creados componentes accesibles de UI en `packages/ui/src/` (Button con variantes, Badge, Card, Input, Textarea, Label, Skeleton, Dialog, Drawer, Tabs).
 - Verificaciones: `typecheck` (0 errores), `build` (ambas apps v3), `build:public:v2` y `build:internal:v2` 100% en verde.
 
-### 📅 2026-08-18 — Sesión 4: PR-V3-04 Zustand Stores ([#535](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/535))
+### 📅 2026-08-18 — Sesión 4: PR-V3-04 Zustand Stores (Mergeado #535)
 - Creados 3 stores Zustand centralizados: `cart.store.ts` (carrito con persist), `ui.store.ts` (drawers, toasts, categoría activa), `checkout.store.ts` (formulario con persist parcial de datos del cliente).
 - Barrel export en `stores/index.ts`.
 - Checks: `typecheck` ✅ (0 errores), `build` ✅ (public-v3 + chekeo-v3), `git diff --check` ✅.
+
+### 📅 2026-08-19 — Sesión 5: PR-V3-05 Public Order Features & Hooks (TanStack Query)
+- Creados módulos de API y hooks TanStack Query v5 en `apps/public-order-v3/src/features/`:
+  - `shared/`: Cliente `apiFetch` y clase de error `ApiError`.
+  - `menu/`: `fetchMenu`, `useMenuQuery`, selectores (`useCategories`, `useMenuItems`, `useFeaturedItems`, `useMenuItem`, `usePromos`, `useSiteConfig`, `usePublicConfig`, `useItemRecipe`) y query keys tipadas (`menuKeys`).
+  - `banners/`: Hooks para `useCatalogBanners`, `useCategoryBanner`, `useCategoryBanners`.
+  - `towers/`: `fetchTowerSchedules`, `useTowerSchedulesQuery`, `useActiveTowers`, `useTowerByKey`, helper de zona horaria CDMX y hook de disponibilidad operativa `useTowerAvailability`.
+  - `raffles/`: `fetchActiveRaffle`, `fetchCampaignConfig`, `lookupRaffleTickets`, `fetchReferralTickets`, y hooks `useActiveRaffleQuery`, `useCampaignConfigQuery`, `useRaffleTicketsLookup`, `useReferralTicketsQuery`.
+  - `orders/`: `createOrder`, helper `cartAndFormToCreateOrderPayload`, y mutation hook `useCreateOrderMutation` con sincronización automática a Zustand `checkoutStore` / `cartStore` e invalidación inteligente de caché.
+  - Barrel exports limpios en cada módulo y master export en `features/index.ts`.
+- Conectado `PublicApp.tsx` para consumir y validar queries activas.
+- Checks: `typecheck` ✅ (0 errores), `build` ✅ (`public-order-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
 
 ---
 
