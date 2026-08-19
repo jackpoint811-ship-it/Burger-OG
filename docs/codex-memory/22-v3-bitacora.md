@@ -59,7 +59,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-03 | Backend: Hono.js router centralizado | ✅ Mergeado | [#534](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/534) | 2026-08-18 | 2026-08-18 |
 | V3-04 | Public Order: Zustand stores | ✅ Mergeado | [#535](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/535) | 2026-08-18 | 2026-08-18 |
 | V3-05 | Public Order: Features (TanStack Query) | ✅ Mergeado | [#536](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/536) | 2026-08-19 | 2026-08-19 |
-| V3-06 | Public Order: UI components (catálogo, drawers) | ⏳ Pendiente | — | — | — |
+| V3-06 | Public Order: UI components (catálogo, drawers) | 🔄 En PR | [#537](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/537) | 2026-08-19 | — |
 | V3-07 | Public Order: Checkout + integración final | ⏳ Pendiente | — | — | — |
 | V3-08 | Chekeo: Auth + AppShell + tabs | ⏳ Pendiente | — | — | — |
 | V3-09 | Chekeo: Feature Pedidos | ⏳ Pendiente | — | — | — |
@@ -101,6 +101,18 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Barrel exports limpios en cada módulo y master export en `features/index.ts`.
 - Conectado `PublicApp.tsx` para consumir y validar queries activas.
 - Checks: `typecheck` ✅ (0 errores), `build` ✅ (`public-order-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
+
+### 📅 2026-08-19 — Sesión 6: PR-V3-06 Public Order UI Components & Drawers
+- Creados componentes y vistas modulares en `apps/public-order-v3/src/components/`:
+  - `header/`: `BrandHeader` con estatus operativo y selector de torre; `TowerScheduleModal` con consulta de horarios CDMX, días activos y selector de torre.
+  - `catalog/`: `BannerCarousel` con carrusel interactivo, autoplay, swipe y CTA actions; `CategoryNav` sticky horizontal con auto-scroll a sección y resaltado activo; `ProductCard` con resolución de assets R2, fallbacks SVG (`ProductFallbackSvg`), badges, precios promo y quick-add; `ProductGrid` con organización por categorías y skeletons.
+  - `drawers/`: `ProductDetailDrawer` con personalización completa (receta original vs personalizar, chips de ingredientes a remover, extras dinámicos, notas para cocina, guarnición obligatoria y bebidas en combos, personalización de burgers incluidas); `CartDrawer` con desglose de ítems, stepper de cantidades, resumen financiero y 1-Tap Reorder.
+  - `layout/`: `CartBar` barra flotante animada con Framer Motion y touch target >= 44px; `ToastContainer` para notificaciones no bloqueantes.
+  - `shared/`: `ProductFallbackSvg` con fallbacks visuales vectoriales para burgers, combos, guarniciones y bebidas.
+  - Master barrel export en `components/index.ts`.
+- Conectado en `PublicApp.tsx` integrando TanStack Query hooks y Zustand stores.
+- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
+
 
 ---
 
