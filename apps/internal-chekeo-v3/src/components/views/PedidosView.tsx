@@ -1,154 +1,194 @@
 /**
- * PedidosView.tsx — PR-V3-08
+ * PedidosView.tsx — PR-V3-09
  *
- * Vista placeholder & esqueleto base para el módulo de Pedidos (PR-V3-09).
- * Estandarización de jerarquía visual: Total destacado, Dónde entregar y Fecha programada.
+ * Vista principal del módulo de Pedidos en Chekeo V3:
+ * - Consulta de pedidos en tiempo real con TanStack Query y auto-refresco
+ * - Filtrado reactivo por texto (folio, cliente, teléfono), estado, modo y torre
+ * - Lista de comandas con acciones de avance de estado
+ * - Drawer de detalle completo y modal de cancelación segura.
  */
 
-import React from 'react';
-import { ShoppingBag, Search, Filter, Calendar, MapPin, Sparkles, RefreshCw, CheckCircle2, Clock } from 'lucide-react';
-import { Skeleton } from '@ui/skeleton';
-import { Badge } from '@ui/badge';
-import { Button } from '@ui/button';
+import React, { useState, useMemo } from 'react';
+import type { OrderV2 } from '@config/index';
+import { useChekeoOrdersQuery } from '../../features/orders';
+import {
+  OrdersFilterBar,
+  OrdersList,
+  OrderDetailDrawer,
+  CancelOrderModal,
+  type OrdersFilterState,
+} from '../orders';
 
 export function PedidosView() {
+  const [filters, setFilters] = useState<OrdersFilterState>({
+    search: '',
+    status: 'all',
+    mode: 'all',
+    tower: 'all',
+    dateHorizon: 'all',
+    autoRefresh: true,
+  });
+
+  const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderV2 | null>(null);
+  const [orderToCancel, setOrderToCancel] = useState<OrderV2 | null>(null);
+
+  // Hook de consulta TanStack Query v5
+  const {
+    orders,
+    counts,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useChekeoOrdersQuery({
+    autoRefresh: filters.autoRefresh,
+    refetchIntervalMs: 15000,
+  });
+
+  // Extraer lista única de torres/ubicaciones presentes en los pedidos
+  const availableTowers = useMemo(() => {
+    const towersSet = new Set<string>();
+    orders.forEach((order) => {
+      const location = order.delivery?.location?.trim();
+      if (location) {
+        const match = location.match(/^(Torre\s+[^•-]+)/i);
+        if (match) {
+          towersSet.add(match[1].trim());
+        } else {
+          towersSet.add(location.split('•')[0].trim());
+        }
+      }
+    });
+    return Array.from(towersSet);
+  }, [orders]);
+
+  // Filtrado de pedidos según los criterios activos
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      // 1. Filtro de Búsqueda por texto (Folio, Cliente, Teléfono o Notas)
+      if (filters.search.trim()) {
+        const term = filters.search.toLowerCase().trim();
+        const matchesFolio = order.folio.toLowerCase().includes(term);
+        const matchesName = order.customerName.toLowerCase().includes(term);
+        const matchesPhone = order.customerPhone.toLowerCase().includes(term);
+        const matchesNotes = order.notes?.toLowerCase().includes(term) ?? false;
+        const matchesItems = order.items.some((item) =>
+          item.name.toLowerCase().includes(term)
+        );
+
+        if (
+          !matchesFolio &&
+          !matchesName &&
+          !matchesPhone &&
+          !matchesNotes &&
+          !matchesItems
+        ) {
+          return false;
+        }
+      }
+
+      // 2. Filtro de Estado
+      if (filters.status !== 'all' && order.status !== filters.status) {
+        return false;
+      }
+
+      // 3. Filtro de Modo (Pickup / Delivery)
+      if (filters.mode !== 'all' && order.orderMode !== filters.mode) {
+        return false;
+      }
+
+      // 4. Filtro de Torre / Ubicación
+      if (filters.tower !== 'all') {
+        const orderLoc = (order.delivery?.location || '').toLowerCase();
+        if (!orderLoc.includes(filters.tower.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // 5. Filtro de Horizonte de Fecha (Hoy / Mañana / Todos)
+      if (filters.dateHorizon !== 'all') {
+        const now = new Date();
+        const orderDate = new Date(order.createdAt);
+        const isSameDay =
+          now.getFullYear() === orderDate.getFullYear() &&
+          now.getMonth() === orderDate.getMonth() &&
+          now.getDate() === orderDate.getDate();
+
+        if (filters.dateHorizon === 'today' && !isSameDay) {
+          return false;
+        }
+
+        if (filters.dateHorizon === 'tomorrow') {
+          const tomorrow = new Date(now);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const isTomorrow =
+            tomorrow.getFullYear() === orderDate.getFullYear() &&
+            tomorrow.getMonth() === orderDate.getMonth() &&
+            tomorrow.getDate() === orderDate.getDate();
+
+          if (!isTomorrow) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [orders, filters]);
+
+  // Mantener actualizado el pedido en el drawer si cambian los datos en segundo plano
+  const currentDetailOrder = useMemo(() => {
+    if (!selectedOrderDetail) return null;
+    return orders.find((o) => o.id === selectedOrderDetail.id) || selectedOrderDetail;
+  }, [orders, selectedOrderDetail]);
+
+  const handleResetFilters = () => {
+    setFilters({
+      search: '',
+      status: 'all',
+      mode: 'all',
+      tower: 'all',
+      dateHorizon: 'all',
+      autoRefresh: true,
+    });
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Barra de Filtros y Control */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-surface-card p-4 rounded-3xl border border-line shadow-xs">
-        {/* Búsqueda rápida */}
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-text-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Buscar por folio, cliente o teléfono…"
-            disabled
-            className="w-full pl-10 pr-4 h-11 rounded-2xl bg-surface-raised border border-line text-sm text-text-primary placeholder:text-text-muted cursor-not-allowed opacity-80"
-          />
-        </div>
+      <OrdersFilterBar
+        filters={filters}
+        onFilterChange={setFilters}
+        counts={counts}
+        availableTowers={availableTowers}
+        isFetching={isFetching}
+        onRefresh={() => refetch()}
+      />
 
-        {/* Filtros de Estado */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 no-scrollbar">
-          {[
-            { label: 'Todos', active: true, count: 12 },
-            { label: 'Nuevos', count: 4 },
-            { label: 'En Preparación', count: 5 },
-            { label: 'En Ruta', count: 3 },
-            { label: 'Entregados', count: 28 },
-          ].map((item, idx) => (
-            <button
-              key={idx}
-              type="button"
-              disabled
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-colors ${
-                item.active
-                  ? 'bg-accent text-white shadow-xs'
-                  : 'bg-surface-raised border border-line text-text-secondary'
-              }`}
-            >
-              <span>{item.label}</span>
-              <span
-                className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                  item.active ? 'bg-white/20 text-white' : 'bg-surface text-text-muted'
-                }`}
-              >
-                {item.count}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Lista de Pedidos */}
+      <OrdersList
+        orders={filteredOrders}
+        isLoading={isLoading}
+        totalUnfilteredCount={orders.length}
+        onOpenDetail={(order) => setSelectedOrderDetail(order)}
+        onOpenCancel={(order) => setOrderToCancel(order)}
+        onResetFilters={handleResetFilters}
+      />
 
-      {/* Ribbon de Calendario & Torres (Filtro Horizontal) */}
-      <div className="flex items-center justify-between gap-3 bg-surface-card p-3 sm:p-4 rounded-2xl border border-line">
-        <div className="flex items-center gap-2 text-xs font-bold text-text-secondary">
-          <Calendar className="w-4 h-4 text-accent" />
-          <span>Filtro de Fecha:</span>
-          <Badge variant="default">Hoy (Mié 19 Ago)</Badge>
-          <Badge variant="secondary">Mañana (Jue 20 Ago)</Badge>
-          <Badge variant="secondary">Viernes (21 Ago)</Badge>
-        </div>
+      {/* Drawer de Detalle Completo de Pedido */}
+      <OrderDetailDrawer
+        order={currentDetailOrder}
+        open={Boolean(selectedOrderDetail)}
+        onClose={() => setSelectedOrderDetail(null)}
+        onOpenCancelModal={(order) => {
+          setSelectedOrderDetail(null);
+          setOrderToCancel(order);
+        }}
+      />
 
-        <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-text-muted">
-          <MapPin className="w-3.5 h-3.5" />
-          <span>Todas las Torres (GGA / Valcob)</span>
-        </div>
-      </div>
-
-      {/* Grid de Tarjetas de Pedidos (Esqueletos representativos) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[1, 2, 3].map((item) => (
-          <div
-            key={item}
-            className="bg-surface-card rounded-3xl p-5 border border-line shadow-card space-y-4 hover:border-accent/40 transition-colors"
-          >
-            {/* Header del pedido: Folio y Estado */}
-            <div className="flex items-center justify-between border-b border-line pb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-base font-black text-text-primary">#ORD-0{item}84</span>
-                <Badge variant={item === 1 ? 'default' : 'warning'}>
-                  {item === 1 ? 'Nuevo' : 'En Preparación'}
-                </Badge>
-              </div>
-              <span className="text-xl font-black text-accent">$310 MXN</span>
-            </div>
-
-            {/* Datos de entrega (Jerarquía V3) */}
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center gap-2 text-text-primary font-bold">
-                <MapPin className="w-4 h-4 text-accent shrink-0" />
-                <span>Torre GGA • Piso 8, Depto 804</span>
-              </div>
-              <div className="flex items-center gap-2 text-text-secondary font-medium">
-                <Clock className="w-4 h-4 text-text-muted shrink-0" />
-                <span>📅 Entrega Hoy (13:45 - 14:15)</span>
-              </div>
-            </div>
-
-            {/* Ítems del pedido preview */}
-            <div className="p-3 rounded-2xl bg-surface-raised border border-line space-y-1 text-xs">
-              <div className="flex justify-between font-bold text-text-primary">
-                <span>1x Combo Burger OG</span>
-                <span>$210</span>
-              </div>
-              <p className="text-[11px] text-text-muted">
-                Papas Francesas • Coca-Cola Zero • Sin Pepinillos
-              </p>
-              <div className="flex justify-between font-bold text-text-primary pt-1 border-t border-line/50">
-                <span>1x Burger BBQ Especial</span>
-                <span>$100</span>
-              </div>
-            </div>
-
-            {/* Skeleton Action Bar */}
-            <div className="flex gap-2 pt-1">
-              <Skeleton className="h-9 flex-1 rounded-xl" />
-              <Skeleton className="h-9 w-20 rounded-xl" />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Banner Informativo del Roadmap */}
-      <div className="p-5 rounded-3xl bg-accent-soft border border-accent/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 text-center sm:text-left">
-          <div className="w-10 h-10 rounded-2xl bg-accent/20 flex items-center justify-center text-accent shrink-0">
-            <ShoppingBag className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-text-primary">
-              Módulo de Pedidos — Próximo PR-V3-09
-            </h4>
-            <p className="text-xs text-text-secondary">
-              Gestión reactiva de comandas, avance de estados, folios de seguimiento y filtros en tiempo real.
-            </p>
-          </div>
-        </div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-card border border-line text-xs font-bold text-accent shadow-xs">
-          <Sparkles className="w-4 h-4" />
-          <span>Esqueleto Listo</span>
-        </div>
-      </div>
+      {/* Modal de Cancelación de Pedido */}
+      <CancelOrderModal
+        order={orderToCancel}
+        open={Boolean(orderToCancel)}
+        onClose={() => setOrderToCancel(null)}
+      />
     </div>
   );
 }

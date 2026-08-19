@@ -47,7 +47,7 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 | V3-08 | Chekeo: Auth + shell + tabs | ✅ Mergeado |
 
 
-| V3-09 | Chekeo: Feature Pedidos | ⏳ Pendiente |
+| V3-09 | Chekeo: Feature Pedidos | 🔄 En PR |
 | V3-10 | Chekeo: Feature Cocina | ⏳ Pendiente |
 | V3-11 | Chekeo: Feature Pagos | ⏳ Pendiente |
 | V3-12 | Chekeo: Feature Admin | ⏳ Pendiente |
