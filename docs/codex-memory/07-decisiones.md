@@ -164,3 +164,26 @@ V2 acumuló deuda técnica masiva: `InternalChekeoApp.tsx` con 6,336 líneas, `s
 - Estado del carrito centralizado en Zustand, server state cacheado con TanStack Query.
 - Backend organizado con Hono.js + Zod validation.
 - Producción protegida hasta cutover final aprobado.
+
+### Fecha
+
+2026-08-19
+
+### Decisión
+
+**Arquitectura de KDS (Kitchen Display System) y Resumen K (Mise en Place) en Chekeo V3 (PR-V3-10)**:
+
+1. **KDS Kanban con Semáforo Reactivo**: Interfaz de 3 columnas (Nuevos / En Plancha / Listos para Empacar) con folio en tipografía grande, temporizador dinámico con semáforo (`<10m` normal, `10-20m` warning, `>20m` urgente) y botón de 1-clic para avanzar el estado del pedido.
+2. **Resaltado Crítico de Modificadores**: Remociones (`🔴 SIN CEBOLLA`, etc.) y extras (`🟢 +EXTRA TOCINO`, etc.) en chips de alto contraste y legibilidad a distancia para pantallas táctiles de cocina y tablets.
+3. **Agregador de Insumos (Resumen K)**: Cómputo consolidado en tiempo real de hamburguesas a producir por receta, guarniciones (Papas Francesas, Aros) y extras totales para mise en place, con integración opcional a base de datos Cloudflare D1 (`/api/kitchen-v2-admin/summary-k`).
+4. **Alertas Sonoras Nativas (Web Audio API)**: Síntesis de chimes sin depender de archivos de audio externos, con persistencia del switch de volumen en `localStorage`.
+
+### Motivo
+
+Permitir a los operadores de plancha y freidora preparar pedidos con máxima velocidad y cero errores de ingredientes, además de dimensionar los insumos necesarios para la jornada.
+
+### Impacto
+
+- Cero errores en burgers con modificaciones especiales.
+- Visibilidad inmediata del flujo de pedidos y tiempos de preparación.
+- Sin dependencias externas de audio ni assets pesados.
