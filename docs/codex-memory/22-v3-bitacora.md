@@ -3,7 +3,7 @@
 
 # 📋 Bitácora V3 — Burgers.exe
 
-> **Estado**: 🟡 En progreso (PR-V3-08 Mergeado)
+> **Estado**: 🟡 En progreso (PR-V3-09 Mergeado)
 > **Inicio**: 2026-08-18
 > **Última actualización**: 2026-08-19
 
@@ -62,9 +62,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-06 | Public Order: UI components (catálogo, drawers) | ✅ Mergeado | [#537](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/537) | 2026-08-19 | 2026-08-19 |
 | V3-07 | Public Order: Checkout + integración final | ✅ Mergeado | [#538](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/538) | 2026-08-19 | 2026-08-19 |
 | V3-08 | Chekeo: Auth + AppShell + tabs | ✅ Mergeado | [#539](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/539) | 2026-08-19 | 2026-08-19 |
-
-
-| V3-09 | Chekeo: Feature Pedidos | 🔄 En PR | [#540](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/540) | 2026-08-19 | — |
+| V3-09 | Chekeo: Feature Pedidos | ✅ Mergeado | [#540](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/540) | 2026-08-19 | 2026-08-19 |
 | V3-10 | Chekeo: Feature Cocina | ⏳ Pendiente | — | — | — |
 | V3-11 | Chekeo: Feature Pagos | ⏳ Pendiente | — | — | — |
 | V3-12 | Chekeo: Feature Admin completo | ⏳ Pendiente | — | — | — |
