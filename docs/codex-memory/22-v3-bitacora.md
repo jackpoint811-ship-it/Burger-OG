@@ -64,7 +64,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-08 | Chekeo: Auth + AppShell + tabs | ✅ Mergeado | [#539](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/539) | 2026-08-19 | 2026-08-19 |
 
 
-| V3-09 | Chekeo: Feature Pedidos | ⏳ Pendiente | — | — | — |
+| V3-09 | Chekeo: Feature Pedidos | 🔄 En PR | [#540](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/540) | 2026-08-19 | — |
 | V3-10 | Chekeo: Feature Cocina | ⏳ Pendiente | — | — | — |
 | V3-11 | Chekeo: Feature Pagos | ⏳ Pendiente | — | — | — |
 | V3-12 | Chekeo: Feature Admin completo | ⏳ Pendiente | — | — | — |
@@ -145,6 +145,22 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `PagosView.tsx`: KPI summary cards financieros, filtros de conciliación y WhatsApp para PR-V3-11.
   - `AdminView.tsx`: hub administrativo para Menú, Torres, Banners, Sorteos y Corte Z para PR-V3-12.
 - Montaje general en `apps/internal-chekeo-v3/src/app/ChekeoApp.tsx` con verificación de sesión al boot.
+- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
+
+### 📅 2026-08-19 — Sesión 9: PR-V3-09 Chekeo Feature Pedidos (Comandas, Filtros, Drawers y Estado)
+- Creada capa Data Layer en `apps/internal-chekeo-v3/src/features/orders/`:
+  - `types/orders.types.ts`: tipos normalizados de comanda (`NormalizedOrderItem`, `NormalizedComboBurger`, `NormalizedExtra`), mapeo de estados, badges accesibles y helpers de formato de moneda, fecha/hora CDMX y links directos a WhatsApp.
+  - `api/orders.api.ts`: integración con backend Hono (`/api/orders-v2-admin`, `/api/orders-v2-admin/:id/status`, `/api/orders-v2-admin/:id/payment`, `/api/orders-v2-admin/summary`, `/api/orders-v2-admin/batch-archive`).
+  - `hooks/use-orders.ts`: TanStack Query v5 hooks (`useChekeoOrdersQuery` con auto-refresh configurable de 15s y cómputo de contadores reactivos, `useUpdateOrderStatusMutation` con invalidación de caché, `useUpdateOrderPaymentMutation`, etc.).
+  - Barrel export en `features/orders/index.ts`.
+- Creados componentes modulares en `apps/internal-chekeo-v3/src/components/orders/`:
+  - `OrdersFilterBar.tsx`: búsqueda instantánea por folio/nombre/teléfono, selector horizontal por estado con conteos en vivo, filtros de modo (Pickup/Delivery), selector dinámico de torres, selector de horizonte de entrega y botón de refresco / switch de auto-refresh.
+  - `OrderCard.tsx`: tarjeta de pedido con folio `#ORD-...`, botón de copiado rápido, badges de estado y modo, datos de cliente y entrega, desglose estructurado de ítems (combos con guarnición y bebida, remociones en tags de alerta, extras en tags de acento, notas para cocina y notas generales), precio total destacado y botones de acción rápida para avanzar estado.
+  - `OrdersList.tsx`: grid adaptativo responsive mobile-first, esqueletos de carga suaves y empty state ilustrado con botón de restablecer filtros.
+  - `OrderDetailDrawer.tsx`: drawer para detalle profundo del pedido, auditoría cronológica de eventos (`order_events_v2`), desglose financiero y acciones de cambio directo de estado.
+  - `CancelOrderModal.tsx`: modal para cancelación segura de pedidos con presets de motivo y nota personalizada.
+  - Barrel export en `components/orders/index.ts`.
+- Integración completa en `apps/internal-chekeo-v3/src/components/views/PedidosView.tsx`.
 - Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
 
 
