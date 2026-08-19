@@ -41,7 +41,7 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 | V3-02 | packages/config (Zod) + packages/ui (shadcn) | ✅ Mergeado |
 | V3-03 | Backend: Hono.js router centralizado | ✅ Mergeado |
 | V3-04 | Public Order: Zustand stores | ✅ Mergeado |
-| V3-05 | Public Order: Features (TanStack Query) | 🔄 En progreso |
+| V3-05 | Public Order: Features (TanStack Query) | ✅ Mergeado |
 | V3-06 | Public Order: UI components | ⏳ Pendiente |
 | V3-07 | Public Order: Checkout + integración | ⏳ Pendiente |
 | V3-08 | Chekeo: Auth + shell + tabs | ⏳ Pendiente |

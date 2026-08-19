@@ -58,7 +58,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-02 | packages/config (Zod) + packages/ui (shadcn) | ✅ Mergeado | [#533](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/533) | 2026-08-18 | 2026-08-18 |
 | V3-03 | Backend: Hono.js router centralizado | ✅ Mergeado | [#534](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/534) | 2026-08-18 | 2026-08-18 |
 | V3-04 | Public Order: Zustand stores | ✅ Mergeado | [#535](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/535) | 2026-08-18 | 2026-08-18 |
-| V3-05 | Public Order: Features (TanStack Query) | 🔄 En progreso | — | 2026-08-19 | — |
+| V3-05 | Public Order: Features (TanStack Query) | ✅ Mergeado | [#536](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/536) | 2026-08-19 | 2026-08-19 |
 | V3-06 | Public Order: UI components (catálogo, drawers) | ⏳ Pendiente | — | — | — |
 | V3-07 | Public Order: Checkout + integración final | ⏳ Pendiente | — | — | — |
 | V3-08 | Chekeo: Auth + AppShell + tabs | ⏳ Pendiente | — | — | — |
