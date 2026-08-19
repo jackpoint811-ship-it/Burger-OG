@@ -60,7 +60,8 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-04 | Public Order: Zustand stores | ✅ Mergeado | [#535](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/535) | 2026-08-18 | 2026-08-18 |
 | V3-05 | Public Order: Features (TanStack Query) | ✅ Mergeado | [#536](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/536) | 2026-08-19 | 2026-08-19 |
 | V3-06 | Public Order: UI components (catálogo, drawers) | ✅ Mergeado | [#537](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/537) | 2026-08-19 | 2026-08-19 |
-| V3-07 | Public Order: Checkout + integración final | 🔄 En PR | — | 2026-08-19 | — |
+| V3-07 | Public Order: Checkout + integración final | 🔄 En PR | [#538](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/538) | 2026-08-19 | — |
+
 | V3-08 | Chekeo: Auth + AppShell + tabs | ⏳ Pendiente | — | — | — |
 
 | V3-09 | Chekeo: Feature Pedidos | ⏳ Pendiente | — | — | — |
