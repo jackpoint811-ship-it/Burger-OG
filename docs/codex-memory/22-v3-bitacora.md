@@ -63,7 +63,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-07 | Public Order: Checkout + integración final | ✅ Mergeado | [#538](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/538) | 2026-08-19 | 2026-08-19 |
 | V3-08 | Chekeo: Auth + AppShell + tabs | ✅ Mergeado | [#539](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/539) | 2026-08-19 | 2026-08-19 |
 | V3-09 | Chekeo: Feature Pedidos | ✅ Mergeado | [#540](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/540) | 2026-08-19 | 2026-08-19 |
-| V3-10 | Chekeo: Feature Cocina | ⏳ Pendiente | — | — | — |
+| V3-10 | Chekeo: Feature Cocina (KDS & Resumen K) | 🔄 En PR | — | 2026-08-19 | — |
 | V3-11 | Chekeo: Feature Pagos | ⏳ Pendiente | — | — | — |
 | V3-12 | Chekeo: Feature Admin completo | ⏳ Pendiente | — | — | — |
 | V3-13 | Cutover + Eliminar V2 + Merge a main | ⏳ Pendiente | — | — | — |
@@ -159,6 +159,20 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `CancelOrderModal.tsx`: modal para cancelación segura de pedidos con presets de motivo y nota personalizada.
   - Barrel export en `components/orders/index.ts`.
 - Integración completa en `apps/internal-chekeo-v3/src/components/views/PedidosView.tsx`.
+- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
+
+### 📅 2026-08-19 — Sesión 10: PR-V3-10 Chekeo Feature Cocina (KDS & Resumen K)
+- Creada capa Data Layer en `apps/internal-chekeo-v3/src/features/kitchen/`:
+  - `types/kitchen.types.ts`: tipos tipados para KDS (`KitchenTicket`, `KitchenTicketItem`, `KitchenStation`), semáforo de tiempos (`calculateAlertTone`, `<10m` normal, `10-20m` warning, `>20m` urgent), cálculo de minutos transcurridos y agregadores de insumos (`computeKitchenAggregates`).
+  - `api/kitchen.api.ts`: cliente de API para `/api/kitchen-v2-admin/summary-k` y `/api/orders-v2-admin/:id/kitchen-item`.
+  - `hooks/use-kitchen.ts`: hooks TanStack Query v5 (`useKitchenDisplay`, `useKitchenSummaryKQuery`, `useUpdateKitchenItemMutation`), tick periódico de 10s para actualizar temporizadores y síntesis de audio con Web Audio API para alertas sonoras (`playKdsChime`).
+  - Barrel export en `features/kitchen/index.ts` y master export en `features/index.ts`.
+- Creados componentes modulares en `apps/internal-chekeo-v3/src/components/kitchen/`:
+  - `KitchenTicketCard.tsx`: comanda de alto contraste diseñada para tablets y pantallas de cocina, folio grande `#ORD-...`, semáforo de tiempo con badge de minutos, tags de remociones en rojo (`🔴 SIN ...`), tags de extras en verde (`🟢 +EXTRA ...`), guarnición de combo y bebida destacadas, nota de cocina/pedido y botón de 1-clic para avanzar de etapa con opción de reversión.
+  - `KitchenDisplay.tsx`: pantalla KDS con 3 columnas Kanban (Nuevos / En Plancha / Listos para Empacar), filtro de estaciones (Todas, Plancha/Burgers, Freidora/Guarniciones), leyenda de semáforo, toggle de audio KDS, soporte de pantalla completa y auto-refresh a 10s.
+  - `KitchenSummaryK.tsx`: agregador de producción en tiempo real con KPIs, contador de hamburguesas a producir por receta (OG, BBQ, Clásica, etc.), consolidado de guarniciones, extras totales para mise en place e integración con D1 para insumos cuantificables y costeo estimado.
+  - Barrel export en `components/kitchen/index.ts`.
+- Integración completa en `apps/internal-chekeo-v3/src/components/views/CocinaView.tsx` con selector de sub-vista entre KDS y Resumen K.
 - Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
 
 
