@@ -61,7 +61,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-05 | Public Order: Features (TanStack Query) | ✅ Mergeado | [#536](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/536) | 2026-08-19 | 2026-08-19 |
 | V3-06 | Public Order: UI components (catálogo, drawers) | ✅ Mergeado | [#537](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/537) | 2026-08-19 | 2026-08-19 |
 | V3-07 | Public Order: Checkout + integración final | ✅ Mergeado | [#538](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/538) | 2026-08-19 | 2026-08-19 |
-| V3-08 | Chekeo: Auth + AppShell + tabs | ⏳ Pendiente | — | — | — |
+| V3-08 | Chekeo: Auth + AppShell + tabs | 🔄 En progreso | — | 2026-08-19 | — |
 
 
 | V3-09 | Chekeo: Feature Pedidos | ⏳ Pendiente | — | — | — |
@@ -128,6 +128,23 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Notificación de boletos ganados para el sorteo activo (`earnedTickets`).
 - Conexión de `useCreateOrderMutation` para persistencia en backend e invalidación automática de caché de catálogo.
 - Integración completa en `apps/public-order-v3/src/app/PublicApp.tsx` (Header + Banners + Categorías + Catálogo + CartBar + Drawers + Checkout + SuccessModal).
+- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
+
+### 📅 2026-08-19 — Sesión 8: PR-V3-08 Chekeo AuthGate, AppShell, Tabs & Layout Base
+- Creada capa de autenticación y estado de sesión en `apps/internal-chekeo-v3/src/features/auth/`:
+  - `auth.api.ts`: funciones para `fetchAuthStatus`, `loginWithPin` y `logoutInternal` con credenciales de cookie de sesión (`/api/internal-v2-auth/*`).
+  - `auth.store.ts`: `useAuthStore` en Zustand con persistencia en localStorage para renderizado instantáneo y validación en segundo plano.
+  - `AuthGate.tsx`: pantalla de login por PIN optimizada para pantallas POS táctiles de cocina y teclados físicos, con feedback de error inline, detección de entorno (Producción / Preview / Dev) y bloqueo de acciones durante envío.
+- Creado AppShell y componentes de navegación en `apps/internal-chekeo-v3/src/components/shell/`:
+  - `TopHeader.tsx`: barra superior con reloj operativo CDMX en tiempo real, indicador de red y sincronización (Online/Offline), toggle de tema claro/oscuro persistente y botón de salida rápida.
+  - `NavTabs.tsx`: navegación por pestañas accesible sobre `@ui/tabs` para Pedidos, Cocina, Pagos y Admin con touch targets $\ge 44$px.
+  - `AppShell.tsx`: layout responsive unificado.
+- Creados componentes esqueleto/placeholder listos para sus respectivos PRs en `apps/internal-chekeo-v3/src/components/views/`:
+  - `PedidosView.tsx`: cola de pedidos, filtros por estado y ribbon de calendario para PR-V3-09.
+  - `CocinaView.tsx`: pantalla KDS con semáforo de tiempos, estación de preparación y desglose de mods para PR-V3-10.
+  - `PagosView.tsx`: KPI summary cards financieros, filtros de conciliación y WhatsApp para PR-V3-11.
+  - `AdminView.tsx`: hub administrativo para Menú, Torres, Banners, Sorteos y Corte Z para PR-V3-12.
+- Montaje general en `apps/internal-chekeo-v3/src/app/ChekeoApp.tsx` con verificación de sesión al boot.
 - Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
 
 
