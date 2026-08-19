@@ -64,7 +64,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-08 | Chekeo: Auth + AppShell + tabs | ✅ Mergeado | [#539](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/539) | 2026-08-19 | 2026-08-19 |
 | V3-09 | Chekeo: Feature Pedidos | ✅ Mergeado | [#540](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/540) | 2026-08-19 | 2026-08-19 |
 | V3-10 | Chekeo: Feature Cocina (KDS & Resumen K) | ✅ Mergeado | [#541](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/541) | 2026-08-19 | 2026-08-19 |
-| V3-11 | Chekeo: Feature Pagos | ⏳ Pendiente | — | — | — |
+| V3-11 | Chekeo: Feature Pagos | 🔄 En progreso | [#542](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/542) | 2026-08-19 | — |
 | V3-12 | Chekeo: Feature Admin completo | ⏳ Pendiente | — | — | — |
 | V3-13 | Cutover + Eliminar V2 + Merge a main | ⏳ Pendiente | — | — | — |
 
@@ -174,6 +174,22 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Barrel export en `components/kitchen/index.ts`.
 - Integración completa en `apps/internal-chekeo-v3/src/components/views/CocinaView.tsx` con selector de sub-vista entre KDS y Resumen K.
 - Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
+
+### 📅 2026-08-19 — Sesión 11: PR-V3-11 Chekeo Feature Pagos (Conciliación, Tickets 80mm & WhatsApp Bridge)
+- Creada capa Data Layer en `apps/internal-chekeo-v3/src/features/payments/`:
+  - `types/payments.types.ts`: tipos para filtros de conciliación (`PaymentFilterMethod`, `PaymentFilterStatus`, `PaymentDateHorizon`), modelo consolidado `FinancialSummary` (ventas totales, efectivo vs. transferencias vs. tarjeta, pendientes SPEI) y plantillas de WhatsApp (`WhatsAppMessageTemplate`).
+  - `utils/payments.utils.ts`: funciones puras `computeFinancialSummary` para agregación financiera en tiempo real, detección de zona horaria CDMX `isOrderFromTodayCDMX` y filtrado multidimensional `filterPaymentsOrders`.
+  - `utils/whatsapp.utils.ts`: normalizador telefónico internacional `normalizeWhatsAppPhone` (`521...`), generador de URLs `buildWhatsAppUrl` y plantillas preformateadas (Confirmación de Pago Validado, Aviso de Pedido en Camino / Listo, Resumen de Ticket y Recordatorio de Transferencia SPEI con CLABE interbancaria).
+  - `utils/ticket.utils.ts`: generador de recibos en texto monoespaciado 80mm/58mm `generateVerticalTicketText` e invocador de impresión nativa POS `printVerticalTicket`.
+  - `hooks/use-payments.ts`: TanStack Query v5 hook con invalidación automática de caché, mutaciones de 1-clic `markAsPaid` y `markAsPending`, estado de filtros y resumen financiero reactivo.
+  - Barrel export en `features/payments/index.ts` y master export en `features/index.ts`.
+- Creados componentes modulares en `apps/internal-chekeo-v3/src/components/payments/`:
+  - `PaymentsManager.tsx`: dashboard de conciliación con 4 KPI cards financieras en cabecera (Total ventas, SPEI, Efectivo y alerta de Transferencias por conciliar), barra de filtros con búsqueda instantánea y selector de métodos/estados, lista/tabla de órdenes con acción de 1-clic para validar pagos y modales integrados.
+  - `OrderTicketModal.tsx`: modal con vista de recibo vertical térmico 80mm (hoja blanca de alto contraste con bordes punteados, desglose detallado de ítems, extras, remociones, notas y desglose financiero) con botones de imprimir ticket y copiar texto plano.
+  - `WhatsAppAction.tsx`: modal interactivo de WhatsApp Bridge con selector de 5 plantillas, campo para nota personalizada con actualización en vivo, botón de copiar mensaje con feedback visual y botón de apertura directa a WhatsApp Web / App móvil.
+  - Barrel export en `components/payments/index.ts` y export en `components/index.ts`.
+- Conectado en `apps/internal-chekeo-v3/src/components/views/PagosView.tsx` y montado en el tab "Pagos" de `ChekeoApp.tsx`.
+- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3` + `chekeo-v3`), `git diff --check` ✅.
 
 
 
