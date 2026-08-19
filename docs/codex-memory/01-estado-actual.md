@@ -43,8 +43,9 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 | V3-04 | Public Order: Zustand stores | ✅ Mergeado |
 | V3-05 | Public Order: Features (TanStack Query) | ✅ Mergeado |
 | V3-06 | Public Order: UI components (catálogo, drawers) | ✅ Mergeado |
-| V3-07 | Public Order: Checkout + integración | 🔄 En PR |
+| V3-07 | Public Order: Checkout + integración | ✅ Mergeado |
 | V3-08 | Chekeo: Auth + shell + tabs | ⏳ Pendiente |
+
 
 | V3-09 | Chekeo: Feature Pedidos | ⏳ Pendiente |
 | V3-10 | Chekeo: Feature Cocina | ⏳ Pendiente |
