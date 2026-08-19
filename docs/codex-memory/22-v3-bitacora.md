@@ -3,7 +3,7 @@
 
 # 📋 Bitácora V3 — Burgers.exe
 
-> **Estado**: 🟡 En progreso (PR-V3-11 Mergeado)
+> **Estado**: 🟡 En progreso (PR-V3-12 Implementado)
 > **Inicio**: 2026-08-18
 > **Última actualización**: 2026-08-19
 
@@ -65,7 +65,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-09 | Chekeo: Feature Pedidos | ✅ Mergeado | [#540](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/540) | 2026-08-19 | 2026-08-19 |
 | V3-10 | Chekeo: Feature Cocina (KDS & Resumen K) | ✅ Mergeado | [#541](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/541) | 2026-08-19 | 2026-08-19 |
 | V3-11 | Chekeo: Feature Pagos | ✅ Mergeado | [#542](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/542) | 2026-08-19 | 2026-08-19 |
-| V3-12 | Chekeo: Feature Admin completo | ⏳ Pendiente | — | — | — |
+| V3-12 | Chekeo: Feature Admin completo | 🔄 En PR | — | 2026-08-19 | — |
 | V3-13 | Cutover + Eliminar V2 + Merge a main | ⏳ Pendiente | — | — | — |
 
 **Leyenda**: ⏳ Pendiente · 🔄 En progreso · ✅ Mergeado · ❌ Bloqueado · ⏸️ Pausado
@@ -188,10 +188,27 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `OrderTicketModal.tsx`: modal con vista de recibo vertical térmico 80mm (hoja blanca de alto contraste con bordes punteados, desglose detallado de ítems, extras, remociones, notas y desglose financiero) con botones de imprimir ticket y copiar texto plano.
   - `WhatsAppAction.tsx`: modal interactivo de WhatsApp Bridge con selector de 5 plantillas, campo para nota personalizada con actualización en vivo, botón de copiar mensaje con feedback visual y botón de apertura directa a WhatsApp Web / App móvil.
   - Barrel export en `components/payments/index.ts` y export en `components/index.ts`.
-- Conectado en `apps/internal-chekeo-v3/src/components/views/PagosView.tsx` y montado en el tab "Pagos" de `ChekeoApp.tsx`.
+- Integración completa en `apps/internal-chekeo-v3/src/components/views/PagosView.tsx` y montado en el tab "Pagos" de `ChekeoApp.tsx`.
 - Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3` + `chekeo-v3`), `git diff --check` ✅.
 
-
+### 📅 2026-08-19 — Sesión 12: PR-V3-12 Chekeo Feature Admin Completo (Menú & Stock, Torres, Banners, Sorteos, Corte Z)
+- Creada capa Data Layer en `apps/internal-chekeo-v3/src/features/admin/`:
+  - `types/admin.types.ts`: tipos para submódulos administrativos (`CreateMenuItemPayload`, `UpdateMenuItemPayload`, `CreateCatalogBannerPayload`, `UpdateTowerSchedulePayload`, `CreateRaffleCampaignAdminPayload`, `CashCutSummaryData`, `OrdersSummaryData`).
+  - `api/admin.api.ts`: cliente API tipado para todos los endpoints administrativos Hono (`/api/menu-v2-admin/*`, `/api/raffles-v2-admin/*`, `/api/orders-v2-admin/cash-cut`, `/api/orders-v2-admin/summary`, `/api/ingredients-v2-admin/*`).
+  - `hooks/use-admin.ts`: hooks TanStack Query v5 estructurados (`useAdminMenu`, `useAdminTowers`, `useAdminBanners`, `useAdminRaffles`, `useAdminCashCut`, `useAdminIngredients`) con invalidación optimizada de caché.
+  - Barrel export en `features/admin/index.ts` y export en `features/index.ts`.
+- Creados componentes modulares en `apps/internal-chekeo-v3/src/components/admin/`:
+  - `MenuStockPanel.tsx`: control de productos en vivo, steppers de existencias diarias, toggles de disponibilidad y visibilidad, filtros por categoría y búsqueda instantánea.
+  - `ProductEditModal.tsx`: modal para creación y edición completa de platillos, precios regulares y de oferta, control de stock límite y carga de imágenes R2.
+  - `TowersAdminPanel.tsx`: gobernanza de horarios de recepción y entrega por torre, selección interactiva de días operativos de la semana y toggle de pausa/activación en vivo.
+  - `BannersAdminPanel.tsx`: administración y previsualización del carrusel público con gradientes preestablecidos, etiquetas (badges), acciones CTA y subida de assets a R2.
+  - `RafflesAdminPanel.tsx`: panel de sorteos activos con métricas de boletos (compras vs referidos vs manuales), ranking de participantes, modal para ajuste manual de boletos con auditoría, generador de códigos de invitado, validación de referidos y ruleta aleatoria ponderada de selección de ganador.
+  - `CashCutPanel.tsx`: arqueo operativo del turno (Corte Z), desglose por método de pago (Efectivo vs SPEI vs Tarjeta), canales de entrega (Delivery vs Pickup), exportación a CSV y cierre seguro de turno.
+  - `IngredientsAdminPanel.tsx`: catálogo maestro de insumos con unidad y costo unitario, junto a vinculación de recetas por SKU para el Resumen K de Cocina.
+  - `AdminWorkspace.tsx`: hub administrativo con sub-navegación por tabs.
+  - Barrel export en `components/admin/index.ts` y export en `components/index.ts`.
+- Conectado en `apps/internal-chekeo-v3/src/components/views/AdminView.tsx` y montado en el tab "Admin" de `ChekeoApp.tsx`.
+- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
 
 ---
 
