@@ -4,7 +4,7 @@
  * Cliente API de autenticación y sesión interna para Chekeo V3.
  */
 
-import { apiFetch } from '../../shared/api-client';
+import { apiFetch, ApiError } from '../../shared/api-client';
 
 export interface AuthStatusResponse {
   ok: boolean;
@@ -24,6 +24,7 @@ export interface AuthLoginResponse {
 
 /**
  * Consulta el estado de autenticación y validez de la cookie de sesión actual.
+ * Retorna true únicamente si el backend confirma la autenticación válida.
  */
 export async function fetchAuthStatus(): Promise<boolean> {
   try {
@@ -32,12 +33,14 @@ export async function fetchAuthStatus(): Promise<boolean> {
     });
     return Boolean(res.ok && res.data?.authenticated === true);
   } catch {
+    // Si la API falla o la sesión es rechazada, retornar false estrictamente
     return false;
   }
 }
 
 /**
- * Inicia sesión enviando el PIN administrativo u operativo.
+ * Inicia sesión enviando el PIN administrativo u operativo al backend.
+ * Valida genuinamente contra el backend sin bypasses en producción.
  */
 export async function loginWithPin(pin: string): Promise<boolean> {
   const trimmed = pin.trim();
@@ -59,21 +62,25 @@ export async function loginWithPin(pin: string): Promise<boolean> {
     }
 
     return true;
-  } catch (err: any) {
-    // Si estamos en entorno de desarrollo local y el backend de Cloudflare no está conectado,
-    // permitir PINs de prueba estándar (1234, 0000, 2026) para facilitar la prueba de UI
-    const isDev =
-      typeof window !== 'undefined' &&
-      (window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        import.meta.env.DEV);
+  } catch (err: unknown) {
+    // Si el backend respondió con un error HTTP (ej. 401 Unauthorized / INVALID_PIN),
+    // rethrow inmediato del error genuino. NUNCA interceptar rechazos del servidor.
+    if (err instanceof ApiError) {
+      throw new Error(err.message || 'PIN incorrecto o no autorizado.');
+    }
 
-    if (isDev && (trimmed === '1234' || trimmed === '0000' || trimmed === '2026')) {
-      console.info('[Chekeo V3 Dev] Sesión iniciada con PIN de prueba local:', trimmed);
+    // Soporte opcional para desarrollo local offline (servidor dev sin backend conectado)
+    // Estrictamente restringido a import.meta.env.DEV y solo ante fallo de red (sin ApiError)
+    if (
+      import.meta.env.DEV &&
+      (trimmed === '1234' || trimmed === '0000' || trimmed === '2026')
+    ) {
+      console.info('[Chekeo V3 Dev] Sesión offline de desarrollo iniciada con PIN de prueba:', trimmed);
       return true;
     }
 
-    throw new Error(err?.message || 'PIN incorrecto o no autorizado.');
+    const message = err instanceof Error ? err.message : 'PIN incorrecto o no autorizado.';
+    throw new Error(message);
   }
 }
 

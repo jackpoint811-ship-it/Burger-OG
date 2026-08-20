@@ -1,237 +1,143 @@
 # Checklists para agentes en Burgers.exe
 
-Este archivo define checklists minimos para que Codex o cualquier agente entregue cambios revisables y seguros.
+Este archivo define checklists mínimos para que Codex o cualquier agente entregue cambios revisables, seguros y alineados a la arquitectura canonical V3.
 
 ## Checklist universal
 
 Aplicar en todo PR:
 
-- [ ] Lei `AGENTS.md`.
-- [ ] Lei `docs/codex-memory/00-indice.md`.
-- [ ] Identifique el area afectada.
-- [ ] No toque `legacy/` salvo autorizacion explicita.
-- [ ] No agregue dependencias, CDNs ni frameworks salvo autorizacion explicita.
-- [ ] No cambie contratos de datos, precios, tickets, promociones ni payloads salvo autorizacion explicita.
-- [ ] Verifique que TODOS los React Hooks (`useState`, `useRef`, `useMemo`, `useCallback`, `useEffect`) esten declarados AL INICIO del componente, ANTES de cualquier `if (...) return` (Rules of Hooks).
-- [ ] Verifique que los valores por defecto de la API y contratos mantengan activo el Modo Catálogo ante cualquier fallo de BD.
-- [ ] Revise el diff completo.
-- [ ] Ejecute `git diff --check` o reporte por que no pude ejecutarlo.
-- [ ] Abri PR desde una rama limpia.
+- [ ] Leí `AGENTS.md` y `PROJECT.md`.
+- [ ] Leí `docs/codex-memory/00-indice.md`.
+- [ ] Identifiqué el área afectada.
+- [ ] No agregué dependencias, CDNs ni frameworks salvo autorización explícita.
+- [ ] No cambié contratos de datos, precios, tickets, promociones ni payloads salvo autorización explícita.
+- [ ] Verifiqué que TODOS los React Hooks (`useState`, `useRef`, `useMemo`, `useCallback`, `useEffect`) estén declarados AL INICIO del componente, ANTES de cualquier `if (...) return` (Rules of Hooks).
+- [ ] Verifiqué que los valores por defecto de la API y contratos mantengan activo el Modo Catálogo ante cualquier fallo de BD.
+- [ ] Revisé el diff completo.
+- [ ] Ejecuté `git diff --check` o reporté por qué no pude ejecutarlo.
+- [ ] Ejecuté `npm run typecheck` si toqué TypeScript o configuración.
+- [ ] Ejecuté los builds aplicables (`npm run build:public`, `npm run build:chekeo` o `npm run build`).
+- [ ] Abrí PR desde una rama limpia con base en `v3` (`gh pr create --base v3 --head feat/v3-xx-...`).
 
-## Checklist de documentacion
+## Checklist de documentación
 
-Para cambios solo de docs:
+Para cambios solo de docs o memoria:
 
-- [ ] No cambie codigo de app.
-- [ ] No cambie scripts ni configuracion.
-- [ ] La documentacion nueva tiene un proposito claro.
-- [ ] El indice enlaza cualquier archivo nuevo importante.
-- [ ] Reporte que no se ejecutaron checks tecnicos porque no aplican.
-
-## Checklist Migracion V2 Clean Architecture
-
-- [ ] Lei `10-migration-tracker.md`.
-- [ ] Confirme fase actual.
-- [ ] Confirme fase autorizada.
-- [ ] No salte fases.
-- [ ] Revise `11-skills-and-tools.md` cuando aplico.
-- [ ] No mezcle preview con produccion.
-- [ ] No movi legacy salvo que la fase lo autorice.
-- [ ] No borre archivos salvo autorizacion explicita.
-- [ ] No toque secrets.
-- [ ] Actualice el tracker antes de cerrar.
-- [ ] Reporte bloqueadores y siguiente fase sugerida.
+- [ ] No cambié código de app, contratos ni lógica de backend.
+- [ ] No cambié scripts ni configuración del proyecto.
+- [ ] La documentación nueva o editada tiene un propósito claro y está alineada a V3.
+- [ ] El índice (`00-indice.md`) enlaza y clasifica cualquier archivo nuevo o actualizado.
+- [ ] Reporté que no se ejecutaron checks de runtime porque no aplican.
 
 ## Checklist de tooling
 
-- [ ] Valide si Graphify aplica.
-- [ ] Valide si Playwright aplica.
-- [ ] Valide si Wrangler aplica.
-- [ ] Valide si npm, typecheck y build aplican.
-- [ ] Si alguna herramienta falto, reporte bloqueo o limitacion.
+- [ ] Validé si Graphify aplica para mapeo de dependencias.
+- [ ] Validé si Playwright aplica (`playwright.e2e.config.ts`, `playwright.internal-kitchen.config.ts`).
+- [ ] Validé si Wrangler aplica para Pages/D1/R2.
+- [ ] Validé `npm run typecheck`, `npm run build:public` y `npm run build:chekeo`.
+- [ ] Si alguna herramienta faltó o falló, reporté el bloqueo o limitación claramente.
 
 ## Checklist ambientes Cloudflare
 
-Aplicar cuando el cambio toque Pages, Wrangler, D1, R2, preview/prod, secrets o scripts de deploy/migracion.
+Aplicar cuando el cambio toque Pages, Wrangler, D1, R2, preview/prod, secrets o scripts de deploy/migración.
 
-- [ ] Confirme la app oficial afectada: `apps/public-order-v2` o `apps/internal-chekeo-v2`.
-- [ ] Confirme el ambiente: local, preview o produccion.
-- [ ] Confirme el Pages project esperado antes de ejecutar cualquier comando remoto.
-- [ ] Confirme que `BOG_MENU_DB` apunta al D1 correcto para ese ambiente.
-- [ ] Confirme que `BOG_MENU_ASSETS` apunta al R2 correcto para ese ambiente.
-- [ ] Confirme presencia de `BOG_INTERNAL_PIN` solo como secreto, sin imprimir ni guardar su valor.
-- [ ] Confirme `ORDERS_V2_WRITE_ENABLED` por ambiente antes de aceptar escrituras publicas.
-- [ ] No ejecute deploy, migrations remotas, seeds remotos ni cambios de secrets en PRs documentales.
-- [ ] Confirme que `.dev.vars`, `wrangler.toml` local y `.wrangler/` no queden trackeados.
-- [ ] Si usa Wrangler, separe comandos read-only de comandos que mutan recursos.
-- [ ] Si hay duda sobre binding real en Cloudflare Dashboard, marque bloqueo o riesgo en el PR.
+- [ ] Confirmé la app oficial afectada: `apps/public-order-v3` o `apps/internal-chekeo-v3`.
+- [ ] Confirmé el ambiente: local, preview o producción.
+- [ ] Confirmé el Pages project esperado antes de ejecutar cualquier comando remoto.
+- [ ] Confirmé que `BOG_MENU_DB` apunta al D1 correcto para ese ambiente.
+- [ ] Confirmé que `BOG_MENU_ASSETS` apunta al R2 correcto para ese ambiente (`resolveCatalogAssetUrl`).
+- [ ] Confirmé presencia de `BOG_INTERNAL_PIN` solo como secreto, sin imprimir ni guardar su valor.
+- [ ] Confirmé `ORDERS_V2_WRITE_ENABLED` por ambiente antes de aceptar escrituras públicas.
+- [ ] No ejecuté deploy, migraciones remotas, seeds remotos ni cambios de secrets en PRs documentales.
+- [ ] Confirmé que `.dev.vars`, `wrangler.toml` local y `.wrangler/` no queden trackeados.
+- [ ] Si uso Wrangler, separé comandos read-only de comandos que mutan recursos.
+- [ ] Si hay duda sobre binding real en Cloudflare Dashboard, marqué bloqueo o riesgo en el PR.
 
-## Checklist de resiliencia y fallbacks (App Pública V2)
+## Checklist de resiliencia y fallbacks (App Pública V3)
 
 Aplicar cuando se modifique la carga del menú, endpoints públicos o manejo de errores de API:
 
-- [ ] La app pública mantiene reintentos automáticos o degradación suave ante fallas 500 / timeouts de `/api/menu-v2`.
-- [ ] No se removieron fallbacks ni guardas defensivas sin asegurar un manejo de errores no bloqueante en la UI.
+- [ ] La app pública mantiene reintentos automáticos o degradación suave ante fallas 500 / timeouts de `/api/menu-v2` mediante TanStack Query v5.
+- [ ] No se removieron fallbacks defensivos ni guardas de schema sin asegurar un manejo de errores no bloqueante en la UI.
 - [ ] Se verificó que un cold-start o latencia transitoria en Cloudflare D1 no provoque pantallas en blanco o bloqueos totales.
 - [ ] En desarrollo/preview, la falla del backend muestra una interfaz intuitiva con reintento activo sin colapsar el layout.
 
-## Checklist superficie activa y Fase 5
+## Checklist UI/UX general (Premium Casual)
 
-Aplicar cuando una fase separe codigo activo de legacy o prepare movimientos de carpetas.
-
-- [ ] Confirme que `docs/codex-memory/14-active-surface-map.md` esta actualizado.
-- [ ] Confirme que las apps oficiales siguen siendo solo `apps/public-order-v2` y `apps/internal-chekeo-v2`.
-- [ ] Confirme que `functions/api`, `packages/config`, `packages/ui`, `vite.config.ts`, `package.json` y `migrations/` estan clasificados.
-- [ ] Liste endpoints V2 activos y cualquier endpoint de riesgo antes de mover carpetas.
-- [ ] Clasifique scripts como activos, tooling, legacy/riesgo o prohibidos sin autorizacion.
-- [ ] No mueva `legacy/cloudflare/`, `legacy/apps-script/`, `legacy/planning/`, `legacy/docs/`, `legacy/skills/` ni otros archivos historicos sin fase autorizada.
-- [ ] Si un archivo parece legacy pero tiene imports o fetch desde apps V2, marcarlo activo o bloqueo.
-- [ ] Antes de Fase 5, preparar lista de rutas, motivo, riesgo y validacion requerida.
-
-## Checklist Fase 6 - Sheets/App Script cleanup
-
-Aplicar cuando una fase remueva referencias activas a Sheets, Apps Script o scripts legacy.
-
-- [ ] Confirmar que `package.json` no contiene scripts `public-order:*`.
-- [ ] Confirmar que no hay imports o fetch activos desde apps V2 hacia Apps Script/Sheets.
-- [ ] Clasificar `APPS_SCRIPT_*`, `SpreadsheetApp` y Sheets como legacy/historico cuando aparezcan fuera de runtime V2.
-- [ ] Confirmar que `BOG_ACTIVE_ENV` no se usa como selector activo V2.
-- [ ] No tocar `legacy/`, Cloudflare real, D1/R2, migrations, seeds, secrets ni deploys.
-- [ ] Actualizar `15-active-cleanup-sheets-appscript.md`, tracker, inventario, audit de ambientes y mapa de superficie activa.
-
-## Checklist Fase 7A - Preview mirror read-only
-
-Aplicar cuando una fase prepare preview 1:1 con D1/R2 espejo sin mutar Cloudflare.
-
-- [ ] Confirmar que Fase 0 a Fase 6 estan en `main`.
-- [ ] Ejecutar solo auditoria Cloudflare read-only.
-- [ ] No ejecutar deploys, migrations, seeds, resets, creates, R2 puts/deletes ni cambios de secrets.
-- [ ] Clasificar scripts `db:v2:*:remote` como mutacion remota preview y no ejecutarlos.
-- [ ] Confirmar recursos Pages/D1/R2 esperados por lista read-only o documentar falla de auth.
-- [ ] Documentar bindings esperados sin leer ni imprimir secrets.
-- [ ] Revisar el seed `0008_preview_realistic_orders_seed.sql` sin ejecutarlo.
-- [ ] Actualizar `16-preview-mirror-runbook.md`, tracker, ambientes y audit Cloudflare.
-
-## Checklist Fase 7B.1 - Preparar preview mirror autorizado
-
-Aplicar cuando una fase prepare comandos/seed/docs para preview 1:1, sin ejecutar remoto.
-
-- [ ] No ejecutar comandos con `--remote`.
-- [ ] No ejecutar deploys, migrations remotas, seeds remotos, resets, creates, R2 puts/deletes ni cambios de secrets.
-- [ ] Reemplazar scripts ambiguos `db:v2:*:remote` por nombres `db:v2:preview:*`.
-- [ ] Confirmar que los scripts `db:v2:preview:*` quedan documentados como mutacion remota preview y requieren autorizacion.
-- [ ] Crear o revisar `migrations/0008_preview_realistic_orders_seed.sql` como PREVIEW/TEST ONLY.
-- [ ] Confirmar que el seed usa datos ficticios, marcador unico y no contiene `DELETE`.
-- [ ] Confirmar que el checklist Dashboard cubre bindings D1/R2 y secrets/vars sin imprimir valores.
-- [ ] Actualizar `16-preview-mirror-runbook.md`, tracker, ambientes, audit Cloudflare y mapa de superficie activa.
-
-## Checklist Skills oficiales
-
-- [ ] Valide `graphify`.
-- [ ] Valide Graphify Codex install.
-- [ ] Valide Graphify Agent Skills install si aplica.
-- [ ] Valide Obsidian skills.
-- [ ] Valide `burgers-pr-workflow`.
-- [ ] Valide `playwright-qa`.
-- [ ] Valide `burgers-brand`.
-- [ ] No copie repos externos completos al repo de Burgers.exe sin necesidad.
-- [ ] No sobrescribi skills sin revisar.
-- [ ] Actualice `11-skills-and-tools.md`.
-
-## Checklist de validacion local
-
-- [ ] Confirme `AGENTS.md`.
-- [ ] Confirme `.git`.
-- [ ] Confirme `docs/codex-memory/00-indice.md`.
-- [ ] Confirme `docs/codex-memory/10-migration-tracker.md`.
-- [ ] Confirme `docs/codex-memory/11-skills-and-tools.md`.
-- [ ] Confirme `docs/refactor-v2-clean-architecture.md`.
-- [ ] Confirme `docs/environments.md`.
-- [ ] Confirme `package.json`.
-- [ ] Confirme `README.md`.
-- [ ] Ejecute `tools/codex/verify-local-tooling.ps1` o reporte por que no se pudo.
-- [ ] Ejecute `tools/codex/verify-skills.ps1` o reporte por que no se pudo.
-- [ ] Clasifique archivos sueltos no trackeados antes de borrarlos.
-
-## Checklist de limpieza de clones locales
-
-- [ ] Busque carpetas bajo `C:\Documentos\Burgers-exe`.
-- [ ] Identifique cuales tienen `.git` y `AGENTS.md`.
-- [ ] Confirme que no sean `C:\Documentos\Burgers-exe\Preview`.
-- [ ] Revise rama actual y `git status --short`.
-- [ ] Revise si hay archivos no trackeados importantes.
-- [ ] Revise si hay secrets, `.dev.vars`, credenciales o datos que deban preservarse.
-- [ ] Si hay duda, marque `no borrar - requiere revision`.
-- [ ] Si borra, verifique que la ruta resuelta este dentro de `C:\Documentos\Burgers-exe` y no sea `Preview`.
-
-## Checklist UI/UX general
-
-Para cambios visibles:
+Para cambios visibles en frontend:
 
 - [ ] Mantiene enfoque mobile-first.
 - [ ] Funciona en 320px sin overflow horizontal.
-- [ ] Funciona en 390px.
-- [ ] Mantiene targets tactiles de al menos 44px.
-- [ ] Mantiene foco visible.
-- [ ] Mantiene labels persistentes.
-- [ ] No reemplaza informacion esencial por placeholders.
-- [ ] Tiene estados loading, success, error o empty cuando aplican.
-- [ ] Respeta `prefers-reduced-motion`.
-- [ ] Mantiene estetica Burgers.exe: cyberpunk, gaming, fondo oscuro, verde neon, glow y tono de quest.
+- [ ] Funciona en 390px y escala a tablets/desktop mediante `--catalog-max-width: 768px`.
+- [ ] Mantiene targets táctiles de al menos 44px (`--touch-target-min`).
+- [ ] Mantiene foco visible (`:focus-visible`).
+- [ ] Mantiene labels persistentes y errores inline claros.
+- [ ] No reemplaza información esencial por placeholders.
+- [ ] Tiene estados loading (skeletons), success, error o empty states cuando aplican.
+- [ ] Respeta `prefers-reduced-motion` en animaciones (Framer Motion / CSS).
+- [ ] Mantiene la estética **Burgers.exe (Premium Casual Vibe)**: tema light-first por defecto (fondo crema `#F5F2EE`, tarjetas blancas `#FFFFFF`, acento verde bosque `#16A34A`), soporte completo para dark mode slate/carbón (`#121212` / `#1E1E1E`, acento `#22C55E`), tipografía Inter, bordes sutiles (`--color-line`) y sombras de elevación limpia (`--shadow-card`, `--shadow-panel`).
 
-## Checklist Chekeo
+## Checklist Chekeo (V3)
 
-Antes de tocar Chekeo, leer `03-flujos-chekeo.md`.
+Antes de tocar Chekeo, leer `03-flujos-chekeo.md` y `21-order-communication-and-recipe-spec.md`.
 
 Validar:
 
-- [ ] Pedidos se enfoca en revisar y administrar pedidos.
-- [ ] Pagos concentra pago, ticket, WhatsApp y comprobante cuando aplique.
-- [ ] Corte mantiene resumen operativo claro.
-- [ ] Sorteo muestra lo esencial sin saturar.
-- [ ] No se rompe el flujo de marcar pagado / regresar a pendiente.
-- [ ] No se rompe nota interna.
-- [ ] No se rompe WhatsApp.
-- [ ] No se rompe descarga o generacion de ticket si aplica.
+- [ ] **Pedidos**: cola de pedidos en vivo con auto-refresh, filtros multidimensionales (estado, modo, torres, calendario), comanda estructurada, drawer de auditoría cronológica y modal de cancelación segura.
+- [ ] **Cocina (KDS & Resumen K)**: KDS Kanban interactivo con 3 columnas y semáforo de tiempos, tags de remociones (`🔴 SIN ...`) y extras (`🟢 +EXTRA ...`), chimes con Web Audio API, y Resumen K consolidado para mise en place.
+- [ ] **Pagos**: conciliación financiera por método (Efectivo, SPEI, Tarjeta), generación e impresión nativa de recibos térmicos 80mm/58mm, y WhatsApp Bridge con 5 plantillas automáticas.
+- [ ] **Admin**: control en vivo de Menú & Stock diario, gobernanza de Torres y horarios CDMX, Banners promocionales, Sorteos con ranking y ruleta, Corte Z de turno con exportación CSV e Insumos / Recetas.
+- [ ] No se rompe el flujo de marcar pagado / regresar a pendiente ni las notas internas.
 
-## Checklist public-order
+## Checklist Public Order (V3)
 
 Antes de tocar public order, leer `04-flujo-public-order.md`.
 
 Validar:
 
-- [ ] CTA para iniciar pedido sigue claro.
-- [ ] Personalizacion del pedido sigue comprensible.
-- [ ] Checkout mantiene labels, helper text y errores inline.
-- [ ] No se rompen payloads enviados desde `orders-v2`.
-- [ ] No se cambia lectura de menu, tickets, promociones, precios ni ubicacion sin autorizacion.
-- [ ] Se probo o se dejo QA sugerido para pedido completo.
+- [ ] Header con estatus operativo CDMX y modal de horarios por torre (`TowerScheduleModal`).
+- [ ] Banners promocionales dinámicos con autoplay, swipe y fallback SVG.
+- [ ] Navegación horizontal de categorías sticky con scroll suave.
+- [ ] Catálogo modular con tarjetas de producto (`ProductCard`), badges, precios promo y quick-add interactivo para combos.
+- [ ] `ProductDetailDrawer` con personalización de receta (ingredientes a remover, extras dinámicos, notas para cocina, guarniciones y bebidas obligatorias).
+- [ ] `CartDrawer` con stepper de cantidades, desglose financiero y 1-Tap Reorder.
+- [ ] `CartBar` flotante con total del pedido, animación suave y targets $\ge 44$px.
+- [ ] `CheckoutDrawer` con validación Zod (nombre, teléfono WhatsApp 10 dígitos), selector de torre con advertencia de horario, cálculo de fecha de entrega, tarjeta bancaria con copiado rápido de CLABE y código de referido para sorteo.
+- [ ] `OrderSuccessModal` con folio `#ORD-...`, resumen financiero y enlaces directos a WhatsApp.
+- [ ] No se rompen contratos ni payloads enviados a `POST /api/orders-v2`.
 
 ## Checklist pagos, tickets y WhatsApp
 
 Aplicar si el cambio toca pagos, ticket, comprobante o mensajes:
 
-- [ ] No cambie reglas de precio sin autorizacion.
-- [ ] No cambie reglas de tickets sin autorizacion.
-- [ ] El copy de WhatsApp incluye solo informacion necesaria.
-- [ ] La informacion bancaria aparece solo cuando el pago es por transferencia, si aplica.
-- [ ] El ticket mantiene folio, fecha/entrega, datos del cliente, desglose y total cuando aplique.
-- [ ] El contenido no se satura visualmente.
-- [ ] El tono mantiene la tematica Burgers.exe.
+- [ ] No cambie reglas de precio ni cálculos financieros sin autorización.
+- [ ] No cambie reglas de tickets térmicos sin autorización.
+- [ ] El copy de WhatsApp incluye solo información necesaria según las plantillas oficiales preestablecidas.
+- [ ] La información bancaria (CLABE / beneficiario) aparece correctamente con botón de 1-tap para copiar.
+- [ ] El ticket vertical 80mm/58mm mantiene folio, fecha/entrega, cliente, desglose de modificaciones y totales.
+- [ ] El tono mantiene la temática Burgers.exe Premium Casual (claro, profesional, amigable).
 
-## Checklist Resumen K / operacion
+## Checklist Resumen K / Operación
 
-Aplicar si el cambio toca produccion o resumen operativo:
+Aplicar si el cambio toca cocina o resumen operativo:
 
-- [ ] Muestra burgers necesarias.
-- [ ] Muestra ingredientes necesarios.
-- [ ] Muestra extras necesarios.
-- [ ] Distingue cantidades operativas de informacion para cliente.
-- [ ] No mezcla datos del sorteo con produccion salvo que el flujo lo requiera.
+- [ ] Muestra burgers necesarias consolidadas por receta (OG, Clásica, BBQ, etc.).
+- [ ] Muestra guarniciones consolidadas (Papas Francesas, Aros de Cebolla, etc.).
+- [ ] Muestra extras totales necesarios para el mise en place.
+- [ ] Distingue cantidades operativas de información para cliente.
+- [ ] No mezcla datos del sorteo con producción salvo requerimiento explícito.
+
+## Checklist Skills oficiales
+
+- [ ] Validé `graphify` y `.graphifyignore`.
+- [ ] Validé Obsidian skills y estructura de `docs/codex-memory/`.
+- [ ] Validé `burgers-pr-workflow`.
+- [ ] Validé `playwright-qa`.
+- [ ] Actualicé `11-skills-and-tools.md` si hubo cambios en herramientas.
 
 ## Checklist PR
 
-La descripcion del PR debe incluir:
+La descripción del PR debe incluir:
 
 ```md
 ## Summary
@@ -252,3 +158,18 @@ Si no se ejecuta un check, escribir:
 ```md
 - Not run: [motivo claro]
 ```
+
+---
+
+## [Histórico / Referencia V2] Checklists de fases archivadas
+
+> **Nota de Archivo**: Los siguientes checklists corresponden a fases pasadas de la migración V2 Clean Architecture y se preservan únicamente con fines de auditoría histórica.
+
+### Checklist superficie activa y Fase 5 [Histórico V2]
+- [x] Clasificación de código activo vs legacy concluida en PR-V3-00 y PR-V3-13.
+
+### Checklist Fase 6 - Sheets/App Script cleanup [Histórico V2]
+- [x] Scripts legacy y referencias a Sheets/AppScript purgados del runtime en V3.
+
+### Checklist Fase 7A / 7B.1 - Preview mirror [Histórico V2]
+- [x] Configuración de preview y aislamiento D1/R2 consolidado en V3.

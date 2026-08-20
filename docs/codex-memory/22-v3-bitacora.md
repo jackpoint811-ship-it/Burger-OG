@@ -1,17 +1,18 @@
 > Estado: vivo
-> Uso: bitácora de migración V3 para Codex/Burgers.exe
+> Uso: bitácora de migración V3 y auditoría post-migración para Codex/Burgers.exe
 
 # 📋 Bitácora V3 — Burgers.exe
 
-> **Estado**: 🟢 100% Completado (14/14 PRs completados — PR-V3-13 Cutover Definitivo)
+> **Estado**: 🟢 100% Migración V3 Completada (14/14 PRs completados) · 🔄 Auditoría Post-Migración & Compliance en Curso (Milestone 1 ✅ · Milestone 2 🔄)
 > **Inicio**: 2026-08-18
-> **Cierre**: 2026-08-20
+> **Cierre Migración Base**: 2026-08-20
+> **Auditoría Post-Migración**: 2026-08-20
 
 ---
 
 ## 🎯 Objetivo
 
-Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack moderno, arquitectura limpia y repo sin legacy.
+Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack moderno, arquitectura limpia y repo sin legacy, seguida de una auditoría exhaustiva de compliance post-migración, hardening y sincronización de memoria operativa.
 
 ---
 
@@ -46,10 +47,11 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | 2026-08-18 | TanStack Query | Elimina todos los `useEffect(fetch)` manuales |
 | 2026-08-18 | shadcn/ui | Componentes accesibles como código propio (no dependencia) |
 | 2026-08-18 | Cutover al final (PR-V3-13) | Nunca merge a main sin aprobación explícita |
+| 2026-08-20 | Auditoría Post-Migración V3 (M1–M4) | Asegurar repo limpio, 0 deuda técnica, tooling alineado a V3 y memoria sincronizada |
 
 ---
 
-## 🗓️ Roadmap de PRs
+## 🗓️ Roadmap de PRs de Migración V3 (100% Completado)
 
 | PR | Nombre | Estado | PR URL | Fecha inicio | Fecha cierre |
 |---|---|:---:|---|---|---|
@@ -68,7 +70,18 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-12 | Chekeo: Feature Admin completo | ✅ Mergeado | [#543](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/543) | 2026-08-19 | 2026-08-19 |
 | V3-13 | Cutover Definitivo + Eliminar V2 | ✅ Integrado en v3 | Commit `022796a` | 2026-08-20 | 2026-08-20 |
 
-**Leyenda**: ⏳ Pendiente · 🔄 En progreso · ✅ Mergeado / Preparado · ❌ Bloqueado · ⏸️ Pausado
+---
+
+## 🛡️ Roadmap de Auditoría Post-Migración & Compliance V3
+
+| Milestone | Nombre | Alcance | Estado | Dependencias |
+|---|---|---|:---:|---|
+| **M1** | Tooling & Test Configurations Alignment | Actualizar configs de Playwright (`playwright.e2e.config.ts`, `playwright.internal-kitchen.config.ts`), `.gitignore` y limpiar artefactos raíz | ✅ Completado | Ninguna |
+| **M2** | Documentation & Codex Memory Synchronization | Alinear `README.md`, `AGENTS.md` y sincronizar notas de `docs/codex-memory/` (00, 02, 09, 22-v3) | 🔄 En Progreso | M1 |
+| **M3** | Code Consistency & Workspace Hardening | Verificar reachability 100% de apps/packages/functions, auditar `auth.api.ts` y tipos | ⏳ Planificado | M1 |
+| **M4** | Final E2E Test Pass & Audit Verification | Ejecución integral de typechecks, builds, tests Playwright y auditorías forenses/adversariales | ⏳ Planificado | M1, M2, M3 |
+
+**Leyenda**: ⏳ Pendiente · 🔄 En progreso · ✅ Completado / Mergeado · ❌ Bloqueado · ⏸️ Pausado
 
 ---
 
@@ -93,139 +106,93 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 ### 📅 2026-08-19 — Sesión 5: PR-V3-05 Public Order Features & Hooks (TanStack Query)
 - Creados módulos de API y hooks TanStack Query v5 en `apps/public-order-v3/src/features/`:
   - `shared/`: Cliente `apiFetch` y clase de error `ApiError`.
-  - `menu/`: `fetchMenu`, `useMenuQuery`, selectores (`useCategories`, `useMenuItems`, `useFeaturedItems`, `useMenuItem`, `usePromos`, `useSiteConfig`, `usePublicConfig`, `useItemRecipe`) y query keys tipadas (`menuKeys`).
+  - `menu/`: `fetchMenu`, `useMenuQuery`, selectores y query keys tipadas (`menuKeys`).
   - `banners/`: Hooks para `useCatalogBanners`, `useCategoryBanner`, `useCategoryBanners`.
-  - `towers/`: `fetchTowerSchedules`, `useTowerSchedulesQuery`, `useActiveTowers`, `useTowerByKey`, helper de zona horaria CDMX y hook de disponibilidad operativa `useTowerAvailability`.
-  - `raffles/`: `fetchActiveRaffle`, `fetchCampaignConfig`, `lookupRaffleTickets`, `fetchReferralTickets`, y hooks `useActiveRaffleQuery`, `useCampaignConfigQuery`, `useRaffleTicketsLookup`, `useReferralTicketsQuery`.
-  - `orders/`: `createOrder`, helper `cartAndFormToCreateOrderPayload`, y mutation hook `useCreateOrderMutation` con sincronización automática a Zustand `checkoutStore` / `cartStore` e invalidación inteligente de caché.
+  - `towers/`: `fetchTowerSchedules`, `useTowerSchedulesQuery`, `useActiveTowers`, `useTowerByKey`, helper de zona horaria CDMX y hook `useTowerAvailability`.
+  - `raffles/`: `fetchActiveRaffle`, `fetchCampaignConfig`, `lookupRaffleTickets`, `fetchReferralTickets`, y hooks de sorteo.
+  - `orders/`: `createOrder`, helper `cartAndFormToCreateOrderPayload`, y mutation hook `useCreateOrderMutation`.
   - Barrel exports limpios en cada módulo y master export en `features/index.ts`.
 - Conectado `PublicApp.tsx` para consumir y validar queries activas.
-- Checks: `typecheck` ✅ (0 errores), `build` ✅ (`public-order-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
+- Checks: `typecheck` ✅ (0 errores), `build` ✅ (`public-order-v3`, `chekeo-v3`), `git diff --check` ✅.
 
 ### 📅 2026-08-19 — Sesión 6: PR-V3-06 Public Order UI Components & Drawers
 - Creados componentes y vistas modulares en `apps/public-order-v3/src/components/`:
-  - `header/`: `BrandHeader` con estatus operativo y selector de torre; `TowerScheduleModal` con consulta de horarios CDMX, días activos y selector de torre.
-  - `catalog/`: `BannerCarousel` con carrusel interactivo, autoplay, swipe y CTA actions; `CategoryNav` sticky horizontal con auto-scroll a sección y resaltado activo; `ProductCard` con resolución de assets R2, fallbacks SVG (`ProductFallbackSvg`), badges, precios promo y quick-add; `ProductGrid` con organización por categorías y skeletons.
-  - `drawers/`: `ProductDetailDrawer` con personalización completa (receta original vs personalizar, chips de ingredientes a remover, extras dinámicos, notas para cocina, guarnición obligatoria y bebidas en combos, personalización de burgers incluidas); `CartDrawer` con desglose de ítems, stepper de cantidades, resumen financiero y 1-Tap Reorder.
-  - `layout/`: `CartBar` barra flotante animada con Framer Motion y touch target >= 44px; `ToastContainer` para notificaciones no bloqueantes.
-  - `shared/`: `ProductFallbackSvg` con fallbacks visuales vectoriales para burgers, combos, guarniciones y bebidas.
-  - Master barrel export en `components/index.ts`.
+  - `header/`: `BrandHeader` con estatus operativo y selector de torre; `TowerScheduleModal` con consulta de horarios CDMX y selector de torre.
+  - `catalog/`: `BannerCarousel` con autoplay y swipe; `CategoryNav` sticky horizontal; `ProductCard` con resolución de assets R2 y fallbacks SVG; `ProductGrid` con organización por categorías.
+  - `drawers/`: `ProductDetailDrawer` con personalización completa; `CartDrawer` con stepper de cantidades, resumen financiero y 1-Tap Reorder.
+  - `layout/`: `CartBar` animada y `ToastContainer`.
+  - `shared/`: `ProductFallbackSvg` con fallbacks vectoriales para burgers, combos, guarniciones y bebidas.
 - Conectado en `PublicApp.tsx` integrando TanStack Query hooks y Zustand stores.
+
 ### 📅 2026-08-19 — Sesión 7: PR-V3-07 Public Order Checkout Drawer, Validación & Integración Final
 - Creado `CheckoutDrawer.tsx` en `apps/public-order-v3/src/components/drawers/`:
-  - Integración completa con React Hook Form v7 y Zod resolver (`@hookform/resolvers/zod`).
-  - Validación inline estricta de nombre (mínimo 2 caracteres) y teléfono WhatsApp (10 dígitos).
-  - Selector interactivo de torre con disponibilidad operativa y aviso si está fuera de horario.
-  - Soporte de pedidos para hoy vs. fechas programadas con cálculo dinámico (`getNextAvailableDeliveryDate`).
-  - Métodos de pago (efectivo, transferencia SPEI y WhatsApp) con tarjeta de datos bancarios (`useSiteConfig`), CLABE y botón de copiado rápido con 1-tap.
-  - Soporte de código de referido / sorteo y opt-in para grupo de WhatsApp.
-- Creado `OrderSuccessModal.tsx` en `apps/public-order-v3/src/components/orders/`:
-  - Modal de confirmación con animación y folio de seguimiento (`#FOLIO`) con botón de copiado rápido.
-  - Resumen detallado del pedido (torre, horario de entrega, forma de pago y total financiero).
-  - Enlaces directos a WhatsApp para enviar comprobante de pago y unirse a la comunidad oficial.
-  - Notificación de boletos ganados para el sorteo activo (`earnedTickets`).
-- Conexión de `useCreateOrderMutation` para persistencia en backend e invalidación automática de caché de catálogo.
-- Integración completa en `apps/public-order-v3/src/app/PublicApp.tsx` (Header + Banners + Categorías + Catálogo + CartBar + Drawers + Checkout + SuccessModal).
-- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
+  - Integración completa con React Hook Form v7 y Zod resolver.
+  - Validación inline de nombre y teléfono WhatsApp (10 dígitos).
+  - Selector de torre con disponibilidad operativa y aviso si está fuera de horario.
+  - Soporte de pedidos para hoy vs. fechas programadas (`getNextAvailableDeliveryDate`).
+  - Métodos de pago (efectivo, SPEI, WhatsApp) con tarjeta bancaria y botón de copiado rápido de CLABE.
+- Creado `OrderSuccessModal.tsx` con folio `#ORD-...`, resumen financiero, tickets ganados y enlaces directos a WhatsApp.
+- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`), `git diff --check` ✅.
 
 ### 📅 2026-08-19 — Sesión 8: PR-V3-08 Chekeo AuthGate, AppShell, Tabs & Layout Base
-- Creada capa de autenticación y estado de sesión en `apps/internal-chekeo-v3/src/features/auth/`:
-  - `auth.api.ts`: funciones para `fetchAuthStatus`, `loginWithPin` y `logoutInternal` con credenciales de cookie de sesión (`/api/internal-v2-auth/*`).
-  - `auth.store.ts`: `useAuthStore` en Zustand con persistencia en localStorage para renderizado instantáneo y validación en segundo plano.
-  - `AuthGate.tsx`: pantalla de login por PIN optimizada para pantallas POS táctiles de cocina y teclados físicos, con feedback de error inline, detección de entorno (Producción / Preview / Dev) y bloqueo de acciones durante envío.
+- Creada capa de autenticación y sesión en `apps/internal-chekeo-v3/src/features/auth/`:
+  - `auth.api.ts`: funciones para `fetchAuthStatus`, `loginWithPin` y `logoutInternal` contra `/api/internal-v2-auth/*`.
+  - `auth.store.ts`: `useAuthStore` en Zustand con persistencia en localStorage.
+  - `AuthGate.tsx`: login por PIN con feedback inline y teclado numérico POS.
 - Creado AppShell y componentes de navegación en `apps/internal-chekeo-v3/src/components/shell/`:
-  - `TopHeader.tsx`: barra superior con reloj operativo CDMX en tiempo real, indicador de red y sincronización (Online/Offline), toggle de tema claro/oscuro persistente y botón de salida rápida.
-  - `NavTabs.tsx`: navegación por pestañas accesible sobre `@ui/tabs` para Pedidos, Cocina, Pagos y Admin con touch targets $\ge 44$px.
-  - `AppShell.tsx`: layout responsive unificado.
-- Creados componentes esqueleto/placeholder listos para sus respectivos PRs en `apps/internal-chekeo-v3/src/components/views/`:
-  - `PedidosView.tsx`: cola de pedidos, filtros por estado y ribbon de calendario para PR-V3-09.
-  - `CocinaView.tsx`: pantalla KDS con semáforo de tiempos, estación de preparación y desglose de mods para PR-V3-10.
-  - `PagosView.tsx`: KPI summary cards financieros, filtros de conciliación y WhatsApp para PR-V3-11.
-  - `AdminView.tsx`: hub administrativo para Menú, Torres, Banners, Sorteos y Corte Z para PR-V3-12.
-- Montaje general en `apps/internal-chekeo-v3/src/app/ChekeoApp.tsx` con verificación de sesión al boot.
-- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
+  - `TopHeader.tsx`: reloj operativo CDMX en tiempo real, indicador de red Online/Offline, toggle de tema y logout.
+  - `NavTabs.tsx`: navegación accesible sobre `@ui/tabs` para Pedidos, Cocina, Pagos y Admin.
+- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`), `git diff --check` ✅.
 
 ### 📅 2026-08-19 — Sesión 9: PR-V3-09 Chekeo Feature Pedidos (Comandas, Filtros, Drawers y Estado)
 - Creada capa Data Layer en `apps/internal-chekeo-v3/src/features/orders/`:
-  - `types/orders.types.ts`: tipos normalizados de comanda (`NormalizedOrderItem`, `NormalizedComboBurger`, `NormalizedExtra`), mapeo de estados, badges accesibles y helpers de formato de moneda, fecha/hora CDMX y links directos a WhatsApp.
-  - `api/orders.api.ts`: integración con backend Hono (`/api/orders-v2-admin`, `/api/orders-v2-admin/:id/status`, `/api/orders-v2-admin/:id/payment`, `/api/orders-v2-admin/summary`, `/api/orders-v2-admin/batch-archive`).
-  - `hooks/use-orders.ts`: TanStack Query v5 hooks (`useChekeoOrdersQuery` con auto-refresh configurable de 15s y cómputo de contadores reactivos, `useUpdateOrderStatusMutation` con invalidación de caché, `useUpdateOrderPaymentMutation`, etc.).
-  - Barrel export en `features/orders/index.ts`.
-- Creados componentes modulares en `apps/internal-chekeo-v3/src/components/orders/`:
-  - `OrdersFilterBar.tsx`: búsqueda instantánea por folio/nombre/teléfono, selector horizontal por estado con conteos en vivo, filtros de modo (Pickup/Delivery), selector dinámico de torres, selector de horizonte de entrega y botón de refresco / switch de auto-refresh.
-  - `OrderCard.tsx`: tarjeta de pedido con folio `#ORD-...`, botón de copiado rápido, badges de estado y modo, datos de cliente y entrega, desglose estructurado de ítems (combos con guarnición y bebida, remociones en tags de alerta, extras en tags de acento, notas para cocina y notas generales), precio total destacado y botones de acción rápida para avanzar estado.
-  - `OrdersList.tsx`: grid adaptativo responsive mobile-first, esqueletos de carga suaves y empty state ilustrado con botón de restablecer filtros.
-  - `OrderDetailDrawer.tsx`: drawer para detalle profundo del pedido, auditoría cronológica de eventos (`order_events_v2`), desglose financiero y acciones de cambio directo de estado.
-  - `CancelOrderModal.tsx`: modal para cancelación segura de pedidos con presets de motivo y nota personalizada.
-  - Barrel export en `components/orders/index.ts`.
-- Integración completa en `apps/internal-chekeo-v3/src/components/views/PedidosView.tsx`.
-- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
+  - Tipos normalizados, cliente API y hooks TanStack Query con auto-refresh de 15s.
+- Creados componentes en `apps/internal-chekeo-v3/src/components/orders/`:
+  - `OrdersFilterBar.tsx`, `OrderCard.tsx`, `OrdersList.tsx`, `OrderDetailDrawer.tsx` y `CancelOrderModal.tsx`.
+- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`), `git diff --check` ✅.
 
 ### 📅 2026-08-19 — Sesión 10: PR-V3-10 Chekeo Feature Cocina (KDS & Resumen K)
 - Creada capa Data Layer en `apps/internal-chekeo-v3/src/features/kitchen/`:
-  - `types/kitchen.types.ts`: tipos tipados para KDS (`KitchenTicket`, `KitchenTicketItem`, `KitchenStation`), semáforo de tiempos (`calculateAlertTone`, `<10m` normal, `10-20m` warning, `>20m` urgent), cálculo de minutos transcurridos y agregadores de insumos (`computeKitchenAggregates`).
-  - `api/kitchen.api.ts`: cliente de API para `/api/kitchen-v2-admin/summary-k` y `/api/orders-v2-admin/:id/kitchen-item`.
-  - `hooks/use-kitchen.ts`: hooks TanStack Query v5 (`useKitchenDisplay`, `useKitchenSummaryKQuery`, `useUpdateKitchenItemMutation`), tick periódico de 10s para actualizar temporizadores y síntesis de audio con Web Audio API para alertas sonoras (`playKdsChime`).
-  - Barrel export en `features/kitchen/index.ts` y master export en `features/index.ts`.
-- Creados componentes modulares en `apps/internal-chekeo-v3/src/components/kitchen/`:
-  - `KitchenTicketCard.tsx`: comanda de alto contraste diseñada para tablets y pantallas de cocina, folio grande `#ORD-...`, semáforo de tiempo con badge de minutos, tags de remociones en rojo (`🔴 SIN ...`), tags de extras en verde (`🟢 +EXTRA ...`), guarnición de combo y bebida destacadas, nota de cocina/pedido y botón de 1-clic para avanzar de etapa con opción de reversión.
-  - `KitchenDisplay.tsx`: pantalla KDS con 3 columnas Kanban (Nuevos / En Plancha / Listos para Empacar), filtro de estaciones (Todas, Plancha/Burgers, Freidora/Guarniciones), leyenda de semáforo, toggle de audio KDS, soporte de pantalla completa y auto-refresh a 10s.
-  - `KitchenSummaryK.tsx`: agregador de producción en tiempo real con KPIs, contador de hamburguesas a producir por receta (OG, BBQ, Clásica, etc.), consolidado de guarniciones, extras totales para mise en place e integración con D1 para insumos cuantificables y costeo estimado.
-  - Barrel export en `components/kitchen/index.ts`.
-- Integración completa en `apps/internal-chekeo-v3/src/components/views/CocinaView.tsx` con selector de sub-vista entre KDS y Resumen K.
-- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`, `public-v2`, `internal-v2`), `git diff --check` ✅.
+  - Tipos para KDS, semáforo de tiempos, hooks TanStack Query y alertas sonoras Web Audio API (`playKdsChime`).
+- Creados componentes en `apps/internal-chekeo-v3/src/components/kitchen/`:
+  - `KitchenTicketCard.tsx` (tags `🔴 SIN ...` y `🟢 +EXTRA ...`), `KitchenDisplay.tsx` (Kanban 3 columnas) y `KitchenSummaryK.tsx` (agregación de insumos para mise en place).
+- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`), `git diff --check` ✅.
 
 ### 📅 2026-08-19 — Sesión 11: PR-V3-11 Chekeo Feature Pagos (Conciliación, Tickets 80mm & WhatsApp Bridge)
 - Creada capa Data Layer en `apps/internal-chekeo-v3/src/features/payments/`:
-  - `types/payments.types.ts`: tipos para filtros de conciliación (`PaymentFilterMethod`, `PaymentFilterStatus`, `PaymentDateHorizon`), modelo consolidado `FinancialSummary` (ventas totales, efectivo vs. transferencias vs. tarjeta, pendientes SPEI) y plantillas de WhatsApp (`WhatsAppMessageTemplate`).
-  - `utils/payments.utils.ts`: funciones puras `computeFinancialSummary` para agregación financiera en tiempo real, detección de zona horaria CDMX `isOrderFromTodayCDMX` y filtrado multidimensional `filterPaymentsOrders`.
-  - `utils/whatsapp.utils.ts`: normalizador telefónico internacional `normalizeWhatsAppPhone` (`521...`), generador de URLs `buildWhatsAppUrl` y plantillas preformateadas (Confirmación de Pago Validado, Aviso de Pedido en Camino / Listo, Resumen de Ticket y Recordatorio de Transferencia SPEI con CLABE interbancaria).
-  - `utils/ticket.utils.ts`: generador de recibos en texto monoespaciado 80mm/58mm `generateVerticalTicketText` e invocador de impresión nativa POS `printVerticalTicket`.
-  - `hooks/use-payments.ts`: TanStack Query v5 hook con invalidación automática de caché, mutaciones de 1-clic `markAsPaid` y `markAsPending`, estado de filtros y resumen financiero reactivo.
-  - Barrel export en `features/payments/index.ts` y master export en `features/index.ts`.
-- Creados componentes modulares en `apps/internal-chekeo-v3/src/components/payments/`:
-  - `PaymentsManager.tsx`: dashboard de conciliación con 4 KPI cards financieras en cabecera (Total ventas, SPEI, Efectivo y alerta de Transferencias por conciliar), barra de filtros con búsqueda instantánea y selector de métodos/estados, lista/tabla de órdenes con acción de 1-clic para validar pagos y modales integrados.
-  - `OrderTicketModal.tsx`: modal con vista de recibo vertical térmico 80mm (hoja blanca de alto contraste con bordes punteados, desglose detallado de ítems, extras, remociones, notas y desglose financiero) con botones de imprimir ticket y copiar texto plano.
-  - `WhatsAppAction.tsx`: modal interactivo de WhatsApp Bridge con selector de 5 plantillas, campo para nota personalizada con actualización en vivo, botón de copiar mensaje con feedback visual y botón de apertura directa a WhatsApp Web / App móvil.
-  - Barrel export en `components/payments/index.ts` y export en `components/index.ts`.
-- Integración completa en `apps/internal-chekeo-v3/src/components/views/PagosView.tsx` y montado en el tab "Pagos" de `ChekeoApp.tsx`.
-- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3` + `chekeo-v3`), `git diff --check` ✅.
+  - Agregación financiera `computeFinancialSummary`, generador de recibos 80mm/58mm `generateVerticalTicketText` y plantillas de WhatsApp normalizadas.
+- Creados componentes en `apps/internal-chekeo-v3/src/components/payments/`:
+  - `PaymentsManager.tsx` (KPIs financieros), `OrderTicketModal.tsx` (recibo térmico de alto contraste) y `WhatsAppAction.tsx` (bridge interactivo con 5 plantillas).
+- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`), `git diff --check` ✅.
 
 ### 📅 2026-08-19 — Sesión 12: PR-V3-12 Chekeo Feature Admin Completo (Menú & Stock, Torres, Banners, Sorteos, Corte Z)
 - Creada capa Data Layer en `apps/internal-chekeo-v3/src/features/admin/`:
-  - `types/admin.types.ts`: tipos para submódulos administrativos (`CreateMenuItemPayload`, `UpdateMenuItemPayload`, `CreateCatalogBannerPayload`, `UpdateTowerSchedulePayload`, `CreateRaffleCampaignAdminPayload`, `CashCutSummaryData`, `OrdersSummaryData`).
-  - `api/admin.api.ts`: cliente API tipado para todos los endpoints administrativos Hono (`/api/menu-v2-admin/*`, `/api/raffles-v2-admin/*`, `/api/orders-v2-admin/cash-cut`, `/api/orders-v2-admin/summary`, `/api/ingredients-v2-admin/*`).
-  - `hooks/use-admin.ts`: hooks TanStack Query v5 estructurados (`useAdminMenu`, `useAdminTowers`, `useAdminBanners`, `useAdminRaffles`, `useAdminCashCut`, `useAdminIngredients`) con invalidación optimizada de caché.
-  - Barrel export en `features/admin/index.ts` y export en `features/index.ts`.
-- Creados componentes modulares en `apps/internal-chekeo-v3/src/components/admin/`:
-  - `MenuStockPanel.tsx`: control de productos en vivo, steppers de existencias diarias, toggles de disponibilidad y visibilidad, filtros por categoría y búsqueda instantánea.
-  - `ProductEditModal.tsx`: modal para creación y edición completa de platillos, precios regulares y de oferta, control de stock límite y carga de imágenes R2.
-  - `TowersAdminPanel.tsx`: gobernanza de horarios de recepción y entrega por torre, selección interactiva de días operativos de la semana y toggle de pausa/activación en vivo.
-  - `BannersAdminPanel.tsx`: administración y previsualización del carrusel público con gradientes preestablecidos, etiquetas (badges), acciones CTA y subida de assets a R2.
-  - `RafflesAdminPanel.tsx`: panel de sorteos activos con métricas de boletos (compras vs referidos vs manuales), ranking de participantes, modal para ajuste manual de boletos con auditoría, generador de códigos de invitado, validación de referidos y ruleta aleatoria ponderada de selección de ganador.
-  - `CashCutPanel.tsx`: arqueo operativo del turno (Corte Z), desglose por método de pago (Efectivo vs SPEI vs Tarjeta), canales de entrega (Delivery vs Pickup), exportación a CSV y cierre seguro de turno.
-  - `IngredientsAdminPanel.tsx`: catálogo maestro de insumos con unidad y costo unitario, junto a vinculación de recetas por SKU para el Resumen K de Cocina.
-  - `AdminWorkspace.tsx`: hub administrativo con sub-navegación por tabs.
-  - Barrel export en `components/admin/index.ts` y export en `components/index.ts`.
-- Conectado en `apps/internal-chekeo-v3/src/components/views/AdminView.tsx` y montado en el tab "Admin" de `ChekeoApp.tsx`.
+  - Clientes API tipados para endpoints Hono administrativos (`/api/menu-v2-admin/*`, `/api/raffles-v2-admin/*`, `/api/orders-v2-admin/cash-cut`, etc.).
+- Creados componentes en `apps/internal-chekeo-v3/src/components/admin/`:
+  - `MenuStockPanel.tsx`, `ProductEditModal.tsx`, `TowersAdminPanel.tsx`, `BannersAdminPanel.tsx`, `RafflesAdminPanel.tsx`, `CashCutPanel.tsx`, `IngredientsAdminPanel.tsx` y `AdminWorkspace.tsx`.
+- Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`), `git diff --check` ✅.
+
 ### 📅 2026-08-20 — Sesión 13: PR-V3-13 Cutover Definitivo V3 (Cierre de Migración y Release a main)
 - **Eliminación total de código V2**:
-  - Removido `apps/public-order-v2/` (landing, modales y estilos monolíticos antiguos).
-  - Removido `apps/internal-chekeo-v2/` (god component de Chekeo V2 y librerías legadas).
+  - Removido `apps/public-order-v2/` e `apps/internal-chekeo-v2/`.
 - **Limpieza de configuración y scripts**:
-  - `package.json`: removidos scripts obsoletos `:v2` (`dev:public:v2`, `dev:internal:v2`, `build:public:v2`, `build:internal:v2`). Targets principales `dev:public`, `dev:chekeo`, `build:public`, `build:chekeo`, `preview:public` y `preview:chekeo` apuntan directamente a V3.
-  - `vite.config.ts`: simplificado para mapear de forma definitiva `public` -> `apps/public-order-v3` y `chekeo` / `internal` -> `apps/internal-chekeo-v3`.
-  - `tsconfig.json`: integración tipada con `vite/client` y `vite-env.d.ts` en ambas apps.
+  - `package.json`: removidos scripts obsoletos `:v2`. Targets principales `dev:public`, `dev:chekeo`, `build:public`, `build:chekeo`, `preview:public` y `preview:chekeo` apuntan directamente a V3.
+  - `vite.config.ts`: mapeo definitivo `public` -> `apps/public-order-v3` y `chekeo` -> `apps/internal-chekeo-v3`.
 - **Verificaciones integrales en verde**:
-  - `typecheck` ✅ (0 errores).
-  - `build` ✅ (`build:public` en 8.28s + `build:chekeo` en 5.39s, 0 errores).
-  - `git diff --check` ✅ (limpio, sin errores de formato).
-- **Documentación y Cierre**:
-  - `docs/codex-memory/01-estado-actual.md`: marcado V3 100% completado en producción.
-  - `docs/codex-memory/05-backlog.md`: backlog actualizado con todos los hitos V3 completados.
-  - `docs/codex-memory/22-v3-bitacora.md`: bitácora finalizada al 100%.
-- **Pull Request**:
-  - Preparado y emitido PR de corte definitivo hacia `main` (`gh pr create --base main --head v3`).
+  - `typecheck` ✅ (0 errores), `build` ✅ (`build:public` + `build:chekeo` en verde), `git diff --check` ✅.
+
+### 📅 2026-08-20 — Sesión 14: Auditoría Post-Migración V3 — Milestones 1 & 2
+- **Milestone 1 (Tooling & Configs)**:
+  - Playwright configs (`playwright.e2e.config.ts`, `playwright.internal-kitchen.config.ts`) actualizados a `dist/public-order-v3` y `dist/internal-chekeo-v3` con comando `preview:chekeo`.
+  - `.gitignore` actualizado con exclusiones para `.graphifyignore` y `.vscode/`.
+  - Limpieza de artefactos residuales en la raíz del repositorio.
+- **Milestone 2 (Documentación & Memoria Codex)**:
+  - `README.md`: Actualizado con la arquitectura canonical V3, stack tecnológico y guía de ejecución.
+  - `AGENTS.md`: Alineadas cabeceras de subsección a `apps/public-order-v3` preservando reglas de gobernanza y branching base `v3`.
+  - `docs/codex-memory/00-indice.md`: Reestructurado con separación nítida entre Notas Activas V3 y Archivo Histórico V2.
+  - `docs/codex-memory/02-reglas-del-proyecto.md`: Actualizado con arquitectura oficial V3 y estética Premium Casual.
+  - `docs/codex-memory/09-checklists.md`: Eliminadas referencias a estética cyberpunk legacy; alineado a Premium Casual y rutas V3.
+  - `docs/codex-memory/22-v3-bitacora.md`: Actualizado con el roadmap y avances de la auditoría post-migración.
 
 ---
 
@@ -239,9 +206,9 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 ## 🔴 Reglas Permanentes V3 (de AGENTS.md)
 
-- **Base de PRs Obligatoria**: Todos los PRs del roadmap V3 (PR-V3-02 hasta PR-V3-12) se crearon con base en `v3`.
+- **Base de PRs Obligatoria**: Todos los PRs del roadmap V3 se crean con base en `v3`.
 - **Cutover Final (PR-V3-13)**: Apertura del PR final desde `v3` hacia `main` tras validar compilación y checks completos.
-- **Atomicidad**: Cada uno de los 14 PRs cumplió un único objetivo acotado y verificable.
+- **Atomicidad**: Cada PR cumple un único objetivo acotado y verificable.
 - **Checks Obligatorios**: `git diff --check`, `npm run typecheck` y `npm run build` validados en cada fase.
 
 ---

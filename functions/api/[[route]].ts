@@ -58,3 +58,4 @@ app.route('/orders-v2', ordersRouter);
 app.route('/orders-v2-admin', ordersAdminRouter);
 
 export const onRequest = handle(app);
+export default app;
