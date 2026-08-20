@@ -73,3 +73,4 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
 ## Hito reciente - 2026-08-20
 
 - **Despliegue y Validación en Vivo V3 (PRs #545, #546, #547)**: Plataforma completamente desplegada en Cloudflare Pages con pipelines de CI/CD. Auditoría automatizada con Chromium headless validó 0 errores de consola, login operativo con PIN `1234` y carga completa de catálogo y assets R2 en vivo.
+- **Unificación Operativa Chekeo V3 (Operación & Semáforo en Vivo)**: Incorporación de la pestaña `Operación` como pantalla de inicio con semáforo del turno en tiempo real (Cocina activa, Pagos pendientes, Pedidos abiertos, Venta del día), tarjeta de Siguiente Acción Prioritaria y Mini Resumen K con acceso directo a Cocina.
