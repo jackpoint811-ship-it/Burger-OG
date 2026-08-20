@@ -1,9 +1,10 @@
 /**
- * PedidosView.tsx — PR-V3-09
+ * PedidosView.tsx — PR-V3-09 / Refinamiento Operativo V3
  *
  * Vista principal del módulo de Pedidos en Chekeo V3:
- * - Consulta de pedidos en tiempo real con TanStack Query y auto-refresco
- * - Filtrado reactivo por texto (folio, cliente, teléfono), estado, modo y torre
+ * - Filtro de Riel Horizontal de Fechas (14 días + Hoy + Anteriores + Todos)
+ * - Consulta de pedidos en tiempo real con TanStack Query y auto-refresco a 15s
+ * - Filtrado reactivo por texto (folio, cliente, teléfono, notas), estado, modo y torre
  * - Lista de comandas con acciones de avance de estado
  * - Drawer de detalle completo y modal de cancelación segura.
  */
@@ -18,14 +19,18 @@ import {
   CancelOrderModal,
   type OrdersFilterState,
 } from '../orders';
+import {
+  HorizontalDateCalendarFilter,
+  extractOrderTargetDate,
+} from '../shared/HorizontalDateCalendarFilter';
 
 export function PedidosView() {
+  const [selectedDate, setSelectedDate] = useState<string>('today');
   const [filters, setFilters] = useState<OrdersFilterState>({
     search: '',
     status: 'all',
     mode: 'all',
     tower: 'all',
-    dateHorizon: 'all',
     autoRefresh: true,
   });
 
@@ -63,8 +68,25 @@ export function PedidosView() {
 
   // Filtrado de pedidos según los criterios activos
   const filteredOrders = useMemo(() => {
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
     return orders.filter((order) => {
-      // 1. Filtro de Búsqueda por texto (Folio, Cliente, Teléfono o Notas)
+      // 1. Filtro por Fecha de Entrega (Riel Horizontal)
+      if (selectedDate !== 'all') {
+        const targetDate = extractOrderTargetDate(order, todayStr);
+        if (selectedDate === 'today' && targetDate !== todayStr) {
+          return false;
+        }
+        if (selectedDate === 'past' && targetDate >= todayStr) {
+          return false;
+        }
+        if (selectedDate !== 'today' && selectedDate !== 'past' && targetDate !== selectedDate) {
+          return false;
+        }
+      }
+
+      // 2. Filtro de Búsqueda por texto (Folio, Cliente, Teléfono o Notas)
       if (filters.search.trim()) {
         const term = filters.search.toLowerCase().trim();
         const matchesFolio = order.folio.toLowerCase().includes(term);
@@ -86,17 +108,17 @@ export function PedidosView() {
         }
       }
 
-      // 2. Filtro de Estado
+      // 3. Filtro de Estado
       if (filters.status !== 'all' && order.status !== filters.status) {
         return false;
       }
 
-      // 3. Filtro de Modo (Pickup / Delivery)
+      // 4. Filtro de Modo (Pickup / Delivery)
       if (filters.mode !== 'all' && order.orderMode !== filters.mode) {
         return false;
       }
 
-      // 4. Filtro de Torre / Ubicación
+      // 5. Filtro de Torre / Ubicación
       if (filters.tower !== 'all') {
         const orderLoc = (order.delivery?.location || '').toLowerCase();
         if (!orderLoc.includes(filters.tower.toLowerCase())) {
@@ -104,34 +126,9 @@ export function PedidosView() {
         }
       }
 
-      // 5. Filtro de Horizonte de Fecha (Hoy / Mañana / Todos)
-      if (filters.dateHorizon !== 'all') {
-        const now = new Date();
-        const orderDate = new Date(order.createdAt);
-        const isSameDay =
-          now.getFullYear() === orderDate.getFullYear() &&
-          now.getMonth() === orderDate.getMonth() &&
-          now.getDate() === orderDate.getDate();
-
-        if (filters.dateHorizon === 'today' && !isSameDay) {
-          return false;
-        }
-
-        if (filters.dateHorizon === 'tomorrow') {
-          const tomorrow = new Date(now);
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          const isTomorrow =
-            tomorrow.getFullYear() === orderDate.getFullYear() &&
-            tomorrow.getMonth() === orderDate.getMonth() &&
-            tomorrow.getDate() === orderDate.getDate();
-
-          if (!isTomorrow) return false;
-        }
-      }
-
       return true;
     });
-  }, [orders, filters]);
+  }, [orders, filters, selectedDate]);
 
   // Mantener actualizado el pedido en el drawer si cambian los datos en segundo plano
   const currentDetailOrder = useMemo(() => {
@@ -140,18 +137,27 @@ export function PedidosView() {
   }, [orders, selectedOrderDetail]);
 
   const handleResetFilters = () => {
+    setSelectedDate('all');
     setFilters({
       search: '',
       status: 'all',
       mode: 'all',
       tower: 'all',
-      dateHorizon: 'all',
       autoRefresh: true,
     });
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-5 animate-in fade-in duration-300">
+      {/* Riel Horizontal de Fechas */}
+      <div className="bg-surface-card p-4 rounded-3xl border border-line shadow-xs">
+        <HorizontalDateCalendarFilter
+          orders={orders}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
+      </div>
+
       {/* Barra de Filtros y Control */}
       <OrdersFilterBar
         filters={filters}

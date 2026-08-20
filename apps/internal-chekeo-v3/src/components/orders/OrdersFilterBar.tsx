@@ -1,11 +1,10 @@
 /**
- * OrdersFilterBar.tsx — PR-V3-09
+ * OrdersFilterBar.tsx — PR-V3-09 / Refinamiento V3
  *
  * Barra de control y filtrado en tiempo real para Pedidos de Chekeo V3:
- * - Búsqueda instantánea por folio (#ORD-...), nombre o teléfono
+ * - Búsqueda instantánea por folio (#ORD-...), cliente, teléfono o notas
  * - Pestañas de estado con conteos reactivos dinámicos
- * - Filtros por Modo (Pickup / Delivery) y Torre / Ubicación
- * - Filtro de horizonte de entrega (Hoy / Mañana / Todos)
+ * - Filtro por Modo (Todos / Pickup / Delivery) y selector de Torre
  * - Botón de refresco manual con feedback y switch de auto-refresco (15s).
  */
 
@@ -15,15 +14,6 @@ import {
   X,
   RefreshCw,
   MapPin,
-  Calendar,
-  Filter,
-  ShoppingBag,
-  Bike,
-  Flame,
-  CheckCircle2,
-  Clock,
-  Ban,
-  Radio,
 } from 'lucide-react';
 import { Button } from '@ui/button';
 import type { OrderV2Status, OrderV2Mode } from '@config/index';
@@ -34,7 +24,6 @@ export interface OrdersFilterState {
   status: 'all' | OrderV2Status;
   mode: 'all' | OrderV2Mode;
   tower: string;
-  dateHorizon: 'today' | 'tomorrow' | 'all';
   autoRefresh: boolean;
 }
 
@@ -89,7 +78,7 @@ export function OrdersFilterBar({
             <button
               type="button"
               onClick={() => onFilterChange((prev) => ({ ...prev, search: '' }))}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary p-0.5 rounded-full"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary p-0.5 rounded-full cursor-pointer"
               aria-label="Limpiar búsqueda"
             >
               <X className="w-4 h-4" />
@@ -105,7 +94,7 @@ export function OrdersFilterBar({
             onClick={() =>
               onFilterChange((prev) => ({ ...prev, autoRefresh: !prev.autoRefresh }))
             }
-            className={`h-11 px-3.5 rounded-2xl border text-xs font-bold flex items-center gap-2 transition-all select-none ${
+            className={`h-11 px-3.5 rounded-2xl border text-xs font-bold flex items-center gap-2 transition-all select-none cursor-pointer ${
               filters.autoRefresh
                 ? 'bg-accent-soft border-accent/30 text-accent'
                 : 'bg-surface-raised border-line text-text-muted hover:text-text-secondary'
@@ -174,7 +163,7 @@ export function OrdersFilterBar({
         })}
       </div>
 
-      {/* ─── Fila 3: Filtros Secundarios (Modo, Torre y Fecha) ──────────────── */}
+      {/* ─── Fila 3: Filtros Secundarios (Modo y Torre) ──────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-line/60 text-xs">
         {/* Filtro de Modo de Pedido */}
         <div className="flex items-center gap-1.5">
@@ -190,7 +179,7 @@ export function OrdersFilterBar({
                 onClick={() =>
                   onFilterChange((prev) => ({ ...prev, mode }))
                 }
-                className={`px-2.5 py-1 rounded-xl font-bold transition-colors ${
+                className={`px-2.5 py-1 rounded-xl font-bold transition-colors cursor-pointer ${
                   isSelected
                     ? 'bg-accent/15 text-accent border border-accent/20'
                     : 'text-text-secondary hover:text-text-primary hover:bg-surface-raised'
@@ -202,60 +191,27 @@ export function OrdersFilterBar({
           })}
         </div>
 
-        {/* Filtros de Torre y Fecha */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Selector de Torre */}
-          {availableTowers.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-surface-raised px-2.5 py-1 rounded-xl border border-line">
-              <MapPin className="w-3.5 h-3.5 text-accent" />
-              <select
-                value={filters.tower}
-                onChange={(e) =>
-                  onFilterChange((prev) => ({ ...prev, tower: e.target.value }))
-                }
-                aria-label="Filtrar por torre"
-                className="bg-transparent text-xs font-bold text-text-primary focus:outline-none cursor-pointer"
-              >
-                <option value="all">Todas las Torres</option>
-                {availableTowers.map((tower) => (
-                  <option key={tower} value={tower}>
-                    {tower}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Filtro de Horizonte de Fecha */}
-          <div className="flex items-center gap-1 bg-surface-raised px-1.5 py-0.5 rounded-xl border border-line">
-            <Calendar className="w-3.5 h-3.5 text-accent ml-1 mr-0.5" />
-            {(['today', 'tomorrow', 'all'] as const).map((horizon) => {
-              const isSelected = filters.dateHorizon === horizon;
-              const label =
-                horizon === 'today'
-                  ? 'Hoy'
-                  : horizon === 'tomorrow'
-                    ? 'Mañana'
-                    : 'Todas';
-              return (
-                <button
-                  key={horizon}
-                  type="button"
-                  onClick={() =>
-                    onFilterChange((prev) => ({ ...prev, dateHorizon: horizon }))
-                  }
-                  className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-colors ${
-                    isSelected
-                      ? 'bg-accent text-white shadow-xs'
-                      : 'text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
+        {/* Selector de Torre */}
+        {availableTowers.length > 0 && (
+          <div className="flex items-center gap-1.5 bg-surface-raised px-2.5 py-1 rounded-xl border border-line">
+            <MapPin className="w-3.5 h-3.5 text-accent" />
+            <select
+              value={filters.tower}
+              onChange={(e) =>
+                onFilterChange((prev) => ({ ...prev, tower: e.target.value }))
+              }
+              aria-label="Filtrar por torre"
+              className="bg-transparent text-xs font-bold text-text-primary focus:outline-none cursor-pointer"
+            >
+              <option value="all">Todas las Torres</option>
+              {availableTowers.map((tower) => (
+                <option key={tower} value={tower}>
+                  {tower}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

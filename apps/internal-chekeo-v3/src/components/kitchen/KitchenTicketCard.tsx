@@ -1,36 +1,37 @@
 /**
- * KitchenTicketCard.tsx — PR-V3-10
+ * KitchenTicketCard.tsx — PR-V3-10 / Refinamiento Operativo V3
  *
  * Comanda de cocina de alto contraste legible a distancia para tablets y pantallas KDS:
- * - Folio grande e indicador de tiempo transcurrido con semáforo de alerta
+ * - Folio grande e indicador claro de ubicación/torre de entrega o pickup
+ * - Resumen rápido con emojis (ej. 🍔 2 Burgers · 🍟 1 Side)
  * - Remociones resaltadas en rojo (🔴 SIN ...)
  * - Extras resaltados en verde (🟢 +EXTRA ...)
- * - Guarnición específica de combo y bebida destacadas
- * - Botón de 1-clic para avanzar de estación
+ * - Desglose de guarniciones y bebidas
+ * - Botón de 1-clic para avanzar de estación (Mandar a Plancha / Marcar Listo / Despachar)
+ * - Cero relojes de presión ni alertas parpadeantes de tiempo
  */
 
 import React, { useState } from 'react';
 import {
-  Clock,
   Flame,
   CheckCircle2,
   PackageCheck,
   RotateCcw,
   MapPin,
   FileText,
-  AlertTriangle,
   Loader2,
+  Calendar,
 } from 'lucide-react';
-import { Badge } from '@ui/badge';
 import { Button } from '@ui/button';
 import {
-  formatElapsedTime,
+  buildKitchenOrderQueueSummary,
   type KitchenTicket,
   type KitchenTicketItem,
 } from '../../features/kitchen/types/kitchen.types';
 
 export interface KitchenTicketCardProps {
   ticket: KitchenTicket;
+  laneMode?: 'prep' | 'sideQuest';
   onAdvance: (ticketId: string, currentStatus: KitchenTicket['status']) => Promise<void>;
   onRevert?: (ticketId: string, currentStatus: KitchenTicket['status']) => Promise<void>;
   isUpdating?: boolean;
@@ -38,6 +39,7 @@ export interface KitchenTicketCardProps {
 
 export function KitchenTicketCard({
   ticket,
+  laneMode,
   onAdvance,
   onRevert,
   isUpdating = false,
@@ -63,10 +65,6 @@ export function KitchenTicketCard({
     }
   };
 
-  // Semáforo de tiempos
-  const isUrgent = ticket.alertTone === 'urgent';
-  const isWarning = ticket.alertTone === 'warning';
-
   // Configuración visual por etapa
   let actionLabel = 'Mandar a Plancha';
   let actionIcon = <Flame className="w-5 h-5 text-white" />;
@@ -82,62 +80,73 @@ export function KitchenTicketCard({
     actionBtnClass = 'bg-blue-600 hover:bg-blue-500 text-white shadow-md active:scale-[0.98]';
   }
 
-  // Estilos de borde y cabecera según urgencia
-  const borderToneClass = isUrgent
-    ? 'border-red-500/80 shadow-[0_0_15px_rgba(239,68,68,0.25)] ring-2 ring-red-500/30'
-    : isWarning
-    ? 'border-amber-500/70 shadow-card'
-    : 'border-line shadow-card';
+  // Filtrar los ítems relevantes según el carril operativo activo
+  const displayedItems = ticket.items.filter((item) => {
+    if (!laneMode) return true;
+    if (laneMode === 'prep') {
+      // Plancha: Burgers individuales o combos con burgers
+      return item.itemKind === 'burger' || item.itemKind === 'combo';
+    }
+    if (laneMode === 'sideQuest') {
+      // Freidora y bebidas: Guarniciones, bebidas, combos con papas/bebida o extras no burger
+      return (
+        item.itemKind === 'garnish' ||
+        item.itemKind === 'drink' ||
+        item.itemKind === 'extra' ||
+        (item.itemKind === 'combo' && (item.garnish || item.includedDrink))
+      );
+    }
+    return true;
+  });
+
+  const queueSummary = buildKitchenOrderQueueSummary(ticket, laneMode);
 
   return (
-    <div
-      className={`bg-surface-card rounded-3xl p-4 sm:p-5 border-2 flex flex-col justify-between transition-all ${borderToneClass}`}
-    >
+    <div className="bg-surface-card rounded-3xl p-4 sm:p-5 border-2 border-line shadow-card flex flex-col justify-between transition-all hover:border-accent/40">
       {/* ─── Encabezado de Comanda KDS ────────────────────────────────────────── */}
       <div className="space-y-3.5">
         <div className="flex items-start justify-between gap-2 border-b border-line pb-3">
           <div>
-            {/* Folio Grande */}
-            <div className="flex items-center gap-2">
+            {/* Folio Grande & Modo */}
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-2xl sm:text-3xl font-black tracking-tight text-text-primary">
                 {ticket.folio}
               </span>
               {ticket.mode === 'pickup' ? (
                 <span className="px-2 py-0.5 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 font-extrabold text-[11px] uppercase tracking-wider">
-                  Pickup
+                  🛍️ Pickup
+                </span>
+              ) : null}
+              {ticket.scheduledDate ? (
+                <span className="px-2 py-0.5 rounded-lg bg-accent/15 text-accent font-extrabold text-[11px] flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  <span>{ticket.scheduledDate}</span>
                 </span>
               ) : null}
             </div>
 
             {/* Cliente y Destino */}
-            <div className="flex items-center gap-1.5 text-xs font-bold text-text-secondary mt-0.5">
-              <span className="text-text-primary font-extrabold truncate max-w-[140px] sm:max-w-[180px]">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-text-secondary mt-1">
+              <span className="text-text-primary font-extrabold truncate max-w-[150px] sm:max-w-[200px]">
                 {ticket.customerName}
               </span>
               <span>•</span>
-              <span className="inline-flex items-center gap-1 truncate max-w-[120px] text-text-muted">
-                <MapPin className="w-3 h-3 shrink-0" />
+              <span className="inline-flex items-center gap-1 truncate max-w-[140px] text-text-muted">
+                <MapPin className="w-3 h-3 shrink-0 text-accent" />
                 <span>{ticket.location}</span>
               </span>
             </div>
           </div>
 
-          {/* Temporizador de Tiempo Transcurrido */}
-          <div
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl font-mono font-black text-sm sm:text-base shrink-0 ${
-              isUrgent
-                ? 'bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/40 animate-pulse'
-                : isWarning
-                ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40'
-                : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            <span>{formatElapsedTime(ticket.elapsedMinutes)}</span>
-          </div>
+          {/* Badge de Resumen de Comanda */}
+          {queueSummary ? (
+            <div className="px-2.5 py-1 rounded-xl bg-surface-raised border border-line text-[11px] font-black text-text-primary shrink-0 select-none">
+              {queueSummary}
+            </div>
+          ) : null}
         </div>
 
-        {/* Nota General de la Orden si existe */}
+        {/* Nota General del Pedido si existe */}
         {ticket.orderNote ? (
           <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-300 text-xs font-bold flex items-start gap-1.5">
             <FileText className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
@@ -150,7 +159,7 @@ export function KitchenTicketCard({
 
         {/* ─── Lista de Ítems / Productos con Mods Destacados ───────────────────── */}
         <div className="space-y-3">
-          {ticket.items.map((item, idx) => (
+          {displayedItems.map((item, idx) => (
             <div
               key={item.id || idx}
               className="p-3 sm:p-3.5 rounded-2xl bg-surface-raised border border-line space-y-2"
@@ -173,8 +182,8 @@ export function KitchenTicketCard({
                 ) : null}
               </div>
 
-              {/* 🔴 Remociones / Ingredientes Removidos (Crítico para Cocina) */}
-              {item.removedIngredients.length > 0 ? (
+              {/* 🔴 Remociones / Ingredientes Removidos (Crítico para Plancha) */}
+              {item.removedIngredients.length > 0 && laneMode !== 'sideQuest' ? (
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {item.removedIngredients.map((mod, mIdx) => (
                     <span
@@ -204,7 +213,7 @@ export function KitchenTicketCard({
               ) : null}
 
               {/* 🍟 Guarnición Específica de Combo */}
-              {item.garnish ? (
+              {item.garnish && laneMode !== 'prep' ? (
                 <div className="pt-1.5 border-t border-line/60 flex items-center gap-1.5 text-xs font-bold text-text-primary">
                   <span className="text-sm">🍟</span>
                   <span className="font-black text-amber-600 dark:text-amber-400">
@@ -215,7 +224,7 @@ export function KitchenTicketCard({
               ) : null}
 
               {/* 🥤 Bebida Incluida */}
-              {item.includedDrink ? (
+              {item.includedDrink && laneMode !== 'prep' ? (
                 <div className="pt-1 flex items-center gap-1.5 text-xs font-bold text-text-secondary">
                   <span className="text-sm">🥤</span>
                   <span className="font-extrabold text-blue-600 dark:text-blue-400">
@@ -225,8 +234,8 @@ export function KitchenTicketCard({
                 </div>
               ) : null}
 
-              {/* Desglose de Burgers de Combo si existen personalizaciones por separado */}
-              {item.comboBurgers && item.comboBurgers.length > 0 ? (
+              {/* Desglose de Burgers de Combo */}
+              {item.comboBurgers && item.comboBurgers.length > 0 && laneMode !== 'sideQuest' ? (
                 <div className="mt-2 pt-2 border-t border-line/70 space-y-2">
                   <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">
                     Burgers del Combo:
@@ -237,7 +246,7 @@ export function KitchenTicketCard({
                       className="p-2 rounded-xl bg-surface-card border border-line text-xs space-y-1.5"
                     >
                       <span className="font-black text-text-primary">🍔 {cb.name}</span>
-                      {cb.removedIngredients.length > 0 ? (
+                      {cb.removedIngredients.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {cb.removedIngredients.map((mod, cmIdx) => (
                             <span
@@ -248,8 +257,8 @@ export function KitchenTicketCard({
                             </span>
                           ))}
                         </div>
-                      ) : null}
-                      {cb.extras.length > 0 ? (
+                      )}
+                      {cb.extras.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {cb.extras.map((extra, ceIdx) => (
                             <span
@@ -260,19 +269,19 @@ export function KitchenTicketCard({
                             </span>
                           ))}
                         </div>
-                      ) : null}
-                      {cb.burgerNote ? (
+                      )}
+                      {cb.burgerNote && (
                         <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 italic">
                           Nota: {cb.burgerNote}
                         </p>
-                      ) : null}
+                      )}
                     </div>
                   ))}
                 </div>
               ) : null}
 
               {/* Nota de la Hamburguesa individual */}
-              {item.burgerNote ? (
+              {item.burgerNote && laneMode !== 'sideQuest' ? (
                 <div className="pt-1.5 border-t border-line/60 text-xs font-bold text-amber-600 dark:text-amber-400 italic">
                   <span>Nota: {item.burgerNote}</span>
                 </div>
@@ -290,7 +299,7 @@ export function KitchenTicketCard({
             size="sm"
             disabled={localBusy || isUpdating}
             onClick={handleRevert}
-            className="h-12 w-12 rounded-2xl shrink-0 p-0 border-line text-text-muted hover:text-text-primary"
+            className="h-12 w-12 rounded-2xl shrink-0 p-0 border-line text-text-muted hover:text-text-primary cursor-pointer"
             title="Retroceder comanda"
           >
             <RotateCcw className="w-4 h-4" />

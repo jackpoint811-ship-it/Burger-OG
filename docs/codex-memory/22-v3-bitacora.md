@@ -3,16 +3,16 @@
 
 # 📋 Bitácora V3 — Burgers.exe
 
-> **Estado**: 🟢 100% Migración V3 + Despliegue en Cloudflare Pages Completado y Verificado en Vivo (PRs #530–#547)
+> **Estado**: 🟢 100% Migración V3 Completada (14/14 PRs completados) · 🔄 Auditoría Post-Migración & Compliance en Curso (Milestone 1 ✅ · Milestone 2 🔄)
 > **Inicio**: 2026-08-18
 > **Cierre Migración Base**: 2026-08-20
-> **Auditoría Post-Migración & Despliegue**: 2026-08-20
+> **Auditoría Post-Migración**: 2026-08-20
 
 ---
 
 ## 🎯 Objetivo
 
-Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack moderno, arquitectura limpia y repo sin legacy, seguida de una auditoría exhaustiva de compliance post-migración, hardening de seguridad, pipelines CI/CD automatizados y despliegue en vivo verificado en Cloudflare Pages.
+Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack moderno, arquitectura limpia y repo sin legacy, seguida de una auditoría exhaustiva de compliance post-migración, hardening y sincronización de memoria operativa.
 
 ---
 
@@ -48,6 +48,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | 2026-08-18 | shadcn/ui | Componentes accesibles como código propio (no dependencia) |
 | 2026-08-18 | Cutover al final (PR-V3-13) | Nunca merge a main sin aprobación explícita |
 | 2026-08-20 | Auditoría Post-Migración V3 (M1–M4) | Asegurar repo limpio, 0 deuda técnica, tooling alineado a V3 y memoria sincronizada |
+| 2026-08-20 | Alineación Operativa Chekeo V3 (PR #549) | Cero relojes de presión en cocina, 3 estaciones reales (Plancha/SideQuest/ResumenK) y calendario horizontal de 14 días |
 
 ---
 
@@ -68,22 +69,18 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-10 | Chekeo: Feature Cocina (KDS & Resumen K) | ✅ Mergeado | [#541](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/541) | 2026-08-19 | 2026-08-19 |
 | V3-11 | Chekeo: Feature Pagos | ✅ Mergeado | [#542](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/542) | 2026-08-19 | 2026-08-19 |
 | V3-12 | Chekeo: Feature Admin completo | ✅ Mergeado | [#543](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/543) | 2026-08-19 | 2026-08-19 |
-| V3-13 | Cutover Definitivo + Eliminar V2 | ✅ Integrado en v3 | [#544](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/544) | 2026-08-20 | 2026-08-20 |
-| V3-Audit | Auditoría Post-Migración Compliance & Hardening | ✅ Mergeado | [#545](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/545) | 2026-08-20 | 2026-08-20 |
-| V3-Deploy | Proyectos Cloudflare Pages V3 + Pipelines CI/CD | ✅ Mergeado | [#546](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/546) | 2026-08-20 | 2026-08-20 |
-| V3-FixAssets | Fix Extracción de Path en Assets Router (/api) | ✅ Mergeado | [#547](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/547) | 2026-08-20 | 2026-08-20 |
+| V3-13 | Cutover Definitivo + Eliminar V2 | ✅ Integrado en v3 | Commit `022796a` | 2026-08-20 | 2026-08-20 |
 
 ---
 
-## 🛡️ Roadmap de Auditoría Post-Migración & Despliegue V3 (100% Completado)
+## 🛡️ Roadmap de Auditoría Post-Migración & Compliance V3
 
-| Milestone | Nombre | Alcance | Estado | PR / Entrega |
+| Milestone | Nombre | Alcance | Estado | Dependencias |
 |---|---|---|:---:|---|
-| **M1** | Tooling & Test Configurations Alignment | Playwright configs, `.gitignore`, tests E2E y limpieza raíz | ✅ Completado | [#545](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/545) |
-| **M2** | Documentation & Codex Memory Synchronization | Sincronización de `docs/codex-memory/`, `README.md` y `AGENTS.md` | ✅ Completado | [#545](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/545) |
-| **M3** | Security Fix & Auth API Hardening | Eliminación de bypass de autenticación y fallbacks inseguros en `auth.api.ts` | ✅ Completado | [#545](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/545) |
-| **M4** | Cloudflare Pages V3 & CI/CD Pipelines | Creación de proyectos `burgers-exe-public-v3`, `burgers-exe-internal-v3` y GitHub Actions | ✅ Completado | [#546](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/546) |
-| **M5** | Live Asset Routing & Live Verification | Corrección de ruta de assets en Hono y verificación integral con Chromium headless | ✅ Completado | [#547](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/547) |
+| **M1** | Tooling & Test Configurations Alignment | Actualizar configs de Playwright (`playwright.e2e.config.ts`, `playwright.internal-kitchen.config.ts`), `.gitignore` y limpiar artefactos raíz | ✅ Completado | Ninguna |
+| **M2** | Documentation & Codex Memory Synchronization | Alinear `README.md`, `AGENTS.md` y sincronizar notas de `docs/codex-memory/` (00, 02, 09, 22-v3) | 🔄 En Progreso | M1 |
+| **M3** | Code Consistency & Workspace Hardening | Verificar reachability 100% de apps/packages/functions, auditar `auth.api.ts` y tipos | ⏳ Planificado | M1 |
+| **M4** | Final E2E Test Pass & Audit Verification | Ejecución integral de typechecks, builds, tests Playwright y auditorías forenses/adversariales | ⏳ Planificado | M1, M2, M3 |
 
 **Leyenda**: ⏳ Pendiente · 🔄 En progreso · ✅ Completado / Mergeado · ❌ Bloqueado · ⏸️ Pausado
 
@@ -157,7 +154,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 ### 📅 2026-08-19 — Sesión 10: PR-V3-10 Chekeo Feature Cocina (KDS & Resumen K)
 - Creada capa Data Layer en `apps/internal-chekeo-v3/src/features/kitchen/`:
-  - Tipos para KDS, semáforo de tiempos, hooks TanStack Query y alertas sonoras Web Audio API (`playKdsChime`).
+  - Tipos para KDS, hooks TanStack Query y alertas sonoras Web Audio API (`playKdsChime`).
 - Creados componentes en `apps/internal-chekeo-v3/src/components/kitchen/`:
   - `KitchenTicketCard.tsx` (tags `🔴 SIN ...` y `🟢 +EXTRA ...`), `KitchenDisplay.tsx` (Kanban 3 columnas) y `KitchenSummaryK.tsx` (agregación de insumos para mise en place).
 - Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`), `git diff --check` ✅.
@@ -222,6 +219,20 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Autenticación con PIN `1234` (`BOG_INTERNAL_PIN`) 100% funcional.
   - 0 errores de consola, 0 excepciones de red.
   - Módulos operativos en vivo: Pedidos, Cocina KDS, Pagos y Admin.
+
+### 📅 2026-08-20 — Sesión 18: Alineación Operativa Chekeo V3 (Cero Relojes + Estaciones + Calendario) — PR #549
+- **Restitución del Riel Horizontal de Fechas**:
+  - Creado `HorizontalDateCalendarFilter.tsx` en `apps/internal-chekeo-v3/src/components/shared/` con soporte CDMX, 14 días consecutivos, botón `⏱️ Anteriores`, tarjeta `🟢 HOY` y badges en tiempo real de comandas pendientes.
+  - Integrado reactivamente en `PedidosView.tsx` y `CocinaView.tsx`.
+  - Depurado `OrdersFilterBar.tsx` eliminando selector obsoleto `dateHorizon`.
+- **Rediseño Operativo de Cocina (Cero Relojes de Presión)**:
+  - Eliminados cronómetros de minutos y semáforos de estrés de `kitchen.types.ts`, `KitchenTicketCard.tsx` y `KitchenDisplay.tsx`.
+  - Organizada la Cocina en 3 estaciones reales: `🍔 Preparación (Plancha)`, `🍟 Side Quest (Freidora & Empaque)` y `📋 Resumen K (Mise en Place)`.
+  - Soporte de modificadores en alto contraste (`🔴 SIN ...`, `🟢 +EXTRA ...`), resumen de comanda con emojis (`buildKitchenOrderQueueSummary`) y chimes Web Audio API.
+- **Verificaciones**:
+  - `typecheck` ✅ (0 errores).
+  - `build:chekeo` y `build:public` ✅ (100% en verde).
+  - Memoria Codex sincronizada en `07-decisiones.md`, `03-flujos-chekeo.md` y `22-v3-bitacora.md`.
 
 ---
 

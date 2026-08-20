@@ -111,7 +111,7 @@ Garantizar que la aplicación pública jamás vuelva a sufrir un congelamiento d
 - Cero posibilidad de que errores de BD forcen la app pública al flujo legacy.
 - Cero excepciones no capturadas por violaciones a Rules of Hooks en React.
 - Cero inconsistencias de tipos MIME por HTMLs cacheados en CDN.
-3. **Manejo de errores no bloqueante**: La app pública debe ofrecer reintentos limpios y fallbacks seguros antes de mostrar pantallas de error totales al usuario final.
+- Manejo de errores no bloqueante: La app pública debe ofrecer reintentos limpios y fallbacks seguros antes de mostrar pantallas de error totales al usuario final.
 
 ### Fecha
 
@@ -173,7 +173,7 @@ V2 acumuló deuda técnica masiva: `InternalChekeoApp.tsx` con 6,336 líneas, `s
 
 **Arquitectura de KDS (Kitchen Display System) y Resumen K (Mise en Place) en Chekeo V3 (PR-V3-10)**:
 
-1. **KDS Kanban con Semáforo Reactivo**: Interfaz de 3 columnas (Nuevos / En Plancha / Listos para Empacar) con folio en tipografía grande, temporizador dinámico con semáforo (`<10m` normal, `10-20m` warning, `>20m` urgente) y botón de 1-clic para avanzar el estado del pedido.
+1. **KDS Kanban**: Interfaz de 3 columnas (Nuevos / En Plancha / Listos para Empacar) con folio en tipografía grande y botón de 1-clic para avanzar el estado del pedido.
 2. **Resaltado Crítico de Modificadores**: Remociones (`🔴 SIN CEBOLLA`, etc.) y extras (`🟢 +EXTRA TOCINO`, etc.) en chips de alto contraste y legibilidad a distancia para pantallas táctiles de cocina y tablets.
 3. **Agregador de Insumos (Resumen K)**: Cómputo consolidado en tiempo real de hamburguesas a producir por receta, guarniciones (Papas Francesas, Aros) y extras totales para mise en place, con integración opcional a base de datos Cloudflare D1 (`/api/kitchen-v2-admin/summary-k`).
 4. **Alertas Sonoras Nativas (Web Audio API)**: Síntesis de chimes sin depender de archivos de audio externos, con persistencia del switch de volumen en `localStorage`.
@@ -185,7 +185,7 @@ Permitir a los operadores de plancha y freidora preparar pedidos con máxima vel
 ### Impacto
 
 - Cero errores en burgers con modificaciones especiales.
-- Visibilidad inmediata del flujo de pedidos y tiempos de preparación.
+- Visibilidad inmediata del flujo de pedidos.
 - Sin dependencias externas de audio ni assets pesados.
 
 ### Fecha
@@ -213,3 +213,28 @@ Garantizar un ciclo de despliegue continuo, desacoplado, sin fricción manual y 
 - Ambas aplicaciones se despliegan en menos de 45 segundos ante cualquier push a `v3`.
 - Catálogo e imágenes de R2 cargan con HTTP 200 sin 404s ni fallbacks degradados.
 - Chekeo V3 mantiene autenticación robusta y segura contra el backend.
+
+### Fecha
+
+2026-08-20
+
+### Decisión
+
+**Alineación Operativa Definitiva en Chekeo V3 (Rescate de Patrones de Producción Real V2 — PR #549)**:
+
+1. **Eliminación Total de Relojes de Presión en Cocina**: Se eliminan cronómetros de minutos transcurridos y semáforos de estrés (`<10m`, `10-20m`, `>20m` parpadeantes) porque chocan con el modelo de producción por lotes (batch cooking) y entregas programadas a torres de Burgers.exe.
+2. **División por Estaciones Operativas Reales**:
+   - `🍔 Preparación (Plancha)`: Enfocada exclusivamente en carnes smash, panes y modificaciones críticas.
+   - `🍟 Side Quest (Freidora & Empaque)`: Enfocada en papas, aros de cebolla, bebidas y ensamble de paquetes.
+   - `📋 Resumen K (Mise en Place)`: Conteo consolidado de insumos activos.
+3. **Restitución de `HorizontalDateCalendarFilter`**: Riel horizontal de 14 días consecutivos con detección en zona horaria CDMX, botón especial de `⏱️ Anteriores / Histórico`, tarjeta `🟢 HOY` y conteo reactivo de comandas pendientes tanto en **Pedidos** como en **Cocina**.
+
+### Motivo
+
+Adaptar la interfaz a la realidad operativa del restaurante sin comprometer la nueva arquitectura modular de V3 (React 19 + TanStack Query + Tailwind v4).
+
+### Impacto
+
+- Cero estrés y cero alertas falsas en pedidos programados.
+- Cocineros y empacadores trabajan con interfaces especializadas por estación física.
+- Visibilidad completa de entregas futuras y pendientes históricos.
