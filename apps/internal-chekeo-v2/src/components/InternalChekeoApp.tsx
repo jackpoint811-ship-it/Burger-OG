@@ -1893,27 +1893,27 @@ const HomePanel = ({
 
   const metricCards = [
     {
-      label: "Pedidos activos",
-      value: summary.activeOrders,
-      hint: "Pedidos hoy que siguen abiertos",
-      action: () => onOpenTab("pedidos"),
-    },
-    {
-      label: "Cocina pendiente",
+      label: "🍔 Cocina activa",
       value: summary.pendingOrders + summary.preparingOrders,
-      hint: "Items antes de listo",
+      hint: kitchenSummary ? `${kitchenSummary.totals.burgers} burgers en cola` : "Items por preparar",
       action: () => onOpenTab("cocina"),
     },
     {
-      label: "Pagos pendientes",
+      label: "💳 Pagos pendientes",
       value: summary.paymentsToReview,
-      hint: "Confirmaciones por revisar",
+      hint: `${summary.paymentsToReview} por conciliar`,
       action: () => onOpenTab("pagos"),
     },
     {
-      label: "Pedidos de hoy",
-      value: todaySummary?.totals.orders ?? "—",
-      hint: todayLoading ? "Actualizando..." : "Lectura del corte actual",
+      label: "📦 Pedidos activos",
+      value: summary.activeOrders,
+      hint: "Órdenes abiertas",
+      action: () => onOpenTab("pedidos"),
+    },
+    {
+      label: "💰 Venta de hoy",
+      value: todaySummary?.totals.grossSales != null ? formatCurrency(todaySummary.totals.grossSales) : (todayLoading ? "..." : "—"),
+      hint: todaySummary ? `${todaySummary.totals.orders} órdenes registradas` : (todayLoading ? "Actualizando..." : "Corte del día"),
       action: () => onOpenTab("pedidos"),
     },
   ];
@@ -1921,46 +1921,47 @@ const HomePanel = ({
     summary.paymentsToReview > 0
       ? {
           title: "Confirmar pagos pendientes",
-          detail: `${summary.paymentsToReview} pedido${summary.paymentsToReview === 1 ? "" : "s"} necesitan revisión de cobro.`,
-          label: "Abrir Pagos",
+          detail: `${summary.paymentsToReview} pedido${summary.paymentsToReview === 1 ? "" : "s"} necesitan validación de pago o comprobante SPEI.`,
+          label: "Abrir Pagos 💳",
           onClick: () => onOpenTab("pagos"),
         }
       : summary.pendingOrders > 0 || summary.preparingOrders > 0
         ? {
-            title: "Revisar cocina",
-            detail: `${summary.pendingOrders + summary.preparingOrders} pedido${summary.pendingOrders + summary.preparingOrders === 1 ? "" : "s"} siguen antes de listo.`,
-            label: "Abrir Cocina",
+            title: "Preparar pedidos en cocina",
+            detail: `${summary.pendingOrders + summary.preparingOrders} pedido${summary.pendingOrders + summary.preparingOrders === 1 ? "" : "s"} están en cola de plancha/freidora.`,
+            label: "Abrir Cocina 👨‍🍳",
             onClick: () => onOpenTab("cocina"),
           }
         : summary.readyOrders > 0
           ? {
               title: "Entregar pedidos listos",
-              detail: `${summary.readyOrders} pedido${summary.readyOrders === 1 ? "" : "s"} ya pueden cerrarse.`,
-              label: "Abrir Pedidos",
+              detail: `${summary.readyOrders} pedido${summary.readyOrders === 1 ? "" : "s"} listos para empaquetar y entregar al cliente.`,
+              label: "Abrir Pedidos 📦",
               onClick: () => onOpenTab("pedidos"),
             }
           : {
-              title: "Operación sin pendientes",
-              detail: "No hay pedidos abiertos que requieran acción inmediata.",
+              title: "Operación al día",
+              detail: "No hay órdenes pendientes de atención inmediata.",
               label: "Ver Pedidos",
               onClick: () => onOpenTab("pedidos"),
             };
 
   return (
-    <section className="operation-console">
-      <div className="operation-console__main">
-        <Card className="home-hero">
-          <div className="home-hero__head">
+    <section className="operation-console space-y-4 max-w-7xl mx-auto px-2 sm:px-4 py-2">
+      <div className="operation-console__main space-y-4">
+        <Card className="home-hero p-4 sm:p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <div className="home-hero__head flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
-              <p className="home-section-label">Operación</p>
-              <h2>Prioridad de turno</h2>
-              <p>
-                Lectura compacta para decidir el siguiente movimiento sin entrar a módulos técnicos.
-              </p>
+              <span className="px-2.5 py-1 text-[11px] font-black uppercase tracking-wider rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                ⚡ Resumen del Turno
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 mt-1">
+                Operación en Vivo
+              </h2>
             </div>
-            <div className="home-hero__meta">
+            <div className="home-hero__meta flex items-center gap-2">
               <StatusPill className={truthToneClassName[runtime.source === "d1" ? "success" : "warning"]}>
-                {runtime.source === "d1" ? "Datos live" : "Respaldo"}
+                {runtime.source === "d1" ? "D1 Live" : "Respaldo"}
               </StatusPill>
               <StatusPill className={truthToneClassName[runtimeEnvironment === "production" ? "danger" : "system"]}>
                 {runtimeEnvironmentLabel[runtimeEnvironment]}
@@ -1968,99 +1969,122 @@ const HomePanel = ({
             </div>
           </div>
 
-          <div className="home-metrics">
+          <div className="home-metrics grid grid-cols-2 sm:grid-cols-4 gap-3">
             {metricCards.map((card) => (
               <button
                 key={card.label}
                 type="button"
-                className="home-metric-card"
+                className="home-metric-card flex flex-col justify-between p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-left group"
                 onClick={card.action}
               >
-                <p className="home-metric-card__label">{card.label}</p>
-                <p className="home-metric-card__value">{card.value}</p>
-                <p className="home-metric-card__hint">{card.hint}</p>
+                <p className="home-metric-card__label text-xs font-bold text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                  {card.label}
+                </p>
+                <p className="home-metric-card__value text-2xl font-black text-zinc-900 dark:text-zinc-100 my-1">
+                  {card.value}
+                </p>
+                <p className="home-metric-card__hint text-[11px] text-zinc-400 dark:text-zinc-500 truncate">
+                  {card.hint}
+                </p>
               </button>
             ))}
           </div>
 
           {todayError ? (
-            <p className="state-message state-message--warning mt-3">
+            <p className="state-message state-message--warning mt-3 text-xs">
               {todayError}
             </p>
           ) : null}
         </Card>
 
-        <Card className="home-next-action">
-          <div className="home-next-action__head">
+        <Card className="home-next-action p-4 sm:p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <div className="home-next-action__head flex flex-wrap items-center justify-between gap-3 mb-3">
             <div>
-              <p className="home-section-label">Siguiente acción</p>
-              <h3>{nextAction.title}</h3>
-              <p>{nextAction.detail}</p>
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                🎯 Siguiente Acción Prioritaria
+              </span>
+              <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100 mt-0.5">
+                {nextAction.title}
+              </h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                {nextAction.detail}
+              </p>
             </div>
             <Button
-              className="home-next-action__button"
+              className="home-next-action__button bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow-sm"
               onClick={nextAction.onClick}
             >
               {nextAction.label}
             </Button>
           </div>
-          <div className="home-next-list">
+
+          <div className="home-next-list space-y-2">
             {actionableOrders.length ? (
               actionableOrders.map((order) => (
                 <button
                   key={order.id}
                   type="button"
-                  className="home-next-row"
+                  className="home-next-row w-full flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/80 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all text-left"
                   onClick={() => onOpenTab(order.paymentState === "pending" ? "pagos" : "pedidos")}
                 >
-                  <span>
-                    <strong>{order.folio}</strong>
-                    <small>{order.customer}</small>
+                  <span className="flex flex-col min-w-0 pr-2">
+                    <strong className="text-sm font-black text-zinc-900 dark:text-zinc-100">
+                      {order.folio} · <span className="font-bold text-zinc-700 dark:text-zinc-300">{order.customer}</span>
+                    </strong>
+                    <small className="text-xs text-zinc-400 truncate">
+                      {order.items.map((i) => `${i.qty}x ${i.name}`).join(", ")}
+                    </small>
                   </span>
-                  <span>
-                    <small>{getPaymentStatusLabel(order.paymentState)}</small>
-                    <strong>{formatCurrency(order.total)}</strong>
+                  <span className="flex flex-col items-end shrink-0">
+                    <small className="text-[11px] font-extrabold text-amber-500">
+                      {getPaymentStatusLabel(order.paymentState)}
+                    </small>
+                    <strong className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                      {formatCurrency(order.total)}
+                    </strong>
                   </span>
                 </button>
               ))
             ) : (
-              <p className="home-empty-line">
-                Sin pedidos abiertos por resolver.
+              <p className="home-empty-line text-xs text-zinc-400 text-center py-3 bg-zinc-50 dark:bg-zinc-800/40 rounded-xl">
+                Sin pedidos abiertos por resolver. Todo al día.
               </p>
             )}
           </div>
         </Card>
       </div>
 
-      <Card className="home-production-strip">
-        <div>
-          <p className="home-section-label">Mini Resumen K</p>
-          <h3>Producción</h3>
+      <Card className="home-production-strip p-4 sm:p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="min-w-0">
+          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            👨‍🍳 Mini Resumen K
+          </span>
+          <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100 mt-0.5">
+            Ingredientes y Producción
+          </h3>
+          {kitchenSummary ? (
+            <div className="home-production-grid flex flex-wrap items-center gap-3 mt-2 text-xs text-zinc-600 dark:text-zinc-300">
+              <span className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+                Burgers: <strong className="text-zinc-900 dark:text-zinc-100">{kitchenSummary.totals.burgers}</strong>
+              </span>
+              <span className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+                Guarniciones: <strong className="text-zinc-900 dark:text-zinc-100">{kitchenSummary.totals.garnishes}</strong>
+              </span>
+              <span className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+                Ingredientes: <strong className="text-zinc-900 dark:text-zinc-100">{kitchenSummary.totals.ingredients}</strong>
+              </span>
+            </div>
+          ) : (
+            <p className="text-xs text-zinc-500 mt-1">
+              {todayLoading ? "Cargando resumen..." : "Sin Resumen K disponible."}
+            </p>
+          )}
         </div>
-        {kitchenSummary ? (
-          <div className="home-production-grid">
-            <span>Burgers <strong>{kitchenSummary.totals.burgers}</strong></span>
-            <span>Guarniciones <strong>{kitchenSummary.totals.garnishes}</strong></span>
-            <span>Ingredientes <strong>{kitchenSummary.totals.ingredients}</strong></span>
-            <span>
-              Costo{" "}
-              <strong>
-                {kitchenSummary.totals.estimatedCostCents === null
-                  ? "-"
-                  : formatCurrency(kitchenSummary.totals.estimatedCostCents / 100)}
-              </strong>
-            </span>
-          </div>
-        ) : (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            {todayLoading ? "Cargando resumen..." : "Sin Resumen K disponible."}
-          </p>
-        )}
         <Button
-          className="home-production-button"
+          className="home-production-button bg-zinc-100 dark:bg-zinc-800 hover:bg-emerald-500/10 text-zinc-800 dark:text-zinc-200 hover:text-emerald-600 dark:hover:text-emerald-400 border border-zinc-200 dark:border-zinc-700 font-extrabold text-xs px-4 py-2 rounded-xl transition-all shrink-0"
           onClick={() => onOpenTab("cocina")}
         >
-          Abrir Cocina
+          Abrir Cocina Completa →
         </Button>
       </Card>
     </section>
@@ -2828,15 +2852,42 @@ const CompactRow = ({
           </div>
         ) : null}
 
-        <div className="orders-card__actions">
+        <div className="orders-card__actions flex items-center gap-2">
+          {order.status === "new" ? (
+            <Button
+              className="orders-primary-action flex-1 bg-lime-500 hover:bg-lime-400 text-lime-950 font-black text-xs py-2 px-3 rounded-xl shadow-sm"
+              onClick={() => void onMove(order.id, "preparing", "Iniciando preparación")}
+              disabled={busy}
+            >
+              {busy ? "Actualizando…" : "Preparar ➔"}
+            </Button>
+          ) : order.status === "preparing" ? (
+            <Button
+              className="orders-primary-action flex-1 bg-amber-500 hover:bg-amber-400 text-amber-950 font-black text-xs py-2 px-3 rounded-xl shadow-sm"
+              onClick={() => void onMove(order.id, "ready", "Marcando pedido listo")}
+              disabled={busy}
+            >
+              {busy ? "Actualizando…" : "Marcar Listo ✔"}
+            </Button>
+          ) : order.status === "ready" ? (
+            <Button
+              className="orders-primary-action flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs py-2 px-3 rounded-xl shadow-sm"
+              onClick={() => void onMove(order.id, "delivered", "Entrega completada")}
+              disabled={busy}
+            >
+              {busy ? "Actualizando…" : "Entregar 🚀"}
+            </Button>
+          ) : null}
+
           <Button
-            className="orders-primary-action"
+            className={`${order.status === "delivered" || order.status === "cancelled" ? "orders-primary-action flex-1" : "orders-secondary-action"} text-xs py-2 px-3 rounded-xl font-bold`}
             onClick={onOpen}
           >
-            Ver ticket ({itemCount} {itemCount === 1 ? "item" : "items"})
+            {order.status === "delivered" || order.status === "cancelled" ? `Ver ticket (${itemCount})` : "Ticket"}
           </Button>
-          <details className="orders-card__more">
-            <summary>Más acciones</summary>
+
+          <details className="orders-card__more shrink-0">
+            <summary className="text-xs font-bold px-2.5 py-1.5 cursor-pointer">Más</summary>
             <div className="orders-card__secondary-actions space-y-2 pt-2">
               <CollapsibleCustomerNote note={details.cleanNotes} />
               {canDeliver ? (

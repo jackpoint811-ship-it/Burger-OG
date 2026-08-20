@@ -67,10 +67,11 @@ const orderEnvironmentLabel: Record<OrderV2Environment, string> = {
 const kitchenViews: Array<{
   key: KitchenView;
   label: string;
+  emoji: string;
 }> = [
-  { key: "preparacion", label: "Preparación" },
-  { key: "sideQuest", label: "Side Quest" },
-  { key: "summaryK", label: "Resumen K" },
+  { key: "preparacion", label: "Preparación", emoji: "🍔" },
+  { key: "sideQuest", label: "Side Quest", emoji: "🍟" },
+  { key: "summaryK", label: "Resumen K", emoji: "📋" },
 ];
 
 const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
@@ -893,20 +894,38 @@ export const KitchenQueue = ({
           selectedDate={selectedDate}
           onSelectDate={setSelectedDate}
         />
-        <div className="kitchen-view-tabs" role="tablist">
-          {kitchenViews.map((option) => (
-            <button
-              key={option.key}
-              type="button"
-              role="tab"
-              aria-selected={view === option.key}
-              aria-pressed={view === option.key}
-              className={`kitchen-view-tab ${view === option.key ? "kitchen-view-tab--active" : ""}`}
-              onClick={() => setView(option.key)}
-            >
-              <span>{option.label}</span>
-            </button>
-          ))}
+        <div className="kitchen-view-tabs grid grid-cols-3 gap-1.5 mt-3" role="tablist">
+          {kitchenViews.map((option) => {
+            const pendingCount =
+              option.key === "preparacion"
+                ? prepItems.filter((i) => !i.done).length
+                : option.key === "sideQuest"
+                  ? sideQuestProductionItems.filter((i) => !i.done).length
+                  : null;
+            return (
+              <button
+                key={option.key}
+                type="button"
+                role="tab"
+                aria-selected={view === option.key}
+                aria-pressed={view === option.key}
+                className={`kitchen-view-tab flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl border transition-all ${
+                  view === option.key
+                    ? "kitchen-view-tab--active border-lime-400 bg-lime-400/15 text-lime-900 dark:text-lime-200 shadow-sm"
+                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700"
+                }`}
+                onClick={() => setView(option.key)}
+              >
+                <span className="text-sm">{option.emoji}</span>
+                <span className="text-xs font-black uppercase tracking-wider">{option.label}</span>
+                {pendingCount !== null && pendingCount > 0 ? (
+                  <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-lime-400 text-lime-950">
+                    {pendingCount}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
         </div>
       </div>
 

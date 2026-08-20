@@ -66,3 +66,9 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
   - **Tarjetas y Botón Quick Add**: Conteo de ítems acumulados en el botón de adición rápida `+` cuando `cartQty > 0`.
   - **Pie de Página (Footer)**: Añadido pie de página oficial ("Burgers.exe — Hecho con ❤️ para ti") con accesos directos a Tickets y WhatsApp.
   - **Verificación**: `npm run typecheck` y `npm run build:public` validados en verde (exit code 0).
+- **Unificación Operativa y Refinamiento Mobile-First Chekeo V3**:
+  - **Dashboard de Operación (`HomePanel`)**: Reincorporado semáforo de turno en vivo (`🍔 Cocina activa`, `💳 Pagos pendientes`, `📦 Pedidos activos`, `💰 Venta de hoy`), tarjeta de acción prioritaria inteligente y mini Resumen K.
+  - **Acciones Rápidas en Pedidos (`CompactRow`)**: Botones directos con 1 toque en móvil para cambiar de estado (`Preparar ➔`, `Marcar Listo ✔`, `Entregar 🚀`) sin requerir abrir menús secundarios.
+  - **KDS & Cocina (`KitchenQueue`)**: Sub-tabs superiores `[🍔 Preparación | 🍟 Side Quest | 📋 Resumen K]` con emojis, badges de conteo en tiempo real y targets táctiles de 44px.
+  - **Reactividad en Herramientas Admin (`StoreBannersTool`)**: Sincronización inmediata al hacer clic en Favoritos (Banners, Horarios, Estado de Tienda).
+

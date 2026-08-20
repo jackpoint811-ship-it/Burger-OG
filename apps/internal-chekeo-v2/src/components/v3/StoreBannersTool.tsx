@@ -177,6 +177,10 @@ export function StoreBannersTool({ initialSubView = 'grid', onBackToLauncher }: 
   }, []);
 
   useEffect(() => {
+    setSubMenuView(initialSubView);
+  }, [initialSubView]);
+
+  useEffect(() => {
     loadBanners();
     loadSchedules();
     loadConfigAndRaffles();
