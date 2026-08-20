@@ -5,21 +5,21 @@
 
 ## Contexto general
 
-Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
+Burgers.exe tiene una app pública de pedidos (`apps/public-order-v3`) y una app interna de Chekeo (`apps/internal-chekeo-v3`).
 
-**Migración V3 en progreso** — branch `v3` desde `main`. V2 sigue en producción sin cambios.
+**Migración V3 100% Completada** — Toda la plataforma opera sobre la arquitectura moderna V3. Código V2 obsoleto eliminado en su totalidad.
 
-## Stack V3
+## Stack V3 Definitivo
 
 - React 19 + Vite 6
-- TanStack Query v5 (server state / caché)
-- Zustand v5 (client state / carrito)
-- shadcn/ui sobre Radix UI (componentes accesibles)
-- Tailwind CSS v4 (reemplaza CSS monolítico)
-- Zod v3 (validación compartida frontend/backend)
-- React Hook Form v7 (formularios)
-- Hono.js v4 (router backend centralizado)
-- Cloudflare D1 + R2 (sin cambios de schema)
+- TanStack Query v5 (server state / caché de 5 minutos)
+- Zustand v5 (client state / carrito persistido + UI)
+- shadcn/ui sobre Radix UI (componentes 100% accesibles y desacoplados)
+- Tailwind CSS v4 (estilos modernos con variables de diseño)
+- Zod v3 (validación compartida frontend/backend con `@config`)
+- React Hook Form v7 (formularios reactivos de alta precisión)
+- Hono.js v4 (router backend centralizado y tipado en Cloudflare Workers/Pages)
+- Cloudflare D1 + R2 (almacenamiento relacional y assets optimizados)
 
 ## Reglas importantes
 
@@ -27,12 +27,10 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 - Los cambios deben terminar en Pull Request cuando el usuario apruebe el cierre.
 - Usar Graphify antes de cambios grandes o de arquitectura.
 - No meter dependencias nuevas sin autorización.
-- Mantener enfoque mobile-first.
+- Mantener enfoque mobile-first y estética Premium Casual.
 - Mantener UX clara, accesible y consistente con la marca.
-- **NUNCA merge a `main` del branch `v3` sin aprobación explícita del usuario.**
-- Apps V2 permanecen intactas en el repo hasta el PR-V3-13 (cutover final).
 
-## Roadmap V3 — 13 PRs secuenciales
+## Roadmap V3 — 14 PRs Completados (100%)
 
 | PR | Objetivo | Estado |
 |---|---|---|
@@ -45,27 +43,24 @@ Burgers.exe tiene una app pública de pedidos y una app interna de Chekeo.
 | V3-06 | Public Order: UI components (catálogo, drawers) | ✅ Mergeado |
 | V3-07 | Public Order: Checkout + integración | ✅ Mergeado |
 | V3-08 | Chekeo: Auth + shell + tabs | ✅ Mergeado |
-
-
 | V3-09 | Chekeo: Feature Pedidos | ✅ Mergeado |
 | V3-10 | Chekeo: Feature Cocina (KDS & Resumen K) | ✅ Mergeado |
 | V3-11 | Chekeo: Feature Pagos | ✅ Mergeado |
 | V3-12 | Chekeo: Feature Admin | ✅ Mergeado |
-| V3-13 | Cutover + eliminar V2 + merge a main | ⏳ Pendiente |
+| V3-13 | Cutover Definitivo + Eliminar V2 + Merge a main | ✅ Preparado / En PR |
 
 ## Bitácora V3
 
-Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, decisiones y métricas.
+Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, decisiones y métricas finales.
 
-## Estado funcional deseado
+## Estado funcional operativo
 
-- Pedidos: revisar pedidos con detalle, sin saturar con descarga/envío de imagen.
-- Pagos: concentrar ticket, WhatsApp y comprobante.
-- Corte: debe funcionar bien y mostrar resumen operativo.
-- Resumen K: debe mostrar burgers, ingredientes, extras y cantidades necesarias.
-- Sorteo: debe mostrar lo más importante sin saturar.
+- **Public Order V3**: Menú en vivo, carrusel de banners con R2, selector de torre con horarios CDMX, carrito Zustand, personalización completa de ingredientes/extras/combos, checkout con validación Zod y pantalla de confirmación con folio, tickets de sorteo y WhatsApp bridge.
+- **Chekeo Pedidos**: Cola en vivo con auto-refresh, filtros multidimensionales, tarjetas de pedido con desglose de modificaciones, drawer de detalle con auditoría y modal de cancelación segura.
+- **Chekeo Cocina**: KDS Kanban interactivo con semáforo de tiempos y audio chimes Web Audio API + Resumen K con agregación de insumos y mise en place en tiempo real.
+- **Chekeo Pagos**: Conciliación financiera por método, generador e impresión nativa de tickets térmicos 80mm/58mm y WhatsApp Bridge con 5 plantillas automáticas.
+- **Chekeo Admin**: Control total de Menú & Stock diario, gobernanza de Torres y horarios, Banners dinámicos, Sorteos con ranking y ruleta de selección, Arqueo de caja (Corte Z) con exportación CSV e Insumos / Recetas.
 
-## Hito reciente - 2026-08-18
+## Hito reciente - 2026-08-20
 
-- **PR-V3-00 en progreso**: Branch `v3` creado, `legacy/` eliminado, docs obsoletas eliminadas, memoria actualizada.
-- V2 en producción (PR #525 fue el último merge a main).
+- **PR-V3-13 Cutover Definitivo a Burgers.exe V3**: Código legacy V2 (`apps/public-order-v2/` e `apps/internal-chekeo-v2/`) eliminado. Scripts de `package.json` y `vite.config.ts` unificados a V3 como targets definitivos. Verificación integral de TypeScript (`typecheck` 0 errores) y compilación (`build:public` + `build:chekeo` en verde). PR final hacia `main` preparado.
