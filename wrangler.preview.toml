@@ -1,0 +1,16 @@
+name = "burgers-exe-public-v3"
+compatibility_date = "2026-05-27"
+main = "functions/api/[[route]].ts"
+
+[[d1_databases]]
+binding = "BOG_MENU_DB"
+database_name = "burgers-exe-menu-v2-preview"
+database_id = "c723f0c7-18ba-4fbe-8d7a-acb5f017af99"
+
+[[r2_buckets]]
+binding = "BOG_MENU_ASSETS"
+bucket_name = "burgers-exe-assets-v2-preview"
+
+[vars]
+ENVIRONMENT = "preview"
+ORDERS_V2_WRITE_ENABLED = "true"
