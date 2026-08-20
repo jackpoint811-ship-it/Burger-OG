@@ -3,9 +3,9 @@
 
 # 📋 Bitácora V3 — Burgers.exe
 
-> **Estado**: 🟡 En progreso (PR-V3-12 Implementado)
+> **Estado**: 🟡 En progreso (PR-V3-12 Mergeado)
 > **Inicio**: 2026-08-18
-> **Última actualización**: 2026-08-19
+> **Última actualización**: 2026-08-20
 
 ---
 
@@ -65,7 +65,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-09 | Chekeo: Feature Pedidos | ✅ Mergeado | [#540](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/540) | 2026-08-19 | 2026-08-19 |
 | V3-10 | Chekeo: Feature Cocina (KDS & Resumen K) | ✅ Mergeado | [#541](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/541) | 2026-08-19 | 2026-08-19 |
 | V3-11 | Chekeo: Feature Pagos | ✅ Mergeado | [#542](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/542) | 2026-08-19 | 2026-08-19 |
-| V3-12 | Chekeo: Feature Admin completo | 🔄 En PR | — | 2026-08-19 | — |
+| V3-12 | Chekeo: Feature Admin completo | ✅ Mergeado | [#543](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/543) | 2026-08-19 | 2026-08-19 |
 | V3-13 | Cutover + Eliminar V2 + Merge a main | ⏳ Pendiente | — | — | — |
 
 **Leyenda**: ⏳ Pendiente · 🔄 En progreso · ✅ Mergeado · ❌ Bloqueado · ⏸️ Pausado
