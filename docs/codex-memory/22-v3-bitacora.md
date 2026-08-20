@@ -3,16 +3,16 @@
 
 # 📋 Bitácora V3 — Burgers.exe
 
-> **Estado**: 🟢 100% Migración V3 Completada (14/14 PRs completados) · 🔄 Auditoría Post-Migración & Compliance en Curso (Milestone 1 ✅ · Milestone 2 🔄)
+> **Estado**: 🟢 100% Migración V3 + Despliegue en Cloudflare Pages Completado y Verificado en Vivo (PRs #530–#547)
 > **Inicio**: 2026-08-18
 > **Cierre Migración Base**: 2026-08-20
-> **Auditoría Post-Migración**: 2026-08-20
+> **Auditoría Post-Migración & Despliegue**: 2026-08-20
 
 ---
 
 ## 🎯 Objetivo
 
-Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack moderno, arquitectura limpia y repo sin legacy, seguida de una auditoría exhaustiva de compliance post-migración, hardening y sincronización de memoria operativa.
+Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack moderno, arquitectura limpia y repo sin legacy, seguida de una auditoría exhaustiva de compliance post-migración, hardening de seguridad, pipelines CI/CD automatizados y despliegue en vivo verificado en Cloudflare Pages.
 
 ---
 
@@ -68,18 +68,22 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | V3-10 | Chekeo: Feature Cocina (KDS & Resumen K) | ✅ Mergeado | [#541](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/541) | 2026-08-19 | 2026-08-19 |
 | V3-11 | Chekeo: Feature Pagos | ✅ Mergeado | [#542](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/542) | 2026-08-19 | 2026-08-19 |
 | V3-12 | Chekeo: Feature Admin completo | ✅ Mergeado | [#543](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/543) | 2026-08-19 | 2026-08-19 |
-| V3-13 | Cutover Definitivo + Eliminar V2 | ✅ Integrado en v3 | Commit `022796a` | 2026-08-20 | 2026-08-20 |
+| V3-13 | Cutover Definitivo + Eliminar V2 | ✅ Integrado en v3 | [#544](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/544) | 2026-08-20 | 2026-08-20 |
+| V3-Audit | Auditoría Post-Migración Compliance & Hardening | ✅ Mergeado | [#545](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/545) | 2026-08-20 | 2026-08-20 |
+| V3-Deploy | Proyectos Cloudflare Pages V3 + Pipelines CI/CD | ✅ Mergeado | [#546](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/546) | 2026-08-20 | 2026-08-20 |
+| V3-FixAssets | Fix Extracción de Path en Assets Router (/api) | ✅ Mergeado | [#547](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/547) | 2026-08-20 | 2026-08-20 |
 
 ---
 
-## 🛡️ Roadmap de Auditoría Post-Migración & Compliance V3
+## 🛡️ Roadmap de Auditoría Post-Migración & Despliegue V3 (100% Completado)
 
-| Milestone | Nombre | Alcance | Estado | Dependencias |
+| Milestone | Nombre | Alcance | Estado | PR / Entrega |
 |---|---|---|:---:|---|
-| **M1** | Tooling & Test Configurations Alignment | Actualizar configs de Playwright (`playwright.e2e.config.ts`, `playwright.internal-kitchen.config.ts`), `.gitignore` y limpiar artefactos raíz | ✅ Completado | Ninguna |
-| **M2** | Documentation & Codex Memory Synchronization | Alinear `README.md`, `AGENTS.md` y sincronizar notas de `docs/codex-memory/` (00, 02, 09, 22-v3) | 🔄 En Progreso | M1 |
-| **M3** | Code Consistency & Workspace Hardening | Verificar reachability 100% de apps/packages/functions, auditar `auth.api.ts` y tipos | ⏳ Planificado | M1 |
-| **M4** | Final E2E Test Pass & Audit Verification | Ejecución integral de typechecks, builds, tests Playwright y auditorías forenses/adversariales | ⏳ Planificado | M1, M2, M3 |
+| **M1** | Tooling & Test Configurations Alignment | Playwright configs, `.gitignore`, tests E2E y limpieza raíz | ✅ Completado | [#545](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/545) |
+| **M2** | Documentation & Codex Memory Synchronization | Sincronización de `docs/codex-memory/`, `README.md` y `AGENTS.md` | ✅ Completado | [#545](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/545) |
+| **M3** | Security Fix & Auth API Hardening | Eliminación de bypass de autenticación y fallbacks inseguros en `auth.api.ts` | ✅ Completado | [#545](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/545) |
+| **M4** | Cloudflare Pages V3 & CI/CD Pipelines | Creación de proyectos `burgers-exe-public-v3`, `burgers-exe-internal-v3` y GitHub Actions | ✅ Completado | [#546](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/546) |
+| **M5** | Live Asset Routing & Live Verification | Corrección de ruta de assets en Hono y verificación integral con Chromium headless | ✅ Completado | [#547](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/547) |
 
 **Leyenda**: ⏳ Pendiente · 🔄 En progreso · ✅ Completado / Mergeado · ❌ Bloqueado · ⏸️ Pausado
 
@@ -181,10 +185,10 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Verificaciones integrales en verde**:
   - `typecheck` ✅ (0 errores), `build` ✅ (`build:public` + `build:chekeo` en verde), `git diff --check` ✅.
 
-### 📅 2026-08-20 — Sesión 14: Auditoría Post-Migración V3 — Milestones 1 & 2
+### 📅 2026-08-20 — Sesión 14: Auditoría Post-Migración V3 — PR #545 (Mergeado)
 - **Milestone 1 (Tooling & Configs)**:
   - Playwright configs (`playwright.e2e.config.ts`, `playwright.internal-kitchen.config.ts`) actualizados a `dist/public-order-v3` y `dist/internal-chekeo-v3` con comando `preview:chekeo`.
-  - `.gitignore` actualizado con exclusiones para `.graphifyignore` y `.vscode/`.
+  - `.gitignore` actualizado con exclusiones para `.graphifyignore`, `.vscode/` y `__pycache__`.
   - Limpieza de artefactos residuales en la raíz del repositorio.
 - **Milestone 2 (Documentación & Memoria Codex)**:
   - `README.md`: Actualizado con la arquitectura canonical V3, stack tecnológico y guía de ejecución.
@@ -192,7 +196,32 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `docs/codex-memory/00-indice.md`: Reestructurado con separación nítida entre Notas Activas V3 y Archivo Histórico V2.
   - `docs/codex-memory/02-reglas-del-proyecto.md`: Actualizado con arquitectura oficial V3 y estética Premium Casual.
   - `docs/codex-memory/09-checklists.md`: Eliminadas referencias a estética cyberpunk legacy; alineado a Premium Casual y rutas V3.
-  - `docs/codex-memory/22-v3-bitacora.md`: Actualizado con el roadmap y avances de la auditoría post-migración.
+- **Milestone 3 (Security Fix en `auth.api.ts`)**:
+  - Eliminado bypass de autenticación por `localStorage` en `fetchAuthStatus()`.
+  - `loginWithPin()` ahora propaga excepciones del servidor `ApiError` sin permitir PINs fallback en producción.
+  - Fallbacks de desarrollo offline estrictamente protegidos con `import.meta.env.DEV`.
+
+### 📅 2026-08-20 — Sesión 15: Infraestructura Cloudflare Pages V3 & CI/CD — PR #546 (Mergeado)
+- Creados proyectos independientes en Cloudflare Pages:
+  - `burgers-exe-public-v3.pages.dev` (Public Order V3)
+  - `burgers-exe-internal-v3.pages.dev` (Internal Chekeo V3)
+- Implementados pipelines de GitHub Actions automatizados:
+  - `.github/workflows/deploy-public-v3.yml`: `typecheck` + `build:public` + deploy a `burgers-exe-public-v3`.
+  - `.github/workflows/deploy-chekeo-v3.yml`: `typecheck` + `build:chekeo` + deploy a `burgers-exe-internal-v3`.
+- `wrangler.preview.toml` y `wrangler.production.toml` configurados con IDs reales de base de datos Cloudflare D1 (`c723f0c7` / `2974d36e`) y buckets R2.
+
+### 📅 2026-08-20 — Sesión 16: Fix Extracción de Path en Assets Router — PR #547 (Mergeado)
+- Corrección de regex en `functions/api/_routes/assets.ts`: `c.req.path.replace(/^(?:\/api)?\/assets-v2\/?/, '')` para remover el prefijo global `/api` y solicitar las claves correctas (`menu/...`, `category-banners/...`) a Cloudflare R2 sin 404s.
+
+### 📅 2026-08-20 — Sesión 17: Auditoría y Verificación en Vivo con Chromium (100% Operativo)
+- **Public Order V3 (`https://burgers-exe-public-v3.pages.dev`)**:
+  - 0 errores de JavaScript / React 19.
+  - Catálogo D1 (`source: d1`) cargado con todos los productos, papas, extras, recetas y banners.
+  - Imágenes R2 respondiendo con HTTP 200 `image/webp`.
+- **Internal Chekeo V3 (`https://burgers-exe-internal-v3.pages.dev`)**:
+  - Autenticación con PIN `1234` (`BOG_INTERNAL_PIN`) 100% funcional.
+  - 0 errores de consola, 0 excepciones de red.
+  - Módulos operativos en vivo: Pedidos, Cocina KDS, Pagos y Admin.
 
 ---
 

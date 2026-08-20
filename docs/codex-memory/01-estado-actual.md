@@ -47,7 +47,16 @@ Burgers.exe tiene una app pública de pedidos (`apps/public-order-v3`) y una app
 | V3-10 | Chekeo: Feature Cocina (KDS & Resumen K) | ✅ Mergeado |
 | V3-11 | Chekeo: Feature Pagos | ✅ Mergeado |
 | V3-12 | Chekeo: Feature Admin | ✅ Mergeado |
-| V3-13 | Cutover Definitivo + Eliminar V2 + Merge a main | ✅ Preparado / En PR |
+| V3-13 | Cutover Definitivo + Eliminar V2 | ✅ Mergeado (#544) |
+| V3-Audit | Auditoría Post-Migración Compliance & Hardening | ✅ Mergeado (#545) |
+| V3-Deploy | Cloudflare Pages V3 + GitHub Actions CI/CD | ✅ Mergeado (#546) |
+| V3-FixAssets | Fix Asset Route Regex & R2 Image Routing | ✅ Mergeado (#547) |
+
+## Infraestructura y URLs Activas (Cloudflare Pages)
+
+- **Public Order V3**: `https://burgers-exe-public-v3.pages.dev` (Conectado a D1 `burgers-exe-menu-v2-preview` y R2 `burgers-exe-assets-v2-preview`).
+- **Internal Chekeo V3**: `https://burgers-exe-internal-v3.pages.dev` (Protegido por `BOG_INTERNAL_PIN`, con acceso a Pedidos, Cocina, Pagos y Admin).
+- **CI/CD Automatizado**: Pipelines en GitHub Actions (`deploy-public-v3.yml` y `deploy-chekeo-v3.yml`) con deploy en <45s por push a `v3`.
 
 ## Bitácora V3
 
@@ -55,12 +64,12 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
 
 ## Estado funcional operativo
 
-- **Public Order V3**: Menú en vivo, carrusel de banners con R2, selector de torre con horarios CDMX, carrito Zustand, personalización completa de ingredientes/extras/combos, checkout con validación Zod y pantalla de confirmación con folio, tickets de sorteo y WhatsApp bridge.
-- **Chekeo Pedidos**: Cola en vivo con auto-refresh, filtros multidimensionales, tarjetas de pedido con desglose de modificaciones, drawer de detalle con auditoría y modal de cancelación segura.
-- **Chekeo Cocina**: KDS Kanban interactivo con semáforo de tiempos y audio chimes Web Audio API + Resumen K con agregación de insumos y mise en place en tiempo real.
-- **Chekeo Pagos**: Conciliación financiera por método, generador e impresión nativa de tickets térmicos 80mm/58mm y WhatsApp Bridge con 5 plantillas automáticas.
-- **Chekeo Admin**: Control total de Menú & Stock diario, gobernanza de Torres y horarios, Banners dinámicos, Sorteos con ranking y ruleta de selección, Arqueo de caja (Corte Z) con exportación CSV e Insumos / Recetas.
+- **Public Order V3**: Menú en vivo (D1), catálogo de productos, personalización de ingredientes/extras, carrito Zustand, checkout validado por Zod y confirmación de pedido con folio.
+- **Chekeo Pedidos**: Cola en vivo, filtros, tarjetas con modificaciones, drawer de detalle y cancelación segura.
+- **Chekeo Cocina**: KDS Kanban 3 columnas, semáforo de tiempos, alertas de audio Web Audio API y Resumen K (mise en place).
+- **Chekeo Pagos**: Conciliación de pagos, generador de tickets 80mm/58mm y WhatsApp Bridge con 5 plantillas automáticas.
+- **Chekeo Admin**: Gestión de Menú & Stock diario, Torres y horarios, Banners dinámicos, Sorteos y Arqueo de caja (Corte Z).
 
 ## Hito reciente - 2026-08-20
 
-- **PR-V3-13 Cutover Definitivo a Burgers.exe V3**: Código legacy V2 (`apps/public-order-v2/` e `apps/internal-chekeo-v2/`) eliminado. Scripts de `package.json` y `vite.config.ts` unificados a V3 como targets definitivos. Verificación integral de TypeScript (`typecheck` 0 errores) y compilación (`build:public` + `build:chekeo` en verde). PR final hacia `main` preparado.
+- **Despliegue y Validación en Vivo V3 (PRs #545, #546, #547)**: Plataforma completamente desplegada en Cloudflare Pages con pipelines de CI/CD. Auditoría automatizada con Chromium headless validó 0 errores de consola, login operativo con PIN `1234` y carga completa de catálogo y assets R2 en vivo.
