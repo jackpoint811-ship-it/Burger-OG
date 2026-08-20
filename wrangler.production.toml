@@ -1,11 +1,11 @@
-name = "burgers-exe-v3-production"
+name = "burgers-exe-public-v3"
 compatibility_date = "2026-05-27"
 main = "functions/api/[[route]].ts"
 
 [[d1_databases]]
 binding = "BOG_MENU_DB"
-database_name = "burgers-exe-menu-v2"
-database_id = "REPLACE_WITH_PRODUCTION_D1_DATABASE_ID"
+database_name = "burgers-exe-menu-v2-production"
+database_id = "2974d36e-9005-4bb3-bb39-b949507bbdc4"
 
 [[r2_buckets]]
 binding = "BOG_MENU_ASSETS"
