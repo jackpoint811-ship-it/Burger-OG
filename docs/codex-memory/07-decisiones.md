@@ -187,3 +187,29 @@ Permitir a los operadores de plancha y freidora preparar pedidos con máxima vel
 - Cero errores en burgers con modificaciones especiales.
 - Visibilidad inmediata del flujo de pedidos y tiempos de preparación.
 - Sin dependencias externas de audio ni assets pesados.
+
+### Fecha
+
+2026-08-20
+
+### Decisión
+
+**Despliegue Independiente V3 en Cloudflare Pages y Pipelines CI/CD Automatizados (PRs #546 y #547)**:
+
+1. **Proyectos Dedicados en Cloudflare Pages**:
+   - `burgers-exe-public-v3`: Public Order V3 mobile-first con soporte directo para catálogo D1 y assets R2.
+   - `burgers-exe-internal-v3`: Internal Chekeo V3 protegido con autenticación de PIN segura por variable de entorno `BOG_INTERNAL_PIN`.
+2. **Pipelines de CI/CD vía GitHub Actions**:
+   - `.github/workflows/deploy-public-v3.yml` y `.github/workflows/deploy-chekeo-v3.yml` compilan con Vite y despliegan a Cloudflare Pages automáticamente en cada push o PR a `v3`.
+3. **Extracción Canónica de Claves R2 en Router Hono**:
+   - En `functions/api/_routes/assets.ts`, la extracción de clave de asset utiliza `c.req.path.replace(/^(?:\/api)?\/assets-v2\/?/, '')` para aislar correctamente la clave del objeto R2 (`menu/...`, `category-banners/...`) sin contaminar con el prefijo global `/api` de la aplicación.
+
+### Motivo
+
+Garantizar un ciclo de despliegue continuo, desacoplado, sin fricción manual y completamente compatible con el routing de Cloudflare Pages y la jerarquía de Hono.js.
+
+### Impacto
+
+- Ambas aplicaciones se despliegan en menos de 45 segundos ante cualquier push a `v3`.
+- Catálogo e imágenes de R2 cargan con HTTP 200 sin 404s ni fallbacks degradados.
+- Chekeo V3 mantiene autenticación robusta y segura contra el backend.
