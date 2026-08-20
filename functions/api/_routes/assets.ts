@@ -7,7 +7,7 @@ export const assetsRouter = new Hono<AppEnv>();
 const notFound = () => new Response('Not found', { status: 404, headers: { 'cache-control': 'no-store' } });
 
 assetsRouter.get('/*', async (c) => {
-  const rawPath = c.req.path.replace(/^\/assets-v2\/?/, '');
+  const rawPath = c.req.path.replace(/^(?:\/api)?\/assets-v2\/?/, '');
   const key = normalizeAssetKey(rawPath);
   if (!key || !c.env.BOG_MENU_ASSETS) return notFound();
 
