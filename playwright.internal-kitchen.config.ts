@@ -23,7 +23,7 @@ export default defineConfig({
     : {
         webServer: {
           command:
-            "npm run preview:internal -- --host 127.0.0.1 --port 4174 --strictPort",
+            "npm run preview:chekeo -- --host 127.0.0.1 --port 4174 --strictPort",
           url: defaultPreviewUrl,
           reuseExistingServer: !process.env.CI,
           timeout: 120_000,

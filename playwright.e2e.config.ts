@@ -16,13 +16,13 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "npx wrangler pages dev dist/public-order-v2 --port 4173 --compatibility-date=2026-05-03 --d1 BOG_MENU_DB",
+      command: "npx wrangler pages dev dist/public-order-v3 --port 4173 --compatibility-date=2026-05-27 --d1 BOG_MENU_DB",
       url: "http://127.0.0.1:4173/",
       reuseExistingServer: true,
       timeout: 120_000,
     },
     {
-      command: "npx wrangler pages dev dist/internal-chekeo-v2 --port 4174 --compatibility-date=2026-05-03 --d1 BOG_MENU_DB",
+      command: "npx wrangler pages dev dist/internal-chekeo-v3 --port 4174 --compatibility-date=2026-05-27 --d1 BOG_MENU_DB",
       url: "http://127.0.0.1:4174/",
       reuseExistingServer: true,
       timeout: 120_000,

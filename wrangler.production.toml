@@ -1,6 +1,6 @@
-name = "burgers-exe-v2-production"
+name = "burgers-exe-v3-production"
 compatibility_date = "2026-05-27"
-main = "functions/api/index.ts"
+main = "functions/api/[[route]].ts"
 
 [[d1_databases]]
 binding = "BOG_MENU_DB"
