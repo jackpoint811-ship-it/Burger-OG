@@ -136,14 +136,6 @@ export function useKitchenDisplay(options: UseKitchenDisplayOptions = {}) {
     });
   }, []);
 
-  // Tick de temporizador cada 10 segundos para refrescar colores y tiempos transcurridos
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTick((t) => (t + 1) % 1000000);
-    }, 10000);
-    return () => clearInterval(timer);
-  }, []);
 
   // Consulta de pedidos activos
   const {

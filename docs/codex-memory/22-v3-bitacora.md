@@ -194,6 +194,20 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `docs/codex-memory/09-checklists.md`: Eliminadas referencias a estética cyberpunk legacy; alineado a Premium Casual y rutas V3.
   - `docs/codex-memory/22-v3-bitacora.md`: Actualizado con el roadmap y avances de la auditoría post-migración.
 
+### 📅 2026-08-20 — Sesión 15: Alineación Operativa Chekeo V3 (Cero Relojes + Estaciones + Calendario)
+- **Restitución del Riel Horizontal de Fechas**:
+  - Creado `HorizontalDateCalendarFilter.tsx` en `apps/internal-chekeo-v3/src/components/shared/` con soporte CDMX, 14 días consecutivos, botón `⏱️ Anteriores`, tarjeta `🟢 HOY` y badges en tiempo real de comandas pendientes.
+  - Integrado reactivamente en `PedidosView.tsx` y `CocinaView.tsx`.
+  - Depurado `OrdersFilterBar.tsx` eliminando selector obsoleto `dateHorizon`.
+- **Rediseño Operativo de Cocina (Cero Relojes de Presión)**:
+  - Eliminados cronómetros de minutos y semáforos de estrés de `kitchen.types.ts`, `KitchenTicketCard.tsx` y `KitchenDisplay.tsx`.
+  - Organizada la Cocina en 3 estaciones reales: `🍔 Preparación (Plancha)`, `🍟 Side Quest (Freidora & Empaque)` y `📋 Resumen K (Mise en Place)`.
+  - Soporte de modificadores en alto contraste (`🔴 SIN ...`, `🟢 +EXTRA ...`), resumen de comanda con emojis (`buildKitchenOrderQueueSummary`) y chimes Web Audio API.
+- **Verificaciones**:
+  - `typecheck` ✅ (0 errores).
+  - `build:chekeo` y `build:public` ✅ (100% en verde).
+  - Memoria Codex sincronizada en `07-decisiones.md`, `03-flujos-chekeo.md` y `22-v3-bitacora.md`.
+
 ---
 
 ## 📌 Issues Abiertos

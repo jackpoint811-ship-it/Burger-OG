@@ -1,8 +1,12 @@
 /**
- * kitchen.types.ts — PR-V3-10
+ * kitchen.types.ts — PR-V3-10 / Refinamiento Operativo V3
  *
  * Tipos de datos, estructuras de comandas KDS, extractores de recetas
  * y agregadores de insumos para la Cocina de Chekeo V3.
+ *
+ * NOTA OPERATIVA:
+ * Se eliminan deliberadamente cronómetros de presión y semáforos de minutos
+ * para respetar el modelo de producción por lotes y entregas programadas por torre.
  */
 
 import type {
@@ -10,17 +14,15 @@ import type {
   OrderV2Item,
   OrderV2Status,
   OrderV2Mode,
-  OrderV2Environment,
-  OrderV2DeliveryInfo,
 } from '@config/index';
 
-// ─── Estados y Estaciones KDS ──────────────────────────────────────────────────
+// ─── Estaciones y Carriles de Cocina ──────────────────────────────────────────
 
-export type KitchenKanbanStage = 'new' | 'preparing' | 'ready';
+export type KitchenLane = 'prep' | 'sideQuest' | 'summaryK';
 
 export type KitchenStation = 'all' | 'grill' | 'fryer';
 
-export type KitchenAlertTone = 'normal' | 'warning' | 'urgent';
+export type KitchenKanbanStage = 'new' | 'preparing' | 'ready';
 
 export interface KitchenTicketItem {
   id: string;
@@ -51,16 +53,17 @@ export interface KitchenTicket {
   status: OrderV2Status;
   createdAtIso: string;
   createdAtMs: number;
-  elapsedMinutes: number;
-  alertTone: KitchenAlertTone;
+  scheduledDate?: string;
+  isScheduled?: boolean;
   orderNote?: string;
   items: KitchenTicketItem[];
   totalBurgersCount: number;
   totalGarnishesCount: number;
+  totalDrinksCount: number;
   totalExtrasCount: number;
 }
 
-// ─── Resumen K / Agregadores de Insumos ────────────────────────────────────────
+// ─── Resumen K / Agregadores de Insumos (Mise en Place) ───────────────────────
 
 export interface AggregatedRecipeCount {
   name: string;
@@ -79,6 +82,14 @@ export interface AggregatedGarnishCount {
   readyQty: number;
 }
 
+export interface AggregatedDrinkCount {
+  name: string;
+  sku?: string;
+  totalQty: number;
+  pendingQty: number;
+  readyQty: number;
+}
+
 export interface AggregatedExtraCount {
   name: string;
   sku?: string;
@@ -88,48 +99,16 @@ export interface AggregatedExtraCount {
 export interface AggregatedMiseEnPlace {
   totalBurgers: number;
   totalGarnishes: number;
+  totalDrinks: number;
   totalExtras: number;
   activeOrdersCount: number;
   recipes: AggregatedRecipeCount[];
   garnishes: AggregatedGarnishCount[];
+  drinks: AggregatedDrinkCount[];
   extras: AggregatedExtraCount[];
 }
 
-// ─── Helpers de Normalización y Tiempos ───────────────────────────────────────
-
-/**
- * Determina el tono de alerta del temporizador de cocina:
- * - < 10 minutos: normal (verde)
- * - 10 a 20 minutos: warning (ámbar)
- * - > 20 minutos: urgent (rojo con pulso)
- */
-export function calculateAlertTone(elapsedMinutes: number): KitchenAlertTone {
-  if (elapsedMinutes >= 20) return 'urgent';
-  if (elapsedMinutes >= 10) return 'warning';
-  return 'normal';
-}
-
-/**
- * Calcula los minutos transcurridos desde la creación del pedido.
- */
-export function calculateElapsedMinutes(createdAtIso?: string, createdAtMs?: number): number {
-  const timestamp = createdAtMs || (createdAtIso ? new Date(createdAtIso).getTime() : Date.now());
-  if (isNaN(timestamp)) return 0;
-  const diffMs = Math.max(0, Date.now() - timestamp);
-  return Math.floor(diffMs / 60000);
-}
-
-/**
- * Formatea los minutos en formato mm:ss o minutos totales legibles.
- */
-export function formatElapsedTime(elapsedMinutes: number): string {
-  if (elapsedMinutes < 60) {
-    return `${elapsedMinutes}m`;
-  }
-  const hours = Math.floor(elapsedMinutes / 60);
-  const remainingMins = elapsedMinutes % 60;
-  return `${hours}h ${remainingMins}m`;
-}
+// ─── Helpers de Normalización y Extracción ────────────────────────────────────
 
 /**
  * Extrae y normaliza los ítems de un pedido para la comanda de cocina.
@@ -138,10 +117,12 @@ export function extractKitchenTicketItems(rawItems: OrderV2Item[] = []): {
   items: KitchenTicketItem[];
   totalBurgersCount: number;
   totalGarnishesCount: number;
+  totalDrinksCount: number;
   totalExtrasCount: number;
 } {
   let totalBurgersCount = 0;
   let totalGarnishesCount = 0;
+  let totalDrinksCount = 0;
   let totalExtrasCount = 0;
 
   const items: KitchenTicketItem[] = rawItems.map((rawItem) => {
@@ -164,6 +145,7 @@ export function extractKitchenTicketItems(rawItems: OrderV2Item[] = []): {
       totalGarnishesCount += rawItem.qty;
     } else if (itemKindRaw === 'drink' || categoryRaw === 'bebidas') {
       itemKind = 'drink';
+      totalDrinksCount += rawItem.qty;
     } else if (itemKindRaw === 'extra' || categoryRaw === 'extras') {
       itemKind = 'extra';
       totalExtrasCount += rawItem.qty;
@@ -244,6 +226,7 @@ export function extractKitchenTicketItems(rawItems: OrderV2Item[] = []): {
           name,
           sku: typeof d.sku === 'string' ? d.sku.trim() : undefined,
         };
+        totalDrinksCount += rawItem.qty;
       }
     } else if (Array.isArray(rawItem.components)) {
       const dComp = rawItem.components.find((c) => c.kind === 'drink');
@@ -252,6 +235,7 @@ export function extractKitchenTicketItems(rawItems: OrderV2Item[] = []): {
           name: dComp.name,
           sku: dComp.sku,
         };
+        totalDrinksCount += rawItem.qty;
       }
     }
 
@@ -317,7 +301,7 @@ export function extractKitchenTicketItems(rawItems: OrderV2Item[] = []): {
     };
   });
 
-  return { items, totalBurgersCount, totalGarnishesCount, totalExtrasCount };
+  return { items, totalBurgersCount, totalGarnishesCount, totalDrinksCount, totalExtrasCount };
 }
 
 /**
@@ -326,16 +310,23 @@ export function extractKitchenTicketItems(rawItems: OrderV2Item[] = []): {
 export function orderToKitchenTicket(order: OrderV2): KitchenTicket {
   const createdAtIso = order.createdAt || new Date().toISOString();
   const createdAtMs = new Date(createdAtIso).getTime();
-  const elapsedMinutes = calculateElapsedMinutes(createdAtIso, createdAtMs);
-  const alertTone = calculateAlertTone(elapsedMinutes);
 
-  const { items, totalBurgersCount, totalGarnishesCount, totalExtrasCount } =
+  const { items, totalBurgersCount, totalGarnishesCount, totalDrinksCount, totalExtrasCount } =
     extractKitchenTicketItems(order.items || []);
 
   const location =
     order.orderMode === 'pickup'
       ? 'Pickup en Local'
       : order.delivery?.location?.trim() || 'A Domicilio';
+
+  const delivery = order.delivery as Record<string, unknown> | undefined;
+  const scheduledDate =
+    typeof delivery?.scheduledDate === 'string'
+      ? delivery.scheduledDate
+      : typeof delivery?.scheduledDeliveryDate === 'string'
+      ? delivery.scheduledDeliveryDate
+      : undefined;
+  const isScheduled = Boolean(delivery?.isScheduled || scheduledDate);
 
   return {
     id: order.id,
@@ -346,14 +337,51 @@ export function orderToKitchenTicket(order: OrderV2): KitchenTicket {
     status: order.status,
     createdAtIso,
     createdAtMs,
-    elapsedMinutes,
-    alertTone,
+    scheduledDate,
+    isScheduled,
     orderNote: order.notes?.trim() || undefined,
     items,
     totalBurgersCount,
     totalGarnishesCount,
+    totalDrinksCount,
     totalExtrasCount,
   };
+}
+
+/**
+ * Construye una línea de resumen compacta para la comanda de cocina con emojis.
+ * Ej. "🍔 3 Burgers · 🍟 2 Sides · 🥤 1 Bebida"
+ */
+export function buildKitchenOrderQueueSummary(
+  ticket: KitchenTicket,
+  laneMode?: 'prep' | 'sideQuest'
+): string {
+  const parts: string[] = [];
+
+  if (laneMode === 'sideQuest') {
+    if (ticket.totalGarnishesCount > 0) {
+      parts.push(`🍟 ${ticket.totalGarnishesCount} Side${ticket.totalGarnishesCount !== 1 ? 's' : ''}`);
+    }
+    if (ticket.totalDrinksCount > 0) {
+      parts.push(`🥤 ${ticket.totalDrinksCount} Bebida${ticket.totalDrinksCount !== 1 ? 's' : ''}`);
+    }
+  } else if (laneMode === 'prep') {
+    if (ticket.totalBurgersCount > 0) {
+      parts.push(`🍔 ${ticket.totalBurgersCount} Burger${ticket.totalBurgersCount !== 1 ? 's' : ''}`);
+    }
+  } else {
+    if (ticket.totalBurgersCount > 0) {
+      parts.push(`🍔 ${ticket.totalBurgersCount} Burger${ticket.totalBurgersCount !== 1 ? 's' : ''}`);
+    }
+    if (ticket.totalGarnishesCount > 0) {
+      parts.push(`🍟 ${ticket.totalGarnishesCount} Side${ticket.totalGarnishesCount !== 1 ? 's' : ''}`);
+    }
+    if (ticket.totalDrinksCount > 0) {
+      parts.push(`🥤 ${ticket.totalDrinksCount} Bebida${ticket.totalDrinksCount !== 1 ? 's' : ''}`);
+    }
+  }
+
+  return parts.join(' · ');
 }
 
 /**
@@ -362,10 +390,12 @@ export function orderToKitchenTicket(order: OrderV2): KitchenTicket {
 export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMiseEnPlace {
   const recipeMap = new Map<string, AggregatedRecipeCount>();
   const garnishMap = new Map<string, AggregatedGarnishCount>();
+  const drinkMap = new Map<string, AggregatedDrinkCount>();
   const extraMap = new Map<string, AggregatedExtraCount>();
 
   let totalBurgers = 0;
   let totalGarnishes = 0;
+  let totalDrinks = 0;
   let totalExtras = 0;
 
   tickets.forEach((ticket) => {
@@ -454,7 +484,46 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
         garnishMap.set(gName, currentGarnish);
       }
 
-      // 3. Extras a nivel de ítem
+      // 3. Bebidas
+      if (item.includedDrink?.name) {
+        const dName = item.includedDrink.name;
+        totalDrinks += item.qty;
+
+        const currentDrink = drinkMap.get(dName) ?? {
+          name: dName,
+          sku: item.includedDrink.sku,
+          totalQty: 0,
+          pendingQty: 0,
+          readyQty: 0,
+        };
+        currentDrink.totalQty += item.qty;
+        if (isReady) {
+          currentDrink.readyQty += item.qty;
+        } else {
+          currentDrink.pendingQty += item.qty;
+        }
+        drinkMap.set(dName, currentDrink);
+      } else if (item.itemKind === 'drink') {
+        const dName = item.name;
+        totalDrinks += item.qty;
+
+        const currentDrink = drinkMap.get(dName) ?? {
+          name: dName,
+          sku: item.sku,
+          totalQty: 0,
+          pendingQty: 0,
+          readyQty: 0,
+        };
+        currentDrink.totalQty += item.qty;
+        if (isReady) {
+          currentDrink.readyQty += item.qty;
+        } else {
+          currentDrink.pendingQty += item.qty;
+        }
+        drinkMap.set(dName, currentDrink);
+      }
+
+      // 4. Extras a nivel de ítem
       if (item.extras?.length) {
         item.extras.forEach((extra) => {
           totalExtras += item.qty;
@@ -492,6 +561,9 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
   const garnishes = Array.from(garnishMap.values()).sort(
     (a, b) => b.totalQty - a.totalQty || a.name.localeCompare(b.name)
   );
+  const drinks = Array.from(drinkMap.values()).sort(
+    (a, b) => b.totalQty - a.totalQty || a.name.localeCompare(b.name)
+  );
   const extras = Array.from(extraMap.values()).sort(
     (a, b) => b.totalQty - a.totalQty || a.name.localeCompare(b.name)
   );
@@ -499,10 +571,12 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
   return {
     totalBurgers,
     totalGarnishes,
+    totalDrinks,
     totalExtras,
     activeOrdersCount: tickets.length,
     recipes,
     garnishes,
+    drinks,
     extras,
   };
 }
