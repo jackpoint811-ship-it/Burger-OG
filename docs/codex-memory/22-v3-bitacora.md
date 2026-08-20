@@ -48,6 +48,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | 2026-08-18 | shadcn/ui | Componentes accesibles como código propio (no dependencia) |
 | 2026-08-18 | Cutover al final (PR-V3-13) | Nunca merge a main sin aprobación explícita |
 | 2026-08-20 | Auditoría Post-Migración V3 (M1–M4) | Asegurar repo limpio, 0 deuda técnica, tooling alineado a V3 y memoria sincronizada |
+| 2026-08-20 | Alineación Operativa Chekeo V3 (PR #549) | Cero relojes de presión en cocina, 3 estaciones reales (Plancha/SideQuest/ResumenK) y calendario horizontal de 14 días |
 
 ---
 
@@ -153,7 +154,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 ### 📅 2026-08-19 — Sesión 10: PR-V3-10 Chekeo Feature Cocina (KDS & Resumen K)
 - Creada capa Data Layer en `apps/internal-chekeo-v3/src/features/kitchen/`:
-  - Tipos para KDS, semáforo de tiempos, hooks TanStack Query y alertas sonoras Web Audio API (`playKdsChime`).
+  - Tipos para KDS, hooks TanStack Query y alertas sonoras Web Audio API (`playKdsChime`).
 - Creados componentes en `apps/internal-chekeo-v3/src/components/kitchen/`:
   - `KitchenTicketCard.tsx` (tags `🔴 SIN ...` y `🟢 +EXTRA ...`), `KitchenDisplay.tsx` (Kanban 3 columnas) y `KitchenSummaryK.tsx` (agregación de insumos para mise en place).
 - Verificaciones: `typecheck` ✅ (0 errores), `build` ✅ (`public-v3`, `chekeo-v3`), `git diff --check` ✅.
@@ -181,10 +182,10 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Verificaciones integrales en verde**:
   - `typecheck` ✅ (0 errores), `build` ✅ (`build:public` + `build:chekeo` en verde), `git diff --check` ✅.
 
-### 📅 2026-08-20 — Sesión 14: Auditoría Post-Migración V3 — Milestones 1 & 2
+### 📅 2026-08-20 — Sesión 14: Auditoría Post-Migración V3 — PR #545 (Mergeado)
 - **Milestone 1 (Tooling & Configs)**:
   - Playwright configs (`playwright.e2e.config.ts`, `playwright.internal-kitchen.config.ts`) actualizados a `dist/public-order-v3` y `dist/internal-chekeo-v3` con comando `preview:chekeo`.
-  - `.gitignore` actualizado con exclusiones para `.graphifyignore` y `.vscode/`.
+  - `.gitignore` actualizado con exclusiones para `.graphifyignore`, `.vscode/` y `__pycache__`.
   - Limpieza de artefactos residuales en la raíz del repositorio.
 - **Milestone 2 (Documentación & Memoria Codex)**:
   - `README.md`: Actualizado con la arquitectura canonical V3, stack tecnológico y guía de ejecución.
@@ -192,9 +193,34 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `docs/codex-memory/00-indice.md`: Reestructurado con separación nítida entre Notas Activas V3 y Archivo Histórico V2.
   - `docs/codex-memory/02-reglas-del-proyecto.md`: Actualizado con arquitectura oficial V3 y estética Premium Casual.
   - `docs/codex-memory/09-checklists.md`: Eliminadas referencias a estética cyberpunk legacy; alineado a Premium Casual y rutas V3.
-  - `docs/codex-memory/22-v3-bitacora.md`: Actualizado con el roadmap y avances de la auditoría post-migración.
+- **Milestone 3 (Security Fix en `auth.api.ts`)**:
+  - Eliminado bypass de autenticación por `localStorage` en `fetchAuthStatus()`.
+  - `loginWithPin()` ahora propaga excepciones del servidor `ApiError` sin permitir PINs fallback en producción.
+  - Fallbacks de desarrollo offline estrictamente protegidos con `import.meta.env.DEV`.
 
-### 📅 2026-08-20 — Sesión 15: Alineación Operativa Chekeo V3 (Cero Relojes + Estaciones + Calendario)
+### 📅 2026-08-20 — Sesión 15: Infraestructura Cloudflare Pages V3 & CI/CD — PR #546 (Mergeado)
+- Creados proyectos independientes en Cloudflare Pages:
+  - `burgers-exe-public-v3.pages.dev` (Public Order V3)
+  - `burgers-exe-internal-v3.pages.dev` (Internal Chekeo V3)
+- Implementados pipelines de GitHub Actions automatizados:
+  - `.github/workflows/deploy-public-v3.yml`: `typecheck` + `build:public` + deploy a `burgers-exe-public-v3`.
+  - `.github/workflows/deploy-chekeo-v3.yml`: `typecheck` + `build:chekeo` + deploy a `burgers-exe-internal-v3`.
+- `wrangler.preview.toml` y `wrangler.production.toml` configurados con IDs reales de base de datos Cloudflare D1 (`c723f0c7` / `2974d36e`) y buckets R2.
+
+### 📅 2026-08-20 — Sesión 16: Fix Extracción de Path en Assets Router — PR #547 (Mergeado)
+- Corrección de regex en `functions/api/_routes/assets.ts`: `c.req.path.replace(/^(?:\/api)?\/assets-v2\/?/, '')` para remover el prefijo global `/api` y solicitar las claves correctas (`menu/...`, `category-banners/...`) a Cloudflare R2 sin 404s.
+
+### 📅 2026-08-20 — Sesión 17: Auditoría y Verificación en Vivo con Chromium (100% Operativo)
+- **Public Order V3 (`https://burgers-exe-public-v3.pages.dev`)**:
+  - 0 errores de JavaScript / React 19.
+  - Catálogo D1 (`source: d1`) cargado con todos los productos, papas, extras, recetas y banners.
+  - Imágenes R2 respondiendo con HTTP 200 `image/webp`.
+- **Internal Chekeo V3 (`https://burgers-exe-internal-v3.pages.dev`)**:
+  - Autenticación con PIN `1234` (`BOG_INTERNAL_PIN`) 100% funcional.
+  - 0 errores de consola, 0 excepciones de red.
+  - Módulos operativos en vivo: Pedidos, Cocina KDS, Pagos y Admin.
+
+### 📅 2026-08-20 — Sesión 18: Alineación Operativa Chekeo V3 (Cero Relojes + Estaciones + Calendario) — PR #549
 - **Restitución del Riel Horizontal de Fechas**:
   - Creado `HorizontalDateCalendarFilter.tsx` en `apps/internal-chekeo-v3/src/components/shared/` con soporte CDMX, 14 días consecutivos, botón `⏱️ Anteriores`, tarjeta `🟢 HOY` y badges en tiempo real de comandas pendientes.
   - Integrado reactivamente en `PedidosView.tsx` y `CocinaView.tsx`.

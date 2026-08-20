@@ -111,7 +111,7 @@ Garantizar que la aplicación pública jamás vuelva a sufrir un congelamiento d
 - Cero posibilidad de que errores de BD forcen la app pública al flujo legacy.
 - Cero excepciones no capturadas por violaciones a Rules of Hooks en React.
 - Cero inconsistencias de tipos MIME por HTMLs cacheados en CDN.
-3. **Manejo de errores no bloqueante**: La app pública debe ofrecer reintentos limpios y fallbacks seguros antes de mostrar pantallas de error totales al usuario final.
+- Manejo de errores no bloqueante: La app pública debe ofrecer reintentos limpios y fallbacks seguros antes de mostrar pantallas de error totales al usuario final.
 
 ### Fecha
 
@@ -194,7 +194,33 @@ Permitir a los operadores de plancha y freidora preparar pedidos con máxima vel
 
 ### Decisión
 
-**Alineación Operativa Definitiva en Chekeo V3 (Rescate de Patrones de Producción Real V2)**:
+**Despliegue Independiente V3 en Cloudflare Pages y Pipelines CI/CD Automatizados (PRs #546 y #547)**:
+
+1. **Proyectos Dedicados en Cloudflare Pages**:
+   - `burgers-exe-public-v3`: Public Order V3 mobile-first con soporte directo para catálogo D1 y assets R2.
+   - `burgers-exe-internal-v3`: Internal Chekeo V3 protegido con autenticación de PIN segura por variable de entorno `BOG_INTERNAL_PIN`.
+2. **Pipelines de CI/CD vía GitHub Actions**:
+   - `.github/workflows/deploy-public-v3.yml` y `.github/workflows/deploy-chekeo-v3.yml` compilan con Vite y despliegan a Cloudflare Pages automáticamente en cada push o PR a `v3`.
+3. **Extracción Canónica de Claves R2 en Router Hono**:
+   - En `functions/api/_routes/assets.ts`, la extracción de clave de asset utiliza `c.req.path.replace(/^(?:\/api)?\/assets-v2\/?/, '')` para aislar correctamente la clave del objeto R2 (`menu/...`, `category-banners/...`) sin contaminar con el prefijo global `/api` de la aplicación.
+
+### Motivo
+
+Garantizar un ciclo de despliegue continuo, desacoplado, sin fricción manual y completamente compatible con el routing de Cloudflare Pages y la jerarquía de Hono.js.
+
+### Impacto
+
+- Ambas aplicaciones se despliegan en menos de 45 segundos ante cualquier push a `v3`.
+- Catálogo e imágenes de R2 cargan con HTTP 200 sin 404s ni fallbacks degradados.
+- Chekeo V3 mantiene autenticación robusta y segura contra el backend.
+
+### Fecha
+
+2026-08-20
+
+### Decisión
+
+**Alineación Operativa Definitiva en Chekeo V3 (Rescate de Patrones de Producción Real V2 — PR #549)**:
 
 1. **Eliminación Total de Relojes de Presión en Cocina**: Se eliminan cronómetros de minutos transcurridos y semáforos de estrés (`<10m`, `10-20m`, `>20m` parpadeantes) porque chocan con el modelo de producción por lotes (batch cooking) y entregas programadas a torres de Burgers.exe.
 2. **División por Estaciones Operativas Reales**:
@@ -212,4 +238,3 @@ Adaptar la interfaz a la realidad operativa del restaurante sin comprometer la n
 - Cero estrés y cero alertas falsas en pedidos programados.
 - Cocineros y empacadores trabajan con interfaces especializadas por estación física.
 - Visibilidad completa de entregas futuras y pendientes históricos.
-
