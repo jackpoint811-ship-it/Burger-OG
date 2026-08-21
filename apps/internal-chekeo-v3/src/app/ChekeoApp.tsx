@@ -12,10 +12,10 @@ import { Loader } from 'lucide-react';
 import { TabsContent } from '@ui/tabs';
 import { useAuthStore, AuthGate } from '../features/auth';
 import { AppShell, ChekeoTab } from '../components/shell';
-import { PedidosView, CocinaView, PagosView, AdminView } from '../components/views';
+import { OperacionView, PedidosView, CocinaView, PagosView, AdminView } from '../components/views';
 
 export function ChekeoApp() {
-  const [activeTab, setActiveTab] = useState<ChekeoTab>('pedidos');
+  const [activeTab, setActiveTab] = useState<ChekeoTab>('operacion');
   const { isAuthenticated, status, checkSession } = useAuthStore();
 
   // Comprobar estado de sesión con el backend al inicializar
@@ -52,6 +52,10 @@ export function ChekeoApp() {
   // Si está autenticado, renderizar AppShell con pestañas
   return (
     <AppShell activeTab={activeTab} onTabChange={setActiveTab}>
+      <TabsContent value="operacion" className="focus-visible:outline-none m-0">
+        <OperacionView onTabChange={setActiveTab} />
+      </TabsContent>
+
       <TabsContent value="pedidos" className="focus-visible:outline-none m-0">
         <PedidosView />
       </TabsContent>

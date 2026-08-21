@@ -11,10 +11,10 @@
  */
 
 import React from 'react';
-import { ShoppingBag, ChefHat, CreditCard, Settings } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, ChefHat, CreditCard, Settings } from 'lucide-react';
 import { TabsList, TabsTrigger } from '@ui/tabs';
 
-export type ChekeoTab = 'pedidos' | 'cocina' | 'pagos' | 'admin';
+export type ChekeoTab = 'operacion' | 'pedidos' | 'cocina' | 'pagos' | 'admin';
 
 export interface TabItem {
   id: ChekeoTab;
@@ -26,6 +26,13 @@ export interface TabItem {
 }
 
 export const CHEKEO_TABS: TabItem[] = [
+  {
+    id: 'operacion',
+    label: 'Operación',
+    shortLabel: 'Turno',
+    subtitle: 'Semáforo en Vivo',
+    icon: LayoutDashboard,
+  },
   {
     id: 'pedidos',
     label: 'Pedidos',
@@ -63,9 +70,9 @@ interface NavTabsProps {
 
 export function NavTabs({ activeTab, onTabChange }: NavTabsProps) {
   return (
-    <div className="w-full bg-surface-card border-b border-line px-3 sm:px-6 py-2.5 transition-colors duration-200">
+    <div className="w-full bg-surface-card border-b border-line px-2 sm:px-6 py-2 transition-colors duration-200">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <TabsList className="w-full sm:w-auto h-auto p-1.5 bg-surface-raised border border-line rounded-2xl grid grid-cols-4 sm:flex gap-1">
+        <TabsList className="w-full sm:w-auto h-auto p-1 bg-surface-raised border border-line rounded-2xl grid grid-cols-5 sm:flex gap-1">
           {CHEKEO_TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
