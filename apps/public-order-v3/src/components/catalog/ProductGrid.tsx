@@ -17,7 +17,7 @@ export function ProductGrid() {
         {[1, 2].map((section) => (
           <div key={section} className="space-y-4">
             <div className="h-7 w-48 rounded-xl bg-surface animate-pulse" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {[1, 2, 3].map((card) => (
                 <div key={card} className="h-64 rounded-3xl bg-surface animate-pulse" />
               ))}
@@ -103,7 +103,7 @@ export function ProductGrid() {
             )}
 
             {/* Products Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {categoryItems.map((item: MenuItem) => (
                 <ProductCard key={item.sku} item={item} />
               ))}

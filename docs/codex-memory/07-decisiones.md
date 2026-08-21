@@ -238,3 +238,27 @@ Adaptar la interfaz a la realidad operativa del restaurante sin comprometer la n
 - Cero estrés y cero alertas falsas en pedidos programados.
 - Cocineros y empacadores trabajan con interfaces especializadas por estación física.
 - Visibilidad completa de entregas futuras y pendientes históricos.
+
+### Fecha
+
+2026-08-21
+
+### Decisión
+
+**Afinaciones de UX/UI, Personalización y Ergonomía en Public Order V3**:
+
+1. **Resolución Canónica de Recetas e Ingredientes Removibles**: Se implementa `useMenuRecipes()` y `lookupRecipeBySku()` garantizando la disponibilidad de modificadores (`removedIngredients`) tanto en burgers individuales como para cada hamburguesa dentro de un combo (`comboBurgerProducts[index]`), mapeando directamente desde Cloudflare D1 con fallbacks tolerantes a prefijos de SKU.
+2. **Switch de Modo Oscuro en App Pública**: Se habilita el selector de tema (`Sun` / `Moon`) en `BrandHeader.tsx` con persistencia en `localStorage` (`public_theme`) y soporte completo de Tailwind v4.
+3. **Emoji de Regalo `🎁` en Sorteos**: Se reemplaza el ícono de ticket genérico por el emoji `🎁` para identificar campañas activas de sorteo en cabecera, checkout y pantalla de éxito.
+4. **Layout Canónico de 2 Columnas Móvil**: Adaptación mobile-first a grilla de 2 columnas (`grid-cols-2 sm:grid-cols-2 md:grid-cols-3`) y carrusel de banners previo a la navegación de categorías sticky.
+5. **Checkout Limpio**: Campo de código de referido oculto si no hay sorteo activo y opt-in a WhatsApp desplegado condicionalmente tras ingresar 10 dígitos del teléfono.
+
+### Motivo
+
+Recuperar la experiencia fluida de personalización y compra probada en producción sin perder las ventajas de la arquitectura modular moderna de V3.
+
+### Impacto
+
+- Cero pedidos de burgers o combos bloqueados sin posibilidad de personalización.
+- Soporte visual nativo para modo oscuro en la app de clientes.
+- Reducción de ruido visual en el checkout para usuarios sin código o que aún no ingresan su teléfono.

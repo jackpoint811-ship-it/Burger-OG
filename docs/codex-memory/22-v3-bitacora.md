@@ -234,6 +234,21 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `build:chekeo` y `build:public` ✅ (100% en verde).
   - Memoria Codex sincronizada en `07-decisiones.md`, `03-flujos-chekeo.md` y `22-v3-bitacora.md`.
 
+### 📅 2026-08-20 — Sesión 19: Dashboard de Operación en Vivo y Semáforo del Turno — PR #551
+- Creada vista `OperacionView.tsx` como pestaña principal en Chekeo V3 con semáforo operativo de 4 métricas reactivas (Cocina activa, Por cobrar, Pedidos abiertos, Venta de hoy), tarjeta inteligente de Siguiente Acción Prioritaria y Mini Resumen K con acceso directo a Cocina.
+
+### 📅 2026-08-20 — Sesión 20: Cocina Enfocada de Producción y KPIs en Resumen K — PR #552
+- Creada `KitchenActiveStation.tsx` con comanda activa destacada (`PEDIDO ACTIVO`), botón gigante de 1 toque `✔ Hecha / Marcar Lista`, cola táctil de espera y acordeón de comandas listas con reversión.
+- Rediseñado `KitchenSummaryK.tsx` con tarjetas KPI grandes para insumos y mise en place.
+
+### 📅 2026-08-21 — Sesión 21: Afinaciones de UX/UI y Personalización en Public Order V3
+- **Personalización de Burgers y Combos**: Implementado `useMenuRecipes` y `lookupRecipeBySku` garantizando detección de ingredientes removibles para hamburguesas individuales y dentro de combos.
+- **Switch de Tema Dark / Light**: Incorporado toggle accesible (`Sun` / `Moon`) en `BrandHeader.tsx` con persistencia en `localStorage`.
+- **Emoji de Regalo 🎁 en Sorteos**: Reemplazado el ícono de ticket genérico por el emoji `🎁` en cabecera, checkout y modal de confirmación.
+- **Layout Adaptativo 2 Columnas Móvil**: Banners previos a la barra sticky de categorías y grilla `grid-cols-2` en móviles.
+- **Checkout Limpio**: Campo de referido oculto si no hay sorteo activo y opt-in a WhatsApp desplegado condicionalmente tras ingresar 10 dígitos del teléfono.
+- **Verificaciones**: `typecheck` ✅ (0 errores), `build:public` ✅ (530 kB), `build:chekeo` ✅ (597 kB), `git diff --check` ✅.
+
 ---
 
 ## 📌 Issues Abiertos
