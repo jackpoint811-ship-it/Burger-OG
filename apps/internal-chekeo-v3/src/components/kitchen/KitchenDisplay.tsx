@@ -19,10 +19,13 @@ import {
   Inbox,
   Flame,
   CheckCircle,
+  LayoutGrid,
+  Focus,
 } from 'lucide-react';
 import { Button } from '@ui/button';
 import { Skeleton } from '@ui/skeleton';
 import { KitchenTicketCard } from './KitchenTicketCard';
+import { KitchenActiveStation } from './KitchenActiveStation';
 import {
   useKitchenDisplay,
   type KitchenTicket,
@@ -39,6 +42,7 @@ export function KitchenDisplay({
   selectedDate = 'today',
 }: KitchenDisplayProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [viewMode, setViewMode] = useState<'station' | 'kanban'>('station');
 
   const {
     tickets,
@@ -125,8 +129,29 @@ export function KitchenDisplay({
           </div>
         </div>
 
-        {/* Controles de Sonido, Pantalla Completa y Refresco */}
+        {/* Controles de Vista, Sonido, Pantalla Completa y Refresco */}
         <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+          {/* Toggle de Modo de Vista (Estación Foco vs Kanban) */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setViewMode((prev) => (prev === 'station' ? 'kanban' : 'station'))}
+            className="flex items-center gap-1.5 text-xs font-extrabold rounded-2xl h-10 px-3.5 border-line cursor-pointer"
+            title={viewMode === 'station' ? 'Cambiar a Tablero KDS (3 columnas)' : 'Cambiar a Estación en Foco'}
+          >
+            {viewMode === 'station' ? (
+              <>
+                <LayoutGrid className="w-4 h-4 text-accent" />
+                <span className="hidden sm:inline">Tablero KDS</span>
+              </>
+            ) : (
+              <>
+                <Focus className="w-4 h-4 text-accent" />
+                <span className="hidden sm:inline">Estación Foco</span>
+              </>
+            )}
+          </Button>
+
           {/* Toggle de Alerta Sonora */}
           <Button
             variant="secondary"
@@ -179,8 +204,18 @@ export function KitchenDisplay({
         </div>
       </div>
 
-      {/* ─── Grid de Columnas Kanban (Nuevos / En Plancha / Listos) ───────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+      {/* ─── Renderizado según Modo de Vista (Estación en Foco vs Kanban) ──────── */}
+      {viewMode === 'station' ? (
+        <KitchenActiveStation
+          laneMode={laneMode}
+          tickets={filteredTickets}
+          isLoading={isLoading}
+          advanceTicketStatus={advanceTicketStatus}
+          revertTicketStatus={revertTicketStatus}
+          isUpdating={isUpdating}
+        />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         {/* ─── Columna 1: Nuevos / Por Atender ──────────────────────────────── */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between p-3.5 rounded-2xl bg-blue-500/10 border-2 border-blue-500/30">
@@ -310,6 +345,7 @@ export function KitchenDisplay({
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
