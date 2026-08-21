@@ -7,11 +7,16 @@ playwright-report/
 .dev.vars
 .wrangler/
 .wrangler/tmp/
-.dev.vars
 
 # Local Cloudflare config overrides
 /wrangler.toml
 /wrangler.local.toml
+
+# Editor & IDE
+.vscode/
+
+# Stray root artifacts
+/*.png
 
 *.local
 *.log
@@ -31,4 +36,7 @@ __pycache__/
 # Graphify
 graphify-out/
 .graphify/
+.graphifyignore
 
+# Local tools
+tools/antigravity-monitor/

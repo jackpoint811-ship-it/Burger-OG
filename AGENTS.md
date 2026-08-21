@@ -15,12 +15,17 @@ Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más especí
 - No tocar carpetas legacy, especialmente `legacy/`, salvo que el prompt lo autorice.
 - Reportar siempre archivos modificados, riesgos, testing ejecutado y checklist manual de QA sugerido.
 
+- **REGLA PERMANENTE DE BRANCHING V3 (MIGRACIÓN EN CURSO):**
+  - Todas las ramas de feature para la migración V3 deben crearse exclusivamente a partir de la rama `v3` (`git checkout -b feat/v3-xx-... v3`).
+  - **TODOS los Pull Requests de V3 deben abrirse obligatoriamente con base en `v3`** (`gh pr create --base v3 --head feat/v3-xx-...`).
+  - `main` permanece congelado y protegido en producción. **Bajo ninguna circunstancia se debe abrir un PR hacia `main` ni hacer push a `main` hasta el cutover final (PR-V3-13)**, el cual requerirá autorización explícita del usuario.
+
 ## Workflow automático para agentes
-- Antes de cambios reales, leer `docs/codex-memory/00-indice.md`.
-- Seguir `docs/codex-memory/08-agent-workflow.md` para rama, cambios, checks, memoria, commit, push y PR.
+- Antes de cambios reales, leer `docs/codex-memory/00-indice.md` y `docs/codex-memory/22-v3-bitacora.md`.
+- Seguir `docs/codex-memory/08-agent-workflow.md` para rama (base `v3`), cambios, checks, memoria, commit, push y PR.
 - Usar `docs/codex-memory/09-checklists.md` para validar el área tocada y preparar la descripción del PR.
 - Usar Graphify antes de cambios grandes, arquitectura, varios archivos o flujos conectados.
-- Actualizar `docs/codex-memory/05-backlog.md`, `06-prompts-buenos.md` o `07-decisiones.md` cuando el cambio altere backlog, prompts reutilizables o decisiones.
+- Actualizar `docs/codex-memory/05-backlog.md`, `06-prompts-buenos.md`, `07-decisiones.md` y `22-v3-bitacora.md` al completar cada fase.
 - No dejar cambios locales sin PR salvo instrucción explícita.
 - El asistente puede preparar rama, commit, push y PR solo cuando el usuario apruebe el cierre; el usuario revisa y mergea.
 
@@ -41,7 +46,7 @@ Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más especí
 - **Accesibilidad**: Foco visible (`:focus-visible`), atributos `aria-*` en modales y drawers, labels persistentes, errores inline y targets táctiles de al menos 44px (`--touch-target-min`).
 - **Movimiento**: Respetar `prefers-reduced-motion`; las animaciones con Framer Motion deben contar con fallback estático o desactivación sin romper el flujo.
 
-## Arquitectura de `apps/public-order-v2` (Headless UI)
+## Arquitectura de `apps/public-order-v3` (Headless UI)
 - **Motor de Renderizado Dinámico**: La interfaz principal se renderiza a través de `DynamicRenderer` y `LayoutEngine` basándose en especificaciones de diseño (`DEFAULT_STUDIO_DESIGN_SPEC`).
 - **Módulos Headless UI**:
   1. `banner_carousel_1`: Banners promocionales interactivos con autoplay y swipe.
@@ -58,8 +63,8 @@ Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más especí
 - **Reglas del flujo de pedido**:
   - No romper el public order flow mobile-first ni los aprendizajes acumulados en PRs 237–240 y PRs 397–400.
   - Mantener CTA claro para iniciar pedido, checkout responsivo con etiquetas claras y validación inline.
-## Reglas específicas para `apps/public-order-v2`
-- Excepción de estilo visual: Esta app utilizará un diseño claro, profesional y tradicional (estilo Uber Eats), con fondo claro, tipografía sans-serif limpia y tarjetas compactas/mixtas, abandonando la estética Cyberpunk del resto del proyecto.
+## Reglas específicas para `apps/public-order-v3`
+- Estilo visual: Esta app utiliza la estética **Burgers.exe (Premium Casual Vibe)** (diseño claro, profesional y apetecible, con fondo cálido/crema suave `#F5F2EE`, tarjetas blancas `#FFFFFF`, acento verde bosque `#16A34A` y tipografía Inter limpia), consistente con el estándar global de Burgers.exe V3.
 - No romper el public order flow mobile-first ni los aprendizajes de PRs 237–240.
 - Mantener CTA claro para iniciar pedido, personalización comprensible, checkout con labels/helper text/errores inline y acciones táctiles cómodas.
 - No cambiar payloads enviados desde `orders-v2`, lectura de menú, tickets, promociones, precios ni ubicación sin autorización explícita.
@@ -70,7 +75,7 @@ Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más especí
 ## Checks esperados
 - Ejecutar `git diff --check` en todo PR.
 - Ejecutar `npm run typecheck` cuando se toque TypeScript, configuración o código de app.
-- Ejecutar `npm run build:public` cuando se toque `apps/public-order-v2` o código compartido que pueda afectarlo.
+- Ejecutar `npm run build:public` cuando se toque `apps/public-order-v3` o código compartido que pueda afectarlo.
 - Si un check no aplica o no puede ejecutarse por limitación del entorno, reportarlo claramente.
 
 ## No hacer

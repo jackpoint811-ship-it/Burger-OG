@@ -1,9 +1,0 @@
-# Cloudflare Pages header rules for public-order-v2
-
-# Always revalidate HTML so browsers immediately receive updated script bundle references
-/*
-  Cache-Control: no-cache, no-store, must-revalidate
-
-# Long-term immutable caching for hashed JS/CSS assets
-/assets/*
-  Cache-Control: public, max-age=31536000, immutable
