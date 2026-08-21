@@ -87,7 +87,7 @@ export function BannersAdminPanel() {
     setSubtitle('');
     setCtaLabel('Pedir ahora');
     setCtaActionType('category');
-    setCtaTarget('burgers');
+    setCtaTarget(menuCategories[0]?.key || 'burgers');
     setBadgeText('PROMO');
     setBadgeColor('emerald');
     setBgPreset('gradient-emerald');
