@@ -187,6 +187,11 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
     return getNextAvailableDeliveryDate(selectedTower?.towerKey, allTowers);
   }, [selectedTower, allTowers]);
 
+  const hasActiveRaffle = Boolean(raffleCampaign?.id);
+  const isPhoneComplete = Boolean(
+    currentCustomerPhone && currentCustomerPhone.replace(/\D/g, '').length === 10
+  );
+
   // Auto-switch to scheduled if tower is closed today
   useEffect(() => {
     if (selectedTower && towerAvailability && !towerAvailability.isOpen && !currentIsScheduled) {
@@ -801,34 +806,49 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                   </div>
                 </div>
 
-                {/* Código de Referido / Sorteo */}
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-text-primary uppercase tracking-wider flex items-center justify-between">
-                    <span>Código de Referido / Sorteo (Opcional)</span>
-                    <span className="text-accent flex items-center gap-1 font-semibold text-[11px]">
-                      <Sparkles className="w-3 h-3" />
-                      Boletos extra
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej. BURGER-AMIGO"
-                    {...register('referralCode')}
-                    className="w-full px-3.5 py-2.5 rounded-2xl bg-surface border border-line text-text-primary text-sm font-medium uppercase tracking-wider focus:outline-none focus:border-accent min-h-[44px]"
-                  />
-                </div>
+                {/* Código de Referido / Sorteo (Solo si hay sorteo activo) */}
+                {hasActiveRaffle && (
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-text-primary uppercase tracking-wider flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <span aria-hidden="true">🎁</span>
+                        <span>Código de Referido / Sorteo (Opcional)</span>
+                      </span>
+                      <span className="text-accent flex items-center gap-1 font-semibold text-[11px]">
+                        <Sparkles className="w-3 h-3" />
+                        Boletos extra
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej. BURGER-AMIGO"
+                      {...register('referralCode')}
+                      className="w-full px-3.5 py-2.5 rounded-2xl bg-surface border border-line text-text-primary text-sm font-medium uppercase tracking-wider focus:outline-none focus:border-accent min-h-[44px]"
+                    />
+                  </div>
+                )}
 
-                {/* Opt-in WhatsApp Group */}
-                <label className="flex items-start gap-2.5 p-3 rounded-2xl bg-surface border border-line cursor-pointer">
-                  <input
-                    type="checkbox"
-                    {...register('wantsWhatsappGroup')}
-                    className="mt-1 rounded text-accent focus:ring-accent w-4 h-4"
-                  />
-                  <span className="text-xs text-text-secondary leading-relaxed">
-                    📲 Quiero recibir avisos de promociones y dinámicas exclusivas en WhatsApp.
-                  </span>
-                </label>
+                {/* Opt-in WhatsApp Group (Se despliega tras escribir los 10 dígitos del teléfono) */}
+                <AnimatePresence>
+                  {isPhoneComplete && (
+                    <motion.label
+                      initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, height: 0, y: -6 }}
+                      animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, height: 'auto', y: 0 }}
+                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, height: 0, y: -6 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex items-start gap-2.5 p-3 rounded-2xl bg-surface border border-line cursor-pointer overflow-hidden"
+                    >
+                      <input
+                        type="checkbox"
+                        {...register('wantsWhatsappGroup')}
+                        className="mt-1 rounded text-accent focus:ring-accent w-4 h-4 shrink-0"
+                      />
+                      <span className="text-xs text-text-secondary leading-relaxed">
+                        📲 Quiero unirme a la comunidad y recibir avisos de promociones exclusivas en WhatsApp.
+                      </span>
+                    </motion.label>
+                  )}
+                </AnimatePresence>
               </div>
             )}
           </form>

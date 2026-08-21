@@ -141,10 +141,94 @@ export function usePublicConfig() {
 }
 
 /**
+ * Recetas canónicas de producción de respaldo para asegurar que todas las burgers
+ * y combos muestren sus ingredientes removibles sin importar variaciones de SKU.
+ */
+export const CANONICAL_BURGER_RECIPES: Record<string, string[]> = {
+  OG: [
+    'Carne smash',
+    'Tocino',
+    'Queso americano',
+    'Queso manchego',
+    'Jitomate',
+    'Lechuga',
+    'Pepinillos',
+    'Mayonesa',
+    'Catsup',
+    'Mostaza',
+  ],
+  BBQ: [
+    'Carne smash',
+    'Tocino',
+    'Queso americano',
+    'Queso manchego',
+    'Aros de cebolla',
+    'Pepinillos',
+    'Salsa BBQ',
+    'Catsup',
+  ],
+  EL_DIABLO: [
+    'Carne Sirloin',
+    'Tocino',
+    'Queso americano',
+    'Queso crema',
+    'Rajas de nachos',
+    'Rajas tempura',
+    'Catsup',
+  ],
+};
+
+/**
+ * Función canónica para buscar la lista de ingredientes removibles de una burger o producto
+ * por su SKU, tolerante a prefijos (BRG-, COMBO-, PROMO-) y mayúsculas/minúsculas.
+ */
+export function lookupRecipeBySku(
+  sku?: string,
+  recipes?: Record<string, string[]>
+): string[] {
+  if (!sku) return CANONICAL_BURGER_RECIPES.OG;
+
+  const rawKey = sku.trim().toUpperCase();
+  const normalizedKey = rawKey
+    .replace(/^(?:BRG|BURGER|COMBO|PROMO)-?/, '')
+    .replace(/[^A-Z0-9_]/g, '');
+
+  if (recipes) {
+    if (recipes[rawKey]?.length) return recipes[rawKey];
+    if (recipes[normalizedKey]?.length) return recipes[normalizedKey];
+    // Intento con búsqueda parcial en claves del diccionario D1
+    const matchingKey = Object.keys(recipes).find(
+      (k) => k.toUpperCase() === rawKey || k.toUpperCase() === normalizedKey
+    );
+    if (matchingKey && recipes[matchingKey]?.length) {
+      return recipes[matchingKey];
+    }
+  }
+
+  // Fallbacks canónicos de recetas según el SKU
+  if (normalizedKey.includes('BBQ')) return CANONICAL_BURGER_RECIPES.BBQ;
+  if (normalizedKey.includes('DIABLO')) return CANONICAL_BURGER_RECIPES.EL_DIABLO;
+  return CANONICAL_BURGER_RECIPES.OG;
+}
+
+/**
  * Hook selector para obtener los ingredientes/receta de un producto según su SKU.
  */
 export function useItemRecipe(sku?: string): string[] {
   const query = useMenuQuery();
-  if (!sku || !query.data?.recipes) return [];
-  return query.data.recipes[sku] ?? query.data.recipes[sku.toUpperCase()] ?? [];
+  return lookupRecipeBySku(sku, query.data?.recipes);
+}
+
+/**
+ * Hook selector para obtener el diccionario completo de recetas y función de consulta.
+ */
+export function useMenuRecipes() {
+  const query = useMenuQuery();
+  const recipes = query.data?.recipes ?? {};
+
+  return {
+    ...query,
+    recipes,
+    getRecipeForSku: (sku?: string) => lookupRecipeBySku(sku, recipes),
+  };
 }

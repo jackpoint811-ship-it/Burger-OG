@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X, Plus, Minus, Check, Sparkles, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useUIStore, useCartStore, type CartItemCustomization } from '../../stores';
-import { useItemRecipe, useMenuItems } from '../../features';
+import { useMenuRecipes, useMenuItems } from '../../features';
 import { resolveCatalogAssetUrl } from '@config/assets';
 import { formatCurrency } from '../../utils/format';
 import { ProductFallbackSvg } from '../shared/ProductFallbackSvg';
@@ -27,7 +27,8 @@ export function ProductDetailDrawer() {
   const product = selectedProduct;
 
   const shouldReduceMotion = useReducedMotion();
-  const recipeIngredients = useItemRecipe(product?.sku);
+  const { getRecipeForSku } = useMenuRecipes();
+  const recipeIngredients = getRecipeForSku(product?.sku);
   const { items: allMenuItems } = useMenuItems();
 
   // State
@@ -463,6 +464,18 @@ export function ProductDetailDrawer() {
                   </button>
                 </div>
 
+                {/* Recipe Overview on Original Mode */}
+                {mode === 'original' && recipeIngredients.length > 0 && (
+                  <div className="pt-1 border-t border-line/60">
+                    <span className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider block mb-1">
+                      🥗 Ingredientes de la receta:
+                    </span>
+                    <p className="text-xs text-text-secondary leading-relaxed">
+                      {recipeIngredients.join(' · ')}
+                    </p>
+                  </div>
+                )}
+
                 {/* Customization Details */}
                 {mode === 'customize' && (
                   <div className="space-y-4 pt-2 border-t border-line/60">
@@ -669,12 +682,17 @@ export function ProductDetailDrawer() {
                       {comboBurgerProducts.map((burger, idx) => {
                         const isExpanded = expandedComboBurger === idx;
                         const draft = comboBurgerDrafts[idx];
-                        const burgerRecipe = burger.sku ? allMenuItems.find((p) => p.sku === burger.sku)?.tags || [] : [];
+                        const burgerIngredients = getRecipeForSku(burger.sku || burger.name);
 
                         const hasModifications =
                           (draft?.removedIngredients.length ?? 0) > 0 ||
                           (draft?.extras.length ?? 0) > 0 ||
                           Boolean(draft?.note);
+
+                        const draftSummary = [
+                          ...(draft?.removedIngredients ?? []).map((m) => `Sin ${m}`),
+                          ...(draft?.extras ?? []).filter((e) => e.qty > 0).map((e) => `${e.qty}x ${e.name}`),
+                        ].join(' · ');
 
                         return (
                           <div
@@ -690,8 +708,8 @@ export function ProductDetailDrawer() {
                                 <span className="text-xs font-bold text-text-primary block">
                                   {burger.name} {comboBurgerProducts.length > 1 ? `#${idx + 1}` : ''}
                                 </span>
-                                <span className="text-[11px] text-text-muted">
-                                  {hasModifications ? '✓ Personalizada' : 'Receta original'}
+                                <span className={`text-[11px] font-bold ${hasModifications ? 'text-accent' : 'text-text-muted'}`}>
+                                  {hasModifications ? `✓ ${draftSummary || 'Personalizada'}` : 'Receta original'}
                                 </span>
                               </div>
                               <div className="text-text-muted">
@@ -702,13 +720,13 @@ export function ProductDetailDrawer() {
                             {isExpanded && (
                               <div className="p-3 border-t border-line space-y-3 bg-surface/50">
                                 {/* Removals */}
-                                {recipeIngredients.length > 0 && (
+                                {burgerIngredients.length > 0 && (
                                   <div>
                                     <span className="text-[11px] font-bold text-text-primary block mb-1.5">
                                       Quitar ingredientes:
                                     </span>
                                     <div className="flex flex-wrap gap-1.5">
-                                      {recipeIngredients.map((ing) => {
+                                      {burgerIngredients.map((ing) => {
                                         const isRemoved = draft?.removedIngredients.includes(ing);
                                         return (
                                           <button
@@ -718,10 +736,10 @@ export function ProductDetailDrawer() {
                                             className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer min-h-[32px] flex items-center gap-1 ${
                                               isRemoved
                                                 ? 'bg-red-500/15 text-red-600 border border-red-500/30'
-                                                : 'bg-surface-card text-text-primary border border-line'
+                                                : 'bg-surface-card text-text-primary border border-line hover:border-text-muted'
                                             }`}
                                           >
-                                            {isRemoved ? `Sin ${ing}` : ing}
+                                            {isRemoved ? `✕ Sin ${ing}` : `✓ ${ing}`}
                                           </button>
                                         );
                                       })}

@@ -32,7 +32,11 @@
 
 ## Completados recientemente
 
-- [x] **PR-V3-13**: Cutover Definitivo a Burgers.exe V3.
+- [x] **Afinaciones de UX/UI en Public Order V3 (2026-08-21)**: Personalización de burgers/combos, switch Dark/Light, emoji regalo 🎁 en sorteos, layout 2 columnas móvil y Checkout interactivo.
+- [x] **PR #552**: Chekeo Cocina Enfocada de Producción y KPIs en Resumen K.
+- [x] **PR #551**: Chekeo Dashboard de Operación en Vivo y Semáforo del Turno.
+- [x] **PR #549**: Chekeo Alineación Operativa (Cero Relojes + Estaciones + Calendario Horizontal).
+- [x] **PR-V3-13**: Cutover Definitivo a Burgers.exe V3 (#544).
 - [x] **PR-V3-12**: Chekeo Admin Completo (#543).
 - [x] **PR-V3-11**: Chekeo Pagos, Recibos 80mm y WhatsApp Bridge (#542).
 - [x] **PR-V3-10**: Chekeo Cocina KDS & Resumen K (#541).

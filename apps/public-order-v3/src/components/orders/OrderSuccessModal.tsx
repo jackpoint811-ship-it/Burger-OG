@@ -223,7 +223,7 @@ export function OrderSuccessModal({
             {earnedTickets && earnedTickets.totalTickets > 0 && (
               <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-2 text-xs">
                 <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold">
-                  <Sparkles className="w-4 h-4" />
+                  <span className="text-base" aria-hidden="true">🎁</span>
                   <span>
                     ¡Ganaste {earnedTickets.totalTickets} boletos para el sorteo!
                   </span>

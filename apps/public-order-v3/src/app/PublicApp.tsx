@@ -55,14 +55,16 @@ export function PublicApp() {
       {/* Brand & Tower Header */}
       <BrandHeader />
 
+      {/* Promotional Banners Carousel */}
+      <div className="w-full max-w-[768px] mx-auto px-4">
+        <BannerCarousel />
+      </div>
+
       {/* Sticky Category Navigation */}
       <CategoryNav />
 
       {/* Main Catalog Body */}
       <main className="flex-1 w-full max-w-[768px] mx-auto px-4">
-        {/* Promotional Banners Carousel */}
-        <BannerCarousel />
-
         {/* Dynamic Product Grid */}
         <ProductGrid />
       </main>
