@@ -64,6 +64,19 @@ export function KitchenSummaryK() {
   const isRefreshing = isOrdersRefetching || isSummaryKRefetching;
   const isLoading = isOrdersLoading && isSummaryKLoading;
 
+  const totalBurgers = aggregates.totalBurgers;
+  const totalGuarniciones = aggregates.totalGarnishes;
+  const combosDesglosados = aggregates.recipes
+    .filter((r) => r.isComboChild)
+    .reduce((acc, r) => acc + r.totalQty, 0);
+  const sideQuestTotal = aggregates.totalGarnishes + aggregates.totalDrinks + aggregates.totalExtras;
+  const porHacer =
+    aggregates.recipes.reduce((acc, r) => acc + r.pendingQty, 0) +
+    aggregates.garnishes.reduce((acc, g) => acc + g.pendingQty, 0);
+  const hechas =
+    aggregates.recipes.reduce((acc, r) => acc + r.readyQty, 0) +
+    aggregates.garnishes.reduce((acc, g) => acc + g.readyQty, 0);
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* ─── Encabezado de Control de Resumen K ────────────────────────────────── */}
@@ -110,66 +123,69 @@ export function KitchenSummaryK() {
         </div>
       </div>
 
-      {/* ─── Tarjetas de Resumen KPI ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 sm:p-5 rounded-3xl bg-surface-card border border-line shadow-card space-y-1">
-          <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-text-muted">
-            <span>Burgers Activas</span>
-            <span className="text-lg">🍔</span>
-          </div>
+      {/* ─── Tarjetas de Resumen KPI Estilo Producción ───────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+        {/* 1. Total Burgers */}
+        <div className="p-4 rounded-3xl bg-surface-card border border-line shadow-card space-y-1">
+          <span className="text-[11px] font-black uppercase tracking-wider text-text-muted">
+            TOTAL BURGERS
+          </span>
           <p className="text-3xl sm:text-4xl font-black text-text-primary">
-            {isLoading ? <Skeleton className="h-9 w-16" /> : aggregates.totalBurgers}
-          </p>
-          <p className="text-[11px] font-bold text-accent">
-            En {aggregates.activeOrdersCount} comandas activas
+            {isLoading ? <Skeleton className="h-9 w-12" /> : totalBurgers}
           </p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-3xl bg-surface-card border border-line shadow-card space-y-1">
-          <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-text-muted">
-            <span>Guarniciones</span>
-            <span className="text-lg">🍟</span>
-          </div>
+        {/* 2. Total Guarniciones */}
+        <div className="p-4 rounded-3xl bg-surface-card border border-line shadow-card space-y-1">
+          <span className="text-[11px] font-black uppercase tracking-wider text-text-muted">
+            TOTAL GUARNICIONES
+          </span>
+          <p className="text-3xl sm:text-4xl font-black text-text-primary">
+            {isLoading ? <Skeleton className="h-9 w-12" /> : totalGuarniciones}
+          </p>
+        </div>
+
+        {/* 3. Combos Desglosados */}
+        <div className="p-4 rounded-3xl bg-surface-card border border-line shadow-card space-y-1">
+          <span className="text-[11px] font-black uppercase tracking-wider text-text-muted">
+            COMBOS DESGLOSADOS
+          </span>
+          <p className="text-3xl sm:text-4xl font-black text-text-primary">
+            {isLoading ? <Skeleton className="h-9 w-12" /> : combosDesglosados}
+          </p>
+        </div>
+
+        {/* 4. Side Quest */}
+        <div className="p-4 rounded-3xl bg-surface-card border border-line shadow-card space-y-1">
+          <span className="text-[11px] font-black uppercase tracking-wider text-text-muted">
+            SIDE QUEST
+          </span>
+          <p className="text-3xl sm:text-4xl font-black text-text-primary">
+            {isLoading ? <Skeleton className="h-9 w-12" /> : sideQuestTotal}
+          </p>
+        </div>
+
+        {/* 5. Por Hacer */}
+        <div className="p-4 rounded-3xl bg-surface-card border border-line shadow-card space-y-1">
+          <span className="text-[11px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            POR HACER
+          </span>
           <p className="text-3xl sm:text-4xl font-black text-amber-600 dark:text-amber-400">
-            {isLoading ? <Skeleton className="h-9 w-16" /> : aggregates.totalGarnishes}
-          </p>
-          <p className="text-[11px] font-bold text-text-muted">
-            Papas, aros y complementos
+            {isLoading ? <Skeleton className="h-9 w-12" /> : porHacer}
           </p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-3xl bg-surface-card border border-line shadow-card space-y-1">
-          <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-text-muted">
-            <span>Extras Totales</span>
-            <span className="text-lg">🥓</span>
-          </div>
+        {/* 6. Hechas */}
+        <div className="p-4 rounded-3xl bg-surface-card border border-line shadow-card space-y-1">
+          <span className="text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            HECHAS
+          </span>
           <p className="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400">
-            {isLoading ? <Skeleton className="h-9 w-16" /> : aggregates.totalExtras}
-          </p>
-          <p className="text-[11px] font-bold text-text-muted">
-            Tocino, quesos, aderezos
-          </p>
-        </div>
-
-        <div className="p-4 sm:p-5 rounded-3xl bg-surface-card border border-line shadow-card space-y-1">
-          <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-text-muted">
-            <span>Insumos D1</span>
-            <span className="text-lg">🧾</span>
-          </div>
-          <p className="text-3xl sm:text-4xl font-black text-blue-600 dark:text-blue-400">
-            {isSummaryKLoading ? (
-              <Skeleton className="h-9 w-16" />
-            ) : (
-              summaryKData?.totals?.ingredients ?? 0
-            )}
-          </p>
-          <p className="text-[11px] font-bold text-text-muted">
-            {summaryKData?.totals?.estimatedCostCents
-              ? `Costo est: ${formatCurrency(summaryKData.totals.estimatedCostCents / 100)}`
-              : 'Recetas cuantificables'}
+            {isLoading ? <Skeleton className="h-9 w-12" /> : hechas}
           </p>
         </div>
       </div>
+
 
       {/* ─── Desglose de Producción ───────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -7,3 +7,4 @@
 export * from './KitchenTicketCard';
 export * from './KitchenDisplay';
 export * from './KitchenSummaryK';
+export * from './KitchenActiveStation';
