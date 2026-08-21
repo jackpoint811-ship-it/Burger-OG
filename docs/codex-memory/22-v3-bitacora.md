@@ -244,13 +244,13 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 ### 📅 2026-08-21 — Sesión 21: Afinaciones de UX/UI y Personalización en Public Order V3 — PR #553
 - Personalización de burgers y combos mediante `useMenuRecipes`, switch Dark/Light persistente, emoji regalo 🎁 en sorteos, layout móvil de 2 columnas y checkout condicional.
 
-### 📅 2026-08-21 — Sesión 22: Consolidación de Banners y Catálogo Interactivo en V3
-- **Chekeo Admin Banners**: Live Preview WYSIWYG en modal de edición y selectores inteligentes de categorías y productos reales de D1 (`useAdminMenu()`) para `ctaTarget`.
-- **Public Carrusel Comercial**: `BannerCarousel.tsx` con soporte de 6 gradientes temáticos (`bgPreset`), acciones directas de apertura de productos (`openProductDrawer`), scroll a categorías, copia de cupones y swipe táctil inercial con `framer-motion`.
-- **Módulo Top Vendidos**: Creado `FeaturedRail.tsx` con riel horizontal de acceso rápido de 1 tap a productos destacados.
-- **Módulo 1-Click Reorder**: Creado `ReorderModule.tsx` con persistencia del snapshot en `localStorage` (`pov3-last-order`) al completar pedido.
-- **Scrollspy Bidireccional**: `CategoryNav.tsx` con `IntersectionObserver` sincronizando automáticamente la píldora activa al hacer scroll.
-- **Verificaciones**: `typecheck` ✅ (0 errores), `build:public` ✅ (537 kB), `build:chekeo` ✅ (600 kB), `git diff --check` ✅.
+### 📅 2026-08-21 — Sesión 22: Consolidación de Banners y Catálogo Interactivo en V3 — PR #554
+- Live Preview WYSIWYG en Chekeo Banners, BannerCarousel interactivo, FeaturedRail (Top Vendidos), ReorderModule (1-Click Reorder) y Scrollspy en CategoryNav.
+
+### 📅 2026-08-21 — Sesión 23: Sincronización de Staging (Preview ➔ Burgers.exe V3)
+- **Alineación de Preview**: Sincronizada la rama `preview` con la versión más reciente de `v3`, erradicando definitivamente el código legacy de V2.
+- **Validación Staging**: `typecheck` ✅ (0 errores), `build:public` ✅ (537 kB), `build:chekeo` ✅ (600 kB).
+- **Despliegue Automático**: Habilitado el pipeline de CI/CD para que Cloudflare Pages despliegue la suite completa de V3 en el entorno de pruebas en vivo.
 
 ---
 

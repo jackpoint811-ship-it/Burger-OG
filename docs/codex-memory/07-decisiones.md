@@ -286,3 +286,23 @@ Maximizar la conversión comercial y la velocidad de pedido en la app pública, 
 - Clientes recurrentes pueden reordenar en 1 clic.
 - Banners promocionales abren el producto directamente sin fricción.
 - Navegación de categorías siempre sincronizada con la posición en pantalla.
+
+### Fecha
+
+2026-08-21
+
+### Decisión
+
+**Sincronización de la Rama `preview` con Burgers.exe V3 (Staging Environment)**:
+
+Se actualiza la rama `preview` incorporando el árbol completo de `v3` y eliminando definitivamente la deuda técnica de V2 (`legacy/`, `apps/*-v2`).
+
+### Motivo
+
+Permitir la validación de campo y pruebas de extremo a extremo en el entorno de Staging / Preview de Cloudflare Pages antes de realizar el Cutover definitivo hacia `main` (Producción), manteniendo `main` 100% protegida e inalterada.
+
+### Impacto
+
+- El entorno de preview despliega Burgers.exe V3 en vivo de forma autónoma.
+- Cero riesgo operativo para la versión en producción.
+- Alineación total de las ramas de trabajo del proyecto.
