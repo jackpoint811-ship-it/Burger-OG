@@ -32,7 +32,8 @@
 
 ## Completados recientemente
 
-- [x] **Afinaciones de UX/UI en Public Order V3 (2026-08-21)**: Personalización de burgers/combos, switch Dark/Light, emoji regalo 🎁 en sorteos, layout 2 columnas móvil y Checkout interactivo.
+- [x] **Consolidación de Banners y Catálogo V3 (2026-08-21)**: Live Preview y selectores inteligentes en Chekeo Banners, BannerCarousel interactivo, FeaturedRail (Top Vendidos), ReorderModule (1-Click Reorder) y Scrollspy en CategoryNav.
+- [x] **PR #553**: Afinaciones de UX/UI en Public Order V3 (Personalización burgers/combos, switch Dark/Light, emoji 🎁, layout 2 cols, checkout).
 - [x] **PR #552**: Chekeo Cocina Enfocada de Producción y KPIs en Resumen K.
 - [x] **PR #551**: Chekeo Dashboard de Operación en Vivo y Semáforo del Turno.
 - [x] **PR #549**: Chekeo Alineación Operativa (Cero Relojes + Estaciones + Calendario Horizontal).

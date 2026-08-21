@@ -241,13 +241,16 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - Creada `KitchenActiveStation.tsx` con comanda activa destacada (`PEDIDO ACTIVO`), botón gigante de 1 toque `✔ Hecha / Marcar Lista`, cola táctil de espera y acordeón de comandas listas con reversión.
 - Rediseñado `KitchenSummaryK.tsx` con tarjetas KPI grandes para insumos y mise en place.
 
-### 📅 2026-08-21 — Sesión 21: Afinaciones de UX/UI y Personalización en Public Order V3
-- **Personalización de Burgers y Combos**: Implementado `useMenuRecipes` y `lookupRecipeBySku` garantizando detección de ingredientes removibles para hamburguesas individuales y dentro de combos.
-- **Switch de Tema Dark / Light**: Incorporado toggle accesible (`Sun` / `Moon`) en `BrandHeader.tsx` con persistencia en `localStorage`.
-- **Emoji de Regalo 🎁 en Sorteos**: Reemplazado el ícono de ticket genérico por el emoji `🎁` en cabecera, checkout y modal de confirmación.
-- **Layout Adaptativo 2 Columnas Móvil**: Banners previos a la barra sticky de categorías y grilla `grid-cols-2` en móviles.
-- **Checkout Limpio**: Campo de referido oculto si no hay sorteo activo y opt-in a WhatsApp desplegado condicionalmente tras ingresar 10 dígitos del teléfono.
-- **Verificaciones**: `typecheck` ✅ (0 errores), `build:public` ✅ (530 kB), `build:chekeo` ✅ (597 kB), `git diff --check` ✅.
+### 📅 2026-08-21 — Sesión 21: Afinaciones de UX/UI y Personalización en Public Order V3 — PR #553
+- Personalización de burgers y combos mediante `useMenuRecipes`, switch Dark/Light persistente, emoji regalo 🎁 en sorteos, layout móvil de 2 columnas y checkout condicional.
+
+### 📅 2026-08-21 — Sesión 22: Consolidación de Banners y Catálogo Interactivo en V3
+- **Chekeo Admin Banners**: Live Preview WYSIWYG en modal de edición y selectores inteligentes de categorías y productos reales de D1 (`useAdminMenu()`) para `ctaTarget`.
+- **Public Carrusel Comercial**: `BannerCarousel.tsx` con soporte de 6 gradientes temáticos (`bgPreset`), acciones directas de apertura de productos (`openProductDrawer`), scroll a categorías, copia de cupones y swipe táctil inercial con `framer-motion`.
+- **Módulo Top Vendidos**: Creado `FeaturedRail.tsx` con riel horizontal de acceso rápido de 1 tap a productos destacados.
+- **Módulo 1-Click Reorder**: Creado `ReorderModule.tsx` con persistencia del snapshot en `localStorage` (`pov3-last-order`) al completar pedido.
+- **Scrollspy Bidireccional**: `CategoryNav.tsx` con `IntersectionObserver` sincronizando automáticamente la píldora activa al hacer scroll.
+- **Verificaciones**: `typecheck` ✅ (0 errores), `build:public` ✅ (537 kB), `build:chekeo` ✅ (600 kB), `git diff --check` ✅.
 
 ---
 

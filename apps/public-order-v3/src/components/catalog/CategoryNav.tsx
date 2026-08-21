@@ -8,6 +8,8 @@ export function CategoryNav() {
   const setActiveCategoryKey = useUIStore((s) => s.setActiveCategoryKey);
   const navRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const isProgrammaticScroll = useRef(false);
+  const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Default active category to first one if none selected
   useEffect(() => {
@@ -15,6 +17,40 @@ export function CategoryNav() {
       setActiveCategoryKey(categories[0].key);
     }
   }, [activeCategoryKey, categories, setActiveCategoryKey]);
+
+  // Scrollspy: detect active category when scrolling vertically
+  useEffect(() => {
+    if (categories.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isProgrammaticScroll.current) return;
+
+        const visibleEntries = entries.filter((entry) => entry.isIntersecting);
+        if (visibleEntries.length > 0) {
+          const firstVisible = visibleEntries[0];
+          const catKey = firstVisible.target.id.replace('category-', '');
+          if (catKey && catKey.toLowerCase() !== activeCategoryKey?.toLowerCase()) {
+            setActiveCategoryKey(catKey);
+          }
+        }
+      },
+      {
+        rootMargin: '-80px 0px -60% 0px',
+        threshold: 0.1,
+      }
+    );
+
+    categories.forEach((cat) => {
+      const el = document.getElementById(`category-${cat.key.toLowerCase()}`);
+      if (el) observer.observe(el);
+    });
+
+    return () => {
+      observer.disconnect();
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    };
+  }, [categories, activeCategoryKey, setActiveCategoryKey]);
 
   // Scroll active tab into view horizontally
   useEffect(() => {
@@ -34,6 +70,12 @@ export function CategoryNav() {
 
   const handleCategoryClick = (categoryKey: string) => {
     setActiveCategoryKey(categoryKey);
+    isProgrammaticScroll.current = true;
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    scrollTimeout.current = setTimeout(() => {
+      isProgrammaticScroll.current = false;
+    }, 800);
+
     const element = document.getElementById(`category-${categoryKey.toLowerCase()}`);
     if (element) {
       // Offset for sticky header

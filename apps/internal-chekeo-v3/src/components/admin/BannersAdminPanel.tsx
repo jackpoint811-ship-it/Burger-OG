@@ -25,7 +25,7 @@ import {
 import type { CatalogBanner } from '@config/index';
 import { Button } from '@ui/button';
 import { Badge } from '@ui/badge';
-import { useAdminBanners } from '../../features/admin/hooks/use-admin';
+import { useAdminBanners, useAdminMenu } from '../../features/admin/hooks/use-admin';
 import type { CreateCatalogBannerPayload, UpdateCatalogBannerPayload } from '../../features/admin/types/admin.types';
 
 const BG_PRESETS = [
@@ -58,6 +58,8 @@ export function BannersAdminPanel() {
     uploadBannerImageMutation,
     deleteBannerImageMutation,
   } = useAdminBanners();
+
+  const { items: menuItems = [], categories: menuCategories = [] } = useAdminMenu();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<CatalogBanner | null>(null);
@@ -402,6 +404,55 @@ export function BannersAdminPanel() {
               </button>
             </div>
 
+            {/* Live WYSIWYG Mockup Preview */}
+            <div className="p-4 bg-surface border-b border-line shrink-0">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-text-muted block mb-2">
+                👁️ Vista Previa en Vivo (Móvil)
+              </span>
+              <div
+                className="w-full rounded-2xl p-4 sm:p-5 text-white relative overflow-hidden shadow-lg border border-white/15"
+                style={{
+                  background:
+                    BG_PRESETS.find((p) => p.key === bgPreset)?.style ||
+                    'linear-gradient(135deg, #15803D 0%, #16A34A 100%)',
+                }}
+              >
+                <div className="flex items-center justify-between gap-3 relative z-10">
+                  <div className="space-y-1 max-w-[70%]">
+                    {badgeText && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/40 text-white text-[10px] font-extrabold uppercase border border-white/20">
+                        ⭐ {badgeText}
+                      </span>
+                    )}
+                    <h4 className="text-base font-extrabold leading-tight text-white line-clamp-2">
+                      {title || 'Título del Banner'}
+                    </h4>
+                    {subtitle && (
+                      <p className="text-xs text-white/80 line-clamp-1">
+                        {subtitle}
+                      </p>
+                    )}
+                    {ctaLabel && (
+                      <span className="inline-block mt-2 text-[11px] font-extrabold bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg backdrop-blur-xs border border-white/30">
+                        {ctaLabel} →
+                      </span>
+                    )}
+                  </div>
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      alt="Banner Preview"
+                      className="w-16 h-16 rounded-xl object-cover border border-white/30 shrink-0 shadow-md"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-2xl shrink-0">
+                      🍔
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <form onSubmit={handleSaveBanner} className="p-6 overflow-y-auto space-y-4 flex-1">
               <div>
                 <label className="block text-xs font-semibold text-text-secondary mb-1">
@@ -488,7 +539,17 @@ export function BannersAdminPanel() {
                   </label>
                   <select
                     value={ctaActionType}
-                    onChange={(e) => setCtaActionType(e.target.value)}
+                    onChange={(e) => {
+                      const newType = e.target.value;
+                      setCtaActionType(newType);
+                      if (newType === 'category' && menuCategories[0]) {
+                        setCtaTarget(menuCategories[0].key);
+                      } else if (newType === 'product' && menuItems[0]) {
+                        setCtaTarget(menuItems[0].sku);
+                      } else if (newType === 'raffle') {
+                        setCtaTarget('/tickets');
+                      }
+                    }}
                     className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent"
                   >
                     <option value="category">Filtrar Categoría</option>
@@ -502,13 +563,41 @@ export function BannersAdminPanel() {
                   <label className="block text-xs font-semibold text-text-secondary mb-1">
                     Destino (Target)
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Ej. burgers o SKU"
-                    value={ctaTarget}
-                    onChange={(e) => setCtaTarget(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent"
-                  />
+                  {ctaActionType === 'category' ? (
+                    <select
+                      value={ctaTarget}
+                      onChange={(e) => setCtaTarget(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent"
+                    >
+                      <option value="">-- Selecciona una categoría --</option>
+                      {menuCategories.map((c) => (
+                        <option key={c.key} value={c.key}>
+                          {c.emoji || '📁'} {c.name} ({c.key})
+                        </option>
+                      ))}
+                    </select>
+                  ) : ctaActionType === 'product' ? (
+                    <select
+                      value={ctaTarget}
+                      onChange={(e) => setCtaTarget(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent"
+                    >
+                      <option value="">-- Selecciona un producto --</option>
+                      {menuItems.map((p) => (
+                        <option key={p.sku} value={p.sku}>
+                          {p.name} ({p.sku}) — ${p.price}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder={ctaActionType === 'url' ? 'https://...' : 'Ej. /tickets o cupón'}
+                      value={ctaTarget}
+                      onChange={(e) => setCtaTarget(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent"
+                    />
+                  )}
                 </div>
               </div>
 

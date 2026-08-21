@@ -291,6 +291,13 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
       const response = await createOrderMutation.mutateAsync({ payload });
 
       if (response?.ok && response?.data?.order) {
+        // Guardar snapshot para 1-Click Reorder
+        try {
+          localStorage.setItem('pov3-last-order', JSON.stringify(items));
+        } catch {
+          // Ignored
+        }
+
         closeDrawer();
         resetAfterOrder();
         pushToast('¡Pedido creado exitosamente!', 'success', 4000);

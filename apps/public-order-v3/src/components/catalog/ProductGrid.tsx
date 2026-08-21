@@ -2,6 +2,8 @@ import React from 'react';
 import { useCategories, useMenuItems, useCategoryBanners } from '../../features';
 import { resolveCatalogAssetUrl } from '@config/assets';
 import { ProductCard } from './ProductCard';
+import { FeaturedRail } from './FeaturedRail';
+import { ReorderModule } from './ReorderModule';
 import type { MenuCategory, MenuItem } from '@config/contracts';
 
 export function ProductGrid() {
@@ -41,7 +43,14 @@ export function ProductGrid() {
   }
 
   return (
-    <div className="w-full space-y-10 py-4 pb-28">
+    <div className="w-full space-y-8 py-2 pb-28">
+      {/* 1-Click Reorder Module (Visible si hay orden previa) */}
+      <ReorderModule />
+
+      {/* Top Vendidos Horizontal Rail */}
+      <FeaturedRail />
+
+      {/* Categorized Products List */}
       {categories.map((category: MenuCategory) => {
         const categoryItems = allItems.filter(
           (item: MenuItem) =>

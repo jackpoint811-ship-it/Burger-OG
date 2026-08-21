@@ -262,3 +262,27 @@ Recuperar la experiencia fluida de personalización y compra probada en producci
 - Cero pedidos de burgers o combos bloqueados sin posibilidad de personalización.
 - Soporte visual nativo para modo oscuro en la app de clientes.
 - Reducción de ruido visual en el checkout para usuarios sin código o que aún no ingresan su teléfono.
+
+### Fecha
+
+2026-08-21
+
+### Decisión
+
+**Consolidación de Banners y Catálogo Interactivo en Chekeo Admin y Public Order V3**:
+
+1. **Chekeo Admin Banners**: Se integra un Live Preview (WYSIWYG) en tiempo real en el modal de edición de banners y selectores desplegables dinámicos para categorías y productos (`useAdminMenu()`), eliminando el tipeo manual propenso a errores en `ctaTarget`.
+2. **Public Carrusel Comercial y Gestos**: `BannerCarousel.tsx` soporta los 6 gradientes temáticos (`bgPreset`), acciones directas a productos (`openProductDrawer`), scroll a categorías, copiado de cupones y swipe táctil inercial con `framer-motion`.
+3. **Módulo Top Vendidos (Featured Rail)**: Riel horizontal (`FeaturedRail.tsx`) arriba del catálogo con acceso en 1 tap a productos destacados.
+4. **Módulo 1-Click Reorder**: `ReorderModule.tsx` lee el último pedido en `localStorage` (`pov3-last-order`) permitiendo repetir la comanda exacta al instante.
+5. **Scrollspy Bidireccional**: `CategoryNav.tsx` implementa `IntersectionObserver` para auto-centrar y actualizar la categoría activa conforme se desplaza la vista por el catálogo.
+
+### Motivo
+
+Maximizar la conversión comercial y la velocidad de pedido en la app pública, brindando a la vez herramientas de gestión visual precisas en Chekeo Admin.
+
+### Impacto
+
+- Clientes recurrentes pueden reordenar en 1 clic.
+- Banners promocionales abren el producto directamente sin fricción.
+- Navegación de categorías siempre sincronizada con la posición en pantalla.
