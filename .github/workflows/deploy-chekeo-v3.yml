@@ -2,9 +2,10 @@ name: 🔐 Deploy Internal Chekeo V3
 
 on:
   push:
-    branches: [v3]
+    branches: [v3, preview]
   pull_request:
-    branches: [v3]
+    branches: [v3, preview]
+  workflow_dispatch:
 
 jobs:
   deploy:
