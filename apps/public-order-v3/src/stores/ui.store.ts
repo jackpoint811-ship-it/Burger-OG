@@ -7,6 +7,7 @@
 
 import { create } from 'zustand';
 import type { ZodMenuItem } from '@config/schemas';
+import type { CartItem } from './cart.store';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -24,6 +25,8 @@ interface UIState {
   activeDrawer: DrawerName | null;
   /** Producto seleccionado para el ProductDrawer */
   selectedProduct: ZodMenuItem | null;
+  /** Ítem del carrito actualmente en edición (o null si es producto nuevo) */
+  editingCartItem: CartItem | null;
   /** Clave de categoría activa en la navegación horizontal */
   activeCategoryKey: string | null;
   /** Cola de toasts */
@@ -33,7 +36,7 @@ interface UIState {
 interface UIActions {
   openDrawer: (drawer: DrawerName) => void;
   closeDrawer: () => void;
-  openProductDrawer: (product: ZodMenuItem) => void;
+  openProductDrawer: (product: ZodMenuItem, editingCartItem?: CartItem | null) => void;
   setActiveCategoryKey: (key: string | null) => void;
   pushToast: (message: string, type?: ToastMessage['type'], durationMs?: number) => void;
   dismissToast: (id: string) => void;
@@ -46,6 +49,7 @@ export const useUIStore = create<UIState & UIActions>()((set, get) => ({
   // Estado inicial
   activeDrawer: null,
   selectedProduct: null,
+  editingCartItem: null,
   activeCategoryKey: null,
   toasts: [],
 
@@ -53,10 +57,10 @@ export const useUIStore = create<UIState & UIActions>()((set, get) => ({
 
   openDrawer: (drawer) => set({ activeDrawer: drawer }),
 
-  closeDrawer: () => set({ activeDrawer: null }),
+  closeDrawer: () => set({ activeDrawer: null, editingCartItem: null }),
 
-  openProductDrawer: (product) =>
-    set({ selectedProduct: product, activeDrawer: 'product' }),
+  openProductDrawer: (product, editingCartItem = null) =>
+    set({ selectedProduct: product, editingCartItem, activeDrawer: 'product' }),
 
   setActiveCategoryKey: (key) => set({ activeCategoryKey: key }),
 

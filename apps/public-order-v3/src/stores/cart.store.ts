@@ -65,6 +65,10 @@ interface CartActions {
    */
   addItem: (item: Omit<CartItem, 'cartLineId'> & { cartLineId?: string }) => void;
   /**
+   * Actualiza los datos o personalización de una línea existente.
+   */
+  updateItem: (cartLineId: string, updatedItem: Partial<CartItem>) => void;
+  /**
    * Actualiza la cantidad de una línea específica.
    * Si qty <= 0, elimina la línea.
    */
@@ -128,6 +132,20 @@ export const useCartStore = create<CartState & CartActions>()(
           nextItems = [...get().items, newItem];
         }
 
+        set({ items: nextItems, ...computeLineTotals(nextItems) });
+      },
+
+      updateItem: (cartLineId, updated) => {
+        const nextItems = get().items.map((i) =>
+          i.cartLineId === cartLineId
+            ? {
+                ...i,
+                ...updated,
+                lineTotal:
+                  (updated.quantity ?? i.quantity) * (updated.unitPrice ?? i.unitPrice),
+              }
+            : i
+        );
         set({ items: nextItems, ...computeLineTotals(nextItems) });
       },
 
