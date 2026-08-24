@@ -70,7 +70,7 @@ export function CartDrawer() {
   const handleEditItem = (item: CartItem) => {
     const menuItem = allMenuItems.find((p) => p.sku.toUpperCase() === item.sku.toUpperCase());
     if (menuItem) {
-      openProductDrawer(menuItem);
+      openProductDrawer(menuItem, item);
     }
   };
 
@@ -351,6 +351,19 @@ export function CartDrawer() {
                               Nota: &quot;{custom.burgerNote}&quot;
                             </div>
                           )}
+                        </div>
+                      )}
+
+                      {/* Edit customization link */}
+                      {(hasCustomizations || menuItem?.category.toLowerCase() === 'burgers' || menuItem?.category.toLowerCase() === 'combos') && (
+                        <div className="pt-1.5 border-t border-line/40 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => handleEditItem(item)}
+                            className="text-[11px] font-bold text-accent hover:underline flex items-center gap-1 cursor-pointer py-0.5"
+                          >
+                            <span>✏️ Editar personalización</span>
+                          </button>
                         </div>
                       )}
                     </div>

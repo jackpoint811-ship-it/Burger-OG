@@ -252,6 +252,21 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Validación Staging**: `typecheck` ✅ (0 errores), `build:public` ✅ (537 kB), `build:chekeo` ✅ (600 kB).
 - **Despliegue Automático**: Habilitado el pipeline de CI/CD para que Cloudflare Pages despliegue la suite completa de V3 en el entorno de pruebas en vivo.
 
+### 📅 2026-08-24 — Sesión 24: Paridad Total de Personalización con Producción
+- **Restitución de Estructura Canónica de Producción**:
+  - `ProductDetailDrawer.tsx`: Muestra la lista de ingredientes de la receta de D1 (`🥗 INGREDIENTES DE LA RECETA`) con nombres reales desde `product_ingredient_recipes_v2` e `ingredients_v2`.
+  - Mantiene los dos botones canónicos `[ 🍔 Receta Original ]` y `[ 🛠️ Personalizar ]` con estilos y estados de selección idénticos a Producción.
+  - Al activar `🛠️ Personalizar`: despliegue interactivo de chips `✓ [Ingrediente]` / `✕ Sin [Ingrediente]`, sumadores de extras con precios reales y notas de cocina.
+- **Combos Reales**:
+  - Filtrado estricto de `comboBurgerProducts` para incluir únicamente productos cuya categoría sea `burgers`, excluyendo complementos como `PAPAS_OG`.
+  - Selectores dinámicos de Guarnición (`guarniciones`) y Bebida (`drinks`) tipo radio.
+- **Edición Fluida desde el Carrito**:
+  - `ui.store.ts` y `cart.store.ts`: Soporte para `editingCartItem` y `updateItem()`.
+  - `CartDrawer.tsx`: Enlace *"✏️ Editar personalización"* para reabrir el drawer precargado con el modo, ingredientes quitados, extras y notas para actualizar la comanda sin duplicar la línea.
+- **Verificación**:
+  - `npm run typecheck` ✅ (0 errores).
+  - `npm run build:public` ✅ y `npm run build:chekeo` ✅.
+
 ---
 
 ## 📌 Issues Abiertos
