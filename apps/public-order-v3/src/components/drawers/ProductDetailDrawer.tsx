@@ -30,7 +30,10 @@ export function ProductDetailDrawer() {
 
   const shouldReduceMotion = useReducedMotion();
   const { getRecipeForSku } = useMenuRecipes();
-  const recipeIngredients = getRecipeForSku(product?.sku);
+  const recipeIngredients = useMemo(() => {
+    return product ? getRecipeForSku(product.sku) : [];
+  }, [product, getRecipeForSku]);
+
   const { items: allMenuItems } = useMenuItems();
 
   // State
@@ -68,29 +71,37 @@ export function ProductDetailDrawer() {
     (g) => g.name.toLowerCase().includes('bebida') || g.name.toLowerCase().includes('drink')
   );
 
-  // Available side options
+  // Available side options (Aros de Cebolla con +$10 de upcharge acordado)
   const sideOptions = useMemo(() => {
     if (!isCombo) return [];
     if (sideGroup && sideGroup.options.length > 0) {
       return sideGroup.options.map((opt) => {
         const item = allMenuItems.find((p) => p.sku.toUpperCase() === opt.sku.toUpperCase());
+        const isAros = opt.sku.toUpperCase().includes('AROS') || item?.name.toLowerCase().includes('aros');
+        const upcharge = isAros ? 10 : (opt.upchargeCents || 0) / 100;
         return {
           sku: opt.sku,
           name: item?.name ?? opt.sku,
-          upcharge: (opt.upchargeCents || 0) / 100,
+          upcharge,
           isDefault: opt.isDefault,
         };
       });
     }
-    // Fallback to all items in guarniciones category
-    return allMenuItems
-      .filter((p) => p.category.toLowerCase() === 'guarniciones' && p.isAvailable !== false)
-      .map((p, idx) => ({
+    // Fallback to all items in guarniciones category con +$10 para Aros de Cebolla
+    const sides = allMenuItems.filter(
+      (p) => p.category.toLowerCase() === 'guarniciones' && p.isAvailable !== false
+    );
+    const basePrice = sides[0]?.price ?? 25;
+    return sides.map((p, idx) => {
+      const isAros = p.sku.toUpperCase().includes('AROS') || p.name.toLowerCase().includes('aros');
+      const diff = isAros ? 10 : Math.max(0, p.price - basePrice);
+      return {
         sku: p.sku,
         name: p.name,
-        upcharge: 0,
+        upcharge: diff,
         isDefault: idx === 0,
-      }));
+      };
+    });
   }, [isCombo, sideGroup, allMenuItems]);
 
   // Available drink options
@@ -133,7 +144,7 @@ export function ProductDetailDrawer() {
     return product.category.toLowerCase() === 'burgers' ? [product] : [];
   }, [isCombo, product, allMenuItems]);
 
-  // Reset or initialize state on drawer open (supporting editingCartItem)
+  // Reset or initialize state when product changes or drawer opens
   useEffect(() => {
     if (isOpen && product) {
       if (editingCartItem) {
@@ -225,7 +236,7 @@ export function ProductDetailDrawer() {
       }
       setExpandedComboBurger(null);
     }
-  }, [isOpen, product, editingCartItem, sideOptions, drinkOptions, comboBurgerProducts, availableExtras]);
+  }, [isOpen, product?.sku, editingCartItem?.cartLineId]);
 
   // Escape key handler
   useEffect(() => {
@@ -237,13 +248,11 @@ export function ProductDetailDrawer() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, closeDrawer]);
 
-  if (!isOpen || !product) return null;
-
-  const imageUrl = resolveCatalogAssetUrl(product.imageUrl, product.imageKey);
+  const imageUrl = product ? resolveCatalogAssetUrl(product.imageUrl, product.imageKey) : undefined;
   const isPromo = Boolean(
-    product.isPromoActive && product.promoPrice != null && product.promoPrice < product.price
+    product?.isPromoActive && product?.promoPrice != null && product.promoPrice < product.price
   );
-  const basePrice = isPromo && product.promoPrice != null ? product.promoPrice : product.price;
+  const basePrice = product ? (isPromo && product.promoPrice != null ? product.promoPrice : product.price) : 0;
 
   // Selected side upcharge
   const selectedSide = sideOptions.find((s) => s.sku === selectedSideSku);
@@ -353,6 +362,7 @@ export function ProductDetailDrawer() {
   };
 
   const handleAddToCart = () => {
+    if (!product) return;
     const isBurger = product.category.toLowerCase() === 'burgers';
 
     const customization: CartItemCustomization = {
@@ -424,532 +434,541 @@ export function ProductDetailDrawer() {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-        {/* Backdrop */}
-        <motion.div
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={closeDrawer}
-          aria-hidden="true"
-        />
+      {isOpen && product && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          {/* Backdrop */}
+          <motion.div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              closeDrawer();
+            }}
+            aria-hidden="true"
+          />
 
-        {/* Drawer Panel */}
-        <motion.div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="drawer-product-title"
-          className="relative z-50 w-full max-w-lg rounded-t-3xl sm:rounded-3xl bg-surface-card border-t sm:border border-line shadow-floating max-h-[92vh] flex flex-col overflow-hidden"
-          initial={shouldReduceMotion ? { opacity: 0 } : { y: '100%' }}
-          animate={shouldReduceMotion ? { opacity: 1 } : { y: 0 }}
-          exit={shouldReduceMotion ? { opacity: 0 } : { y: '100%' }}
-          transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-        >
-          {/* Top Handle on Mobile */}
-          <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-line sm:hidden shrink-0" />
+          {/* Drawer Panel */}
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+            aria-labelledby="drawer-product-title"
+            className="relative z-50 w-full max-w-lg rounded-t-3xl sm:rounded-3xl bg-surface-card border-t sm:border border-line shadow-floating max-h-[92vh] flex flex-col overflow-hidden"
+            initial={shouldReduceMotion ? { opacity: 0 } : { y: '100%' }}
+            animate={shouldReduceMotion ? { opacity: 1 } : { y: 0 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { y: '100%' }}
+            transition={{ type: 'spring', damping: 26, stiffness: 220 }}
+          >
+            {/* Top Handle on Mobile */}
+            <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-line sm:hidden shrink-0" />
 
-          {/* Scrollable Body */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
-            {/* Header / Media */}
-            <div className="relative aspect-16/9 w-full rounded-2xl overflow-hidden bg-surface border border-line/60">
-              {imageUrl ? (
-                <img
-                  src={imageUrl}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <ProductFallbackSvg type={product.category} className="w-full h-full" />
-              )}
-
-              {/* Close button floating on image */}
-              <button
-                type="button"
-                onClick={closeDrawer}
-                className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
-                aria-label="Cerrar personalización"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              {/* Badges */}
-              <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
-                {isPromo && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-extrabold shadow-sm">
-                    <Sparkles className="w-2.5 h-2.5" /> PROMO
-                  </span>
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+              {/* Header / Media */}
+              <div className="relative aspect-16/9 w-full rounded-2xl overflow-hidden bg-surface border border-line/60">
+                {imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <ProductFallbackSvg type={product.category} className="w-full h-full" />
                 )}
-                {product.isFeatured && !isPromo && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold shadow-sm">
-                    ⭐ TOP
-                  </span>
-                )}
-                {isCombo && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-accent text-white text-[10px] font-extrabold shadow-sm">
-                    🍔 COMBO
-                  </span>
-                )}
-              </div>
-            </div>
 
-            {/* Product Title & Info */}
-            <div>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 id="drawer-product-title" className="text-xl sm:text-2xl font-extrabold text-text-primary">
-                    {product.name}
-                  </h2>
-                  <span className="text-xs font-bold text-text-muted uppercase tracking-wider">
-                    {product.category}
-                  </span>
-                </div>
-                <div className="text-right">
+                {/* Close button floating on image */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    closeDrawer();
+                  }}
+                  className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
+                  aria-label="Cerrar personalización"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* Badges */}
+                <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
                   {isPromo && (
-                    <span className="text-xs text-text-muted line-through block">
-                      {formatCurrency(product.price)}
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-extrabold shadow-sm">
+                      <Sparkles className="w-2.5 h-2.5" /> PROMO
                     </span>
                   )}
-                  <span className="text-xl font-extrabold text-accent">
-                    {formatCurrency(unitPrice)}
-                  </span>
+                  {product.isFeatured && !isPromo && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold shadow-sm">
+                      ⭐ TOP
+                    </span>
+                  )}
+                  {isCombo && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-accent text-white text-[10px] font-extrabold shadow-sm">
+                      🍔 COMBO
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {product.description && (
-                <p className="text-xs sm:text-sm text-text-secondary mt-2 leading-relaxed">
-                  {product.description}
-                </p>
-              )}
-            </div>
-
-            {/* ── BURGER CUSTOMIZATION (Unit) ── */}
-            {product.category.toLowerCase() === 'burgers' && (
-              <div className="p-4 rounded-2xl bg-surface border border-line space-y-3.5">
-                {/* 🥗 Ingredientes de la receta D1 */}
-                {recipeIngredients.length > 0 && (
+              {/* Product Title & Info */}
+              <div>
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <span className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider block mb-1.5">
-                      🥗 INGREDIENTES DE LA RECETA
+                    <h2 id="drawer-product-title" className="text-xl sm:text-2xl font-extrabold text-text-primary">
+                      {product.name}
+                    </h2>
+                    <span className="text-xs font-bold text-text-muted uppercase tracking-wider">
+                      {product.category}
                     </span>
-                    <ul className="space-y-1 text-xs text-text-secondary">
-                      {recipeIngredients.map((ing, idx) => (
-                        <li key={idx} className="flex items-center gap-1.5">
-                          <span className="text-accent">•</span>
-                          <span>{ing}</span>
-                        </li>
-                      ))}
-                    </ul>
                   </div>
-                )}
-
-                {/* Botones Receta Original vs Personalizar */}
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-line/60">
-                  <button
-                    type="button"
-                    onClick={() => setMode('original')}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[44px] flex items-center justify-center gap-1.5 ${
-                      mode === 'original'
-                        ? 'bg-accent/10 text-accent border-2 border-accent font-extrabold shadow-xs'
-                        : 'bg-surface-card text-text-secondary hover:text-text-primary border border-line'
-                    }`}
-                  >
-                    🍔 Receta Original
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMode('customize')}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[44px] flex items-center justify-center gap-1.5 ${
-                      mode === 'customize'
-                        ? 'bg-accent/10 text-accent border-2 border-accent font-extrabold shadow-xs'
-                        : 'bg-surface-card text-text-secondary hover:text-text-primary border border-line'
-                    }`}
-                  >
-                    🛠️ Personalizar
-                  </button>
+                  <div className="text-right">
+                    {isPromo && (
+                      <span className="text-xs text-text-muted line-through block">
+                        {formatCurrency(product.price)}
+                      </span>
+                    )}
+                    <span className="text-xl font-extrabold text-accent">
+                      {formatCurrency(unitPrice)}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Personalización desplegada al pulsar 'customize' */}
-                {mode === 'customize' && (
-                  <div className="space-y-4 pt-3 border-t border-line/60">
-                    {/* 1. Ingredientes a quitar */}
-                    {recipeIngredients.length > 0 && (
-                      <div>
-                        <span className="text-xs font-bold text-text-primary block mb-2">
-                          Personaliza ingredientes (Toca para quitar):
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                          {recipeIngredients.map((ing) => {
-                            const isRemoved = removedIngredients.includes(ing);
-                            return (
-                              <button
-                                key={ing}
-                                type="button"
-                                onClick={() => handleToggleRemoveIngredient(ing)}
-                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer min-h-[36px] flex items-center gap-1.5 ${
-                                  isRemoved
-                                    ? 'bg-red-500/15 text-red-600 border border-red-500/30 font-extrabold'
-                                    : 'bg-surface-card text-text-primary border border-line hover:border-text-muted'
-                                }`}
-                              >
-                                {isRemoved ? (
-                                  <>
-                                    <X className="w-3.5 h-3.5" />
-                                    <span>✕ Sin {ing}</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Check className="w-3.5 h-3.5 text-accent" />
-                                    <span>✓ {ing}</span>
-                                  </>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
+                {product.description && (
+                  <p className="text-xs sm:text-sm text-text-secondary mt-2 leading-relaxed">
+                    {product.description}
+                  </p>
+                )}
+              </div>
 
-                    {/* 2. Extras / Upgrades */}
-                    {availableExtras.length > 0 && (
+              {/* ── BURGER CUSTOMIZATION (Unit) ── */}
+              {product.category.toLowerCase() === 'burgers' && (
+                <div className="p-4 rounded-2xl bg-surface border border-line space-y-3.5">
+                  {/* 🥗 Ingredientes de la receta D1 */}
+                  {recipeIngredients.length > 0 && (
+                    <div>
+                      <span className="text-[11px] font-extrabold text-text-muted uppercase tracking-wider block mb-1.5">
+                        🥗 INGREDIENTES DE LA RECETA
+                      </span>
+                      <ul className="space-y-1 text-xs text-text-secondary">
+                        {recipeIngredients.map((ing, idx) => (
+                          <li key={idx} className="flex items-center gap-1.5">
+                            <span className="text-accent">•</span>
+                            <span>{ing}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Botones Receta Original vs Personalizar */}
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-line/60">
+                    <button
+                      type="button"
+                      onClick={() => setMode('original')}
+                      className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[44px] flex items-center justify-center gap-1.5 ${
+                        mode === 'original'
+                          ? 'bg-accent/10 text-accent border-2 border-accent font-extrabold shadow-xs'
+                          : 'bg-surface-card text-text-secondary hover:text-text-primary border border-line'
+                      }`}
+                    >
+                      🍔 Receta Original
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMode('customize')}
+                      className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[44px] flex items-center justify-center gap-1.5 ${
+                        mode === 'customize'
+                          ? 'bg-accent/10 text-accent border-2 border-accent font-extrabold shadow-xs'
+                          : 'bg-surface-card text-text-secondary hover:text-text-primary border border-line'
+                      }`}
+                    >
+                      🛠️ Personalizar
+                    </button>
+                  </div>
+
+                  {/* Personalización desplegada al pulsar 'customize' */}
+                  {mode === 'customize' && (
+                    <div className="space-y-4 pt-3 border-t border-line/60">
+                      {/* 1. Ingredientes a quitar */}
+                      {recipeIngredients.length > 0 && (
+                        <div>
+                          <span className="text-xs font-bold text-text-primary block mb-2">
+                            Personaliza ingredientes (Toca para quitar):
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {recipeIngredients.map((ing) => {
+                              const isRemoved = removedIngredients.includes(ing);
+                              return (
+                                <button
+                                  key={ing}
+                                  type="button"
+                                  onClick={() => handleToggleRemoveIngredient(ing)}
+                                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer min-h-[36px] flex items-center gap-1.5 ${
+                                    isRemoved
+                                      ? 'bg-red-500/15 text-red-600 border border-red-500/30 font-extrabold'
+                                      : 'bg-surface-card text-text-primary border border-line hover:border-text-muted'
+                                  }`}
+                                >
+                                  {isRemoved ? (
+                                    <>
+                                      <X className="w-3.5 h-3.5" />
+                                      <span>✕ Sin {ing}</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Check className="w-3.5 h-3.5 text-accent" />
+                                      <span>✓ {ing}</span>
+                                    </>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 2. Extras / Upgrades */}
+                      {availableExtras.length > 0 && (
+                        <div>
+                          <span className="text-xs font-bold text-text-primary block mb-2">
+                            Extras y Adicionales:
+                          </span>
+                          <div className="space-y-2">
+                            {availableExtras.map((extra) => {
+                              const currentQty = extras.find((e) => e.sku === extra.sku)?.qty ?? 0;
+                              return (
+                                <div
+                                  key={extra.sku}
+                                  className="flex items-center justify-between p-2.5 rounded-xl bg-surface-card border border-line"
+                                >
+                                  <div>
+                                    <span className="text-xs font-bold text-text-primary block">
+                                      {extra.name}
+                                    </span>
+                                    <span className="text-[11px] font-bold text-accent">
+                                      +{formatCurrency(extra.price)}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleExtraQuantityChange(extra, -1)}
+                                      disabled={currentQty === 0}
+                                      className="w-8 h-8 rounded-lg bg-surface border border-line flex items-center justify-center text-text-primary hover:bg-surface-raised disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer min-h-[36px] min-w-[36px]"
+                                      aria-label={`Quitar 1 ${extra.name}`}
+                                    >
+                                      <Minus className="w-4 h-4" />
+                                    </button>
+                                    <span className="w-5 text-center text-xs font-bold text-text-primary">
+                                      {currentQty}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleExtraQuantityChange(extra, 1)}
+                                      className="w-8 h-8 rounded-lg bg-accent text-white flex items-center justify-center hover:bg-accent-dark cursor-pointer min-h-[36px] min-w-[36px]"
+                                      aria-label={`Agregar 1 ${extra.name}`}
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 3. Instrucciones de cocina */}
                       <div>
-                        <span className="text-xs font-bold text-text-primary block mb-2">
-                          Extras y Adicionales:
+                        <label className="text-xs font-bold text-text-primary block mb-1.5">
+                          Instrucciones de cocina (opcional):
+                        </label>
+                        <textarea
+                          value={specialNote}
+                          onChange={(e) => setSpecialNote(e.target.value)}
+                          placeholder="Ej. Carne bien cocida, cebolla extra dorada..."
+                          rows={2}
+                          maxLength={160}
+                          className="w-full p-2.5 rounded-xl bg-surface-card border border-line text-xs text-text-primary focus:outline-hidden focus:ring-2 focus:ring-accent resize-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── COMBO CUSTOMIZATION ── */}
+              {isCombo && (
+                <div className="space-y-4">
+                  {/* 1. Burgers incluidas en el combo */}
+                  {comboBurgerProducts.length > 0 && (
+                    <div className="p-4 rounded-2xl bg-surface border border-line space-y-3">
+                      <div>
+                        <span className="text-xs font-extrabold text-text-primary uppercase tracking-wide block">
+                          🍔 1. BURGERS DEL COMBO
                         </span>
-                        <div className="space-y-2">
-                          {availableExtras.map((extra) => {
-                            const currentQty = extras.find((e) => e.sku === extra.sku)?.qty ?? 0;
-                            return (
-                              <div
-                                key={extra.sku}
-                                className="flex items-center justify-between p-2.5 rounded-xl bg-surface-card border border-line"
+                        <p className="text-[11px] text-text-secondary mt-0.5">
+                          Toca cada burger para quitar ingredientes o agregar extras.
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        {comboBurgerProducts.map((burger, idx) => {
+                          const isExpanded = expandedComboBurger === idx;
+                          const draft = comboBurgerDrafts[idx];
+                          const burgerIngredients = getRecipeForSku(burger.sku || burger.name);
+
+                          const hasModifications =
+                            (draft?.removedIngredients.length ?? 0) > 0 ||
+                            (draft?.extras.length ?? 0) > 0 ||
+                            Boolean(draft?.note);
+
+                          const draftSummary = [
+                            ...(draft?.removedIngredients ?? []).map((m) => `Sin ${m}`),
+                            ...(draft?.extras ?? []).filter((e) => e.qty > 0).map((e) => `${e.qty}x ${e.name}`),
+                          ].join(' · ');
+
+                          return (
+                            <div
+                              key={idx}
+                              className="rounded-xl border border-line bg-surface-card overflow-hidden"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => setExpandedComboBurger(isExpanded ? null : idx)}
+                                className="w-full flex items-center justify-between p-3 text-left hover:bg-surface transition-colors cursor-pointer min-h-[44px]"
                               >
                                 <div>
                                   <span className="text-xs font-bold text-text-primary block">
-                                    {extra.name}
+                                    {burger.name} {comboBurgerProducts.length > 1 ? `#${idx + 1}` : ''}
                                   </span>
-                                  <span className="text-[11px] font-bold text-accent">
-                                    +{formatCurrency(extra.price)}
+                                  <span className={`text-[11px] font-bold ${hasModifications ? 'text-accent' : 'text-text-muted'}`}>
+                                    {hasModifications ? `✓ ${draftSummary || 'Personalizada'}` : 'Receta original'}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleExtraQuantityChange(extra, -1)}
-                                    disabled={currentQty === 0}
-                                    className="w-8 h-8 rounded-lg bg-surface border border-line flex items-center justify-center text-text-primary hover:bg-surface-raised disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer min-h-[36px] min-w-[36px]"
-                                    aria-label={`Quitar 1 ${extra.name}`}
-                                  >
-                                    <Minus className="w-4 h-4" />
-                                  </button>
-                                  <span className="w-5 text-center text-xs font-bold text-text-primary">
-                                    {currentQty}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleExtraQuantityChange(extra, 1)}
-                                    className="w-8 h-8 rounded-lg bg-accent text-white flex items-center justify-center hover:bg-accent-dark cursor-pointer min-h-[36px] min-w-[36px]"
-                                    aria-label={`Agregar 1 ${extra.name}`}
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                  </button>
+                                <div className="text-text-muted">
+                                  {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                 </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                              </button>
+
+                              {isExpanded && (
+                                <div className="p-3 border-t border-line space-y-3 bg-surface/50">
+                                  {/* Removals */}
+                                  {burgerIngredients.length > 0 && (
+                                    <div>
+                                      <span className="text-[11px] font-bold text-text-primary block mb-1.5">
+                                        Quitar ingredientes:
+                                      </span>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {burgerIngredients.map((ing) => {
+                                          const isRemoved = draft?.removedIngredients.includes(ing);
+                                          return (
+                                            <button
+                                              key={ing}
+                                              type="button"
+                                              onClick={() => handleComboBurgerToggleRemove(idx, ing)}
+                                              className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer min-h-[32px] flex items-center gap-1 ${
+                                                isRemoved
+                                                  ? 'bg-red-500/15 text-red-600 border border-red-500/30 font-extrabold'
+                                                  : 'bg-surface-card text-text-primary border border-line hover:border-text-muted'
+                                              }`}
+                                            >
+                                              {isRemoved ? `✕ Sin ${ing}` : `✓ ${ing}`}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Extras */}
+                                  {availableExtras.length > 0 && (
+                                    <div>
+                                      <span className="text-[11px] font-bold text-text-primary block mb-1.5">
+                                        Extras para esta burger:
+                                      </span>
+                                      <div className="space-y-1.5">
+                                        {availableExtras.map((extra) => {
+                                          const currentQty =
+                                            draft?.extras.find((e) => e.sku === extra.sku)?.qty ?? 0;
+                                          return (
+                                            <div
+                                              key={extra.sku}
+                                              className="flex items-center justify-between p-2 rounded-lg bg-surface-card border border-line text-xs"
+                                            >
+                                              <div>
+                                                <span className="font-bold text-text-primary block">{extra.name}</span>
+                                                <span className="text-[10px] text-accent font-bold">+{formatCurrency(extra.price)}</span>
+                                              </div>
+                                              <div className="flex items-center gap-1.5">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleComboBurgerExtraChange(idx, extra, -1)}
+                                                  disabled={currentQty === 0}
+                                                  className="w-6 h-6 rounded bg-surface border border-line flex items-center justify-center disabled:opacity-30 cursor-pointer min-h-[32px] min-w-[32px]"
+                                                >
+                                                  <Minus className="w-3 h-3" />
+                                                </button>
+                                                <span className="w-4 text-center font-bold text-xs">{currentQty}</span>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleComboBurgerExtraChange(idx, extra, 1)}
+                                                  className="w-6 h-6 rounded bg-accent text-white flex items-center justify-center cursor-pointer min-h-[32px] min-w-[32px]"
+                                                >
+                                                  <Plus className="w-3 h-3" />
+                                                </button>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Note */}
+                                  <div>
+                                    <input
+                                      type="text"
+                                      value={draft?.note ?? ''}
+                                      onChange={(e) => handleComboBurgerNoteChange(idx, e.target.value)}
+                                      placeholder="Nota para esta burger..."
+                                      maxLength={100}
+                                      className="w-full p-2 rounded-lg bg-surface-card border border-line text-xs text-text-primary"
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                    )}
-
-                    {/* 3. Instrucciones de cocina */}
-                    <div>
-                      <label className="text-xs font-bold text-text-primary block mb-1.5">
-                        Instrucciones de cocina (opcional):
-                      </label>
-                      <textarea
-                        value={specialNote}
-                        onChange={(e) => setSpecialNote(e.target.value)}
-                        placeholder="Ej. Carne bien cocida, cebolla extra dorada..."
-                        rows={2}
-                        maxLength={160}
-                        className="w-full p-2.5 rounded-xl bg-surface-card border border-line text-xs text-text-primary focus:outline-hidden focus:ring-2 focus:ring-accent resize-none"
-                      />
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
 
-            {/* ── COMBO CUSTOMIZATION ── */}
-            {isCombo && (
-              <div className="space-y-4">
-                {/* 1. Burgers incluidas en el combo */}
-                {comboBurgerProducts.length > 0 && (
-                  <div className="p-4 rounded-2xl bg-surface border border-line space-y-3">
-                    <div>
-                      <span className="text-xs font-extrabold text-text-primary uppercase tracking-wide block">
-                        🍔 1. BURGERS DEL COMBO
-                      </span>
-                      <p className="text-[11px] text-text-secondary mt-0.5">
-                        Toca cada burger para quitar ingredientes o agregar extras.
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      {comboBurgerProducts.map((burger, idx) => {
-                        const isExpanded = expandedComboBurger === idx;
-                        const draft = comboBurgerDrafts[idx];
-                        const burgerIngredients = getRecipeForSku(burger.sku || burger.name);
-
-                        const hasModifications =
-                          (draft?.removedIngredients.length ?? 0) > 0 ||
-                          (draft?.extras.length ?? 0) > 0 ||
-                          Boolean(draft?.note);
-
-                        const draftSummary = [
-                          ...(draft?.removedIngredients ?? []).map((m) => `Sin ${m}`),
-                          ...(draft?.extras ?? []).filter((e) => e.qty > 0).map((e) => `${e.qty}x ${e.name}`),
-                        ].join(' · ');
-
-                        return (
-                          <div
-                            key={idx}
-                            className="rounded-xl border border-line bg-surface-card overflow-hidden"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => setExpandedComboBurger(isExpanded ? null : idx)}
-                              className="w-full flex items-center justify-between p-3 text-left hover:bg-surface transition-colors cursor-pointer min-h-[44px]"
+                  {/* 2. Side Selection (Guarnición) */}
+                  {sideOptions.length > 0 && (
+                    <div className="p-4 rounded-2xl bg-surface border border-line space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-extrabold text-text-primary uppercase tracking-wide">
+                          🍟 2. ELIGE TU GUARNICIÓN
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {sideOptions.map((side) => {
+                          const isSelected = selectedSideSku === side.sku;
+                          return (
+                            <label
+                              key={side.sku}
+                              className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer min-h-[44px] ${
+                                isSelected
+                                  ? 'border-accent bg-accent/5 ring-1 ring-accent'
+                                  : 'border-line bg-surface-card hover:border-text-muted/30'
+                              }`}
                             >
-                              <div>
-                                <span className="text-xs font-bold text-text-primary block">
-                                  {burger.name} {comboBurgerProducts.length > 1 ? `#${idx + 1}` : ''}
+                              <div className="flex items-center gap-2.5">
+                                <input
+                                  type="radio"
+                                  name="combo-side"
+                                  checked={isSelected}
+                                  onChange={() => setSelectedSideSku(side.sku)}
+                                  className="w-4 h-4 text-accent accent-accent"
+                                />
+                                <span className="text-xs font-bold text-text-primary">
+                                  {side.name}
                                 </span>
-                                <span className={`text-[11px] font-bold ${hasModifications ? 'text-accent' : 'text-text-muted'}`}>
-                                  {hasModifications ? `✓ ${draftSummary || 'Personalizada'}` : 'Receta original'}
-                                </span>
                               </div>
-                              <div className="text-text-muted">
-                                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                              </div>
-                            </button>
-
-                            {isExpanded && (
-                              <div className="p-3 border-t border-line space-y-3 bg-surface/50">
-                                {/* Removals */}
-                                {burgerIngredients.length > 0 && (
-                                  <div>
-                                    <span className="text-[11px] font-bold text-text-primary block mb-1.5">
-                                      Quitar ingredientes:
-                                    </span>
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {burgerIngredients.map((ing) => {
-                                        const isRemoved = draft?.removedIngredients.includes(ing);
-                                        return (
-                                          <button
-                                            key={ing}
-                                            type="button"
-                                            onClick={() => handleComboBurgerToggleRemove(idx, ing)}
-                                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer min-h-[32px] flex items-center gap-1 ${
-                                              isRemoved
-                                                ? 'bg-red-500/15 text-red-600 border border-red-500/30 font-extrabold'
-                                                : 'bg-surface-card text-text-primary border border-line hover:border-text-muted'
-                                            }`}
-                                          >
-                                            {isRemoved ? `✕ Sin ${ing}` : `✓ ${ing}`}
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Extras */}
-                                {availableExtras.length > 0 && (
-                                  <div>
-                                    <span className="text-[11px] font-bold text-text-primary block mb-1.5">
-                                      Extras para esta burger:
-                                    </span>
-                                    <div className="space-y-1.5">
-                                      {availableExtras.map((extra) => {
-                                        const currentQty =
-                                          draft?.extras.find((e) => e.sku === extra.sku)?.qty ?? 0;
-                                        return (
-                                          <div
-                                            key={extra.sku}
-                                            className="flex items-center justify-between p-2 rounded-lg bg-surface-card border border-line text-xs"
-                                          >
-                                            <div>
-                                              <span className="font-bold text-text-primary block">{extra.name}</span>
-                                              <span className="text-[10px] text-accent font-bold">+{formatCurrency(extra.price)}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                              <button
-                                                type="button"
-                                                onClick={() => handleComboBurgerExtraChange(idx, extra, -1)}
-                                                disabled={currentQty === 0}
-                                                className="w-6 h-6 rounded bg-surface border border-line flex items-center justify-center disabled:opacity-30 cursor-pointer min-h-[32px] min-w-[32px]"
-                                              >
-                                                <Minus className="w-3 h-3" />
-                                              </button>
-                                              <span className="w-4 text-center font-bold text-xs">{currentQty}</span>
-                                              <button
-                                                type="button"
-                                                onClick={() => handleComboBurgerExtraChange(idx, extra, 1)}
-                                                className="w-6 h-6 rounded bg-accent text-white flex items-center justify-center cursor-pointer min-h-[32px] min-w-[32px]"
-                                              >
-                                                <Plus className="w-3 h-3" />
-                                              </button>
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Note */}
-                                <div>
-                                  <input
-                                    type="text"
-                                    value={draft?.note ?? ''}
-                                    onChange={(e) => handleComboBurgerNoteChange(idx, e.target.value)}
-                                    placeholder="Nota para esta burger..."
-                                    maxLength={100}
-                                    className="w-full p-2 rounded-lg bg-surface-card border border-line text-xs text-text-primary"
-                                  />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                              <span className="text-xs font-extrabold text-accent">
+                                {side.upcharge > 0 ? `+${formatCurrency(side.upcharge)}` : 'Incluida'}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* 2. Side Selection (Guarnición) */}
-                {sideOptions.length > 0 && (
-                  <div className="p-4 rounded-2xl bg-surface border border-line space-y-2.5">
-                    <div className="flex items-center justify-between">
+                  {/* 3. Drink Selection (Bebida) */}
+                  {drinkOptions.length > 0 && (
+                    <div className="p-4 rounded-2xl bg-surface border border-line space-y-2.5">
                       <span className="text-xs font-extrabold text-text-primary uppercase tracking-wide">
-                        🍟 2. ELIGE TU GUARNICIÓN
+                        🥤 3. ELIGE TU BEBIDA
                       </span>
-                    </div>
-                    <div className="space-y-2">
-                      {sideOptions.map((side) => {
-                        const isSelected = selectedSideSku === side.sku;
-                        return (
-                          <label
-                            key={side.sku}
-                            className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer min-h-[44px] ${
-                              isSelected
-                                ? 'border-accent bg-accent/5 ring-1 ring-accent'
-                                : 'border-line bg-surface-card hover:border-text-muted/30'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <input
-                                type="radio"
-                                name="combo-side"
-                                checked={isSelected}
-                                onChange={() => setSelectedSideSku(side.sku)}
-                                className="w-4 h-4 text-accent accent-accent"
-                              />
-                              <span className="text-xs font-bold text-text-primary">
-                                {side.name}
+                      <div className="space-y-2">
+                        {drinkOptions.map((drink) => {
+                          const isSelected = selectedDrinkSku === drink.sku;
+                          return (
+                            <label
+                              key={drink.sku}
+                              className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer min-h-[44px] ${
+                                isSelected
+                                  ? 'border-accent bg-accent/5 ring-1 ring-accent'
+                                  : 'border-line bg-surface-card hover:border-text-muted/30'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <input
+                                  type="radio"
+                                  name="combo-drink"
+                                  checked={isSelected}
+                                  onChange={() => setSelectedDrinkSku(drink.sku)}
+                                  className="w-4 h-4 text-accent accent-accent"
+                                />
+                                <span className="text-xs font-bold text-text-primary">
+                                  {drink.name}
+                                </span>
+                              </div>
+                              <span className="text-xs font-extrabold text-accent">
+                                {drink.upcharge > 0 ? `+${formatCurrency(drink.upcharge)}` : 'Incluida'}
                               </span>
-                            </div>
-                            <span className="text-xs font-extrabold text-accent">
-                              {side.upcharge > 0 ? `+${formatCurrency(side.upcharge)}` : 'Incluida'}
-                            </span>
-                          </label>
-                        );
-                      })}
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
-
-                {/* 3. Drink Selection (Bebida) */}
-                {drinkOptions.length > 0 && (
-                  <div className="p-4 rounded-2xl bg-surface border border-line space-y-2.5">
-                    <span className="text-xs font-extrabold text-text-primary uppercase tracking-wide">
-                      🥤 3. ELIGE TU BEBIDA
-                    </span>
-                    <div className="space-y-2">
-                      {drinkOptions.map((drink) => {
-                        const isSelected = selectedDrinkSku === drink.sku;
-                        return (
-                          <label
-                            key={drink.sku}
-                            className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer min-h-[44px] ${
-                              isSelected
-                                ? 'border-accent bg-accent/5 ring-1 ring-accent'
-                                : 'border-line bg-surface-card hover:border-text-muted/30'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <input
-                                type="radio"
-                                name="combo-drink"
-                                checked={isSelected}
-                                onChange={() => setSelectedDrinkSku(drink.sku)}
-                                className="w-4 h-4 text-accent accent-accent"
-                              />
-                              <span className="text-xs font-bold text-text-primary">
-                                {drink.name}
-                              </span>
-                            </div>
-                            <span className="text-xs font-extrabold text-accent">
-                              {drink.upcharge > 0 ? `+${formatCurrency(drink.upcharge)}` : 'Incluida'}
-                            </span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Sticky CTA Footer */}
-          <div className="border-t border-line bg-surface-card p-4 sm:p-5 flex items-center justify-between gap-4 shadow-panel shrink-0">
-            {/* Quantity Stepper */}
-            <div className="flex items-center gap-2 bg-surface p-1.5 rounded-2xl border border-line shrink-0">
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                disabled={quantity <= 1}
-                className="w-9 h-9 rounded-xl bg-surface-card border border-line flex items-center justify-center text-text-primary hover:bg-surface-raised disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
-                aria-label="Disminuir cantidad"
-              >
-                <Minus className="w-4 h-4" />
-              </button>
-              <span className="w-6 text-center font-extrabold text-sm text-text-primary">
-                {quantity}
-              </span>
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => q + 1)}
-                className="w-9 h-9 rounded-xl bg-surface-card border border-line flex items-center justify-center text-text-primary hover:bg-surface-raised transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
-                aria-label="Aumentar cantidad"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Add/Save CTA */}
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              className="flex-1 py-3.5 px-4 rounded-2xl bg-accent text-white font-extrabold text-sm sm:text-base hover:bg-accent-dark transition-colors shadow-cta cursor-pointer min-h-[48px] flex items-center justify-between"
-            >
-              <span>{editingCartItem ? 'Guardar Cambios' : 'Agregar al pedido'}</span>
-              <span>{formatCurrency(lineTotal)}</span>
-            </button>
-          </div>
-        </motion.div>
-      </div>
+            {/* Sticky CTA Footer */}
+            <div className="border-t border-line bg-surface-card p-4 sm:p-5 flex items-center justify-between gap-4 shadow-panel shrink-0">
+              {/* Quantity Stepper */}
+              <div className="flex items-center gap-2 bg-surface p-1.5 rounded-2xl border border-line shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  disabled={quantity <= 1}
+                  className="w-9 h-9 rounded-xl bg-surface-card border border-line flex items-center justify-center text-text-primary hover:bg-surface-raised disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
+                  aria-label="Disminuir cantidad"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-6 text-center font-extrabold text-sm text-text-primary">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => q + 1)}
+                  className="w-9 h-9 rounded-xl bg-surface-card border border-line flex items-center justify-center text-text-primary hover:bg-surface-raised transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
+                  aria-label="Aumentar cantidad"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Add/Save CTA */}
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                className="flex-1 py-3.5 px-4 rounded-2xl bg-accent text-white font-extrabold text-sm sm:text-base hover:bg-accent-dark transition-colors shadow-cta cursor-pointer min-h-[48px] flex items-center justify-between"
+              >
+                <span>{editingCartItem ? 'Guardar Cambios' : 'Agregar al pedido'}</span>
+                <span>{formatCurrency(lineTotal)}</span>
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </AnimatePresence>
   );
 }
