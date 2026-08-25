@@ -214,118 +214,149 @@ export function KitchenActiveStation({
 
           {/* Lista de Ítems Individuales de la Comanda */}
           <div className="space-y-3">
-            {displayedItems.map((item, idx) => (
-              <div
-                key={`${item.id}-${idx}`}
-                className="p-4 rounded-2xl bg-surface-raised border border-line space-y-2.5"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">
-                      {item.itemKind === 'combo'
-                        ? 'COMBO'
-                        : item.itemKind === 'burger'
-                        ? 'BURGER'
-                        : 'SIDE QUEST'}
-                    </span>
-                    <h4 className="text-base sm:text-lg font-black text-text-primary">
-                      {item.qty > 1 ? `${item.qty}x ` : ''}
-                      {item.name}
-                    </h4>
-                  </div>
-                  <Badge variant="outline" className="text-[10px] uppercase font-black">
-                    POR HACER
-                  </Badge>
-                </div>
+            {displayedItems.map((item, idx) => {
+              // Badge de categoría según la estación
+              const itemKindBadge = () => {
+                if (laneMode === 'prep') {
+                  return item.itemKind === 'combo' ? 'COMBO' : 'BURGER';
+                }
+                if (item.itemKind === 'combo') return 'COMBO (COMPLEMENTOS)';
+                if (item.itemKind === 'garnish') return '🍟 GUARNICIÓN';
+                if (item.itemKind === 'drink') return '🥤 BEBIDA';
+                if (item.itemKind === 'extra') return '🥫 DIP / EXTRA';
+                return 'SIDE QUEST';
+              };
 
-                {/* Subtags: Combo, Remociones, Extras y Notas */}
-                <div className="flex flex-wrap gap-1.5 text-xs">
-                  {/* Guarnición y Bebida solo visibles en Side Quest */}
-                  {laneMode !== 'prep' && item.garnish && (
-                    <span className="px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-amber-800 dark:text-amber-300 text-[11px] font-bold">
-                      🍟 {item.garnish.name}
-                    </span>
-                  )}
-
-                  {laneMode !== 'prep' && item.includedDrink && (
-                    <span className="px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/25 text-blue-800 dark:text-blue-300 text-[11px] font-bold">
-                      🥤 {item.includedDrink.name}
-                    </span>
-                  )}
-
-                  {/* Receta Original si no tiene modificadores ni burgers secundarias */}
-                  {(!item.comboBurgers || item.comboBurgers.length === 0) &&
-                    (!item.removedIngredients || item.removedIngredients.length === 0) &&
-                    (!item.extras || item.extras.length === 0) &&
-                    !item.burgerNote && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-line text-text-muted text-[11px] font-bold">
-                        ✓ Receta Original
+              return (
+                <div
+                  key={`${item.id}-${idx}`}
+                  className="p-4 rounded-2xl bg-surface-raised border border-line space-y-2.5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">
+                        {itemKindBadge()}
                       </span>
+                      <h4 className="text-base sm:text-lg font-black text-text-primary">
+                        {item.qty > 1 ? `${item.qty}x ` : ''}
+                        {item.name}
+                      </h4>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] uppercase font-black">
+                      POR HACER
+                    </Badge>
+                  </div>
+
+                  {/* Subtags según la estación */}
+                  <div className="flex flex-wrap gap-1.5 text-xs">
+                    {/* ─── En SIDE QUEST: Mostrar Guarnición y Bebida del combo destacadas ─── */}
+                    {laneMode === 'sideQuest' && (
+                      <>
+                        {item.garnish && (
+                          <span className="px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-black">
+                            🍟 {item.garnish.name}
+                          </span>
+                        )}
+
+                        {item.includedDrink && (
+                          <span className="px-2.5 py-1 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-800 dark:text-blue-300 text-xs font-black">
+                            🥤 {item.includedDrink.name}
+                          </span>
+                        )}
+
+                        {item.extras && item.extras.length > 0 && item.itemKind !== 'combo' && (
+                          <span className="px-2.5 py-1 rounded-xl bg-emerald-600 text-white font-black text-xs shadow-xs">
+                            🟢 +EXTRA {item.extras.map((e) => e.name).join(', ')}
+                          </span>
+                        )}
+
+                        {item.burgerNote && (
+                          <span className="px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 font-bold text-xs">
+                            💬 {item.burgerNote}
+                          </span>
+                        )}
+                      </>
                     )}
 
-                  {item.removedIngredients && item.removedIngredients.length > 0 && (
-                    <span className="px-2.5 py-1 rounded-xl bg-red-600 text-white font-black text-xs shadow-xs">
-                      🔴 SIN {item.removedIngredients.join(', ')}
-                    </span>
-                  )}
+                    {/* ─── En PREPARACIÓN (PLANCHA): Solo carnes, remociones y extras ─── */}
+                    {laneMode === 'prep' && (
+                      <>
+                        {/* Receta Original si no tiene modificadores ni burgers secundarias */}
+                        {(!item.comboBurgers || item.comboBurgers.length === 0) &&
+                          (!item.removedIngredients || item.removedIngredients.length === 0) &&
+                          (!item.extras || item.extras.length === 0) &&
+                          !item.burgerNote && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-line text-text-muted text-[11px] font-bold">
+                              ✓ Receta Original
+                            </span>
+                          )}
 
-                  {item.extras && item.extras.length > 0 && (
-                    <span className="px-2.5 py-1 rounded-xl bg-emerald-600 text-white font-black text-xs shadow-xs">
-                      🟢 +EXTRA {item.extras.map((e) => e.name).join(', ')}
-                    </span>
-                  )}
+                        {item.removedIngredients && item.removedIngredients.length > 0 && (
+                          <span className="px-2.5 py-1 rounded-xl bg-red-600 text-white font-black text-xs shadow-xs">
+                            🔴 SIN {item.removedIngredients.join(', ')}
+                          </span>
+                        )}
 
-                  {item.burgerNote && (
-                    <span className="px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 font-bold text-xs">
-                      💬 {item.burgerNote}
-                    </span>
+                        {item.extras && item.extras.length > 0 && (
+                          <span className="px-2.5 py-1 rounded-xl bg-emerald-600 text-white font-black text-xs shadow-xs">
+                            🟢 +EXTRA {item.extras.map((e) => e.name).join(', ')}
+                          </span>
+                        )}
+
+                        {item.burgerNote && (
+                          <span className="px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 font-bold text-xs">
+                            💬 {item.burgerNote}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Desglose de burgers dentro del combo SOLO en PREPARACIÓN */}
+                  {laneMode === 'prep' && item.comboBurgers && item.comboBurgers.length > 0 && (
+                    <div className="pt-2 border-t border-line/60 space-y-1.5 pl-2">
+                      {item.comboBurgers.map((cb, cbIdx) => {
+                        const isOriginal =
+                          (!cb.removedIngredients || cb.removedIngredients.length === 0) &&
+                          (!cb.extras || cb.extras.length === 0) &&
+                          !cb.burgerNote;
+
+                        return (
+                          <div key={cbIdx} className="text-xs space-y-0.5">
+                            <span className="font-bold text-text-primary">🍔 {cb.name}</span>
+                            <div className="flex flex-wrap gap-1 text-[11px]">
+                              {isOriginal && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-line text-text-muted text-[11px] font-bold">
+                                  ✓ Receta Original
+                                </span>
+                              )}
+                              {cb.removedIngredients && cb.removedIngredients.length > 0 && (
+                                <span className="px-2 py-0.5 rounded-lg bg-red-600 text-white font-black text-[11px]">
+                                  🔴 SIN {cb.removedIngredients.join(', ')}
+                                </span>
+                              )}
+                              {cb.extras && cb.extras.length > 0 && (
+                                <span className="px-2 py-0.5 rounded-lg bg-emerald-600 text-white font-black text-[11px]">
+                                  🟢 +EXTRA {cb.extras.map((e) => e.name).join(', ')}
+                                </span>
+                              )}
+                              {cb.burgerNote && (
+                                <span className="text-amber-700 dark:text-amber-300 font-medium">
+                                  💬 {cb.burgerNote}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
-
-                {/* Desglose de burgers dentro del combo si aplica */}
-                {item.comboBurgers && item.comboBurgers.length > 0 && (
-                  <div className="pt-2 border-t border-line/60 space-y-1.5 pl-2">
-                    {item.comboBurgers.map((cb, cbIdx) => {
-                      const isOriginal =
-                        (!cb.removedIngredients || cb.removedIngredients.length === 0) &&
-                        (!cb.extras || cb.extras.length === 0) &&
-                        !cb.burgerNote;
-
-                      return (
-                        <div key={cbIdx} className="text-xs space-y-0.5">
-                          <span className="font-bold text-text-primary">🍔 {cb.name}</span>
-                          <div className="flex flex-wrap gap-1 text-[11px]">
-                            {isOriginal && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-line text-text-muted text-[11px] font-bold">
-                                ✓ Receta Original
-                              </span>
-                            )}
-                            {cb.removedIngredients && cb.removedIngredients.length > 0 && (
-                              <span className="px-2 py-0.5 rounded-lg bg-red-600 text-white font-black text-[11px]">
-                                🔴 SIN {cb.removedIngredients.join(', ')}
-                              </span>
-                            )}
-                            {cb.extras && cb.extras.length > 0 && (
-                              <span className="px-2 py-0.5 rounded-lg bg-emerald-600 text-white font-black text-[11px]">
-                                🟢 +EXTRA {cb.extras.map((e) => e.name).join(', ')}
-                              </span>
-                            )}
-                            {cb.burgerNote && (
-                              <span className="text-amber-700 dark:text-amber-300 font-medium">
-                                💬 {cb.burgerNote}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* Botón Principal de Acción Táctil (✔ Hecha / Marcar Lista) */}
+          {/* Botón Principal de Acción Táctil */}
           <div className="pt-2">
             <Button
               type="button"
@@ -340,7 +371,11 @@ export function KitchenActiveStation({
               ) : (
                 <CheckCircle2 className="w-5 h-5" />
               )}
-              <span>✔ Hecha (Marcar Lista para Empaque)</span>
+              <span>
+                {laneMode === 'prep'
+                  ? '✔ Hecha (Marcar Lista para Empaque)'
+                  : '✔ Listo (Marcar Empacado / Listo)'}
+              </span>
             </Button>
           </div>
         </div>
@@ -349,7 +384,7 @@ export function KitchenActiveStation({
           <Inbox className="w-10 h-10 stroke-1 opacity-70" />
           <p className="text-base font-bold text-text-primary">Estación al día</p>
           <p className="text-xs text-text-secondary">
-            No hay pedidos pendientes en cola de {laneMode === 'prep' ? 'plancha' : 'side quest'}.
+            No hay pedidos pendientes en cola de {laneMode === 'prep' ? 'plancha' : 'side quest / empaque'}.
           </p>
         </div>
       )}

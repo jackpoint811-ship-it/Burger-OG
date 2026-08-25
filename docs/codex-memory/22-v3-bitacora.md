@@ -379,6 +379,19 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Foco visible en botones de la cola y acordeón (`focus-visible:ring-2 focus-visible:ring-accent`), targets táctiles $\ge 44\text{px}$ y botón gigante `✔ Hecha` ($\ge 52\text{px}$).
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (4.90s), `npm run build:public` ✅ (5.36s).
 
+### 📅 2026-08-25 — Sesión 37: Subventana de Side Quest en Cocina V3 (Paso 3 - Freidora, Bebidas & Empaque)
+- **Foco 100% en Complementos y Empaque**:
+  - En `Side Quest` (`laneMode === 'sideQuest'`), los combos desglosan en primer plano sus complementos (`🍟 Papas Francesas`, `🥤 Bebida`) y omiten las modificaciones de carne de las hamburguesas para evitar distracciones en freidora y ensamble.
+- **Badges Semánticos de Categoría**:
+  - `COMBO (COMPLEMENTOS)` para paquetes y menús con guarniciones.
+  - `🍟 GUARNICIÓN` para papas, aros y guarniciones sueltas.
+  - `🥤 BEBIDA` para refrescos, aguas y malteadas.
+  - `🥫 DIP / EXTRA` para aderezos, salsas y extras sueltos.
+- **Botón de Acción Adaptativo y Filtros de Cola**:
+  - Botón táctil adaptado: `✔ Listo (Marcar Empacado / Listo)`.
+  - Resúmenes de texto de la cola de espera y listas filtrados para desplegar únicamente complementos en Side Quest.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (4.92s), `npm run build:public` ✅ (5.39s).
+
 ---
 
 
