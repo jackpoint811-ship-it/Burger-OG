@@ -9,7 +9,18 @@ import type { OrderV2, OrderV2PaymentMethod, OrderV2PaymentStatus } from '@confi
 
 export type PaymentFilterMethod = 'all' | 'transfer' | 'cash' | 'card';
 export type PaymentFilterStatus = 'all' | 'pending' | 'paid' | 'cancelled';
+export type PaymentFilterMode = 'all' | 'pickup' | 'delivery';
 export type PaymentDateHorizon = 'today' | 'all';
+
+export interface PaymentFilterCriteria {
+  search?: string;
+  method?: PaymentFilterMethod;
+  status?: PaymentFilterStatus;
+  mode?: PaymentFilterMode;
+  tower?: string;
+  selectedDate?: string;
+  dateHorizon?: PaymentDateHorizon;
+}
 
 export interface FinancialSummary {
   // Totales generales (órdenes activas no canceladas)

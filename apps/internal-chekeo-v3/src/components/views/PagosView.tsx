@@ -1,15 +1,287 @@
 /**
- * PagosView.tsx — PR-V3-11
+ * PagosView.tsx — Chekeo V3 Pagos Refinement
  *
- * Vista principal de Pagos y Conciliación para Chekeo V3:
- * - Integración de PaymentsManager con resumen financiero en tiempo real.
- * - Validación de transferencias SPEI en 1-clic.
- * - Generador de tickets térmicos 80mm y WhatsApp Bridge integrado.
+ * Vista principal y orquestador del módulo de Pagos y Conciliación:
+ * - Nivel 1: Riel Horizontal de Fechas (14 días CDMX + Hoy + Anteriores + Todos).
+ * - Nivel 2: 4 Tarjetas KPI financieras con click-to-filter inteligente.
+ * - Nivel 3: Barra de Control Unificada con Buscador Universal, botón BBVA, Popover de Filtros y Ribbon dual.
+ * - Nivel 4: Lista responsiva de tarjetas con 3 Hechos Clave, acciones 1-clic y select-all.
+ * - Nivel 5: Barra Flotante de Acciones en Lote (Validar / Revertir / Copiar Arqueo) con modal de confirmación.
+ * - Modales integrados: Ticket Térmico 80mm, WhatsApp Bridge, Cuenta Bancaria BBVA y Detalle Completo.
  */
 
-import React from 'react';
-import { PaymentsManager } from '../payments';
+import React, { useState, useMemo } from 'react';
+import type { OrderV2 } from '@config/index';
+import {
+  usePayments,
+  generateBatchPaymentSummaryText,
+} from '../../features/payments';
+import {
+  PaymentKpiHeader,
+  PaymentsFilterBar,
+  PaymentsList,
+  PaymentBatchActionBar,
+  PaymentBatchConfirmModal,
+  BankDetailsModal,
+  OrderTicketModal,
+  WhatsAppActionModal,
+} from '../payments';
+import { HorizontalDateCalendarFilter } from '../shared/HorizontalDateCalendarFilter';
+import { OrderDetailDrawer } from '../orders/OrderDetailDrawer';
 
 export function PagosView() {
-  return <PaymentsManager />;
+  const {
+    allOrders,
+    filteredOrders,
+    financialSummary,
+    availableTowers,
+    isLoading,
+    isFetching,
+    refetch,
+    filters,
+    setSearch,
+    setSelectedDate,
+    setMethodFilter,
+    setStatusFilter,
+    setModeFilter,
+    setTowerFilter,
+    setAutoRefresh,
+    resetFilters,
+    markAsPaid,
+    markAsPending,
+    markBatchAsPaid,
+    markBatchAsPending,
+  } = usePayments();
+
+  // Estados de modales interactivos
+  const [selectedTicketOrder, setSelectedTicketOrder] = useState<OrderV2 | null>(null);
+  const [selectedWhatsAppOrder, setSelectedWhatsAppOrder] = useState<OrderV2 | null>(null);
+  const [selectedDetailOrder, setSelectedDetailOrder] = useState<OrderV2 | null>(null);
+  const [bankDetailsOpen, setBankDetailsOpen] = useState(false);
+
+  // Estados de selección múltiple y acciones en lote
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
+  const [batchConfirmOpen, setBatchConfirmOpen] = useState(false);
+  const [batchActionType, setBatchActionType] = useState<'validate' | 'revert'>('validate');
+  const [batchBusy, setBatchBusy] = useState(false);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+
+  // Acción de 1-clic desde tarjeta
+  const handleTogglePaymentStatus = async (order: OrderV2) => {
+    setUpdatingOrderId(order.id);
+    try {
+      if (order.paymentStatus === 'paid') {
+        await markAsPending(order.id, 'Marcado como pendiente desde módulo de Pagos');
+      } else {
+        await markAsPaid(order.id, 'Pago validado y confirmado en módulo de Pagos');
+      }
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  // Click inteligente en KPI "Por Conciliar (SPEI)" -> Conmuta a Todos + transfer + pending
+  const handleFilterByPendingSpei = () => {
+    setSelectedDate('all');
+    setMethodFilter('transfer');
+    setStatusFilter('pending');
+  };
+
+  // Selección múltiple
+  const handleToggleSelectOrder = (orderId: string) => {
+    setSelectedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) {
+        next.delete(orderId);
+      } else {
+        next.add(orderId);
+      }
+      return next;
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedOrderIds.size >= filteredOrders.length && filteredOrders.length > 0) {
+      setSelectedOrderIds(new Set());
+    } else {
+      setSelectedOrderIds(new Set(filteredOrders.map((o) => o.id)));
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedOrderIds(new Set());
+  };
+
+  // Lista de órdenes seleccionadas actualmente
+  const selectedOrdersList = useMemo(() => {
+    return allOrders.filter((o) => selectedOrderIds.has(o.id));
+  }, [allOrders, selectedOrderIds]);
+
+  const selectedTotalAmount = useMemo(() => {
+    return selectedOrdersList.reduce((sum, o) => sum + (o.total ?? 0), 0);
+  }, [selectedOrdersList]);
+
+  const selectedPendingCount = useMemo(() => {
+    return selectedOrdersList.filter((o) => o.paymentStatus === 'pending').length;
+  }, [selectedOrdersList]);
+
+  const selectedPaidCount = useMemo(() => {
+    return selectedOrdersList.filter((o) => o.paymentStatus === 'paid').length;
+  }, [selectedOrdersList]);
+
+  // Apertura de modal de confirmación en lote
+  const handleBatchValidateClick = () => {
+    setBatchActionType('validate');
+    setBatchConfirmOpen(true);
+  };
+
+  const handleBatchRevertClick = () => {
+    setBatchActionType('revert');
+    setBatchConfirmOpen(true);
+  };
+
+  // Ejecución de la mutación en lote
+  const handleExecuteBatchAction = async () => {
+    if (selectedOrderIds.size === 0) return;
+    setBatchBusy(true);
+    try {
+      const ids = Array.from(selectedOrderIds);
+      if (batchActionType === 'validate') {
+        await markBatchAsPaid(ids, 'Validación en lote desde Chekeo Pagos');
+      } else {
+        await markBatchAsPending(ids, 'Reversión en lote a pendiente desde Chekeo Pagos');
+      }
+      setSelectedOrderIds(new Set());
+      setBatchConfirmOpen(false);
+      refetch();
+    } finally {
+      setBatchBusy(false);
+    }
+  };
+
+  // Copiar resumen de arqueo al portapapeles
+  const handleCopyBatchSummary = () => {
+    const text = generateBatchPaymentSummaryText(selectedOrdersList);
+    navigator.clipboard.writeText(text);
+  };
+
+  // Mantener actualizado el pedido en el drawer de detalle si se actualiza en segundo plano
+  const currentDetailOrder = useMemo(() => {
+    if (!selectedDetailOrder) return null;
+    return allOrders.find((o) => o.id === selectedDetailOrder.id) || selectedDetailOrder;
+  }, [allOrders, selectedDetailOrder]);
+
+  return (
+    <div className="space-y-5 animate-in fade-in duration-300 pb-16">
+      {/* ─── 1. Riel Horizontal de Fechas (14 días CDMX + Anteriores) ──────── */}
+      <div className="bg-surface-card p-4 rounded-3xl border border-line shadow-xs">
+        <HorizontalDateCalendarFilter
+          orders={allOrders}
+          selectedDate={filters.selectedDate}
+          onSelectDate={setSelectedDate}
+        />
+      </div>
+
+      {/* ─── 2. Header Financiero / 4 KPIs Reactivos ───────────────────────── */}
+      <PaymentKpiHeader
+        financialSummary={financialSummary}
+        onFilterByPendingSpei={handleFilterByPendingSpei}
+      />
+
+      {/* ─── 3. Barra de Filtros y Búsqueda Unificada ──────────────────────── */}
+      <PaymentsFilterBar
+        search={filters.search}
+        onSearchChange={setSearch}
+        method={filters.method}
+        onMethodChange={setMethodFilter}
+        status={filters.status}
+        onStatusChange={setStatusFilter}
+        mode={filters.mode}
+        onModeChange={setModeFilter}
+        tower={filters.tower}
+        onTowerChange={setTowerFilter}
+        availableTowers={availableTowers}
+        autoRefresh={filters.autoRefresh}
+        onAutoRefreshChange={setAutoRefresh}
+        isFetching={isFetching}
+        onRefresh={() => refetch()}
+        financialSummary={financialSummary}
+        allOrdersCount={allOrders.length}
+        onOpenBankDetails={() => setBankDetailsOpen(true)}
+        onResetFilters={resetFilters}
+      />
+
+      {/* ─── 4. Lista y Grilla de Cobros ────────────────────────────────────── */}
+      <PaymentsList
+        orders={filteredOrders}
+        isLoading={isLoading}
+        totalUnfilteredCount={allOrders.length}
+        selectedOrderIds={selectedOrderIds}
+        onToggleSelectOrder={handleToggleSelectOrder}
+        onToggleSelectAll={handleToggleSelectAll}
+        updatingOrderId={updatingOrderId}
+        onTogglePaymentStatus={handleTogglePaymentStatus}
+        onOpenTicket={(order) => setSelectedTicketOrder(order)}
+        onOpenWhatsApp={(order) => setSelectedWhatsAppOrder(order)}
+        onOpenDetail={(order) => setSelectedDetailOrder(order)}
+        onResetFilters={resetFilters}
+      />
+
+      {/* ─── 5. Barra Flotante de Acciones en Lote ─────────────────────────── */}
+      <PaymentBatchActionBar
+        selectedCount={selectedOrderIds.size}
+        selectedTotalAmount={selectedTotalAmount}
+        pendingCount={selectedPendingCount}
+        paidCount={selectedPaidCount}
+        onClearSelection={handleClearSelection}
+        onBatchValidate={handleBatchValidateClick}
+        onBatchRevert={handleBatchRevertClick}
+        onCopySummary={handleCopyBatchSummary}
+        busy={batchBusy}
+      />
+
+      {/* ─── 6. Modales Interactivos ────────────────────────────────────────── */}
+      {/* Modal de Confirmación de Operación Masiva */}
+      <PaymentBatchConfirmModal
+        open={batchConfirmOpen}
+        onClose={() => setBatchConfirmOpen(false)}
+        onConfirm={handleExecuteBatchAction}
+        actionType={batchActionType}
+        totalCount={selectedOrderIds.size}
+        totalAmount={selectedTotalAmount}
+        busy={batchBusy}
+      />
+
+      {/* Modal de Cuenta Bancaria BBVA */}
+      <BankDetailsModal
+        open={bankDetailsOpen}
+        onClose={() => setBankDetailsOpen(false)}
+      />
+
+      {/* Modal de Ticket Térmico 80mm */}
+      <OrderTicketModal
+        order={selectedTicketOrder}
+        isOpen={Boolean(selectedTicketOrder)}
+        onClose={() => setSelectedTicketOrder(null)}
+        onOpenWhatsApp={(order) => {
+          setSelectedTicketOrder(null);
+          setSelectedWhatsAppOrder(order);
+        }}
+      />
+
+      {/* Modal de WhatsApp Bridge */}
+      <WhatsAppActionModal
+        order={selectedWhatsAppOrder}
+        isOpen={Boolean(selectedWhatsAppOrder)}
+        onClose={() => setSelectedWhatsAppOrder(null)}
+      />
+
+      {/* Drawer de Detalle Completo de la Comanda */}
+      <OrderDetailDrawer
+        order={currentDetailOrder}
+        open={Boolean(selectedDetailOrder)}
+        onClose={() => setSelectedDetailOrder(null)}
+      />
+    </div>
+  );
 }
