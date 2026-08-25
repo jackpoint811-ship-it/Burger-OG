@@ -310,6 +310,15 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Icono `CalendarDays` (📅) azul para pedidos con fecha real futura (ej. `"26 Ago"` o `"Vie 28"`).
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (7.00s), `npm run build:chekeo` ✅ (6.57s).
 
+### 📅 2026-08-25 — Sesión 31: Integración de Skills de Frontend, shadcn/ui, Accesibilidad y Tokens Tailwind v4
+- **Skill `shadcn-ui` (`.agents/skills/shadcn-ui/`)**:
+  - Patrones de composición desacoplada sobre Radix UI en `packages/ui`, variantes con `cva` y slots polimórficos con `asChild`.
+- **Skill `a11y-wcag-auditor` (`.agents/skills/a11y-wcag-auditor/`)**:
+  - Matriz de comprobación WCAG 2.1 AA (contrastes $4.5:1$, foco `:focus-visible`, targets táctiles $\ge 44\text{px}$ y `aria-live`).
+- **Skill `tailwind-v4-tokens` (`.agents/skills/tailwind-v4-tokens/`)**:
+  - Paleta oficial Premium Casual, directivas de Tailwind v4, safe area insets y erradicación de antipatrones visuales.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
+
 ---
 
 
