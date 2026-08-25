@@ -73,7 +73,7 @@ export function ReorderModule() {
         <button
           type="button"
           onClick={handleReorder}
-          className="flex items-center gap-1 px-3.5 py-2 rounded-2xl bg-accent text-white hover:bg-accent-dark font-extrabold text-xs tracking-wide shadow-sm transition-all shrink-0 cursor-pointer min-h-[40px]"
+          className="flex items-center gap-1 px-4 py-2.5 rounded-2xl bg-accent text-white hover:bg-accent-dark focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none font-extrabold text-xs tracking-wide shadow-sm transition-all shrink-0 cursor-pointer min-h-[44px]"
         >
           <span>PEDIR</span>
           <ArrowRight className="w-3.5 h-3.5" />

@@ -81,7 +81,7 @@ export function BrandHeader() {
             <button
               type="button"
               onClick={toggleTheme}
-              className="w-10 h-10 rounded-2xl border border-line bg-surface hover:bg-surface-raised text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
+              className="w-10 h-10 rounded-2xl border border-line bg-surface hover:bg-surface-raised text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
               aria-label={isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
               title={isDark ? 'Modo Claro' : 'Modo Oscuro'}
             >
@@ -95,7 +95,9 @@ export function BrandHeader() {
           <button
             type="button"
             onClick={() => setIsScheduleOpen(true)}
-            className="flex-1 flex items-center justify-between gap-2 px-3.5 py-2 rounded-2xl bg-surface hover:bg-surface-raised border border-line transition-colors text-left cursor-pointer min-h-[44px]"
+            aria-haspopup="dialog"
+            aria-expanded={isScheduleOpen}
+            className="flex-1 flex items-center justify-between gap-2 px-3.5 py-2 rounded-2xl bg-surface hover:bg-surface-raised border border-line transition-colors text-left cursor-pointer min-h-[44px] focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
             aria-label="Seleccionar torre y ver horarios de entrega"
           >
             <div className="flex items-center gap-2 min-w-0">

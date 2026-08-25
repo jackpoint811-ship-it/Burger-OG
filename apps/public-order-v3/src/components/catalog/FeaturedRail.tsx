@@ -117,10 +117,10 @@ export function FeaturedRail() {
                   <button
                     type="button"
                     onClick={(e) => handleQuickAdd(item, e)}
-                    className="w-7 h-7 rounded-lg bg-accent text-white flex items-center justify-center hover:bg-accent-dark transition-colors cursor-pointer min-h-[28px] min-w-[28px]"
+                    className="w-8 h-8 rounded-xl bg-accent text-white flex items-center justify-center hover:bg-accent-dark focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none transition-colors cursor-pointer min-h-[32px] min-w-[32px]"
                     aria-label={`Pedir ${item.name}`}
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-4 h-4" />
                   </button>
                 </div>
               </div>
