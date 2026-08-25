@@ -26,6 +26,7 @@ Thumbs.db
 # Agent temporary workspace logs & states
 .agents/*
 !.agents/skills/
+!.agents/rules/
 ..agents/
 agents/
 
