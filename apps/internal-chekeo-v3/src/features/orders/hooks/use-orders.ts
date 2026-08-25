@@ -68,6 +68,17 @@ export function useChekeoOrdersQuery(options: UseChekeoOrdersQueryOptions = {}) 
 
   const orders = query.data ?? [];
 
+  // Hook para consultar órdenes archivadas
+  const archivedQuery = useQuery({
+    queryKey: chekeoOrderKeys.list({ ...fetchOptions, archived: 'true' }),
+    queryFn: () => fetchChekeoOrders({ ...fetchOptions, archived: 'true' }),
+    refetchInterval: autoRefresh ? refetchIntervalMs * 2 : false,
+    staleTime: 10000,
+    enabled,
+  });
+
+  const archivedOrders = archivedQuery.data ?? [];
+
   // Calcular conteos por estado a partir de la lista activa
   const counts: OrderCounts = {
     all: orders.length,
@@ -76,13 +87,35 @@ export function useChekeoOrdersQuery(options: UseChekeoOrdersQueryOptions = {}) 
     ready: orders.filter((o) => o.status === 'ready').length,
     delivered: orders.filter((o) => o.status === 'delivered').length,
     cancelled: orders.filter((o) => o.status === 'cancelled').length,
+    archived: archivedOrders.length,
   };
 
   return {
     ...query,
     orders,
+    archivedOrders,
+    archivedQuery,
     counts,
   };
+}
+
+export function useChekeoArchivedOrdersQuery(
+  options: UseChekeoOrdersQueryOptions = {}
+) {
+  const {
+    autoRefresh = false,
+    refetchIntervalMs = 30000,
+    enabled = true,
+    ...fetchOptions
+  } = options;
+
+  return useQuery({
+    queryKey: chekeoOrderKeys.list({ ...fetchOptions, archived: 'true' }),
+    queryFn: () => fetchChekeoOrders({ ...fetchOptions, archived: 'true' }),
+    refetchInterval: autoRefresh ? refetchIntervalMs : false,
+    staleTime: 10000,
+    enabled,
+  });
 }
 
 export function useChekeoOrderSummaryQuery(

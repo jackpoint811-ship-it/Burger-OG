@@ -66,6 +66,7 @@ export interface OrderCounts {
   ready: number;
   delivered: number;
   cancelled: number;
+  archived: number;
 }
 
 // ─── Normalizadores de Ítems ──────────────────────────────────────────────────
