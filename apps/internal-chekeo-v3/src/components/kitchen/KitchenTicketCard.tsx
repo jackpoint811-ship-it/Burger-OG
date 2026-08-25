@@ -66,15 +66,11 @@ export function KitchenTicketCard({
   };
 
   // Configuración visual por etapa
-  let actionLabel = 'Mandar a Plancha';
-  let actionIcon = <Flame className="w-5 h-5 text-white" />;
-  let actionBtnClass = 'bg-amber-600 hover:bg-amber-500 text-white shadow-md active:scale-[0.98]';
+  let actionLabel = '✔ Hecha / Marcar Listo';
+  let actionIcon = <CheckCircle2 className="w-5 h-5 text-white" />;
+  let actionBtnClass = 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md active:scale-[0.98]';
 
-  if (ticket.status === 'preparing') {
-    actionLabel = 'Marcar Listo';
-    actionIcon = <CheckCircle2 className="w-5 h-5 text-white" />;
-    actionBtnClass = 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md active:scale-[0.98]';
-  } else if (ticket.status === 'ready') {
+  if (ticket.status === 'ready') {
     actionLabel = 'Despachar / Entregar';
     actionIcon = <PackageCheck className="w-5 h-5 text-white" />;
     actionBtnClass = 'bg-blue-600 hover:bg-blue-500 text-white shadow-md active:scale-[0.98]';

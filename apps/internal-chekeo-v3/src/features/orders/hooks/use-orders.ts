@@ -80,10 +80,25 @@ export function useChekeoOrdersQuery(options: UseChekeoOrdersQueryOptions = {}) 
   const archivedOrders = archivedQuery.data ?? [];
 
   // Calcular conteos por estado a partir de la lista activa
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  const isOrderToday = (order: OrderV2) => {
+    const delivery = order.delivery as Record<string, unknown> | undefined;
+    const sched = delivery?.scheduledDate || delivery?.scheduledDeliveryDate;
+    if (typeof sched === 'string' && sched.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return sched === todayStr;
+    }
+    if (order.createdAt) {
+      return order.createdAt.startsWith(todayStr);
+    }
+    return true;
+  };
+
   const counts: OrderCounts = {
     all: orders.length,
-    new: orders.filter((o) => o.status === 'new').length,
-    preparing: orders.filter((o) => o.status === 'preparing').length,
+    new: orders.filter((o) => o.status === 'new' && isOrderToday(o)).length,
+    preparing: orders.filter((o) => o.status === 'preparing' || (o.status === 'new' && !isOrderToday(o))).length,
     ready: orders.filter((o) => o.status === 'ready').length,
     delivered: orders.filter((o) => o.status === 'delivered').length,
     cancelled: orders.filter((o) => o.status === 'cancelled').length,

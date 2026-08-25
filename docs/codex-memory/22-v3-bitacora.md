@@ -339,6 +339,19 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Botones de acción rápida en `FeaturedRail` y botón de `ReorderModule` ampliados a dimensiones táctiles cómodas ($\ge 44\text{px}$).
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
 
+### 📅 2026-08-25 — Sesión 34: Afinación de la Máquina de Estados Operativa y Financiera en Chekeo V3
+- **Estado `Nuevo` Exclusivo de Hoy vs. `Preparando`**:
+  - En la pestaña de `Pedidos`, el badge `Nuevo` (🔵) se reserva exclusivamente para pedidos ingresados para `"Hoy"`.
+  - Pedidos programados para fechas posteriores o anteriores con estado `new` se representan e indexan visual y operativamente como `Preparando` (🟡), manteniendo la cola unificada.
+  - Sincronizados los conteos de `use-orders.ts` (`counts.new`, `counts.preparing`) y el filtro por estado de `PedidosView.tsx` para responder a esta semántica.
+- **Avance Directo en Cocina a `Listo` (`ready`)**:
+  - Al completar la comanda activa en `KitchenActiveStation` (`✔ Hecha`) o en `KitchenTicketCard`, la orden avanza directamente a estado `ready` ("Listo para Empaque"), tanto si estaba en `new` como en `preparing`.
+- **Validación de Pago Automatizada con Entrega (`Pagos ➔ Entregado`)**:
+  - En el módulo de `Pagos` (`use-payments.ts`), marcar una orden como `Pagado` (individual o en lote) actualiza inmediatamente `paymentStatus: 'paid'` y establece `status: 'delivered'` (Entregado).
+- **Flexibilidad de Transiciones en Backend (`_orders-v2-utils.ts`)**:
+  - `STATUS_TRANSITIONS` ampliado para habilitar saltos directos válidos (`new ➔ ready/delivered`, `preparing ➔ ready/delivered`, `delivered ➔ ready`).
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (4.86s), `npm run build:public` ✅ (5.26s).
+
 ---
 
 

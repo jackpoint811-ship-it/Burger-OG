@@ -195,15 +195,13 @@ export function useKitchenDisplay(options: UseKitchenDisplayOptions = {}) {
 
   /**
    * Avanza un ticket al siguiente estado con 1 clic:
-   * - new -> preparing (Mandar a plancha)
-   * - preparing -> ready (Marcar listo)
+   * - new / preparing -> ready (Marcar listo / Hecha)
    * - ready -> delivered (Entregar / Despachar)
    */
   const advanceTicketStatus = useCallback(
     async (ticketId: string, currentStatus: OrderV2Status) => {
       let nextStatus: OrderV2Status | null = null;
-      if (currentStatus === 'new') nextStatus = 'preparing';
-      else if (currentStatus === 'preparing') nextStatus = 'ready';
+      if (currentStatus === 'new' || currentStatus === 'preparing') nextStatus = 'ready';
       else if (currentStatus === 'ready') nextStatus = 'delivered';
 
       if (!nextStatus) return;

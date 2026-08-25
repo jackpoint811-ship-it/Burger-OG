@@ -37,7 +37,7 @@ import {
   CupSoda,
 } from 'lucide-react';
 import { Button } from '@ui/button';
-import type { OrderV2 } from '@config/index';
+import type { OrderV2, OrderV2Status } from '@config/index';
 import {
   normalizeOrderItems,
   ORDER_STATUS_CONFIGS,
@@ -77,7 +77,13 @@ export function OrderCard({
   const updateStatusMutation = useUpdateOrderStatusMutation();
 
   const normalizedItems = normalizeOrderItems(order.items);
-  const statusConfig = ORDER_STATUS_CONFIGS[order.status] || ORDER_STATUS_CONFIGS.new;
+  const dateInfo = formatOrderTargetDateInfo(order);
+
+  // Si la orden es 'new' pero es programada/anterior (!dateInfo.isToday), se muestra como 'Preparando'
+  const displayStatus: OrderV2Status =
+    order.status === 'new' && !dateInfo.isToday ? 'preparing' : order.status;
+
+  const statusConfig = ORDER_STATUS_CONFIGS[displayStatus] || ORDER_STATUS_CONFIGS.new;
   const paymentStatusConfig =
     PAYMENT_STATUS_CONFIGS[order.paymentStatus] || PAYMENT_STATUS_CONFIGS.pending;
   const isTerminal = order.status === 'delivered' || order.status === 'cancelled';
@@ -85,7 +91,6 @@ export function OrderCard({
   const towerLocation = formatTowerDeliveryLabel(
     order.delivery as Record<string, unknown> | null | undefined
   );
-  const dateInfo = formatOrderTargetDateInfo(order);
 
   const handleCopyFolio = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -96,11 +101,20 @@ export function OrderCard({
 
   const handleAdvanceStatus = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!statusConfig.nextStatus) return;
+    const nextStatus =
+      order.status === 'new'
+        ? 'preparing'
+        : order.status === 'preparing'
+        ? 'ready'
+        : order.status === 'ready'
+        ? 'delivered'
+        : null;
+
+    if (!nextStatus) return;
 
     await updateStatusMutation.mutateAsync({
       orderId: order.id,
-      status: statusConfig.nextStatus,
+      status: nextStatus,
     });
   };
 

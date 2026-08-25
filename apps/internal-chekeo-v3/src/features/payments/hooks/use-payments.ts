@@ -9,7 +9,11 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import type { OrderV2, OrderV2PaymentStatus } from '@config/index';
-import { useChekeoOrdersQuery, useUpdateOrderPaymentMutation } from '../../orders';
+import {
+  useChekeoOrdersQuery,
+  useUpdateOrderPaymentMutation,
+  useUpdateOrderStatusMutation,
+} from '../../orders';
 import { computeFinancialSummary, filterPaymentsOrders } from '../utils/payments.utils';
 import type {
   PaymentFilterMethod,
@@ -45,6 +49,7 @@ export function usePayments(options: UsePaymentsOptions = {}) {
   });
 
   const updatePaymentMutation = useUpdateOrderPaymentMutation();
+  const updateStatusMutation = useUpdateOrderStatusMutation();
 
   const allOrders = ordersQuery.orders ?? [];
 
@@ -82,18 +87,30 @@ export function usePayments(options: UsePaymentsOptions = {}) {
     });
   }, [allOrders, search, methodFilter, statusFilter, modeFilter, towerFilter, selectedDate]);
 
-  // Acción rápida: Marcar como Pagado / Validado (Individual)
+  // Acción rápida: Marcar como Pagado / Validado (Individual) -> Marca Pagado y Entregado
   const markAsPaid = useCallback(
     async (orderId: string, notes?: string) => {
-      return updatePaymentMutation.mutateAsync({
+      const paymentRes = await updatePaymentMutation.mutateAsync({
         orderId,
         payload: {
           paymentStatus: 'paid',
           notes,
         },
       });
+
+      try {
+        await updateStatusMutation.mutateAsync({
+          orderId,
+          status: 'delivered',
+          reason: notes || 'Entregado al confirmar pago',
+        });
+      } catch {
+        // En caso de que ya estuviera en estado terminal o similar
+      }
+
+      return paymentRes;
     },
-    [updatePaymentMutation]
+    [updatePaymentMutation, updateStatusMutation]
   );
 
   // Acción rápida: Marcar como Pendiente de Validación (Individual)
@@ -110,7 +127,7 @@ export function usePayments(options: UsePaymentsOptions = {}) {
     [updatePaymentMutation]
   );
 
-  // Acción en Lote: Marcar múltiples pedidos como Pagados
+  // Acción en Lote: Marcar múltiples pedidos como Pagados y Entregados
   const markBatchAsPaid = useCallback(
     async (orderIds: string[], notes?: string) => {
       for (const orderId of orderIds) {
@@ -121,9 +138,18 @@ export function usePayments(options: UsePaymentsOptions = {}) {
             notes: notes || 'Validación en lote de pagos',
           },
         });
+        try {
+          await updateStatusMutation.mutateAsync({
+            orderId,
+            status: 'delivered',
+            reason: notes || 'Entregado al confirmar pago en lote',
+          });
+        } catch {
+          // Continuar con el siguiente
+        }
       }
     },
-    [updatePaymentMutation]
+    [updatePaymentMutation, updateStatusMutation]
   );
 
   // Acción en Lote: Revertir múltiples pedidos a Pendiente
