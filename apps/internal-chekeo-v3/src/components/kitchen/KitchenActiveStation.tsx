@@ -145,23 +145,6 @@ export function KitchenActiveStation({
 
   return (
     <div className="space-y-5 animate-in fade-in duration-300">
-      {/* ─── Encabezado Informativo de Estación ─────────────────────────────────── */}
-      <div className="bg-surface-card p-4 sm:p-5 rounded-3xl border border-line shadow-card space-y-2">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-black uppercase tracking-wider text-accent">
-              {stationHeader.title}
-            </span>
-          </div>
-          <span className="px-3 py-1 text-xs font-extrabold rounded-full bg-accent-soft text-accent border border-accent/20">
-            {stationHeader.countBadge}
-          </span>
-        </div>
-        <p className="text-xs text-text-secondary">
-          {stationHeader.desc}
-        </p>
-      </div>
-
       {/* ─── Comanda Activa en Foco (PEDIDO ACTIVO) ─────────────────────────────── */}
       {activeTicket ? (
         <div className="bg-surface-card p-5 sm:p-6 rounded-3xl border-2 border-accent/40 shadow-floating space-y-5">

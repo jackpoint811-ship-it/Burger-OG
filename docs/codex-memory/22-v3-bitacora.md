@@ -352,6 +352,19 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `STATUS_TRANSITIONS` ampliado para habilitar saltos directos válidos (`new ➔ ready/delivered`, `preparing ➔ ready/delivered`, `delivered ➔ ready`).
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (4.86s), `npm run build:public` ✅ (5.26s).
 
+### 📅 2026-08-25 — Sesión 35: Interfaz General de Cocina V3 (Paso 1 - Jerarquía V3 & Erradicación de Ruido)
+- **Reestructuración a 3 Niveles Directos**:
+  - **Nivel 1 (Selector de Estación Operativa)**: `role="tablist"` accesible sobre `bg-surface-card` con `🍔 Preparación`, `🍟 Side Quest` y `📋 Resumen K`. Píldoras de alto contraste con conteo reactivo de comandas pendientes y badge de conexión `🟢 Cocina en Vivo`.
+  - **Nivel 2 (Riel Horizontal de Fechas)**: Riel compacto con scroll suave (`snap-start`), tarjeta `🟢 HOY` destacada y botones pastilla para `⏱️ Anteriores` y `Ver Todos`.
+  - **Nivel 3 (Área de Producción Directa)**: Renderizado inmediato de la comanda activa (`PEDIDO ACTIVO`) sin banners explicativos intermedios.
+- **Erradicación Total de Ruido Visual y Controles Innecesarios**:
+  - Eliminado el toggle confuso "Foco / Tablero" en favor de la visualización canónica de producción.
+  - Eliminados los botones de bocina/audio, pantalla completa y refresco manual.
+  - Eliminada la franja redundante `🥩 Plancha & Parrilla (Burgers)` y el banner de texto de `KitchenActiveStation`.
+- **Accesibilidad & Ergonomía (WCAG 2.1 AA)**:
+  - Targets táctiles $\ge 44\text{px}$, semántica `role="tablist"` / `role="tab"` con `aria-selected` y `aria-controls`, y foco visible `focus-visible:ring-2 focus-visible:ring-accent`.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (4.77s), `npm run build:public` ✅ (5.17s).
+
 ---
 
 
