@@ -274,6 +274,15 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Archivos de compatibilidad**: Agregados `CLAUDE.md` y `.cursorrules` para interoperabilidad entre distintos entornos y herramientas de desarrollo.
 - **Verificación**: `npm run typecheck` ✅ (0 errores), `git diff --check` ✅.
 
+### 📅 2026-08-25 — Sesión 26: Refinamiento Integral de la Pestaña "Pedidos" en Chekeo V3
+- **Simplificación Radical de Filtros (2 Niveles)**:
+  - Nivel 1: Riel horizontal de fechas intacto (Hoy, 14 días consecutivos, Histórico y Todos).
+  - Nivel 2: Buscador Universal inteligente (`#ORD-...`, cliente, teléfono, torre, ingredientes), Ribbon de estados con conteos en vivo y menú Popover discreto de Filtros Avanzados (Modo Pickup/Delivery y selector de Torres con badge de filtros activos).
+- **Integración de Basurero / Archivadas (`Soft-Delete`)**: Pestaña `🗑️ Archivados` en el ribbon de estados con consulta a Cloudflare D1 y botones de restauración.
+- **Acciones en Lote & Limpieza de Turno**: Componente `BatchActionBar` (barra flotante inferior) y `BatchConfirmModal` (modal de confirmación preventivo) para archivar y restaurar múltiples comandas.
+- **Jerarquía y Diseño en `OrderCard`**: Cuadrícula de 3 Hechos Clave (*Total*, *Ubicación* y *Fecha/Horario con badge programado*), desglose limpio de comanda y realce de pedido prioritario (`isPriority`).
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.52s), `npm run build:public` ✅ (6.09s).
+
 ---
 
 

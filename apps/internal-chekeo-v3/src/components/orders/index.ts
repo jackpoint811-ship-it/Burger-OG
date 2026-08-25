@@ -9,3 +9,5 @@ export * from './OrdersFilterBar';
 export * from './OrdersList';
 export * from './OrderDetailDrawer';
 export * from './CancelOrderModal';
+export * from './BatchActionBar';
+export * from './BatchConfirmModal';
