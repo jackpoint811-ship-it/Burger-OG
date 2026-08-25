@@ -89,9 +89,9 @@ export function CancelOrderModal({ order, open, onClose }: CancelOrderModalProps
                   key={preset}
                   type="button"
                   onClick={() => handlePresetSelect(preset)}
-                  className={`text-left p-2.5 rounded-xl text-xs font-semibold border transition-all ${
+                  className={`text-left p-3 rounded-2xl text-xs font-semibold border transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-danger/10 border-danger text-danger'
+                      ? 'bg-danger/10 border-danger text-danger ring-1 ring-danger/30'
                       : 'bg-surface-raised border-line text-text-primary hover:border-line/80'
                   }`}
                 >

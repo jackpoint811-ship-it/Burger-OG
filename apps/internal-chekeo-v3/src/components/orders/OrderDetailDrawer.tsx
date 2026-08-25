@@ -22,6 +22,10 @@ import {
   AlertCircle,
   Copy,
   CheckCircle2,
+  Utensils,
+  CupSoda,
+  Plus,
+  CircleSlash2,
 } from 'lucide-react';
 import { Drawer } from '@ui/drawer';
 import { Badge } from '@ui/badge';
@@ -109,8 +113,18 @@ export function OrderDetailDrawer({
             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider border ${statusConfig.badgeClass}`}>
               {statusConfig.shortLabel}
             </span>
-            <Badge variant="outline" className="text-[11px] font-bold">
-              {order.orderMode === 'pickup' ? '🛍️ Pickup' : '🛵 Delivery'}
+            <Badge variant="outline" className="text-[11px] font-bold flex items-center gap-1">
+              {order.orderMode === 'pickup' ? (
+                <>
+                  <ShoppingBag className="w-3 h-3 text-accent" />
+                  <span>Pickup</span>
+                </>
+              ) : (
+                <>
+                  <Bike className="w-3 h-3 text-accent" />
+                  <span>Delivery</span>
+                </>
+              )}
             </Badge>
           </div>
           <div className="text-right">
@@ -148,7 +162,7 @@ export function OrderDetailDrawer({
                   )}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-600 text-xs font-bold hover:bg-emerald-500/25 transition-colors"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-500/15 text-emerald-600 text-xs font-bold hover:bg-emerald-500/25 transition-colors cursor-pointer"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
                   <span>WhatsApp</span>
@@ -181,9 +195,10 @@ export function OrderDetailDrawer({
             </div>
 
             {order.notes && (
-              <div className="sm:col-span-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs">
-                <p className="font-bold text-amber-700 dark:text-amber-300 mb-0.5">
-                  Nota del Cliente:
+              <div className="sm:col-span-2 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs">
+                <p className="font-bold text-amber-700 dark:text-amber-300 mb-0.5 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>Nota del Cliente:</span>
                 </p>
                 <p className="text-amber-800 dark:text-amber-200">{order.notes}</p>
               </div>
@@ -200,7 +215,7 @@ export function OrderDetailDrawer({
             {normalizedItems.map((item, idx) => (
               <div
                 key={item.id || idx}
-                className="p-3.5 rounded-2xl bg-surface-raised border border-line space-y-2"
+                className="p-3.5 rounded-2xl bg-surface-raised border border-line space-y-2.5"
               >
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
@@ -219,7 +234,7 @@ export function OrderDetailDrawer({
                   <div className="pl-8 space-y-1 text-xs text-text-secondary">
                     {item.garnish && (
                       <div className="flex items-center gap-1.5">
-                        <span>🍟</span>
+                        <Utensils className="w-3.5 h-3.5 text-accent shrink-0" />
                         <span className="font-semibold">{item.garnish.name}</span>
                         {item.garnish.upcharge ? (
                           <span className="text-accent font-bold">
@@ -230,7 +245,7 @@ export function OrderDetailDrawer({
                     )}
                     {item.includedDrink && (
                       <div className="flex items-center gap-1.5">
-                        <span>🥤</span>
+                        <CupSoda className="w-3.5 h-3.5 text-sky-500 shrink-0" />
                         <span className="font-semibold">{item.includedDrink.name}</span>
                       </div>
                     )}
@@ -243,9 +258,10 @@ export function OrderDetailDrawer({
                     {item.removedIngredients.map((ing, i) => (
                       <span
                         key={i}
-                        className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-600 dark:text-red-400 text-[11px] font-bold border border-red-500/20"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/10 text-red-600 dark:text-red-400 text-[11px] font-bold border border-red-500/20"
                       >
-                        Sin {ing}
+                        <CircleSlash2 className="w-2.5 h-2.5 shrink-0" />
+                        <span>Sin {ing}</span>
                       </span>
                     ))}
                   </div>
@@ -257,9 +273,10 @@ export function OrderDetailDrawer({
                     {item.extras.map((extra, i) => (
                       <span
                         key={i}
-                        className="px-2 py-0.5 rounded-md bg-accent-soft text-accent text-[11px] font-bold border border-accent/20"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-accent-soft text-accent text-[11px] font-bold border border-accent/20"
                       >
-                        + {extra.name} {extra.price ? `(${formatCurrency(extra.price)})` : ''}
+                        <Plus className="w-2.5 h-2.5 shrink-0" />
+                        <span>{extra.name} {extra.price ? `(${formatCurrency(extra.price)})` : ''}</span>
                       </span>
                     ))}
                   </div>
@@ -276,13 +293,17 @@ export function OrderDetailDrawer({
                 {item.comboBurgers && item.comboBurgers.length > 0 && (
                   <div className="pl-8 pt-2 border-t border-line/40 space-y-1.5">
                     {item.comboBurgers.map((burger, bIdx) => (
-                      <div key={bIdx} className="text-xs bg-surface p-2 rounded-xl border border-line/60 space-y-1">
-                        <span className="font-bold text-text-primary">🍔 {burger.name}</span>
+                      <div key={bIdx} className="text-xs bg-surface p-2.5 rounded-2xl border border-line/60 space-y-1.5">
+                        <span className="font-bold text-text-primary flex items-center gap-1.5">
+                          <Utensils className="w-3 h-3 text-accent shrink-0" />
+                          <span>{burger.name}</span>
+                        </span>
                         {burger.removedIngredients.length > 0 && (
                           <div className="flex flex-wrap gap-1">
                             {burger.removedIngredients.map((ing, bi) => (
-                              <span key={bi} className="px-1.5 py-0.2 rounded bg-red-500/10 text-red-600 text-[10px] font-bold">
-                                Sin {ing}
+                              <span key={bi} className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-red-500/10 text-red-600 text-[10px] font-bold">
+                                <CircleSlash2 className="w-2.5 h-2.5 shrink-0" />
+                                <span>Sin {ing}</span>
                               </span>
                             ))}
                           </div>
@@ -290,8 +311,9 @@ export function OrderDetailDrawer({
                         {burger.extras.length > 0 && (
                           <div className="flex flex-wrap gap-1">
                             {burger.extras.map((ext, bi) => (
-                              <span key={bi} className="px-1.5 py-0.2 rounded bg-accent/10 text-accent text-[10px] font-bold">
-                                + {ext.name}
+                              <span key={bi} className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-accent/10 text-accent text-[10px] font-bold">
+                                <Plus className="w-2.5 h-2.5 shrink-0" />
+                                <span>{ext.name}</span>
                               </span>
                             ))}
                           </div>

@@ -6,7 +6,7 @@
  * - Realce visual de pedido prioritario (isPriority).
  * - Folio destacado con botón de copiado rápido y badges de estado y modo.
  * - Grilla de 3 Hechos Clave (Total, Dónde Entregar y Fecha/Horario con badge programado).
- * - Desglose visual limpio de comanda (combos, guarniciones, remociones, extras y notas).
+ * - Desglose visual limpio de comanda con iconografía SVG profesional (Lucide).
  * - Botones de acción rápida: Avance de estado, Detalle, Cancelar, Archivar y Restaurar.
  */
 
@@ -14,6 +14,7 @@ import React, { useState } from 'react';
 import {
   MapPin,
   Clock,
+  CalendarClock,
   MessageCircle,
   ShoppingBag,
   Bike,
@@ -29,6 +30,10 @@ import {
   Archive,
   RotateCcw,
   Sparkles,
+  Plus,
+  CircleSlash2,
+  Utensils,
+  CupSoda,
 } from 'lucide-react';
 import { Button } from '@ui/button';
 import type { OrderV2 } from '@config/index';
@@ -101,7 +106,7 @@ export function OrderCard({
 
   return (
     <div
-      className={`bg-surface-card rounded-3xl p-4 sm:p-5 border transition-all space-y-3.5 flex flex-col justify-between ${
+      className={`bg-surface-card rounded-3xl p-4 sm:p-5 border transition-all duration-200 space-y-3.5 flex flex-col justify-between ${
         selected
           ? 'ring-2 ring-accent border-accent/50 bg-accent/[0.02] shadow-card'
           : isPriority
@@ -133,7 +138,7 @@ export function OrderCard({
 
                 {isPriority && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-black uppercase bg-accent-soft text-accent border border-accent/30 animate-pulse">
-                    <Sparkles className="w-2.5 h-2.5" />
+                    <Sparkles className="w-2.5 h-2.5 shrink-0" />
                     <span>Prioridad</span>
                   </span>
                 )}
@@ -167,12 +172,12 @@ export function OrderCard({
                 <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-bold bg-surface-raised text-text-secondary border border-line">
                   {order.orderMode === 'pickup' ? (
                     <>
-                      <ShoppingBag className="w-2.5 h-2.5 text-accent" />
+                      <ShoppingBag className="w-2.5 h-2.5 text-accent shrink-0" />
                       <span>Pickup</span>
                     </>
                   ) : (
                     <>
-                      <Bike className="w-2.5 h-2.5 text-accent" />
+                      <Bike className="w-2.5 h-2.5 text-accent shrink-0" />
                       <span>Delivery</span>
                     </>
                   )}
@@ -205,25 +210,33 @@ export function OrderCard({
           <div className="flex flex-col justify-center min-w-0">
             <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">Entrega</span>
             <strong
-              className="text-[11px] sm:text-xs font-bold text-text-primary truncate"
+              className="text-[11px] sm:text-xs font-bold text-text-primary truncate flex items-center gap-1"
               title={formatDeliveryLocation(order.delivery, order.orderMode)}
             >
-              📍 {formatDeliveryLocation(order.delivery, order.orderMode)}
+              <MapPin className="w-3 h-3 text-accent shrink-0" />
+              <span className="truncate">{formatDeliveryLocation(order.delivery, order.orderMode)}</span>
             </strong>
           </div>
 
           <div className="flex flex-col justify-center min-w-0">
             <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">Fecha</span>
-            <span
-              className={`text-[11px] sm:text-xs font-bold truncate ${
-                isScheduled
-                  ? 'text-amber-600 dark:text-amber-400 font-extrabold'
-                  : 'text-text-primary'
-              }`}
-              title={formatDeliverySchedule(order.delivery, order.createdAt)}
-            >
-              {isScheduled ? '📅 Programado' : '⚡ Hoy'}
-            </span>
+            {isScheduled ? (
+              <span
+                className="text-[11px] sm:text-xs font-black text-amber-600 dark:text-amber-400 truncate flex items-center gap-1"
+                title={formatDeliverySchedule(order.delivery, order.createdAt)}
+              >
+                <CalendarClock className="w-3 h-3 shrink-0" />
+                <span>Programado</span>
+              </span>
+            ) : (
+              <span
+                className="text-[11px] sm:text-xs font-bold text-text-primary truncate flex items-center gap-1"
+                title={formatDeliverySchedule(order.delivery, order.createdAt)}
+              >
+                <Clock className="w-3 h-3 text-text-muted shrink-0" />
+                <span>Hoy</span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -250,7 +263,7 @@ export function OrderCard({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="p-1 rounded-md text-emerald-600 hover:bg-emerald-500/10 transition-colors"
+              className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-500/15 transition-colors cursor-pointer"
               title="Escribir por WhatsApp"
               aria-label="WhatsApp"
             >
@@ -279,8 +292,9 @@ export function OrderCard({
               {(item.garnish || item.includedDrink) && (
                 <div className="pl-5 space-y-0.5 text-[11px] text-text-secondary font-medium">
                   {item.garnish && (
-                    <div className="flex items-center gap-1">
-                      <span>🍟 {item.garnish.name}</span>
+                    <div className="flex items-center gap-1.5">
+                      <Utensils className="w-3 h-3 text-accent shrink-0" />
+                      <span>{item.garnish.name}</span>
                       {item.garnish.upcharge ? (
                         <span className="text-accent font-bold">
                           (+{formatCurrency(item.garnish.upcharge)})
@@ -288,7 +302,12 @@ export function OrderCard({
                       ) : null}
                     </div>
                   )}
-                  {item.includedDrink && <div>🥤 {item.includedDrink.name}</div>}
+                  {item.includedDrink && (
+                    <div className="flex items-center gap-1.5">
+                      <CupSoda className="w-3 h-3 text-sky-500 shrink-0" />
+                      <span>{item.includedDrink.name}</span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -298,9 +317,10 @@ export function OrderCard({
                   {item.removedIngredients.map((ing, i) => (
                     <span
                       key={i}
-                      className="px-1.5 py-0.2 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-bold"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-bold border border-red-500/20"
                     >
-                      Sin {ing}
+                      <CircleSlash2 className="w-2.5 h-2.5 shrink-0" />
+                      <span>Sin {ing}</span>
                     </span>
                   ))}
                 </div>
@@ -312,9 +332,10 @@ export function OrderCard({
                   {item.extras.map((extra, i) => (
                     <span
                       key={i}
-                      className="px-1.5 py-0.2 rounded bg-accent-soft text-accent text-[10px] font-bold"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent-soft text-accent text-[10px] font-bold border border-accent/20"
                     >
-                      + {extra.name}
+                      <Plus className="w-2.5 h-2.5 shrink-0" />
+                      <span>{extra.name}</span>
                     </span>
                   ))}
                 </div>
@@ -348,7 +369,7 @@ export function OrderCard({
             variant="default"
             size="sm"
             onClick={() => onUnarchive(order)}
-            className="flex-1 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="flex-1 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white min-h-[38px] cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
             <span>Restaurar a Operaciones</span>
@@ -363,7 +384,7 @@ export function OrderCard({
                 size="sm"
                 onClick={handleAdvanceStatus}
                 disabled={updateStatusMutation.isPending}
-                className="flex-1 text-xs font-bold"
+                className="flex-1 text-xs font-bold min-h-[38px] cursor-pointer"
               >
                 {updateStatusMutation.isPending ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
@@ -385,7 +406,7 @@ export function OrderCard({
                 variant="destructive"
                 size="sm"
                 onClick={() => onArchive(order)}
-                className="flex-1 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white"
+                className="flex-1 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white min-h-[38px] cursor-pointer"
               >
                 <Archive className="w-3.5 h-3.5 mr-1.5" />
                 <span>Archivar</span>
@@ -399,7 +420,7 @@ export function OrderCard({
           variant="outline"
           size="sm"
           onClick={() => onOpenDetail(order)}
-          className="text-xs font-bold"
+          className="text-xs font-bold min-h-[38px] cursor-pointer"
           title="Ver detalle completo"
         >
           <FileText className="w-3.5 h-3.5 sm:mr-1" />
@@ -412,7 +433,7 @@ export function OrderCard({
             variant="ghost"
             size="sm"
             onClick={() => onOpenCancel(order)}
-            className="text-text-muted hover:text-danger hover:bg-danger-soft p-2 h-9 min-h-[36px]"
+            className="text-text-muted hover:text-danger hover:bg-danger-soft p-2 h-9 min-h-[38px] cursor-pointer"
             title="Cancelar pedido"
             aria-label="Cancelar pedido"
           >

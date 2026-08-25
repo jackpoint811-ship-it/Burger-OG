@@ -19,6 +19,7 @@ import {
   Bike,
   RotateCcw,
   Check,
+  Archive,
 } from 'lucide-react';
 import { Button } from '@ui/button';
 import type { OrderV2Status, OrderV2Mode } from '@config/index';
@@ -81,6 +82,7 @@ export function OrdersFilterBar({
     id: 'all' | OrderV2Status | 'archived';
     label: string;
     count: number;
+    icon?: React.ComponentType<{ className?: string }>;
     badgeClass?: string;
   }> = [
     { id: 'all', label: 'Todos', count: counts.all },
@@ -89,7 +91,7 @@ export function OrdersFilterBar({
     { id: 'ready', label: 'Listos', count: counts.ready, badgeClass: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' },
     { id: 'delivered', label: 'Entregados', count: counts.delivered },
     { id: 'cancelled', label: 'Cancelados', count: counts.cancelled, badgeClass: 'bg-red-500/20 text-red-600 dark:text-red-400' },
-    { id: 'archived', label: '🗑️ Archivados', count: counts.archived, badgeClass: 'bg-zinc-500/20 text-zinc-600 dark:text-zinc-400' },
+    { id: 'archived', label: 'Archivados', icon: Archive, count: counts.archived, badgeClass: 'bg-zinc-500/20 text-zinc-600 dark:text-zinc-400' },
   ];
 
   return (
@@ -282,12 +284,13 @@ export function OrdersFilterBar({
               onClick={() =>
                 onFilterChange((prev) => ({ ...prev, status: tab.id }))
               }
-              className={`px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-all cursor-pointer ${
                 isActive
                   ? 'bg-accent text-white shadow-xs'
                   : 'bg-surface-raised border border-line text-text-secondary hover:text-text-primary hover:border-line/80'
               }`}
             >
+              {tab.icon && <tab.icon className="w-3.5 h-3.5 shrink-0" />}
               <span>{tab.label}</span>
               <span
                 className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${
@@ -308,8 +311,18 @@ export function OrdersFilterBar({
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-line/60 text-xs">
           <span className="text-text-muted font-bold text-[11px]">Filtros activos:</span>
           {filters.mode !== 'all' && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-accent-soft text-accent text-xs font-bold border border-accent/20">
-              <span>{filters.mode === 'pickup' ? '🛍️ Pickup' : '🛵 Delivery'}</span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-accent-soft text-accent text-xs font-bold border border-accent/20">
+              {filters.mode === 'pickup' ? (
+                <>
+                  <ShoppingBag className="w-3 h-3 shrink-0" />
+                  <span>Pickup</span>
+                </>
+              ) : (
+                <>
+                  <Bike className="w-3 h-3 shrink-0" />
+                  <span>Delivery</span>
+                </>
+              )}
               <button
                 type="button"
                 onClick={() => onFilterChange((prev) => ({ ...prev, mode: 'all' }))}
