@@ -27,6 +27,8 @@ Thumbs.db
 .agents/*
 !.agents/skills/
 !.agents/rules/
+!.agents/hooks.json
+!.agents/scripts/
 ..agents/
 agents/
 

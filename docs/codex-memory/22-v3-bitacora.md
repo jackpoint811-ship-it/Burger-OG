@@ -283,6 +283,16 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Jerarquía, Iconografía SVG Lucide y Diseño en `OrderCard`**: Cuadrícula de 3 Hechos Clave (*Total*, *Ubicación* y *Fecha/Horario con badge programado*), iconografía SVG Lucide profesional (sustituyendo emojis en modo, guarnición, bebidas, remociones y extras) y realce de pedido prioritario (`isPriority`).
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.66s), `npm run build:public` ✅ (6.09s).
 
+### 📅 2026-08-25 — Sesión 27: Configuración de Antigravity Lifecycle Hooks & Suite de Validación QA
+- **Lifecycle Hook `PreToolUse` de Seguridad (`.agents/hooks.json` & `.agents/scripts/safety-guard.mjs`)**:
+  - Intercepción y bloqueo determinista de comandos prohibidos por `AGENTS.md`:
+    - Intento de push directo o merge a `main`.
+    - Uso de comandos destructivos de git (`git reset --hard`, `git add .`, `git add -A`).
+    - Eliminaciones catastróficas de directorios raíz, cwd o home (`rm -rf /`, `rm -rf .`, `rm -rf ~`).
+- **Skill de Validación Técnica (`.agents/skills/burgers-qa/`)**:
+  - Creación de `.agents/skills/burgers-qa/SKILL.md` y script automatizado `.agents/skills/burgers-qa/scripts/run-all-checks.sh` para correr de punta a punta la matriz de comprobaciones (`git diff --check`, `npm run typecheck`, `npm run build:public`, `npm run build:chekeo`).
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.11s), `npm run build:chekeo` ✅ (5.72s).
+
 ---
 
 
