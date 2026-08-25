@@ -18,7 +18,7 @@ export function CartBar() {
     <AnimatePresence>
       {isVisible && (
         <aside
-          className="fixed bottom-4 left-4 right-4 max-w-[768px] mx-auto z-40"
+          className="fixed bottom-4 left-4 right-4 pb-[max(0rem,env(safe-area-inset-bottom))] max-w-[768px] mx-auto z-40"
           aria-label="Resumen flotante del carrito"
         >
           <motion.div
@@ -58,7 +58,7 @@ export function CartBar() {
                 e.stopPropagation();
                 openDrawer('cart');
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white text-accent font-extrabold text-xs sm:text-sm hover:bg-gray-100 transition-colors shadow-xs cursor-pointer min-h-[40px]"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white text-accent font-extrabold text-xs sm:text-sm hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none transition-colors shadow-xs cursor-pointer min-h-[40px]"
             >
               <span>Ver Pedido</span>
               <ArrowRight className="w-4 h-4" />

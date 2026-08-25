@@ -325,6 +325,20 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Popover de Filtros acotado a `Todas las Torres`, `Torre GGA` y `Torre Valcob` (sin selector de modo pickup).
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (5.50s), `npm run build:chekeo` ✅ (5.07s).
 
+### 📅 2026-08-25 — Sesión 33: Afinación de UX/UI & Accesibilidad en Public Order V3
+- **Ergonomía Móvil en `CartBar`**:
+  - Inclusión de `safe-area-inset-bottom` para evitar que la barra flotante de resumen del carrito se solape con la barra de gestos en iOS/Android.
+- **Navegación por Teclado y Foco Visible en `ProductCard`**:
+  - Implementación de `tabIndex={0}`, `role="button"`, `onKeyDown` (<kbd>Enter</kbd> / <kbd>Espacio</kbd>) y anillos `:focus-visible:ring-accent` para cumplir WCAG 2.1 AA.
+  - Mejora de contraste tipográfico en subencabezados de categoría (`text-text-secondary`).
+- **Semántica ARIA en `CategoryNav`**:
+  - `role="tablist"` y `role="tab"` con `aria-selected` y foco visible en navegación sticky por categorías.
+- **Atributos Accesibles en `BrandHeader`**:
+  - `aria-haspopup="dialog"` y `aria-expanded` en el selector de torre y horarios de entrega.
+- **Targets Táctiles Optimizados**:
+  - Botones de acción rápida en `FeaturedRail` y botón de `ReorderModule` ampliados a dimensiones táctiles cómodas ($\ge 44\text{px}$).
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
+
 ---
 
 

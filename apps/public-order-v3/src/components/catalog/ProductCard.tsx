@@ -58,11 +58,24 @@ export function ProductCard({ item }: ProductCardProps) {
     setTimeout(() => setJustAdded(false), 1200);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isAvailable) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openProductDrawer(item);
+    }
+  };
+
   return (
     <article
+      tabIndex={isAvailable ? 0 : -1}
+      role="button"
       onClick={handleCardClick}
-      className={`group relative flex flex-col justify-between rounded-3xl bg-surface-card border border-line shadow-card hover:shadow-panel hover:border-text-muted/30 transition-all cursor-pointer overflow-hidden p-3 sm:p-4 ${
-        !isAvailable ? 'opacity-60 grayscale-[40%]' : ''
+      onKeyDown={handleKeyDown}
+      aria-label={`${item.name}, ${formatCurrency(effectivePrice)}`}
+      aria-disabled={!isAvailable}
+      className={`group relative flex flex-col justify-between rounded-3xl bg-surface-card border border-line shadow-card hover:shadow-panel hover:border-text-muted/30 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none transition-all cursor-pointer overflow-hidden p-3 sm:p-4 select-none ${
+        !isAvailable ? 'opacity-60 grayscale-[40%] cursor-not-allowed' : ''
       }`}
     >
       {/* Top Media & Badges */}
@@ -118,9 +131,9 @@ export function ProductCard({ item }: ProductCardProps) {
       {/* Product Information */}
       <div className="flex-1 flex flex-col justify-between gap-3">
         <div>
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-text-muted uppercase tracking-wider mb-0.5">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">
             <span>{item.category}</span>
-            {isCombo && <span className="text-accent">· Combo</span>}
+            {isCombo && <span className="text-accent font-extrabold">· Combo</span>}
           </div>
           <h3 className="font-bold text-sm sm:text-base text-text-primary group-hover:text-accent transition-colors line-clamp-1 leading-snug">
             {item.name}
@@ -150,7 +163,7 @@ export function ProductCard({ item }: ProductCardProps) {
             <button
               type="button"
               onClick={handleQuickAdd}
-              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer min-h-[44px] min-w-[44px] ${
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
                 justAdded
                   ? 'bg-accent text-white'
                   : requiresCustomization

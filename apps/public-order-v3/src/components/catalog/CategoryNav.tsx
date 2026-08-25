@@ -107,6 +107,8 @@ export function CategoryNav() {
       <div className="max-w-[768px] mx-auto px-4">
         <div
           ref={navRef}
+          role="tablist"
+          aria-label="Categorías"
           className="flex items-center gap-2 py-2.5 overflow-x-auto no-scrollbar scroll-smooth"
         >
           {categories.map((cat) => {
@@ -121,13 +123,14 @@ export function CategoryNav() {
                   buttonRefs.current[cat.key.toLowerCase()] = el;
                 }}
                 type="button"
+                role="tab"
+                aria-selected={isSelected}
                 onClick={() => handleCategoryClick(cat.key)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer min-h-[44px] shrink-0 select-none ${
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer min-h-[44px] shrink-0 select-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
                   isSelected
                     ? 'bg-accent text-white shadow-sm ring-2 ring-accent/20'
                     : 'bg-surface hover:bg-surface-raised text-text-secondary hover:text-text-primary border border-line'
                 }`}
-                aria-current={isSelected ? 'true' : undefined}
               >
                 {cat.emoji && <span className="text-sm">{cat.emoji}</span>}
                 <span>{cat.name}</span>
