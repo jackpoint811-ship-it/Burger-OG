@@ -39,13 +39,11 @@ import {
   normalizeOrderItems,
   formatCurrency,
   formatOrderTime,
+  formatTowerDeliveryLabel,
+  formatOrderTargetDateInfo,
   getWhatsAppLink,
   ORDER_STATUS_CONFIGS,
 } from '../../features/orders';
-import {
-  formatTowerDeliveryLabel,
-  formatOrderTargetDateInfo,
-} from '../../features/payments';
 
 export interface PaymentCardProps {
   order: OrderV2;

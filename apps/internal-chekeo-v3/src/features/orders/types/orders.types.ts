@@ -384,3 +384,84 @@ export function getWhatsAppLink(phone?: string, text?: string): string {
   const messageParam = text ? `?text=${encodeURIComponent(text)}` : '';
   return `https://wa.me/${fullNumber}${messageParam}`;
 }
+
+/**
+ * Extrae y formatea la torre de entrega exclusiva (Torre GGA o Torre Valcob) con departamento si aplica.
+ */
+export function formatTowerDeliveryLabel(delivery?: Record<string, unknown> | null): string {
+  if (!delivery) return 'Torre GGA';
+  const loc = typeof delivery.location === 'string' ? delivery.location.trim() : '';
+  const notes = typeof delivery.notes === 'string' ? delivery.notes.trim() : '';
+  const fullText = `${loc} ${notes}`.toLowerCase();
+
+  const isValcob = fullText.includes('valcob');
+  const towerName = isValcob ? 'Torre Valcob' : 'Torre GGA';
+
+  // Buscar departamento o piso (ej. Depto 402, D-102, #304, etc.)
+  const deptoMatch =
+    loc.match(/(?:depto|departamento|dpto|apt|apto|#)\.?\s*([a-zA-Z0-9-]+)/i) ||
+    notes.match(/(?:depto|departamento|dpto|apt|apto|#)\.?\s*([a-zA-Z0-9-]+)/i);
+
+  if (deptoMatch && deptoMatch[1]) {
+    return `${towerName} · Depto ${deptoMatch[1]}`;
+  }
+
+  return towerName;
+}
+
+/**
+ * Obtiene la información de fecha del pedido: si es para hoy o para una fecha futura/distinta.
+ */
+export function formatOrderTargetDateInfo(order: OrderV2): {
+  isToday: boolean;
+  label: string;
+} {
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  let targetDateStr = todayStr;
+  const delivery = order.delivery as Record<string, unknown> | undefined;
+  if (delivery) {
+    if (typeof delivery.scheduledDate === 'string' && delivery.scheduledDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      targetDateStr = delivery.scheduledDate;
+    } else if (typeof delivery.scheduledDeliveryDate === 'string' && delivery.scheduledDeliveryDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      targetDateStr = delivery.scheduledDeliveryDate;
+    }
+  } else if (order.createdAt) {
+    try {
+      const d = new Date(order.createdAt);
+      if (!isNaN(d.getTime())) {
+        targetDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (targetDateStr === todayStr) {
+    return {
+      isToday: true,
+      label: 'Hoy',
+    };
+  }
+
+  try {
+    const [year, month, day] = targetDateStr.split('-').map(Number);
+    if (year && month && day) {
+      const dateObj = new Date(year, month - 1, day);
+      const monthName = dateObj.toLocaleDateString('es-MX', { month: 'short' }).replace('.', '');
+      const monthNameCap = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+      return {
+        isToday: false,
+        label: `${day} ${monthNameCap}`,
+      };
+    }
+  } catch {
+    // fallback
+  }
+
+  return {
+    isToday: false,
+    label: targetDateStr,
+  };
+}
