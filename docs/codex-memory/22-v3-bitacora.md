@@ -310,14 +310,20 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Icono `CalendarDays` (📅) azul para pedidos con fecha real futura (ej. `"26 Ago"` o `"Vie 28"`).
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (7.00s), `npm run build:chekeo` ✅ (6.57s).
 
-### 📅 2026-08-25 — Sesión 31: Integración de Skills de Frontend, shadcn/ui, Accesibilidad y Tokens Tailwind v4
-- **Skill `shadcn-ui` (`.agents/skills/shadcn-ui/`)**:
-  - Patrones de composición desacoplada sobre Radix UI en `packages/ui`, variantes con `cva` y slots polimórficos con `asChild`.
-- **Skill `a11y-wcag-auditor` (`.agents/skills/a11y-wcag-auditor/`)**:
-  - Matriz de comprobación WCAG 2.1 AA (contrastes $4.5:1$, foco `:focus-visible`, targets táctiles $\ge 44\text{px}$ y `aria-live`).
-- **Skill `tailwind-v4-tokens` (`.agents/skills/tailwind-v4-tokens/`)**:
-  - Paleta oficial Premium Casual, directivas de Tailwind v4, safe area insets y erradicación de antipatrones visuales.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
+### 📅 2026-08-25 — Sesión 32: Adopción de Hitos UX/UI & Desaturación Visual en Pedidos V3 (Torre GGA & Torre Valcob)
+- **Centralización Canónica de Formato en `features/orders`**:
+  - `formatTowerDeliveryLabel(delivery)` y `formatOrderTargetDateInfo(order)` centralizadas y compartidas entre Pedidos y Pagos.
+- **Fecha Dinámica en Tarjeta (`OrderCard`)**:
+  - Icono `Zap` (rayito ⚡) verde/esmeralda para pedidos de `"Hoy"`.
+  - Icono `CalendarDays` (calendario 📅) azul con la fecha real (ej. `"26 Ago"`, `"Vie 28"`) para pedidos programados/futuros.
+- **Entrega Exclusiva por Torre**:
+  - Hecho clave de Entrega formatea directamente `📍 Torre GGA` o `📍 Torre Valcob` (+ Depto), erradicando textos genéricos.
+- **Eliminación Total del Chip de Pickup**:
+  - Erradicado el badge `Pickup / Delivery` tanto de `OrderCard.tsx` como de `OrderDetailDrawer.tsx` para eliminar conceptos ajenos al modelo de negocio de 2 torres exclusivas.
+- **Desaturación de la Barra de Filtros (`OrdersFilterBar`)**:
+  - Eliminados los botones ruidosos de `Auto 15s` y `Refresh` en el buscador.
+  - Popover de Filtros acotado a `Todas las Torres`, `Torre GGA` y `Torre Valcob` (sin selector de modo pickup).
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (5.50s), `npm run build:chekeo` ✅ (5.07s).
 
 ---
 

@@ -39,7 +39,7 @@ import {
   formatCurrency,
   formatOrderTime,
   formatOrderDate,
-  formatDeliveryLocation,
+  formatTowerDeliveryLabel,
   formatDeliverySchedule,
   getWhatsAppLink,
   useUpdateOrderStatusMutation,
@@ -113,19 +113,6 @@ export function OrderDetailDrawer({
             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider border ${statusConfig.badgeClass}`}>
               {statusConfig.shortLabel}
             </span>
-            <Badge variant="outline" className="text-[11px] font-bold flex items-center gap-1">
-              {order.orderMode === 'pickup' ? (
-                <>
-                  <ShoppingBag className="w-3 h-3 text-accent" />
-                  <span>Pickup</span>
-                </>
-              ) : (
-                <>
-                  <Bike className="w-3 h-3 text-accent" />
-                  <span>Delivery</span>
-                </>
-              )}
-            </Badge>
           </div>
           <div className="text-right">
             <p className="text-xs font-semibold text-text-secondary">Creado</p>
@@ -176,7 +163,7 @@ export function OrderDetailDrawer({
                 <div>
                   <p className="text-xs text-text-muted">Ubicación de Entrega</p>
                   <p className="font-bold text-text-primary">
-                    {formatDeliveryLocation(order.delivery, order.orderMode)}
+                    {formatTowerDeliveryLabel(order.delivery as Record<string, unknown> | null | undefined)}
                   </p>
                 </div>
               </div>

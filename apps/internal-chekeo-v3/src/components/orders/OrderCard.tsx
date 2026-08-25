@@ -1,11 +1,14 @@
 /**
- * OrderCard.tsx — PR-V3-09 / Refinamiento V3
+ * OrderCard.tsx — PR-V3-09 / Refinamiento UX/UI V3
  *
  * Tarjeta de comanda reactiva y accesible de Chekeo V3:
  * - Checkbox para selección múltiple / acciones en lote.
  * - Realce visual de pedido prioritario (isPriority).
- * - Folio destacado con botón de copiado rápido y badges de estado y modo.
- * - Grilla de 3 Hechos Clave (Total, Dónde Entregar y Fecha/Horario con badge programado).
+ * - Folio destacado con botón de copiado rápido y badges de estado y prioridad (sin chip redundante de pickup).
+ * - Grilla de 3 Hechos Clave:
+ *   1. Total formateado.
+ *   2. Entrega exclusiva a Torre GGA / Torre Valcob (con depto).
+ *   3. Fecha con icono de rayito (Zap) para Hoy vs. calendario (CalendarDays) con fecha real para después.
  * - Desglose visual limpio de comanda con iconografía SVG profesional (Lucide).
  * - Botones de acción rápida: Avance de estado, Detalle, Cancelar, Archivar y Restaurar.
  */
@@ -13,11 +16,9 @@
 import React, { useState } from 'react';
 import {
   MapPin,
-  Clock,
-  CalendarClock,
+  Zap,
+  CalendarDays,
   MessageCircle,
-  ShoppingBag,
-  Bike,
   Copy,
   CheckCircle2,
   FileText,
@@ -43,8 +44,8 @@ import {
   PAYMENT_STATUS_CONFIGS,
   formatCurrency,
   formatOrderTime,
-  formatDeliveryLocation,
-  formatDeliverySchedule,
+  formatTowerDeliveryLabel,
+  formatOrderTargetDateInfo,
   getWhatsAppLink,
   useUpdateOrderStatusMutation,
 } from '../../features/orders';
@@ -81,11 +82,10 @@ export function OrderCard({
     PAYMENT_STATUS_CONFIGS[order.paymentStatus] || PAYMENT_STATUS_CONFIGS.pending;
   const isTerminal = order.status === 'delivered' || order.status === 'cancelled';
 
-  // Detectar si la entrega es programada
-  const delivery = order.delivery as Record<string, unknown> | undefined;
-  const isScheduled = Boolean(
-    delivery?.scheduledDate || delivery?.scheduledDeliveryDate || delivery?.scheduledTime
+  const towerLocation = formatTowerDeliveryLabel(
+    order.delivery as Record<string, unknown> | null | undefined
   );
+  const dateInfo = formatOrderTargetDateInfo(order);
 
   const handleCopyFolio = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -168,20 +168,6 @@ export function OrderCard({
                 >
                   {isArchived ? 'Archivado' : statusConfig.shortLabel}
                 </span>
-
-                <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-bold bg-surface-raised text-text-secondary border border-line">
-                  {order.orderMode === 'pickup' ? (
-                    <>
-                      <ShoppingBag className="w-2.5 h-2.5 text-accent shrink-0" />
-                      <span>Pickup</span>
-                    </>
-                  ) : (
-                    <>
-                      <Bike className="w-2.5 h-2.5 text-accent shrink-0" />
-                      <span>Delivery</span>
-                    </>
-                  )}
-                </span>
               </div>
             </div>
           </div>
@@ -198,8 +184,9 @@ export function OrderCard({
           </div>
         </div>
 
-        {/* ─── Caja de 3 Hechos Clave (Total, Dónde Entregar y Fecha) ─────────── */}
-        <div className="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-surface-raised border border-line text-xs">
+        {/* ─── Caja de 3 Hechos Clave (Total, Entrega Torre y Fecha) ─────────── */}
+        <div className="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-surface-raised/70 border border-line text-xs">
+          {/* Total */}
           <div className="flex flex-col justify-center">
             <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">Total</span>
             <strong className="text-xs sm:text-sm font-black text-accent truncate">
@@ -207,40 +194,42 @@ export function OrderCard({
             </strong>
           </div>
 
+          {/* Entrega a Torre */}
           <div className="flex flex-col justify-center min-w-0">
             <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">Entrega</span>
             <strong
               className="text-[11px] sm:text-xs font-bold text-text-primary truncate flex items-center gap-1"
-              title={formatDeliveryLocation(order.delivery, order.orderMode)}
+              title={towerLocation}
             >
               <MapPin className="w-3 h-3 text-accent shrink-0" />
-              <span className="truncate">{formatDeliveryLocation(order.delivery, order.orderMode)}</span>
+              <span className="truncate">{towerLocation}</span>
             </strong>
           </div>
 
+          {/* Fecha Real (⚡ Rayito para Hoy vs 📅 Calendario para Después) */}
           <div className="flex flex-col justify-center min-w-0">
             <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">Fecha</span>
-            {isScheduled ? (
+            {dateInfo.isToday ? (
               <span
-                className="text-[11px] sm:text-xs font-black text-amber-600 dark:text-amber-400 truncate flex items-center gap-1"
-                title={formatDeliverySchedule(order.delivery, order.createdAt)}
+                className="text-[11px] sm:text-xs font-black text-emerald-600 dark:text-emerald-400 truncate flex items-center gap-1"
+                title="Para entrega hoy"
               >
-                <CalendarClock className="w-3 h-3 shrink-0" />
-                <span>Programado</span>
+                <Zap className="w-3.5 h-3.5 text-emerald-500 shrink-0 fill-emerald-500/20" />
+                <span>{dateInfo.label}</span>
               </span>
             ) : (
               <span
-                className="text-[11px] sm:text-xs font-bold text-text-primary truncate flex items-center gap-1"
-                title={formatDeliverySchedule(order.delivery, order.createdAt)}
+                className="text-[11px] sm:text-xs font-black text-blue-600 dark:text-blue-400 truncate flex items-center gap-1"
+                title={`Fecha de entrega: ${dateInfo.label}`}
               >
-                <Clock className="w-3 h-3 text-text-muted shrink-0" />
-                <span>Hoy</span>
+                <CalendarDays className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                <span>{dateInfo.label}</span>
               </span>
             )}
           </div>
         </div>
 
-        {/* ─── Datos de Cliente y Contacto ───────────────────────────────────── */}
+        {/* ─── Datos de Cliente y Contacto Rápido ─────────────────────────────── */}
         <div className="flex items-center justify-between gap-2 text-xs pt-0.5">
           <div className="flex items-center gap-1.5 font-bold text-text-primary truncate">
             <span className="truncate">{order.customerName}</span>
@@ -258,7 +247,7 @@ export function OrderCard({
             <a
               href={getWhatsAppLink(
                 order.customerPhone,
-                `Hola ${order.customerName}, te contactamos de Burgers.exe sobre tu orden #${order.folio}:`
+                `Hola ${order.customerName}, te contactamos de Burgers.exe sobre tu pedido #${order.folio}:`
               )}
               target="_blank"
               rel="noopener noreferrer"
@@ -272,8 +261,8 @@ export function OrderCard({
           </div>
         </div>
 
-        {/* ─── Desglose Limpio de Comanda ────────────────────────────────────── */}
-        <div className="p-3 rounded-2xl bg-surface-raised border border-line space-y-2 text-xs">
+        {/* ─── Desglose Visual Limpio con Iconografía Lucide ──────────────────── */}
+        <div className="p-3 rounded-2xl bg-surface-raised/70 border border-line space-y-2 text-xs">
           {normalizedItems.map((item, idx) => (
             <div key={item.id || idx} className="space-y-1">
               <div className="flex justify-between items-baseline font-bold text-text-primary">
@@ -340,17 +329,10 @@ export function OrderCard({
                   ))}
                 </div>
               )}
-
-              {/* Nota de cocina del ítem */}
-              {item.burgerNote && (
-                <p className="pl-5 text-[11px] text-text-muted italic">
-                  "{item.burgerNote}"
-                </p>
-              )}
             </div>
           ))}
 
-          {/* Nota general del pedido */}
+          {/* Nota general */}
           {order.notes && (
             <div className="pt-2 border-t border-line/60 text-[11px] text-amber-700 dark:text-amber-300 font-medium flex items-start gap-1">
               <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
@@ -360,86 +342,97 @@ export function OrderCard({
         </div>
       </div>
 
-      {/* ─── Botones de Acción Rápida ──────────────────────────────────────── */}
-      <div className="flex items-center gap-2 pt-2 border-t border-line">
-        {/* Caso 1: Órdenes archivadas -> Botón Restaurar */}
-        {isArchived && onUnarchive ? (
+      {/* ─── Botones de Acción Rápida (Footer) ──────────────────────────────── */}
+      <div className="space-y-2 pt-2 border-t border-line">
+        {/* Botón Principal: Avanzar Siguiente Estado */}
+        {!isTerminal && statusConfig.nextStatus && (
           <Button
             type="button"
             variant="default"
             size="sm"
-            onClick={() => onUnarchive(order)}
-            className="flex-1 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white min-h-[38px] cursor-pointer"
+            onClick={handleAdvanceStatus}
+            disabled={updateStatusMutation.isPending}
+            className="w-full text-xs font-bold flex items-center justify-center gap-1.5 min-h-[38px] shadow-sm cursor-pointer"
           >
-            <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-            <span>Restaurar a Operaciones</span>
+            {updateStatusMutation.isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : statusConfig.nextStatus === 'preparing' ? (
+              <>
+                <Flame className="w-3.5 h-3.5 text-amber-300" />
+                <span>Pasar a Cocina</span>
+              </>
+            ) : statusConfig.nextStatus === 'ready' ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-300" />
+                <span>Marcar Listo</span>
+              </>
+            ) : statusConfig.nextStatus === 'delivered' ? (
+              <>
+                <PackageCheck className="w-3.5 h-3.5 text-white" />
+                <span>Completar Entrega</span>
+              </>
+            ) : (
+              <span>Avanzar Estado</span>
+            )}
           </Button>
-        ) : (
-          <>
-            {/* Caso 2: Avance dinámico de estado */}
-            {statusConfig.nextStatus && (
-              <Button
-                type="button"
-                variant="default"
-                size="sm"
-                onClick={handleAdvanceStatus}
-                disabled={updateStatusMutation.isPending}
-                className="flex-1 text-xs font-bold min-h-[38px] cursor-pointer"
-              >
-                {updateStatusMutation.isPending ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                ) : statusConfig.nextStatus === 'preparing' ? (
-                  <Flame className="w-3.5 h-3.5 mr-1.5 text-amber-300" />
-                ) : statusConfig.nextStatus === 'ready' ? (
-                  <Check className="w-3.5 h-3.5 mr-1.5" />
-                ) : (
-                  <PackageCheck className="w-3.5 h-3.5 mr-1.5" />
-                )}
-                <span>{statusConfig.nextActionLabel}</span>
-              </Button>
-            )}
-
-            {/* Caso 3: Canceladas -> Botón Mandar a Basurero */}
-            {order.status === 'cancelled' && onArchive && (
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() => onArchive(order)}
-                className="flex-1 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white min-h-[38px] cursor-pointer"
-              >
-                <Archive className="w-3.5 h-3.5 mr-1.5" />
-                <span>Archivar</span>
-              </Button>
-            )}
-          </>
         )}
 
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => onOpenDetail(order)}
-          className="text-xs font-bold min-h-[38px] cursor-pointer"
-          title="Ver detalle completo"
-        >
-          <FileText className="w-3.5 h-3.5 sm:mr-1" />
-          <span className="hidden sm:inline">Detalle</span>
-        </Button>
-
-        {!isTerminal && !isArchived && (
+        {/* Botones Secundarios */}
+        <div className="flex items-center justify-between gap-1.5">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             size="sm"
-            onClick={() => onOpenCancel(order)}
-            className="text-text-muted hover:text-danger hover:bg-danger-soft p-2 h-9 min-h-[38px] cursor-pointer"
-            title="Cancelar pedido"
-            aria-label="Cancelar pedido"
+            onClick={() => onOpenDetail(order)}
+            className="flex-1 text-xs font-bold flex items-center justify-center gap-1 min-h-[36px] cursor-pointer"
           >
-            <Ban className="w-3.5 h-3.5" />
+            <FileText className="w-3.5 h-3.5 text-accent" />
+            <span>Detalle</span>
           </Button>
-        )}
+
+          {/* Botón Cancelar (solo si no es terminal) */}
+          {!isTerminal && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenCancel(order)}
+              className="text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-500/10 border-red-500/20 px-2.5 min-h-[36px] cursor-pointer"
+              title="Cancelar comanda"
+            >
+              <Ban className="w-3.5 h-3.5" />
+            </Button>
+          )}
+
+          {/* Botón Restaurar (si está archivado) */}
+          {isArchived && onUnarchive && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onUnarchive(order)}
+              className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 border-emerald-500/20 px-2.5 min-h-[36px] cursor-pointer"
+              title="Restaurar a pedidos activos"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Restaurar</span>
+            </Button>
+          )}
+
+          {/* Botón Archivar Individual (si es terminal y no archivado) */}
+          {isTerminal && !isArchived && onArchive && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onArchive(order)}
+              className="text-xs font-bold text-text-muted hover:text-text-primary px-2.5 min-h-[36px] cursor-pointer"
+              title="Archivar comanda"
+            >
+              <Archive className="w-3.5 h-3.5" />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
