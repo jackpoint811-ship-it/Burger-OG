@@ -292,6 +292,15 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Skill de Validación Técnica (`.agents/skills/burgers-qa/`)**:
   - Creación de `.agents/skills/burgers-qa/SKILL.md` y script automatizado `.agents/skills/burgers-qa/scripts/run-all-checks.sh` para correr de punta a punta la matriz de comprobaciones (`git diff --check`, `npm run typecheck`, `npm run build:public`, `npm run build:chekeo`).
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.11s), `npm run build:chekeo` ✅ (5.72s).
+- **Merge**: PR #560 mergeado a `preview`.
+
+### 📅 2026-08-25 — Sesión 28: Skills Especializadas de Cloudflare Ops y GitHub Workflow
+- **Skill `cloudflare-ops` (`.agents/skills/cloudflare-ops/`)**:
+  - Runbook de operaciones en Cloudflare para Burgers.exe: consultas SQL a D1 (`burgers-exe-menu-v2-preview`), inspección y subida de assets a R2 (`burgers-exe-assets-v2-preview`), emulador local con Hono y live tail de logs de Pages.
+  - Scripts auxiliares: `query-d1-preview.sh` y `list-r2-assets.sh`.
+- **Skill `github-workflow` (`.agents/skills/github-workflow/`)**:
+  - Protocolo de branching (base `preview`/`v3`), commits semánticos quirúrgicos sin adiciones globales, matriz de validación obligatoria con `burgers-qa` y auditoría de pureza de PRs con `gh pr view`.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
 
 ---
 
