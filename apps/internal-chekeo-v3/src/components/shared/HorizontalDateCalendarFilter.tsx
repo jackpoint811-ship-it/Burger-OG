@@ -225,8 +225,9 @@ export function HorizontalDateCalendarFilter({
           }`}
         >
           <div className="flex items-center justify-between w-full gap-1">
-            <span className="text-[11px] font-black uppercase tracking-wider flex items-center gap-1">
-              <span>⏱️</span> Anteriores
+            <span className="text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" />
+              <span>Anteriores</span>
             </span>
             {calendarOptions.pastPendingCount > 0 ? (
               <span className="px-1.5 py-0.5 text-[10px] font-black rounded-full bg-amber-500 text-zinc-950 animate-pulse">
@@ -240,7 +241,6 @@ export function HorizontalDateCalendarFilter({
           </div>
 
           <div className="mt-2 flex items-center gap-1.5 text-xs font-bold opacity-80">
-            <Clock className="w-3.5 h-3.5" />
             <span className="text-[10px] font-extrabold tracking-tight">Histórico</span>
           </div>
         </button>
@@ -278,8 +278,9 @@ export function HorizontalDateCalendarFilter({
 
                 <div className="flex items-center gap-1">
                   {item.isToday && (
-                    <span className="px-1.5 py-0.5 text-[9px] font-black rounded-full bg-accent text-white shadow-xs tracking-tighter">
-                      🟢 HOY
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-black rounded-full bg-accent text-white shadow-xs tracking-tighter">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                      <span>HOY</span>
                     </span>
                   )}
                   {item.pendingCount > 0 ? (
