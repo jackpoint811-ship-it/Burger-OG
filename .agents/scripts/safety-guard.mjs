@@ -45,8 +45,11 @@ function main() {
   if (name === 'run_command' && typeof args.CommandLine === 'string') {
     const cmd = args.CommandLine.trim();
 
-    // 1. Prohibit push or direct merge to main
-    if (/(git\s+push(\s+[^\s]+)*\s+main)|(git\s+merge(\s+[^\s]+)*\s+main)/i.test(cmd)) {
+    // 1. Prohibit push or direct merge to main (only when git is the invoked executable)
+    if (
+      /(?:^|[;&|]\s*)git\s+push\b.*?\bmain(?:\s+|$|[;&|])/i.test(cmd) ||
+      /(?:^|[;&|]\s*)git\s+merge\b.*?\bmain(?:\s+|$|[;&|])/i.test(cmd)
+    ) {
       console.log(
         JSON.stringify({
           decision: 'deny',
@@ -58,7 +61,7 @@ function main() {
     }
 
     // 2. Prohibit git reset --hard
-    if (/git\s+reset\s+--hard/i.test(cmd)) {
+    if (/(?:^|[;&|]\s*)git\s+reset\s+--hard(?:\s+|$|[;&|])/i.test(cmd)) {
       console.log(
         JSON.stringify({
           decision: 'deny',
@@ -71,9 +74,7 @@ function main() {
 
     // 3. Prohibit git add . / git add -A / git add --all
     if (
-      /(?:^|\s+)git\s+add\s+(?:\.(?:\s+|$)|-A(?:\s+|$)|--all(?:\s+|$))/i.test(
-        cmd
-      )
+      /(?:^|[;&|]\s*)git\s+add\s+(?:\.|\-A|\-\-all)(?:\s+|$|[;&|])/i.test(cmd)
     ) {
       console.log(
         JSON.stringify({
@@ -87,7 +88,7 @@ function main() {
 
     // 4. Prohibit catastrophic root, cwd, or home deletion
     if (
-      /(?:^|\s+)rm\s+(?:-[a-zA-Z]*r[a-zA-Z]*f[a-zA-Z]*|-[a-zA-Z]*f[a-zA-Z]*r[a-zA-Z]*)\s+(?:\/|\.\/?|\~|\/\*)(?:\s+|$)/i.test(
+      /(?:^|[;&|]\s*)rm\s+(?:-[a-zA-Z]*r[a-zA-Z]*f[a-zA-Z]*|-[a-zA-Z]*f[a-zA-Z]*r[a-zA-Z]*)\s+(?:\/|\.\/?|\~|\/\*)(?:\s+|$|[;&|])/i.test(
         cmd
       )
     ) {
