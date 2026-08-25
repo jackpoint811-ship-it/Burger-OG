@@ -240,32 +240,43 @@ export function KitchenActiveStation({
 
                 {/* Subtags: Combo, Remociones, Extras y Notas */}
                 <div className="flex flex-wrap gap-1.5 text-xs">
-                  {item.garnish && (
+                  {/* Guarnición y Bebida solo visibles en Side Quest */}
+                  {laneMode !== 'prep' && item.garnish && (
                     <span className="px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-amber-800 dark:text-amber-300 text-[11px] font-bold">
                       🍟 {item.garnish.name}
                     </span>
                   )}
 
-                  {item.includedDrink && (
+                  {laneMode !== 'prep' && item.includedDrink && (
                     <span className="px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/25 text-blue-800 dark:text-blue-300 text-[11px] font-bold">
                       🥤 {item.includedDrink.name}
                     </span>
                   )}
 
+                  {/* Receta Original si no tiene modificadores ni burgers secundarias */}
+                  {(!item.comboBurgers || item.comboBurgers.length === 0) &&
+                    (!item.removedIngredients || item.removedIngredients.length === 0) &&
+                    (!item.extras || item.extras.length === 0) &&
+                    !item.burgerNote && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-line text-text-muted text-[11px] font-bold">
+                        ✓ Receta Original
+                      </span>
+                    )}
+
                   {item.removedIngredients && item.removedIngredients.length > 0 && (
-                    <span className="px-2 py-0.5 rounded-md bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-400 font-extrabold text-[11px]">
+                    <span className="px-2.5 py-1 rounded-xl bg-red-600 text-white font-black text-xs shadow-xs">
                       🔴 SIN {item.removedIngredients.join(', ')}
                     </span>
                   )}
 
                   {item.extras && item.extras.length > 0 && (
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 font-extrabold text-[11px]">
+                    <span className="px-2.5 py-1 rounded-xl bg-emerald-600 text-white font-black text-xs shadow-xs">
                       🟢 +EXTRA {item.extras.map((e) => e.name).join(', ')}
                     </span>
                   )}
 
                   {item.burgerNote && (
-                    <span className="px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 font-bold text-[11px]">
+                    <span className="px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 font-bold text-xs">
                       💬 {item.burgerNote}
                     </span>
                   )}
@@ -274,28 +285,40 @@ export function KitchenActiveStation({
                 {/* Desglose de burgers dentro del combo si aplica */}
                 {item.comboBurgers && item.comboBurgers.length > 0 && (
                   <div className="pt-2 border-t border-line/60 space-y-1.5 pl-2">
-                    {item.comboBurgers.map((cb, cbIdx) => (
-                      <div key={cbIdx} className="text-xs space-y-0.5">
-                        <span className="font-bold text-text-primary">🍔 {cb.name}</span>
-                        <div className="flex flex-wrap gap-1 text-[11px]">
-                          {cb.removedIngredients && cb.removedIngredients.length > 0 && (
-                            <span className="text-rose-600 dark:text-rose-400 font-bold">
-                              🔴 SIN {cb.removedIngredients.join(', ')}
-                            </span>
-                          )}
-                          {cb.extras && cb.extras.length > 0 && (
-                            <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                              🟢 +EXTRA {cb.extras.map((e) => e.name).join(', ')}
-                            </span>
-                          )}
-                          {cb.burgerNote && (
-                            <span className="text-amber-700 dark:text-amber-300 font-medium">
-                              💬 {cb.burgerNote}
-                            </span>
-                          )}
+                    {item.comboBurgers.map((cb, cbIdx) => {
+                      const isOriginal =
+                        (!cb.removedIngredients || cb.removedIngredients.length === 0) &&
+                        (!cb.extras || cb.extras.length === 0) &&
+                        !cb.burgerNote;
+
+                      return (
+                        <div key={cbIdx} className="text-xs space-y-0.5">
+                          <span className="font-bold text-text-primary">🍔 {cb.name}</span>
+                          <div className="flex flex-wrap gap-1 text-[11px]">
+                            {isOriginal && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-line text-text-muted text-[11px] font-bold">
+                                ✓ Receta Original
+                              </span>
+                            )}
+                            {cb.removedIngredients && cb.removedIngredients.length > 0 && (
+                              <span className="px-2 py-0.5 rounded-lg bg-red-600 text-white font-black text-[11px]">
+                                🔴 SIN {cb.removedIngredients.join(', ')}
+                              </span>
+                            )}
+                            {cb.extras && cb.extras.length > 0 && (
+                              <span className="px-2 py-0.5 rounded-lg bg-emerald-600 text-white font-black text-[11px]">
+                                🟢 +EXTRA {cb.extras.map((e) => e.name).join(', ')}
+                              </span>
+                            )}
+                            {cb.burgerNote && (
+                              <span className="text-amber-700 dark:text-amber-300 font-medium">
+                                💬 {cb.burgerNote}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -310,7 +333,7 @@ export function KitchenActiveStation({
               size="lg"
               onClick={handleAdvanceActive}
               disabled={isUpdating || localBusyId === activeTicket.id}
-              className="w-full py-4 text-sm sm:text-base font-black rounded-2xl flex items-center justify-center gap-2 shadow-md cursor-pointer transition-transform active:scale-[0.98] min-h-[52px] bg-emerald-600 hover:bg-emerald-500 text-white"
+              className="w-full py-4 text-sm sm:text-base font-black rounded-2xl flex items-center justify-center gap-2 shadow-md cursor-pointer transition-transform active:scale-[0.98] min-h-[52px] bg-emerald-600 hover:bg-emerald-500 text-white focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
             >
               {localBusyId === activeTicket.id ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -344,34 +367,45 @@ export function KitchenActiveStation({
           <div className="space-y-2">
             {pendingTickets
               .filter((t) => t.id !== activeTicket?.id)
-              .map((ticket) => (
-                <button
-                  key={ticket.id}
-                  type="button"
-                  onClick={() => setSelectedTicketId(ticket.id)}
-                  className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-surface-raised border border-line hover:border-accent/40 hover:bg-surface transition-all text-left cursor-pointer group"
-                >
-                  <div className="min-w-0 pr-3">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="font-black text-sm text-text-primary group-hover:text-accent transition-colors">
-                        #{ticket.folio}
-                      </span>
-                      <span className="font-bold text-xs text-text-secondary truncate">
-                        {ticket.customerName}
-                      </span>
-                    </div>
-                    <p className="text-xs text-text-muted truncate">
-                      {ticket.items.map((i) => `${i.qty}x ${i.name}`).join(' · ')}
-                    </p>
-                  </div>
+              .map((ticket) => {
+                const laneItemsSummary = ticket.items
+                  .filter((i) => {
+                    if (laneMode === 'prep') return i.itemKind === 'burger' || i.itemKind === 'combo';
+                    if (laneMode === 'sideQuest') return i.itemKind !== 'burger';
+                    return true;
+                  })
+                  .map((i) => `${i.qty}x ${i.name}`)
+                  .join(' · ');
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Badge variant="outline" className="text-[10px]">
-                      {ticket.status === 'preparing' ? 'En Plancha' : 'En Cola'}
-                    </Badge>
-                  </div>
-                </button>
-              ))}
+                return (
+                  <button
+                    key={ticket.id}
+                    type="button"
+                    onClick={() => setSelectedTicketId(ticket.id)}
+                    className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-surface-raised border border-line hover:border-accent/40 hover:bg-surface transition-all text-left cursor-pointer group focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none min-h-[48px]"
+                  >
+                    <div className="min-w-0 pr-3">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="font-black text-sm text-text-primary group-hover:text-accent transition-colors">
+                          #{ticket.folio}
+                        </span>
+                        <span className="font-bold text-xs text-text-secondary truncate">
+                          {ticket.customerName}
+                        </span>
+                      </div>
+                      <p className="text-xs text-text-muted truncate">
+                        {laneItemsSummary || ticket.items.map((i) => `${i.qty}x ${i.name}`).join(' · ')}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant="outline" className="text-[10px]">
+                        {ticket.status === 'preparing' ? 'En Plancha' : 'En Cola'}
+                      </Badge>
+                    </div>
+                  </button>
+                );
+              })}
           </div>
         </div>
       )}
@@ -382,7 +416,8 @@ export function KitchenActiveStation({
           <button
             type="button"
             onClick={() => setIsReadySectionOpen((prev) => !prev)}
-            className="w-full p-4 flex items-center justify-between text-left cursor-pointer hover:bg-surface-raised transition-colors"
+            aria-expanded={isReadySectionOpen}
+            className="w-full p-4 flex items-center justify-between text-left cursor-pointer hover:bg-surface-raised transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
           >
             <div>
               <span className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
@@ -401,43 +436,54 @@ export function KitchenActiveStation({
 
           {isReadySectionOpen && (
             <div className="p-4 pt-0 border-t border-line space-y-2.5">
-              {readyTickets.map((ticket) => (
-                <div
-                  key={ticket.id}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-surface-raised border border-line"
-                >
-                  <div className="min-w-0 pr-3">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="font-black text-sm text-text-primary">
-                        #{ticket.folio}
-                      </span>
-                      <span className="font-bold text-xs text-text-secondary truncate">
-                        {ticket.customerName}
-                      </span>
-                    </div>
-                    <p className="text-xs text-text-muted truncate">
-                      {ticket.items.map((i) => `${i.qty}x ${i.name}`).join(' · ')}
-                    </p>
-                  </div>
+              {readyTickets.map((ticket) => {
+                const readyItemsSummary = ticket.items
+                  .filter((i) => {
+                    if (laneMode === 'prep') return i.itemKind === 'burger' || i.itemKind === 'combo';
+                    if (laneMode === 'sideQuest') return i.itemKind !== 'burger';
+                    return true;
+                  })
+                  .map((i) => `${i.qty}x ${i.name}`)
+                  .join(' · ');
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRevertTicket(ticket.id, ticket.status)}
-                    disabled={isUpdating || localBusyId === ticket.id}
-                    className="shrink-0 text-xs font-bold rounded-xl border-line text-text-secondary hover:text-text-primary"
-                    title="Revertir comanda a preparación"
+                return (
+                  <div
+                    key={ticket.id}
+                    className="flex items-center justify-between p-3.5 rounded-2xl bg-surface-raised border border-line"
                   >
-                    {localBusyId === ticket.id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <RotateCcw className="w-3.5 h-3.5 mr-1" />
-                    )}
-                    <span>Revertir</span>
-                  </Button>
-                </div>
-              ))}
+                    <div className="min-w-0 pr-3">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="font-black text-sm text-text-primary">
+                          #{ticket.folio}
+                        </span>
+                        <span className="font-bold text-xs text-text-secondary truncate">
+                          {ticket.customerName}
+                        </span>
+                      </div>
+                      <p className="text-xs text-text-muted truncate">
+                        {readyItemsSummary || ticket.items.map((i) => `${i.qty}x ${i.name}`).join(' · ')}
+                      </p>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRevertTicket(ticket.id, ticket.status)}
+                      disabled={isUpdating || localBusyId === ticket.id}
+                      className="shrink-0 text-xs font-bold rounded-xl border-line text-text-secondary hover:text-text-primary min-h-[40px] px-3.5 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+                      title="Revertir comanda a preparación"
+                    >
+                      {localBusyId === ticket.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                      )}
+                      <span>Revertir</span>
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

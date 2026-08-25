@@ -365,6 +365,20 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Targets táctiles $\ge 44\text{px}$, semántica `role="tablist"` / `role="tab"` con `aria-selected` y `aria-controls`, y foco visible `focus-visible:ring-2 focus-visible:ring-accent`.
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (4.77s), `npm run build:public` ✅ (5.17s).
 
+### 📅 2026-08-25 — Sesión 36: Subventana de Preparación en Cocina V3 (Paso 2 - Plancha & Receta Original)
+- **Distintivo Explícito `✓ Receta Original`**:
+  - Incorporado distintivo claro `✓ Receta Original` tanto para hamburguesas individuales como dentro de combos desglosados cuando no tienen remociones ni extras, asegurando certeza total al parrillero.
+- **Filtro Estricto de Ítems en Plancha**:
+  - En la estación de `Preparación` (`laneMode === 'prep'`), se ocultan los chips de papas y refrescos (`🍟 Papas OG`, `🥤 Bebida`) en combos, quedando reservados exclusivamente para *Side Quest*.
+  - En la cola de espera y acordeón de listas, los resúmenes de texto se filtran para mostrar únicamente las hamburguesas.
+- **Modificadores Críticos en Alto Contraste**:
+  - `🔴 SIN [INGREDIENTE]` con fondo rojo intenso (`bg-red-600 text-white font-black`).
+  - `🟢 +EXTRA [INGREDIENTE]` con fondo verde esmeralda (`bg-emerald-600 text-white font-black`).
+  - `💬 [NOTA]` en contenedor ámbar cálido.
+- **Accesibilidad & Ergonomía (WCAG 2.1 AA)**:
+  - Foco visible en botones de la cola y acordeón (`focus-visible:ring-2 focus-visible:ring-accent`), targets táctiles $\ge 44\text{px}$ y botón gigante `✔ Hecha` ($\ge 52\text{px}$).
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (4.90s), `npm run build:public` ✅ (5.36s).
+
 ---
 
 
