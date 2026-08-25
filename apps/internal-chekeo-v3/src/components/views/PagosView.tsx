@@ -182,10 +182,12 @@ export function PagosView() {
         />
       </div>
 
-      {/* ─── 2. Header Financiero / 4 KPIs Reactivos ───────────────────────── */}
+      {/* ─── 2. Header Financiero / 4 KPIs Reactivos (Click-to-Filter) ───── */}
       <PaymentKpiHeader
         financialSummary={financialSummary}
+        selectedMethod={filters.method}
         onFilterByPendingSpei={handleFilterByPendingSpei}
+        onFilterByMethod={(method) => setMethodFilter(method)}
       />
 
       {/* ─── 3. Barra de Filtros y Búsqueda Unificada ──────────────────────── */}
@@ -196,15 +198,9 @@ export function PagosView() {
         onMethodChange={setMethodFilter}
         status={filters.status}
         onStatusChange={setStatusFilter}
-        mode={filters.mode}
-        onModeChange={setModeFilter}
         tower={filters.tower}
         onTowerChange={setTowerFilter}
-        availableTowers={availableTowers}
-        autoRefresh={filters.autoRefresh}
-        onAutoRefreshChange={setAutoRefresh}
         isFetching={isFetching}
-        onRefresh={() => refetch()}
         financialSummary={financialSummary}
         allOrdersCount={allOrders.length}
         onOpenBankDetails={() => setBankDetailsOpen(true)}

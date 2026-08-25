@@ -243,3 +243,66 @@ export function generateBatchPaymentSummaryText(orders: OrderV2[]): string {
 
   return lines.join('\n');
 }
+
+/**
+ * Extrae y formatea la torre de entrega exclusiva (Torre GGA o Torre Valcob) con departamento si aplica.
+ */
+export function formatTowerDeliveryLabel(delivery?: Record<string, unknown> | null): string {
+  if (!delivery) return 'Torre GGA';
+  const loc = typeof delivery.location === 'string' ? delivery.location.trim() : '';
+  const notes = typeof delivery.notes === 'string' ? delivery.notes.trim() : '';
+  const fullText = `${loc} ${notes}`.toLowerCase();
+
+  const isValcob = fullText.includes('valcob');
+  const towerName = isValcob ? 'Torre Valcob' : 'Torre GGA';
+
+  // Buscar departamento o piso (ej. Depto 402, D-102, #304, etc.)
+  const deptoMatch =
+    loc.match(/(?:depto|departamento|dpto|apt|apto|#)\.?\s*([a-zA-Z0-9-]+)/i) ||
+    notes.match(/(?:depto|departamento|dpto|apt|apto|#)\.?\s*([a-zA-Z0-9-]+)/i);
+
+  if (deptoMatch && deptoMatch[1]) {
+    return `${towerName} · Depto ${deptoMatch[1]}`;
+  }
+
+  return towerName;
+}
+
+/**
+ * Obtiene la información de fecha del pedido: si es para hoy o para una fecha futura/distinta.
+ */
+export function formatOrderTargetDateInfo(order: OrderV2): {
+  isToday: boolean;
+  label: string;
+} {
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const targetDateStr = extractOrderTargetDate(order, todayStr);
+
+  if (targetDateStr === todayStr) {
+    return {
+      isToday: true,
+      label: 'Hoy',
+    };
+  }
+
+  try {
+    const [year, month, day] = targetDateStr.split('-').map(Number);
+    if (year && month && day) {
+      const dateObj = new Date(year, month - 1, day);
+      const monthName = dateObj.toLocaleDateString('es-MX', { month: 'short' }).replace('.', '');
+      const monthNameCap = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+      return {
+        isToday: false,
+        label: `${day} ${monthNameCap}`,
+      };
+    }
+  } catch {
+    // fallback
+  }
+
+  return {
+    isToday: false,
+    label: targetDateStr,
+  };
+}

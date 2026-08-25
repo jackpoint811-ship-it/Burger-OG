@@ -294,23 +294,21 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.11s), `npm run build:chekeo` ✅ (5.72s).
 - **Merge**: PR #560 mergeado a `preview`.
 
-### 📅 2026-08-25 — Sesión 29: Refinamiento Integral & Polish UI/UX de la Pestaña "Pagos" en Chekeo V3
-- **Descomposición Modular de Alta Cohesión**:
-  - Eliminado el archivo monolítico `PaymentsManager.tsx` (620 líneas) y sustituido por 8 componentes especializados y desacoplados (<120 líneas c/u) en `apps/internal-chekeo-v3/src/components/payments/`.
-- **Riel Horizontal de Fechas Integrado (`HorizontalDateCalendarFilter`)**:
-  - Incorporado el riel de 14 días con detección CDMX, botón superior `Anteriores`, badge `🟢 HOY` y conteos dinámicos. Inicia en `Hoy` por defecto.
-- **Header Financiero Interactivo (`PaymentKpiHeader`)**:
-  - 4 KPIs financieros (Total Ventas, SPEI, Efectivo, Por Conciliar SPEI). Al hacer clic en el KPI `Por Conciliar (SPEI)` conmuta automáticamente la fecha a `Todos` y activa los filtros `transfer` + `pending`.
-- **Barra de Control Unificada a 2 Niveles (`PaymentsFilterBar`)**:
-  - Nivel 1: Buscador universal inteligente, modal accesible de `Cuenta Bancaria BBVA` (`BankDetailsModal`) con copiado de CLABE en 1-toque, Popover discreto de Filtros Avanzados (Modo y Torre) y auto-refresco 15s.
-  - Nivel 2: Ribbon dual de Métodos de Pago (con conteos y alerta en SPEI) y Estados de Cobro (Por Validar con pulso ámbar, Pagados, Cancelados).
-- **Tarjeta de Cobro con 3 Hechos Clave (`PaymentCard`)**:
-  - Checkbox para acciones en lote, folio copiable, realce en transferencias pendientes, cuadrícula de 3 Hechos Clave (Total, Entrega, Fecha), iconografía Lucide (`Utensils`, `CupSoda`, `CircleSlash2`, `Plus`) y 4 acciones directas (1-Clic Validar/Revertir, Ticket 80mm, WhatsApp Bridge, Detalle completo).
-- **Acciones en Lote & Cuadre de Caja (`PaymentBatchActionBar` & `PaymentBatchConfirmModal`)**:
-  - Barra flotante inferior con Validar en Lote, Revertir a Pendiente y Copiar Resumen de Arqueo para reporte de caja con diálogo de confirmación seguro.
-- **Orquestador Desacoplado (`PagosView.tsx`)**:
-  - Orquestador conciso (<180 líneas) que integra todos los componentes y modales sin lógica monolítica.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.21s), `npm run build:chekeo` ✅ (5.82s).
+### 📅 2026-08-25 — Sesión 30: Pasada de UX/UI & Desaturación Visual en Pagos V3 (Torre GGA & Torre Valcob)
+- **Erradicación del Ruido en Búsqueda**:
+  - Eliminados el botón verde chillante `Auto 15s` y el botón manual de `Refresh` (TanStack Query actualiza silenciosamente en background).
+  - La fila 1 queda espaciosa con Buscador Universal amplio, botón `🏦 Cuenta BBVA` y botón de `Filtros` con badge numérico.
+- **Unificación de Filtros a 1 Solo Ribbon Coherente**:
+  - Eliminado el doble ribbon de chips en conflicto; la barra visible ahora solo expone el ribbon de **Estados de Cobro** (`Todos`, `Por Validar`, `Pagados`, `Cancelados`).
+  - El filtro por **Método de Pago** vive en el Popover de Filtros y en 1-clic directo desde las tarjetas KPI superiores (`SPEI`, `Efectivo`, `Por Conciliar`).
+- **Eliminación Total del Chip de Pickup**:
+  - Eliminado el badge redundante `Pickup / Delivery` de las tarjetas para liberar espacio y eliminar conceptos ajenos al modelo de negocio de condominios.
+- **Entrega Exclusiva por Torre**:
+  - El hecho clave de Entrega formatea directamente `📍 Torre GGA` o `📍 Torre Valcob` (+ Depto), y el selector de torres se acota a `Todas las Torres`, `Torre GGA` y `Torre Valcob`.
+- **Fecha Real de la Orden: Rayito ⚡ (Hoy) vs. Calendario 📅 (Después)**:
+  - Icono `Zap` (⚡) verde/esmeralda para pedidos de `"Hoy"`.
+  - Icono `CalendarDays` (📅) azul para pedidos con fecha real futura (ej. `"26 Ago"` o `"Vie 28"`).
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (7.00s), `npm run build:chekeo` ✅ (6.57s).
 
 ---
 
