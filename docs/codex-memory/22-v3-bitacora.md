@@ -276,12 +276,12 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 ### 📅 2026-08-25 — Sesión 26: Refinamiento Integral & Polish UI/UX de la Pestaña "Pedidos" en Chekeo V3
 - **Simplificación Radical de Filtros (2 Niveles)**:
-  - Nivel 1: Riel horizontal de fechas intacto (Hoy con pulso sutil, 14 días consecutivos, Histórico y Todos).
+  - Nivel 1: Riel horizontal de fechas con botón `Anteriores` en cabecera junto a `Ver Todos` en formato píldora, dejando el riel de scroll 100% numérico para fechas de calendario.
   - Nivel 2: Buscador Universal inteligente (`#ORD-...`, cliente, teléfono, torre, ingredientes), Ribbon de estados con conteos en vivo y menú Popover discreto de Filtros Avanzados (Modo Pickup/Delivery y selector de Torres con badge de filtros activos).
 - **Integración de Basurero / Archivadas (`Soft-Delete`)**: Pestaña `Archivados` en el ribbon de estados con consulta a Cloudflare D1 y botones de restauración.
 - **Acciones en Lote & Limpieza de Turno**: Componente `BatchActionBar` (barra flotante inferior) y `BatchConfirmModal` (modal de confirmación preventivo) para archivar y restaurar múltiples comandas.
 - **Jerarquía, Iconografía SVG Lucide y Diseño en `OrderCard`**: Cuadrícula de 3 Hechos Clave (*Total*, *Ubicación* y *Fecha/Horario con badge programado*), iconografía SVG Lucide profesional (sustituyendo emojis en modo, guarnición, bebidas, remociones y extras) y realce de pedido prioritario (`isPriority`).
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.66s), `npm run build:public` ✅ (6.09s).
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.74s), `npm run build:public` ✅ (6.09s).
 
 ### 📅 2026-08-25 — Sesión 27: Configuración de Antigravity Lifecycle Hooks & Suite de Validación QA
 - **Lifecycle Hook `PreToolUse` de Seguridad (`.agents/hooks.json` & `.agents/scripts/safety-guard.mjs`)**:

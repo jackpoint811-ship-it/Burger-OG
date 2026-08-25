@@ -178,7 +178,7 @@ export function HorizontalDateCalendarFilter({
   return (
     <div className={`w-full max-w-full overflow-hidden space-y-2.5 ${className}`}>
       {/* ─── Encabezado del Riel de Fechas ────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-1">
+      <div className="flex items-center justify-between px-1 flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-accent" />
           <span className="text-xs font-black uppercase tracking-wider text-text-secondary">
@@ -186,65 +186,71 @@ export function HorizontalDateCalendarFilter({
           </span>
         </div>
 
-        {/* Botón Ver Todos */}
-        <button
-          type="button"
-          onClick={() => onSelectDate('all')}
-          className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-            selectedDate === 'all'
-              ? 'bg-accent text-white shadow-xs'
-              : 'bg-surface-raised border border-line text-text-secondary hover:text-text-primary'
-          }`}
-        >
-          <Filter className="w-3 h-3" />
-          <span>Ver Todos</span>
-          {calendarOptions.totalPendingAll > 0 && (
-            <span
-              className={`ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
-                selectedDate === 'all'
-                  ? 'bg-white/20 text-white'
-                  : 'bg-accent-soft text-accent'
-              }`}
-            >
-              {calendarOptions.totalPendingAll}
-            </span>
-          )}
-        </button>
+        {/* Botones de Control Superior: Histórico (Past) + Ver Todos */}
+        <div className="flex items-center gap-1.5">
+          {/* Botón Histórico / Anteriores (Pastilla) */}
+          <button
+            type="button"
+            onClick={() => onSelectDate('past')}
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              isPastSelected
+                ? 'bg-amber-500 text-zinc-950 shadow-xs ring-1 ring-amber-500/50'
+                : 'bg-surface-raised border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10'
+            }`}
+            title="Ver pedidos anteriores / históricos pendientes"
+          >
+            <Clock className="w-3 h-3" />
+            <span>Anteriores</span>
+            {calendarOptions.pastPendingCount > 0 ? (
+              <span
+                className={`ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                  isPastSelected
+                    ? 'bg-zinc-950 text-amber-400'
+                    : 'bg-amber-500 text-zinc-950 animate-pulse'
+                }`}
+              >
+                {calendarOptions.pastPendingCount}
+              </span>
+            ) : calendarOptions.pastTotalCount > 0 ? (
+              <span
+                className={`ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  isPastSelected ? 'bg-zinc-950/20 text-zinc-950' : 'bg-surface text-text-muted'
+                }`}
+              >
+                {calendarOptions.pastTotalCount}
+              </span>
+            ) : null}
+          </button>
+
+          {/* Botón Ver Todos */}
+          <button
+            type="button"
+            onClick={() => onSelectDate('all')}
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              selectedDate === 'all'
+                ? 'bg-accent text-white shadow-xs'
+                : 'bg-surface-raised border border-line text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            <Filter className="w-3 h-3" />
+            <span>Ver Todos</span>
+            {calendarOptions.totalPendingAll > 0 && (
+              <span
+                className={`ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
+                  selectedDate === 'all'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-accent-soft text-accent'
+                }`}
+              >
+                {calendarOptions.totalPendingAll}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* ─── Riel de Scroll Horizontal ────────────────────────────────────────── */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar snap-x w-full max-w-full">
-        {/* Botón 1: Anteriores / Histórico */}
-        <button
-          type="button"
-          onClick={() => onSelectDate('past')}
-          className={`flex-shrink-0 snap-start px-3.5 py-2.5 rounded-2xl transition-all border text-left min-w-[95px] flex flex-col justify-between cursor-pointer select-none ${
-            isPastSelected
-              ? 'bg-amber-500/20 border-amber-500 text-amber-600 dark:text-amber-300 ring-2 ring-amber-500/30 shadow-card'
-              : 'bg-surface-card border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10'
-          }`}
-        >
-          <div className="flex items-center justify-between w-full gap-1">
-            <span className="text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5" />
-              <span>Anteriores</span>
-            </span>
-            {calendarOptions.pastPendingCount > 0 ? (
-              <span className="px-1.5 py-0.5 text-[10px] font-black rounded-full bg-amber-500 text-zinc-950 animate-pulse">
-                {calendarOptions.pastPendingCount}
-              </span>
-            ) : calendarOptions.pastTotalCount > 0 ? (
-              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-surface-raised text-text-muted">
-                {calendarOptions.pastTotalCount}
-              </span>
-            ) : null}
-          </div>
-
-          <div className="mt-2 flex items-center gap-1.5 text-xs font-bold opacity-80">
-            <span className="text-[10px] font-extrabold tracking-tight">Histórico</span>
-          </div>
-        </button>
-
         {/* Tarjetas de Fechas Consecutivas */}
         {calendarOptions.dates.map((item) => {
           const isSelected =
