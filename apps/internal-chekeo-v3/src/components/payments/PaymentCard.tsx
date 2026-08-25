@@ -1,11 +1,14 @@
 /**
- * PaymentCard.tsx — Chekeo V3 Pagos Refinement
+ * PaymentCard.tsx — Chekeo V3 Pagos Refinement (UX Polish)
  *
  * Tarjeta de cobro individual y conciliación reactiva:
  * - Checkbox de selección múltiple para acciones en lote.
  * - Folio destacado con copiado rápido al portapapeles.
  * - Realce visual si es una transferencia SPEI por validar.
- * - Grilla de 3 Hechos Clave (Total, Ubicación y Fecha/Horario con badge programado).
+ * - Grilla de 3 Hechos Clave:
+ *   1. Total formateado.
+ *   2. Entrega exclusiva a Torre GGA / Torre Valcob (con depto).
+ *   3. Fecha con icono de rayito (Zap) para Hoy vs. calendario (CalendarDays) con fecha real para después.
  * - Contacto rápido con enlace a WhatsApp y desglose con iconografía Lucide.
  * - 4 Acciones de 1-toque: Validar/Revertir, Ver Ticket 80mm, WhatsApp Bridge y Detalle completo.
  */
@@ -13,16 +16,13 @@
 import React, { useState } from 'react';
 import {
   MapPin,
-  Clock,
-  CalendarClock,
+  Zap,
+  CalendarDays,
   MessageCircle,
-  ShoppingBag,
-  Bike,
   Copy,
   CheckCircle2,
   FileText,
   Check,
-  Ban,
   Loader2,
   AlertTriangle,
   Plus,
@@ -39,13 +39,13 @@ import {
   normalizeOrderItems,
   formatCurrency,
   formatOrderTime,
-  formatDeliveryLocation,
-  formatDeliverySchedule,
   getWhatsAppLink,
-  PAYMENT_METHOD_LABELS,
-  PAYMENT_STATUS_CONFIGS,
   ORDER_STATUS_CONFIGS,
 } from '../../features/orders';
+import {
+  formatTowerDeliveryLabel,
+  formatOrderTargetDateInfo,
+} from '../../features/payments';
 
 export interface PaymentCardProps {
   order: OrderV2;
@@ -75,15 +75,11 @@ export function PaymentCard({
   const isSPEI = order.paymentMethod === 'transfer';
   const normalizedItems = normalizeOrderItems(order.items);
   const statusConfig = ORDER_STATUS_CONFIGS[order.status] || ORDER_STATUS_CONFIGS.new;
-  const paymentStatusConfig =
-    PAYMENT_STATUS_CONFIGS[order.paymentStatus] || PAYMENT_STATUS_CONFIGS.pending;
-  const location = formatDeliveryLocation(order.delivery, order.orderMode);
 
-  // Detectar si la entrega es programada
-  const delivery = order.delivery as Record<string, unknown> | undefined;
-  const isScheduled = Boolean(
-    delivery?.scheduledDate || delivery?.scheduledDeliveryDate || delivery?.scheduledTime
+  const towerLocation = formatTowerDeliveryLabel(
+    order.delivery as Record<string, unknown> | null | undefined
   );
+  const dateInfo = formatOrderTargetDateInfo(order);
 
   const handleCopyFolio = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -94,7 +90,7 @@ export function PaymentCard({
 
   return (
     <div
-      className={`bg-surface-card rounded-3xl p-4 sm:p-5 border transition-all duration-200 space-y-3.5 flex flex-col justify-between ${
+      className={`bg-surface-card rounded-3xl p-4 sm:p-5 border transition-all duration-200 space-y-3 flex flex-col justify-between ${
         selected
           ? 'ring-2 ring-accent border-accent/50 bg-accent/[0.02] shadow-card'
           : !isPaid && isSPEI && !isCancelled
@@ -104,7 +100,7 @@ export function PaymentCard({
     >
       <div className="space-y-3">
         {/* ─── Header: Checkbox + Folio + Método + Estado de Cobro ─────────────── */}
-        <div className="flex items-start justify-between gap-2 border-b border-line pb-3">
+        <div className="flex items-start justify-between gap-2 border-b border-line pb-2.5">
           <div className="flex items-start gap-2.5 min-w-0">
             {/* Checkbox de Selección Múltiple */}
             {onToggleSelect && (
@@ -168,21 +164,6 @@ export function PaymentCard({
                   )}
                 </span>
 
-                {/* Badge de Modo */}
-                <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-bold bg-surface-raised text-text-secondary border border-line">
-                  {order.orderMode === 'pickup' ? (
-                    <>
-                      <ShoppingBag className="w-2.5 h-2.5 text-accent shrink-0" />
-                      <span>Pickup</span>
-                    </>
-                  ) : (
-                    <>
-                      <Bike className="w-2.5 h-2.5 text-accent shrink-0" />
-                      <span>Delivery</span>
-                    </>
-                  )}
-                </span>
-
                 {/* Badge de Estado Operativo */}
                 <span
                   className={`inline-flex items-center px-2 py-0.2 rounded-full text-[10px] font-bold border ${statusConfig.badgeClass}`}
@@ -211,8 +192,9 @@ export function PaymentCard({
           </div>
         </div>
 
-        {/* ─── Cuadrícula de 3 Hechos Clave (Total, Entrega, Fecha) ───────────── */}
-        <div className="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-surface-raised border border-line text-xs">
+        {/* ─── Cuadrícula de 3 Hechos Clave (Total, Entrega Torre, Fecha) ───────── */}
+        <div className="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-surface-raised/70 border border-line text-xs">
+          {/* Total */}
           <div className="flex flex-col justify-center">
             <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">Total</span>
             <strong className="text-xs sm:text-sm font-black text-accent truncate">
@@ -220,34 +202,36 @@ export function PaymentCard({
             </strong>
           </div>
 
+          {/* Entrega a Torre */}
           <div className="flex flex-col justify-center min-w-0">
             <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">Entrega</span>
             <strong
               className="text-[11px] sm:text-xs font-bold text-text-primary truncate flex items-center gap-1"
-              title={location}
+              title={towerLocation}
             >
               <MapPin className="w-3 h-3 text-accent shrink-0" />
-              <span className="truncate">{location}</span>
+              <span className="truncate">{towerLocation}</span>
             </strong>
           </div>
 
+          {/* Fecha Real (⚡ Rayito para Hoy vs 📅 Calendario para Después) */}
           <div className="flex flex-col justify-center min-w-0">
             <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">Fecha</span>
-            {isScheduled ? (
+            {dateInfo.isToday ? (
               <span
-                className="text-[11px] sm:text-xs font-black text-amber-600 dark:text-amber-400 truncate flex items-center gap-1"
-                title={formatDeliverySchedule(order.delivery, order.createdAt)}
+                className="text-[11px] sm:text-xs font-black text-emerald-600 dark:text-emerald-400 truncate flex items-center gap-1"
+                title="Para entrega hoy"
               >
-                <CalendarClock className="w-3 h-3 shrink-0" />
-                <span>Programado</span>
+                <Zap className="w-3.5 h-3.5 text-emerald-500 shrink-0 fill-emerald-500/20" />
+                <span>{dateInfo.label}</span>
               </span>
             ) : (
               <span
-                className="text-[11px] sm:text-xs font-bold text-text-primary truncate flex items-center gap-1"
-                title={formatDeliverySchedule(order.delivery, order.createdAt)}
+                className="text-[11px] sm:text-xs font-black text-blue-600 dark:text-blue-400 truncate flex items-center gap-1"
+                title={`Fecha de entrega: ${dateInfo.label}`}
               >
-                <Clock className="w-3 h-3 text-text-muted shrink-0" />
-                <span>Hoy</span>
+                <CalendarDays className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                <span>{dateInfo.label}</span>
               </span>
             )}
           </div>
@@ -286,7 +270,7 @@ export function PaymentCard({
         </div>
 
         {/* ─── Desglose Limpio de Comanda con Lucide Icons ───────────────────── */}
-        <div className="p-3 rounded-2xl bg-surface-raised border border-line space-y-2 text-xs">
+        <div className="p-3 rounded-2xl bg-surface-raised/70 border border-line space-y-2 text-xs">
           {normalizedItems.map((item, idx) => (
             <div key={item.id || idx} className="space-y-1">
               <div className="flex justify-between items-baseline font-bold text-text-primary">
