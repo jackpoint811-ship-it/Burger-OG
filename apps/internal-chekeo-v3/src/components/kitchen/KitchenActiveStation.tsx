@@ -319,7 +319,7 @@ export function KitchenActiveStation({
             ))}
           </div>
 
-          {/* Botón Principal de Acción Táctil (✔ Hecha / Mandar a Plancha) */}
+          {/* Botón Principal de Acción Táctil (✔ Hecha / Marcar Lista) */}
           <div className="pt-2">
             <Button
               type="button"
@@ -327,22 +327,14 @@ export function KitchenActiveStation({
               size="lg"
               onClick={handleAdvanceActive}
               disabled={isUpdating || localBusyId === activeTicket.id}
-              className={`w-full py-4 text-sm sm:text-base font-black rounded-2xl flex items-center justify-center gap-2 shadow-md cursor-pointer transition-transform active:scale-[0.98] min-h-[52px] ${
-                activeTicket.status === 'preparing'
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                  : 'bg-accent hover:bg-accent/90 text-white'
-              }`}
+              className="w-full py-4 text-sm sm:text-base font-black rounded-2xl flex items-center justify-center gap-2 shadow-md cursor-pointer transition-transform active:scale-[0.98] min-h-[52px] bg-emerald-600 hover:bg-emerald-500 text-white"
             >
               {localBusyId === activeTicket.id ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <CheckCircle2 className="w-5 h-5" />
               )}
-              <span>
-                {activeTicket.status === 'preparing'
-                  ? '✔ Hecha (Marcar Lista para Empaque)'
-                  : '🔥 Mandar a Plancha / Preparar'}
-              </span>
+              <span>✔ Hecha (Marcar Lista para Empaque)</span>
             </Button>
           </div>
         </div>

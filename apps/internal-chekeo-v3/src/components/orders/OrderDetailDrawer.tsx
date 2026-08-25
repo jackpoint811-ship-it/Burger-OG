@@ -41,6 +41,7 @@ import {
   formatOrderDate,
   formatTowerDeliveryLabel,
   formatDeliverySchedule,
+  formatOrderTargetDateInfo,
   getWhatsAppLink,
   useUpdateOrderStatusMutation,
 } from '../../features/orders';
@@ -64,7 +65,13 @@ export function OrderDetailDrawer({
   if (!order) return null;
 
   const normalizedItems = normalizeOrderItems(order.items);
-  const statusConfig = ORDER_STATUS_CONFIGS[order.status] || ORDER_STATUS_CONFIGS.new;
+  const dateInfo = formatOrderTargetDateInfo(order);
+
+  // Si la orden es 'new' pero es programada/anterior (!dateInfo.isToday), se muestra como 'Preparando'
+  const displayStatus: OrderV2Status =
+    order.status === 'new' && !dateInfo.isToday ? 'preparing' : order.status;
+
+  const statusConfig = ORDER_STATUS_CONFIGS[displayStatus] || ORDER_STATUS_CONFIGS.new;
   const paymentStatusConfig =
     PAYMENT_STATUS_CONFIGS[order.paymentStatus] || PAYMENT_STATUS_CONFIGS.pending;
   const isTerminal = order.status === 'delivered' || order.status === 'cancelled';

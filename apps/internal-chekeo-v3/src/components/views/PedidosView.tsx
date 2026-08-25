@@ -132,8 +132,13 @@ export function PedidosView() {
       }
 
       // 3. Filtro de Estado (Si no es 'all' ni 'archived')
-      if (filters.status !== 'all' && filters.status !== 'archived' && order.status !== filters.status) {
-        return false;
+      if (filters.status !== 'all' && filters.status !== 'archived') {
+        const targetDate = extractOrderTargetDate(order, todayStr);
+        const isOrderToday = targetDate === todayStr;
+        const displayStatus = order.status === 'new' && !isOrderToday ? 'preparing' : order.status;
+        if (displayStatus !== filters.status) {
+          return false;
+        }
       }
 
       // 4. Filtro de Modo (Pickup / Delivery)

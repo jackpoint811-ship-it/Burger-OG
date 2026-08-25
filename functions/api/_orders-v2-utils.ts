@@ -14,10 +14,10 @@ export type AdminEnv = { BOG_MENU_DB?: D1Database; BOG_INTERNAL_PIN?: string };
 
 export { TERMINAL_STATUSES };
 const STATUS_TRANSITIONS: Record<OrderV2Status, OrderV2Status[]> = {
-  new: ['preparing', 'cancelled'],
-  preparing: ['ready', 'cancelled'],
+  new: ['preparing', 'ready', 'delivered', 'cancelled'],
+  preparing: ['new', 'ready', 'delivered', 'cancelled'],
   ready: ['preparing', 'delivered', 'cancelled'],
-  delivered: [],
+  delivered: ['ready'],
   cancelled: []
 };
 
