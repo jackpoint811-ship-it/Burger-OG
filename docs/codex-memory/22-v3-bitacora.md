@@ -294,13 +294,23 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.11s), `npm run build:chekeo` ✅ (5.72s).
 - **Merge**: PR #560 mergeado a `preview`.
 
-### 📅 2026-08-25 — Sesión 28: Skills Especializadas de Cloudflare Ops y GitHub Workflow
-- **Skill `cloudflare-ops` (`.agents/skills/cloudflare-ops/`)**:
-  - Runbook de operaciones en Cloudflare para Burgers.exe: consultas SQL a D1 (`burgers-exe-menu-v2-preview`), inspección y subida de assets a R2 (`burgers-exe-assets-v2-preview`), emulador local con Hono y live tail de logs de Pages.
-  - Scripts auxiliares: `query-d1-preview.sh` y `list-r2-assets.sh`.
-- **Skill `github-workflow` (`.agents/skills/github-workflow/`)**:
-  - Protocolo de branching (base `preview`/`v3`), commits semánticos quirúrgicos sin adiciones globales, matriz de validación obligatoria con `burgers-qa` y auditoría de pureza de PRs con `gh pr view`.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
+### 📅 2026-08-25 — Sesión 29: Refinamiento Integral & Polish UI/UX de la Pestaña "Pagos" en Chekeo V3
+- **Descomposición Modular de Alta Cohesión**:
+  - Eliminado el archivo monolítico `PaymentsManager.tsx` (620 líneas) y sustituido por 8 componentes especializados y desacoplados (<120 líneas c/u) en `apps/internal-chekeo-v3/src/components/payments/`.
+- **Riel Horizontal de Fechas Integrado (`HorizontalDateCalendarFilter`)**:
+  - Incorporado el riel de 14 días con detección CDMX, botón superior `Anteriores`, badge `🟢 HOY` y conteos dinámicos. Inicia en `Hoy` por defecto.
+- **Header Financiero Interactivo (`PaymentKpiHeader`)**:
+  - 4 KPIs financieros (Total Ventas, SPEI, Efectivo, Por Conciliar SPEI). Al hacer clic en el KPI `Por Conciliar (SPEI)` conmuta automáticamente la fecha a `Todos` y activa los filtros `transfer` + `pending`.
+- **Barra de Control Unificada a 2 Niveles (`PaymentsFilterBar`)**:
+  - Nivel 1: Buscador universal inteligente, modal accesible de `Cuenta Bancaria BBVA` (`BankDetailsModal`) con copiado de CLABE en 1-toque, Popover discreto de Filtros Avanzados (Modo y Torre) y auto-refresco 15s.
+  - Nivel 2: Ribbon dual de Métodos de Pago (con conteos y alerta en SPEI) y Estados de Cobro (Por Validar con pulso ámbar, Pagados, Cancelados).
+- **Tarjeta de Cobro con 3 Hechos Clave (`PaymentCard`)**:
+  - Checkbox para acciones en lote, folio copiable, realce en transferencias pendientes, cuadrícula de 3 Hechos Clave (Total, Entrega, Fecha), iconografía Lucide (`Utensils`, `CupSoda`, `CircleSlash2`, `Plus`) y 4 acciones directas (1-Clic Validar/Revertir, Ticket 80mm, WhatsApp Bridge, Detalle completo).
+- **Acciones en Lote & Cuadre de Caja (`PaymentBatchActionBar` & `PaymentBatchConfirmModal`)**:
+  - Barra flotante inferior con Validar en Lote, Revertir a Pendiente y Copiar Resumen de Arqueo para reporte de caja con diálogo de confirmación seguro.
+- **Orquestador Desacoplado (`PagosView.tsx`)**:
+  - Orquestador conciso (<180 líneas) que integra todos los componentes y modales sin lógica monolítica.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.21s), `npm run build:chekeo` ✅ (5.82s).
 
 ---
 

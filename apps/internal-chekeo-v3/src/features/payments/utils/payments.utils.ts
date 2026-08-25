@@ -9,7 +9,9 @@ import type {
   FinancialSummary,
   PaymentFilterMethod,
   PaymentFilterStatus,
+  PaymentFilterMode,
   PaymentDateHorizon,
+  PaymentFilterCriteria,
 } from '../types/payments.types';
 
 /**
@@ -121,35 +123,54 @@ export function computeFinancialSummary(orders: OrderV2[]): FinancialSummary {
   };
 }
 
-export interface PaymentFilterCriteria {
-  search?: string;
-  method?: PaymentFilterMethod;
-  status?: PaymentFilterStatus;
-  dateHorizon?: PaymentDateHorizon;
-}
+import { formatCurrency, PAYMENT_METHOD_LABELS } from '../../orders';
+import { extractOrderTargetDate } from '../../../components/shared/HorizontalDateCalendarFilter';
 
 /**
- * Filtra una lista de pedidos según criterios de búsqueda, método, estado y fecha.
+ * Filtra una lista de pedidos según criterios de búsqueda, método, estado, modo, torre y fecha.
  */
 export function filterPaymentsOrders(
   orders: OrderV2[],
   criteria: PaymentFilterCriteria
 ): OrderV2[] {
-  const { search = '', method = 'all', status = 'all', dateHorizon = 'all' } = criteria;
+  const {
+    search = '',
+    method = 'all',
+    status = 'all',
+    mode = 'all',
+    tower = 'all',
+    selectedDate = 'today',
+    dateHorizon = 'all',
+  } = criteria;
   const searchLower = search.trim().toLowerCase();
 
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
   return orders.filter((order) => {
-    // Filtro por fecha (Hoy vs Todos)
-    if (dateHorizon === 'today' && !isOrderFromTodayCDMX(order.createdAt)) {
+    // 1. Filtro por Riel Horizontal de Fechas
+    if (selectedDate !== 'all') {
+      const targetDate = extractOrderTargetDate(order, todayStr);
+      if (selectedDate === 'today' && targetDate !== todayStr) {
+        return false;
+      }
+      if (selectedDate === 'past' && targetDate >= todayStr) {
+        return false;
+      }
+      if (selectedDate !== 'today' && selectedDate !== 'past' && targetDate !== selectedDate) {
+        return false;
+      }
+    } else if (dateHorizon === 'today' && !isOrderFromTodayCDMX(order.createdAt)) {
+      // Fallback para dateHorizon legacy si no se especificó selectedDate
       return false;
     }
 
-    // Filtro por método de pago
+    // 2. Filtro por método de pago
     if (method !== 'all' && order.paymentMethod !== method) {
       return false;
     }
 
-    // Filtro por estado de cobro
+    // 3. Filtro por estado de cobro
     if (status !== 'all') {
       if (status === 'pending' && order.paymentStatus !== 'pending') return false;
       if (status === 'paid' && order.paymentStatus !== 'paid') return false;
@@ -158,19 +179,67 @@ export function filterPaymentsOrders(
       }
     }
 
-    // Filtro de búsqueda libre
+    // 4. Filtro por modo de entrega (pickup / delivery)
+    if (mode !== 'all' && order.orderMode !== mode) {
+      return false;
+    }
+
+    // 5. Filtro por torre / ubicación
+    if (tower && tower !== 'all') {
+      const locationLower = (order.delivery?.location || '').toLowerCase();
+      if (!locationLower.includes(tower.toLowerCase())) {
+        return false;
+      }
+    }
+
+    // 6. Filtro de búsqueda libre enriquecido
     if (searchLower) {
       const folioMatch = order.folio?.toLowerCase().includes(searchLower);
       const nameMatch = order.customerName?.toLowerCase().includes(searchLower);
       const phoneMatch = order.customerPhone?.includes(searchLower);
       const locationMatch = order.delivery?.location?.toLowerCase().includes(searchLower);
-      const idMatch = order.id?.toLowerCase().includes(searchLower);
+      const notesMatch = order.notes?.toLowerCase().includes(searchLower);
+      const itemsMatch = order.items?.some((item) =>
+        item.name?.toLowerCase().includes(searchLower)
+      );
 
-      if (!folioMatch && !nameMatch && !phoneMatch && !locationMatch && !idMatch) {
+      if (!folioMatch && !nameMatch && !phoneMatch && !locationMatch && !notesMatch && !itemsMatch) {
         return false;
       }
     }
 
     return true;
   });
+}
+
+/**
+ * Genera un texto formateado de arqueo y conciliación para órdenes seleccionadas.
+ */
+export function generateBatchPaymentSummaryText(orders: OrderV2[]): string {
+  if (orders.length === 0) return 'No hay órdenes seleccionadas.';
+
+  const totalAmount = orders.reduce((sum, o) => sum + (o.total ?? 0), 0);
+  const paidCount = orders.filter((o) => o.paymentStatus === 'paid').length;
+  const pendingCount = orders.filter((o) => o.paymentStatus === 'pending').length;
+
+  const lines = [
+    '📊 RESUMEN DE ARQUEO / CONCILIACIÓN — BURGERS.EXE',
+    `Fecha: ${new Date().toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })}`,
+    `Total Órdenes: ${orders.length} | Monto Total: ${formatCurrency(totalAmount)}`,
+    `Pagadas: ${paidCount} | Por Validar: ${pendingCount}`,
+    '----------------------------------------',
+  ];
+
+  orders.forEach((order, index) => {
+    const method = PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod;
+    const status = order.paymentStatus === 'paid' ? 'PAGADO' : 'PENDIENTE';
+    lines.push(
+      `${index + 1}. #${order.folio} — ${order.customerName} | ${method} | ${status} | ${formatCurrency(order.total)}`
+    );
+  });
+
+  lines.push('----------------------------------------');
+  lines.push(`TOTAL ACUMULADO: ${formatCurrency(totalAmount)}`);
+
+  return lines.join('\n');
 }
