@@ -2,6 +2,12 @@
 
 Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más específico indique algo distinto.
 
+## ⚡ Activador Maestro: `Burgers.exe`
+Si el usuario envía únicamente `Burgers.exe` o `burger.exe`:
+- Leer de inmediato `docs/codex-memory/01-estado-actual.md` y `docs/codex-memory/22-v3-bitacora.md`.
+- Inspeccionar rama activa y estado de compilación.
+- Responder con un resumen del estado actual y ponerse a la orden para la siguiente tarea siguiendo el flujo de trabajo estricto.
+
 ## Forma de trabajo
 - Trabajar por PRs pequeños, controlados y fáciles de revisar.
 - No hacer merges automáticos ni resolver conflictos sin instrucción explícita.

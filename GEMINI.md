@@ -6,6 +6,15 @@
 
 ---
 
+## ⚡ PALABRA CLAVE DE ACTIVACIÓN: `Burgers.exe`
+
+Si el usuario envía únicamente **`Burgers.exe`** (o `burger.exe`), el agente debe activar inmediatamente el modo operativo completo:
+1. Leer `docs/codex-memory/01-estado-actual.md` y `docs/codex-memory/22-v3-bitacora.md`.
+2. Verificar la rama actual de git (`git status`) y compilación.
+3. Responder con un resumen conciso del estado actual y ponerse a la orden para la siguiente tarea siguiendo el flujo de trabajo estricto sin sugerir nada prohibido.
+
+---
+
 ## 🛑 1. PROHIBICIONES ESTRICTAS (HARD CONSTRAINTS)
 
 1. **NUNCA HACER PUSH NI MERGE A `main`**:

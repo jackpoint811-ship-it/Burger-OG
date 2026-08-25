@@ -2,6 +2,7 @@
 
 Refer to GEMINI.md and AGENTS.md for full context.
 
+- Trigger: When user writes `Burgers.exe`, activate context and check status.
 - Base branch: `preview` or `v3` (NEVER touch `main`).
 - No new npm dependencies without explicit instruction.
 - Aesthetic: Premium Casual (light-first `#F5F2EE`, green `#16A34A`, Inter font).

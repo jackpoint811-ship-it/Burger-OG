@@ -1,5 +1,10 @@
 # 🛑 Prohibiciones Estrictas (Hard Constraints)
 
+## ⚡ Activador Maestro: `Burgers.exe`
+Si el usuario envía únicamente `Burgers.exe` o `burger.exe`, el agente debe activar inmediatamente el modo operativo completo: leer `docs/codex-memory/01-estado-actual.md` y `docs/codex-memory/22-v3-bitacora.md`, verificar el entorno y ponerse a la orden siguiendo las reglas.
+
+---
+
 Estas reglas son inquebrantables bajo cualquier circunstancia en este repositorio:
 
 1. **NUNCA PUSH NI MERGE A `main`**:

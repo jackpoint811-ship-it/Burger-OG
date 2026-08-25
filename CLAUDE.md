@@ -2,6 +2,9 @@
 
 Please follow the rules and workflow defined in [GEMINI.md](./GEMINI.md) and [AGENTS.md](./AGENTS.md).
 
+## Activation Keyword: `Burgers.exe`
+If the user inputs `Burgers.exe` or `burger.exe`, immediately load context from `docs/codex-memory/01-estado-actual.md`, check git status and stand by following the workflow.
+
 ## Critical Rules:
 1. NEVER push or PR to `main`. Use `preview` or `v3` as base.
 2. NEVER add dependencies without explicit approval.
