@@ -265,9 +265,17 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `CartDrawer.tsx`: Enlace *"✏️ Editar personalización"* para reabrir el drawer precargado con el modo, ingredientes quitados, extras y notas para actualizar la comanda sin duplicar la línea.
 - **Verificación**:
   - `npm run typecheck` ✅ (0 errores).
-  - `npm run build:public` ✅ y `npm run build:chekeo` ✅.
+### 📅 2026-08-25 — Sesión 25: Blindaje de Reglas de CLI y Compatibilidad de Entornos
+- **Creación de `GEMINI.md`**: Configuración nativa para Antigravity / Gemini CLI en la raíz del proyecto con Hard Constraints (prohibición de push a `main`, no dependencias no autorizadas, respeto de contratos D1/Hono/Zod y estética Premium Casual).
+- **Reglas Modulares en `.agents/rules/`**:
+  - `00-hard-constraints.md`: Restricciones críticas de máxima prioridad.
+  - `01-workflow-and-branching.md`: Ciclo de vida de tareas, branches y PRs.
+  - `02-architecture-and-style.md`: Especificaciones de arquitectura V3 y diseño.
+- **Archivos de compatibilidad**: Agregados `CLAUDE.md` y `.cursorrules` para interoperabilidad entre distintos entornos y herramientas de desarrollo.
+- **Verificación**: `npm run typecheck` ✅ (0 errores), `git diff --check` ✅.
 
 ---
+
 
 ## 📌 Issues Abiertos
 
