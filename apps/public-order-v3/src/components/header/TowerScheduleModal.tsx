@@ -1,15 +1,13 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Building2, Clock, Calendar, Check, Info, Sparkles } from 'lucide-react';
+import { X, Building2, Clock, Calendar, Sparkles } from 'lucide-react';
 import { useTowerSchedulesQuery, getMexicoCityDateTime } from '../../features';
-import { useCheckoutStore } from '../../stores';
 import type { TowerSchedulePublic } from '@config/contracts';
 
 export interface TowerScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedTowerKey?: string | null;
-  onSelectTower?: (towerKey: string) => void;
 }
 
 const DAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -28,11 +26,8 @@ export function TowerScheduleModal({
   isOpen,
   onClose,
   selectedTowerKey,
-  onSelectTower,
 }: TowerScheduleModalProps) {
   const { data: towers = [], isLoading } = useTowerSchedulesQuery();
-  const locationKey = useCheckoutStore((s) => s.form.locationKey);
-  const updateField = useCheckoutStore((s) => s.updateField);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -45,21 +40,16 @@ export function TowerScheduleModal({
 
   const mxNow = getMexicoCityDateTime();
 
-  // Torre que disparó el modal o la torre activa actual
-  const targetKey = selectedTowerKey || locationKey || towers[0]?.towerKey;
-  const focusedTower = towers.find(
-    (t) =>
-      t.towerKey.toLowerCase() === targetKey?.toLowerCase() ||
-      t.towerName.toLowerCase() === targetKey?.toLowerCase()
-  );
+  // Torre que disparó el modal
+  const focusedTower = selectedTowerKey
+    ? towers.find(
+        (t) =>
+          t.towerKey.toLowerCase() === selectedTowerKey.toLowerCase() ||
+          t.towerName.toLowerCase() === selectedTowerKey.toLowerCase()
+      )
+    : undefined;
 
-  const handleSelect = (tower: TowerSchedulePublic) => {
-    updateField('locationKey', tower.towerName);
-    onSelectTower?.(tower.towerKey);
-    onClose();
-  };
-
-  // Estado operativo de la torre en foco
+  // Estado operativo de la torre en foco si aplica
   const isFocusedConfigActive = focusedTower?.isActive !== false;
   const isFocusedTodayActive =
     Array.isArray(focusedTower?.activeDays) &&
@@ -161,7 +151,7 @@ export function TowerScheduleModal({
             {/* Content List */}
             <div className="space-y-3">
               <p className="text-xs font-semibold text-text-secondary">
-                Selecciona tu edificio para consultar horarios o confirmar tu pedido:
+                Horarios y días de servicio por edificio:
               </p>
 
               {isLoading ? (
@@ -176,9 +166,6 @@ export function TowerScheduleModal({
               ) : (
                 <div className="space-y-3">
                   {towers.map((tower) => {
-                    const isSelected =
-                      locationKey.toLowerCase() === tower.towerName.toLowerCase() ||
-                      locationKey.toLowerCase() === tower.towerKey.toLowerCase();
                     const isConfigActive = tower.isActive !== false;
                     const isTodayActive =
                       Array.isArray(tower.activeDays) &&
@@ -196,11 +183,7 @@ export function TowerScheduleModal({
                     return (
                       <div
                         key={tower.towerKey}
-                        className={`p-4 rounded-2xl border transition-all ${
-                          isSelected
-                            ? 'border-accent bg-accent/5 ring-2 ring-accent/20'
-                            : 'border-line bg-surface-card hover:border-text-muted/30'
-                        }`}
+                        className="p-4 rounded-2xl border border-line bg-surface-card hover:border-text-muted/30 transition-all"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-start gap-3">
@@ -208,16 +191,9 @@ export function TowerScheduleModal({
                               {tower.emoji || '🏢'}
                             </span>
                             <div className="space-y-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h4 className="font-bold text-sm text-text-primary">
-                                  {tower.towerName}
-                                </h4>
-                                {isSelected && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent text-white text-[10px] font-bold shadow-xs">
-                                    <Check className="w-3 h-3" /> Activa
-                                  </span>
-                                )}
-                              </div>
+                              <h4 className="font-bold text-sm text-text-primary">
+                                {tower.towerName}
+                              </h4>
                               <div className="flex items-center gap-1.5 text-xs text-text-secondary">
                                 <Calendar className="w-3.5 h-3.5 text-text-muted shrink-0" />
                                 <span>{formatActiveDays(tower.activeDays)}</span>
@@ -248,18 +224,6 @@ export function TowerScheduleModal({
                                 ? '🟢 Recibe Hoy'
                                 : '📅 Programar'}
                             </span>
-
-                            <button
-                              type="button"
-                              onClick={() => handleSelect(tower)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[36px] flex items-center justify-center ${
-                                isSelected
-                                  ? 'bg-accent text-white shadow-xs'
-                                  : 'bg-surface text-text-primary hover:bg-surface-raised border border-line'
-                              }`}
-                            >
-                              {isSelected ? '✓ Seleccionada' : 'Elegir Torre'}
-                            </button>
                           </div>
                         </div>
                       </div>
@@ -273,7 +237,7 @@ export function TowerScheduleModal({
             <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-surface border border-line text-xs text-text-secondary mt-1">
               <Sparkles className="w-4 h-4 text-accent shrink-0 mt-0.5" />
               <p className="leading-relaxed">
-                <strong>¿Tu edificio no recibe pedidos hoy?</strong> No te preocupes, puedes realizar tu pedido con anticipación las 24 horas y lo preparamos fresco para su próxima ruta de entrega.
+                <strong>¿Tu edificio no recibe pedidos hoy?</strong> No te preocupes, puedes realizar tu pedido con anticipación las 24 horas y lo preparamos fresco para su próxima ruta de entrega. Al completar tu pedido en Checkout podrás elegir tu edificio.
               </p>
             </div>
 
@@ -281,7 +245,7 @@ export function TowerScheduleModal({
             <button
               type="button"
               onClick={onClose}
-              className="w-full py-3 px-4 rounded-2xl bg-surface hover:bg-surface-raised border border-line text-text-primary font-bold text-sm transition-colors cursor-pointer min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+              className="w-full py-3 px-4 rounded-2xl bg-accent text-white hover:bg-accent-hover font-bold text-sm transition-colors cursor-pointer min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none shadow-xs"
             >
               Entendido
             </button>
