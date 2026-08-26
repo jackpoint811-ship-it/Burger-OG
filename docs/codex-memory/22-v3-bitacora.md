@@ -431,7 +431,27 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Notas de Pedido e Ítems en Acordeón Colapsable (`OrderNoteAccordion` / `ItemNoteAccordion`)**:
   - Si no existe nota, la sección correspondiente se omite por completo sin dejar espacios vacíos.
   - Si la nota es larga (> 40 caracteres en orden, > 45 caracteres en ítem), se renderiza con acordeón interactivo y toggle `Desplegar`/`Ocultar` para optimizar el espacio útil en pantalla.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.16s), `npm run build:public` ✅ (5.87s).
+### 📅 2026-08-26 — Sesión 44: Refinamiento Integral de Resumen K, Unificación Canónica y Herramientas Operativas V3
+- **Principio de Unificación Canónica de Producto Físico**:
+  - Eliminada la duplicidad entre productos individuales y combos. En plancha, una burger individual y una de combo se agrupan en una única fila canónica (ej. `2x Hamburguesa Sencilla` con micro-badge discreto `1 indiv · 1 combo`).
+  - Guarniciones y bebidas agregadas directamente bajo sus nombres exactos.
+- **4 Estaciones de Producción en Paralelo**:
+  - `Plancha (Burgers)` con recetas canónicas, patties y conteo de pendientes/listas.
+  - `Freidora (Sides)` con papas y aros exactos.
+  - `Bebidas & Fríos` con marcas/sabores consolidados.
+  - `Extras & Dips` con porciones adicionales.
+- **Calculadora Determinista de Mise en Place**:
+  - Estimación exacta de bolitas/patties de carne (dobles x2, triples x3, sencillas x1) y bollos de pan.
+  - Barra de proporción visual de `Receta Original` vs `Modificadas`.
+- **Panel de Modificaciones & Recetas**:
+  - Badge de `✓ Receta Original` y lista agregada de remociones (`🔴 SIN Cebolla (x4)`, `🔴 SIN Pepinillos (x2)`, etc.).
+- **Desglose Logístico por Torre**:
+  - Tarjetas de destino (`Torre GGA` vs `Torre Valcob`) con conteo de comandas, avance de empaque y productos asignados.
+- **Herramienta 1-Click: Copiar Resumen para WhatsApp**:
+  - Generador de texto formateado con emojis listo para compartir con el equipo operativo con feedback visual interactivo `Copiado ✓` y accesibilidad para lectores de pantalla.
+- **Modo Dual Accesible**:
+  - Selector de pestañas para alternar entre `📊 Producción` en vivo e `⚖️ Insumos D1` con costos y gramajes.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.44s), `npm run build:public` ✅ (6.75s).
 
 ---
 
