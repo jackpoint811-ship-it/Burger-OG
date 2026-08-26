@@ -23,6 +23,7 @@ export function ToastContainer() {
           return (
             <motion.div
               key={toast.id}
+              role="status"
               initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -16, scale: 0.95 }}
               animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
               exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -16, scale: 0.95 }}
@@ -41,7 +42,7 @@ export function ToastContainer() {
               <button
                 type="button"
                 onClick={() => dismissToast(toast.id)}
-                className="text-gray-400 hover:text-white transition-colors cursor-pointer p-1 -mr-1"
+                className="text-gray-400 hover:text-white transition-colors cursor-pointer p-1 -mr-1 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
                 aria-label="Cerrar notificación"
               >
                 <X className="w-4 h-4" />

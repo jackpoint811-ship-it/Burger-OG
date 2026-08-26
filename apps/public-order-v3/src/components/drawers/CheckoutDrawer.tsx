@@ -429,7 +429,7 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                 className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
                   step === 2
                     ? 'bg-accent text-white font-black'
-                    : 'bg-surface-elevated text-text-muted font-bold'
+                    : 'bg-surface text-text-muted font-bold'
                 }`}
               >
                 2
@@ -654,7 +654,7 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-accent flex items-center gap-1.5">
                           <CreditCard className="w-4 h-4" />
-                          Datos Bancarios (SPEI)
+                          Datos Bancarios (Transferencia)
                         </span>
                         <span className="text-[11px] font-semibold text-text-muted">
                           {bankInfo.bankName}
@@ -718,7 +718,7 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                       {currentPaymentMethod === 'cash'
                         ? '💵 Efectivo'
                         : currentPaymentMethod === 'transfer'
-                        ? '📱 Transferencia SPEI'
+                        ? '📱 Transferencia'
                         : '💬 Vía WhatsApp'}
                     </p>
                   </div>
@@ -733,7 +733,7 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
 
                 {/* Campo Nombre */}
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-text-primary uppercase tracking-wider">
+                  <label htmlFor="checkout-customer-name" className="block text-xs font-bold text-text-primary uppercase tracking-wider">
                     Nombre Completo *
                   </label>
                   <div className="relative">
@@ -741,8 +741,11 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                       <User className="w-4 h-4" />
                     </div>
                     <input
+                      id="checkout-customer-name"
                       type="text"
                       placeholder="Ej. Juan Pérez"
+                      aria-invalid={Boolean(errors.customerName)}
+                      aria-describedby={errors.customerName ? "checkout-name-error" : undefined}
                       {...register('customerName')}
                       className={`w-full pl-10 pr-3.5 py-3 rounded-2xl bg-surface border text-text-primary text-sm font-medium focus:outline-none min-h-[48px] ${
                         errors.customerName
@@ -752,7 +755,7 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                     />
                   </div>
                   {errors.customerName && (
-                    <p className="text-xs text-red-500 font-medium pt-0.5">
+                    <p id="checkout-name-error" role="alert" className="text-xs text-red-500 font-medium pt-0.5">
                       {errors.customerName.message}
                     </p>
                   )}
@@ -760,7 +763,7 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
 
                 {/* Campo Teléfono WhatsApp */}
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-text-primary uppercase tracking-wider">
+                  <label htmlFor="checkout-customer-phone" className="block text-xs font-bold text-text-primary uppercase tracking-wider">
                     Teléfono WhatsApp (10 dígitos) *
                   </label>
                   <div className="relative">
@@ -768,9 +771,12 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                       <Phone className="w-4 h-4" />
                     </div>
                     <input
+                      id="checkout-customer-phone"
                       type="tel"
                       inputMode="numeric"
                       placeholder="Ej. 5512345678"
+                      aria-invalid={Boolean(errors.customerPhone)}
+                      aria-describedby={errors.customerPhone ? "checkout-phone-error" : undefined}
                       {...register('customerPhone', {
                         onChange: (e) => {
                           const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
@@ -785,7 +791,7 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                     />
                   </div>
                   {errors.customerPhone ? (
-                    <p className="text-xs text-red-500 font-medium pt-0.5">
+                    <p id="checkout-phone-error" role="alert" className="text-xs text-red-500 font-medium pt-0.5">
                       {errors.customerPhone.message}
                     </p>
                   ) : (
@@ -797,7 +803,7 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
 
                 {/* Campo Notas de Entrega */}
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-text-primary uppercase tracking-wider">
+                  <label htmlFor="checkout-customer-notes" className="block text-xs font-bold text-text-primary uppercase tracking-wider">
                     Instrucciones de Entrega / Notas (Opcional)
                   </label>
                   <div className="relative">
@@ -805,6 +811,7 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                       <FileText className="w-4 h-4" />
                     </div>
                     <textarea
+                      id="checkout-customer-notes"
                       rows={2}
                       placeholder="Ej. Piso 4, entregar en recepción o dejar con guardia"
                       {...register('customerNotes')}
@@ -816,7 +823,7 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                 {/* Código de Referido / Sorteo (Solo si hay sorteo activo) */}
                 {hasActiveRaffle && (
                   <div className="space-y-1">
-                    <label className="block text-xs font-bold text-text-primary uppercase tracking-wider flex items-center justify-between">
+                    <label htmlFor="checkout-referral-code" className="block text-xs font-bold text-text-primary uppercase tracking-wider flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
                         <span aria-hidden="true">🎁</span>
                         <span>Código de Referido / Sorteo (Opcional)</span>
@@ -827,6 +834,7 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                       </span>
                     </label>
                     <input
+                      id="checkout-referral-code"
                       type="text"
                       placeholder="Ej. BURGER-AMIGO"
                       {...register('referralCode')}

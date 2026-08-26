@@ -527,7 +527,20 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Botón CTA dinámico: `[ Agregar N burgers personalizadas · $XXX ]` vs `[ Agregar N burgers (Original) · $XXX ]`.
 - **🛒 Insignia de Volumen en Carrito**:
   - En `CartDrawer.tsx`, cuando una línea tiene `quantity > 1` y modificaciones activas, se añade el badge `✨ Aplica a las N unidades`.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
+### 📅 2026-08-26 — Sesión 50: Refinamiento UI/UX Integral, Tokens Tailwind v4 & Accesibilidad WCAG 2.1 AA en Public Order V3
+- **🏷️ Estandarización de Terminología Canónica Global**:
+  - Sustituido "SPEI" por **Transferencia** en `OrderSuccessModal.tsx` (resumen de pedido, datos bancarios y mensajes automáticos de confirmación para WhatsApp) y en `CheckoutDrawer.tsx` (resumen de paso 2 y tarjeta de datos bancarios).
+- **🎨 Tokens Oficiales Tailwind v4 & Contraste AAA**:
+  - Alineación de `globals.css` con `tailwind-v4-tokens`: `--color-text-primary: #0F172A`, `--color-text-secondary: #475569`, `--color-text-muted: #64748B`, `--color-line: #E2DCD5` (Light) y `--color-line: #333333` (Dark), alcanzando ratios de contraste superiores a 15:1.
+  - Reemplazo del token inexistente `bg-surface-elevated` por `bg-surface` y `hover:bg-surface-raised` en `CheckoutDrawer.tsx` y `OrderSuccessModal.tsx`.
+- **📱 Micro-Interacciones & Feedback Táctil**:
+  - Incorporación de `motion.article` con `whileTap={{ scale: 0.98 }}` y `useReducedMotion` en `ProductCard.tsx` para feedback táctil instantáneo tipo app nativa.
+- **♿ Accesibilidad WCAG 2.1 AA en Toda la App**:
+  - Navegación accesible por teclado en `BannerCarousel.tsx` (`tabIndex={0}`, `role="button"`, `onKeyDown` y foco visible).
+  - Incorporación de atributos ARIA explícitos (`aria-expanded`, `aria-controls`) en los acordeones de personalización de combos y `htmlFor` / `id` en `ProductDetailDrawer.tsx`.
+  - Vinculación accesible de `htmlFor`, `id`, `aria-invalid` y `aria-describedby` con alertas en los inputs y errores inline de `CheckoutDrawer.tsx`.
+  - Ampliación de targets táctiles en `FeaturedRail.tsx` y optimización de notificaciones con `role="status"` en `ToastContainer.tsx`.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (8.10s), `npm run build:chekeo` ✅ (5.76s).
 
 ---
 
