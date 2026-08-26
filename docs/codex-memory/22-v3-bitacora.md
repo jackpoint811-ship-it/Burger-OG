@@ -527,7 +527,16 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Botón CTA dinámico: `[ Agregar N burgers personalizadas · $XXX ]` vs `[ Agregar N burgers (Original) · $XXX ]`.
 - **🛒 Insignia de Volumen en Carrito**:
   - En `CartDrawer.tsx`, cuando una línea tiene `quantity > 1` y modificaciones activas, se añade el badge `✨ Aplica a las N unidades`.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
+### 📅 2026-08-26 — Sesión 50: Refinamiento UI/UX Integral & Accesibilidad WCAG 2.1 AA en Public Order V3
+- **🏷️ Estandarización de Terminología Canónica Global**:
+  - Sustituido "SPEI" por **Transferencia** en `OrderSuccessModal.tsx` (resumen de pedido, datos bancarios y mensajes automáticos de confirmación para WhatsApp) y en `CheckoutDrawer.tsx` (resumen de paso 2 y tarjeta de datos bancarios).
+- **🎨 Corrección de Tokens Visuales & Feedback Táctil**:
+  - Reemplazo del token inexistente `bg-surface-elevated` por `bg-surface` y `hover:bg-surface-raised` en `CheckoutDrawer.tsx` y `OrderSuccessModal.tsx`.
+  - Incorporación de `motion.article` con `whileTap={{ scale: 0.98 }}` y `useReducedMotion` en `ProductCard.tsx` para feedback táctil instantáneo tipo app nativa.
+- **♿ Accesibilidad WCAG 2.1 AA en Drawers y Catálogo**:
+  - Incorporación de atributos ARIA explícitos (`aria-expanded`, `aria-controls`) en los acordeones de personalización de combos en `ProductDetailDrawer.tsx`.
+  - Ampliación de targets táctiles ($\ge 38\text{px}$) con foco visible en botones de acción rápida en `FeaturedRail.tsx`.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.48s), `npm run build:chekeo` ✅ (5.77s).
 
 ---
 

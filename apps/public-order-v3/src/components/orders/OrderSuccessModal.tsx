@@ -90,7 +90,7 @@ export function OrderSuccessModal({
     paymentMethod === 'cash'
       ? '💵 Efectivo contra entrega'
       : paymentMethod === 'transfer'
-      ? '📱 Transferencia SPEI'
+      ? '📱 Transferencia'
       : '💬 Confirmar por WhatsApp';
 
   // Construct WhatsApp direct confirmation message
@@ -286,7 +286,7 @@ export function OrderSuccessModal({
             <button
               type="button"
               onClick={onClose}
-              className="w-full py-3 px-4 rounded-2xl bg-surface border border-line text-text-primary hover:bg-surface-elevated font-bold text-sm transition-colors cursor-pointer min-h-[48px] flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 rounded-2xl bg-surface border border-line text-text-primary hover:bg-surface-raised font-bold text-sm transition-colors cursor-pointer min-h-[48px] flex items-center justify-center gap-2"
             >
               <ArrowLeft className="w-4 h-4 text-text-secondary" />
               <span>Volver al Menú de Productos</span>

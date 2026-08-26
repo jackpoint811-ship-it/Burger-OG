@@ -783,8 +783,10 @@ export function ProductDetailDrawer() {
                             >
                               <button
                                 type="button"
+                                aria-expanded={isExpanded}
+                                aria-controls={`combo-burger-panel-${idx}`}
                                 onClick={() => setExpandedComboBurger(isExpanded ? null : idx)}
-                                className="w-full flex items-center justify-between p-3 text-left hover:bg-surface transition-colors cursor-pointer min-h-[44px]"
+                                className="w-full flex items-center justify-between p-3 text-left hover:bg-surface transition-colors cursor-pointer min-h-[44px] focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
                               >
                                 <div>
                                   <span className="text-xs font-bold text-text-primary block">
@@ -800,7 +802,7 @@ export function ProductDetailDrawer() {
                               </button>
 
                               {isExpanded && (
-                                <div className="p-3 border-t border-line space-y-3 bg-surface/50">
+                                <div id={`combo-burger-panel-${idx}`} className="p-3 border-t border-line space-y-3 bg-surface/50">
                                   {/* Removals */}
                                   {burgerIngredients.length > 0 && (
                                     <div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Plus, Check, Sparkles } from 'lucide-react';
 import { useUIStore, useCartStore, menuItemToCartItem } from '../../stores';
 import { resolveCatalogAssetUrl } from '@config/assets';
@@ -58,6 +59,8 @@ export function ProductCard({ item }: ProductCardProps) {
     setTimeout(() => setJustAdded(false), 1200);
   };
 
+  const shouldReduceMotion = useReducedMotion();
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isAvailable) return;
     if (e.key === 'Enter' || e.key === ' ') {
@@ -67,7 +70,8 @@ export function ProductCard({ item }: ProductCardProps) {
   };
 
   return (
-    <article
+    <motion.article
+      whileTap={!shouldReduceMotion && isAvailable ? { scale: 0.98 } : undefined}
       tabIndex={isAvailable ? 0 : -1}
       role="button"
       onClick={handleCardClick}
@@ -193,6 +197,6 @@ export function ProductCard({ item }: ProductCardProps) {
           )}
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }

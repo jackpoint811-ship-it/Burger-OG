@@ -429,7 +429,7 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                 className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
                   step === 2
                     ? 'bg-accent text-white font-black'
-                    : 'bg-surface-elevated text-text-muted font-bold'
+                    : 'bg-surface text-text-muted font-bold'
                 }`}
               >
                 2
@@ -654,7 +654,7 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-accent flex items-center gap-1.5">
                           <CreditCard className="w-4 h-4" />
-                          Datos Bancarios (SPEI)
+                          Datos Bancarios (Transferencia)
                         </span>
                         <span className="text-[11px] font-semibold text-text-muted">
                           {bankInfo.bankName}
@@ -718,7 +718,7 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                       {currentPaymentMethod === 'cash'
                         ? '💵 Efectivo'
                         : currentPaymentMethod === 'transfer'
-                        ? '📱 Transferencia SPEI'
+                        ? '📱 Transferencia'
                         : '💬 Vía WhatsApp'}
                     </p>
                   </div>
