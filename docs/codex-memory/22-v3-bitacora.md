@@ -416,9 +416,16 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Distintivo `[ ✓ Receta Original ]` en verde suave cuando no tenga modificaciones.
 - **Nota de Cocina Fija en la Base**:
   - Contenedor estructurado con fondo ámbar suave, borde e ícono fijo `📝 Nota:` al pie de la tarjeta del ítem.
-- **Botones Concisos**:
-  - Texto simplificado a `Listo` (y `✔ Listo` al completarse).
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (6.82s), `npm run build:public` ✅ (6.01s).
+### 📅 2026-08-26 — Sesión 42: Flujo KDS Desacoplado por Estación (Plancha / Side Quest) con Unificación Automática de Orden Global (PR #577)
+- **Despacho Independiente por Estación**:
+  - En **🍔 Preparación (Plancha)**, el botón `Listo` valida únicamente las hamburguesas y despacha de inmediato la comanda de la vista de plancha para permitir continuar con las siguientes órdenes sin bloquearse.
+  - En **🍟 Side Quest**, el botón `Listo` valida únicamente las guarniciones, bebidas y extras y despacha de inmediato la comanda de la vista de side quest.
+- **Unificación Automática de Orden Global (`dispatchMap`)**:
+  - `useKitchenItemTracking` incorpora `dispatchMap` con persistencia en `localStorage` (`burgers_kds_station_dispatches_v3`).
+  - Cuando una estación termina su parte, si la otra estación ya está despachada o no aplica (ej. orden solo de burgers o solo de papas), el sistema ejecuta automáticamente `advanceTicketStatus` promoviendo la orden global a `ready` en Cloudflare D1.
+- **Sincronización Reactiva de Pestañas en Cocina (`CocinaView.tsx`)**:
+  - Los contadores numéricos en los badges de `🍔 Preparación` y `🍟 Side Quest` descuentan en vivo conforme cada estación despacha su parte.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.50s), `npm run build:public` ✅ (5.57s).
 
 ---
 
