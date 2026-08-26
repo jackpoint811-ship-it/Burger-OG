@@ -3,16 +3,15 @@
  *
  * Resumen K & Agregador de Insumos para Mise en Place, Precocción y Control de Restock Diario:
  * - Principio de Unificación Canónica V3: Las hamburguesas se agrupan por receta real sin duplicidad de combos.
- * - 📦 Checklist de Insumos Físicos & Control de Restock: Cálculo de carnes (patties), panes, quesos, tocinos, papas, bebidas y dips.
+ * - 📦 Checklist de Insumos Físicos & Control de Restock: Cálculo de carnes (patties base + extras), panes, quesos, tocinos, papas, bebidas y dips.
  * - 🍟 Precocción & Pesaje de Side Quests: Desglose exacto de porciones por receta de papas y aros.
  * - 4 Estaciones de Producción en paralelo con filtros tipo chip: Plancha, Freidora, Bebidas y Extras.
  * - Panel de Modificaciones con desglose de hamburguesas afectadas.
  * - Desglose Logístico por Torre: Conteo y avance de empaque para Torre GGA y Torre Valcob.
- * - Herramienta 1-Click: "Copiar Resumen para WhatsApp" formateado con emojis y reporte de restock.
  * - Modo Dual accesible: Vista de Producción & Restock reactiva en vivo y Vista de Insumos/Costeo D1.
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Flame,
   Utensils,
@@ -26,8 +25,6 @@ import {
   ChefHat,
   Scale,
   Building2,
-  Copy,
-  Check,
   CheckCircle2,
   FileText,
   Wine,
@@ -57,106 +54,6 @@ function formatCurrency(pesos: number): string {
   }).format(safeNumber);
 }
 
-/**
- * Genera el texto limpio y formateado con emojis para copiar a WhatsApp o notas operativas.
- */
-function generateProductionSummaryText(
-  aggregates: AggregatedMiseEnPlace,
-  dateLabel: string
-): string {
-  const lines: string[] = [];
-  lines.push(`📋 *RESUMEN DE PRODUCCIÓN & RESTOCK — ${dateLabel.toUpperCase()}*`);
-  lines.push(`📍 *Torres:* Torre GGA · Torre Valcob`);
-  lines.push(`-------------------------------------------`);
-
-  // 1. Checklist de Insumos Físicos para Restock
-  lines.push(`📦 *CHECKLIST DE INSUMOS & RESTOCK MÍNIMO:*`);
-  lines.push(`  🥩 Patties de Carne: ${aggregates.suppliesChecklist.patties} bolitas a pesar/descongelar`);
-  lines.push(`  🍞 Bollos de Pan: ${aggregates.suppliesChecklist.buns} piezas a tostar`);
-  lines.push(`  🧀 Queso Americano: ${aggregates.suppliesChecklist.cheeseSlices} rebanadas`);
-  lines.push(`  🥓 Tocino: ${aggregates.suppliesChecklist.baconPortions} porciones a dorar`);
-  lines.push(`  🍟 Guarniciones (Sides): ${aggregates.suppliesChecklist.garnishPortions} porciones a pesar`);
-  lines.push(`  🥤 Bebidas Frías: ${aggregates.suppliesChecklist.coldDrinks} latas a refrigerar`);
-  if (aggregates.suppliesChecklist.dipPortions > 0) {
-    lines.push(`  🥫 Dips / Salsas: ${aggregates.suppliesChecklist.dipPortions} vasitos a porcionar`);
-  }
-  lines.push(``);
-
-  // 2. Hamburguesas (Canónicas)
-  lines.push(
-    `🍔 *BURGERS (${aggregates.totalBurgers} unidades · ${aggregates.totalPatties} patties · ${aggregates.totalBuns} bollos):*`
-  );
-  if (aggregates.recipes.length > 0) {
-    aggregates.recipes.forEach((r) => {
-      const parts: string[] = [];
-      if (r.pendingQty > 0) parts.push(`${r.pendingQty} en plancha`);
-      if (r.readyQty > 0) parts.push(`${r.readyQty} listas`);
-      const statusStr = parts.length ? ` (${parts.join(' · ')})` : '';
-      lines.push(`  • ${r.totalQty}x ${r.name}${statusStr}`);
-    });
-  } else {
-    lines.push(`  • Sin hamburguesas en cola`);
-  }
-  lines.push(``);
-
-  // 3. Guarniciones (Precocción & Pesaje)
-  lines.push(`🍟 *PRECOCCIÓN & PESAJE DE SIDE QUESTS (${aggregates.totalGarnishes} porciones):*`);
-  if (aggregates.garnishes.length > 0) {
-    aggregates.garnishes.forEach((g) => {
-      const parts: string[] = [];
-      if (g.pendingQty > 0) parts.push(`${g.pendingQty} por freír`);
-      if (g.readyQty > 0) parts.push(`${g.readyQty} listas`);
-      const statusStr = parts.length ? ` (${parts.join(' · ')})` : '';
-      lines.push(`  • ${g.totalQty}x ${g.name}${statusStr}`);
-    });
-  } else {
-    lines.push(`  • Sin guarniciones en cola`);
-  }
-  lines.push(``);
-
-  // 4. Bebidas
-  lines.push(`🥤 *BEBIDAS (${aggregates.totalDrinks} unidades):*`);
-  if (aggregates.drinks.length > 0) {
-    aggregates.drinks.forEach((d) => {
-      lines.push(`  • ${d.totalQty}x ${d.name}`);
-    });
-  } else {
-    lines.push(`  • Sin bebidas`);
-  }
-  lines.push(``);
-
-  // 5. Extras y Dips
-  if (aggregates.extras.length > 0) {
-    lines.push(`🥫 *EXTRAS & DIPS (${aggregates.totalExtras} porciones):*`);
-    aggregates.extras.forEach((e) => {
-      lines.push(`  • ${e.totalQty}x +${e.name}`);
-    });
-    lines.push(``);
-  }
-
-  // 6. Modificaciones (Remociones con detalle)
-  if (aggregates.removedIngredients.length > 0) {
-    lines.push(`🥗 *MODIFICACIONES (REMOCIONES EN ENSAMBLAJE):*`);
-    aggregates.removedIngredients.forEach((rem) => {
-      const details = rem.affectedBurgers.length ? ` (↳ ${rem.affectedBurgers.join(' · ')})` : '';
-      lines.push(`  • SIN ${rem.name} (x${rem.count})${details}`);
-    });
-    lines.push(``);
-  }
-
-  // 7. Despacho por Torre
-  lines.push(`🏢 *DESPACHO POR TORRE:*`);
-  aggregates.towerBreakdown.forEach((t) => {
-    lines.push(
-      `  • ${t.location}: ${t.totalOrders} pedidos (${t.readyOrders} listos · ${t.pendingOrders} pendientes) — 🍔 ${t.totalBurgers} | 🍟 ${t.totalGarnishes} | 🥤 ${t.totalDrinks}`
-    );
-  });
-  lines.push(`-------------------------------------------`);
-  lines.push(`_Generado desde Burgers.exe Chekeo V3_`);
-
-  return lines.join('\n');
-}
-
 export interface KitchenSummaryKProps {
   selectedDate?: string;
 }
@@ -164,7 +61,6 @@ export interface KitchenSummaryKProps {
 export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps) {
   const [viewMode, setViewMode] = useState<'production' | 'd1Ingredients'>('production');
   const [stationFilter, setStationFilter] = useState<'all' | 'prep' | 'sideQuest' | 'drinks' | 'extras'>('all');
-  const [copyFeedback, setCopyFeedback] = useState<boolean>(false);
 
   const todayStr = getCdmxTodayString();
 
@@ -241,28 +137,6 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
     aggregates.recipes.reduce((acc, r) => acc + r.readyQty, 0) +
     aggregates.garnishes.reduce((acc, g) => acc + g.readyQty, 0);
 
-  const handleCopyWhatsApp = useCallback(async () => {
-    try {
-      const text = generateProductionSummaryText(aggregates, dateLabel);
-      if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-      }
-      setCopyFeedback(true);
-      setTimeout(() => setCopyFeedback(false), 2500);
-    } catch {
-      // Ignorar error de portapapeles
-    }
-  }, [aggregates, dateLabel]);
-
   const originalPercent =
     aggregates.totalBurgers > 0
       ? Math.round((aggregates.originalRecipeCount / aggregates.totalBurgers) * 100)
@@ -291,7 +165,7 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
           </div>
         </div>
 
-        {/* Controles: Selector de Modo, Copiar WhatsApp y Refresco */}
+        {/* Controles: Selector de Modo y Refresco */}
         <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap self-end lg:self-auto">
           {/* Selector de Modo */}
           <div
@@ -325,35 +199,6 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
             >
               ⚖️ Insumos D1
             </button>
-          </div>
-
-          {/* Botón 1-Click Copiar WhatsApp */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopyWhatsApp}
-            className={`min-h-[44px] px-3.5 rounded-2xl border-line flex items-center gap-1.5 text-xs font-black cursor-pointer transition-all ${
-              copyFeedback
-                ? 'bg-emerald-600 text-white border-emerald-600'
-                : 'hover:bg-surface-raised text-text-primary'
-            }`}
-          >
-            {copyFeedback ? (
-              <>
-                <Check className="w-4 h-4 text-white" />
-                <span>Copiado ✓</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4 text-text-secondary" />
-                <span>Copiar WhatsApp</span>
-              </>
-            )}
-          </Button>
-
-          {/* Anuncio para lectores de pantalla */}
-          <div role="status" aria-live="polite" className="sr-only">
-            {copyFeedback ? 'Resumen de producción y restock copiado al portapapeles' : ''}
           </div>
 
           {/* Control de Refresco Rápido */}
@@ -632,6 +477,11 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
                               {rec.pattiesCount > 1 ? (
                                 <span className="px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[9px] font-black">
                                   {rec.pattiesCount} patties
+                                </span>
+                              ) : null}
+                              {rec.extraPattiesCount > 0 ? (
+                                <span className="px-1.5 py-0.2 rounded bg-rose-500/15 text-rose-700 dark:text-rose-300 text-[9px] font-black">
+                                  +{rec.extraPattiesCount} extra carne
                                 </span>
                               ) : null}
                             </div>

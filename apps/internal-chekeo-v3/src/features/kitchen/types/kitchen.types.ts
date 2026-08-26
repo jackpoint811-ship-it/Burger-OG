@@ -111,6 +111,7 @@ export interface AggregatedRecipeCount {
   individualQty: number;
   comboQty: number;
   pattiesCount: number;
+  extraPattiesCount: number;
   isComboChild?: boolean;
 }
 
@@ -651,13 +652,34 @@ export function buildKitchenOrderQueueSummary(
 }
 
 /**
- * Estima la cantidad de carnes/patties por hamburguesa a partir de su receta o SKU.
+ * Estima la cantidad de carnes/patties por hamburguesa a partir de su receta o SKU,
+ * sumando automáticamente cualquier porción de carne extra solicitada.
  */
-function estimatePattiesPerBurger(name: string, sku?: string): number {
+function estimatePattiesPerBurger(
+  name: string,
+  sku?: string,
+  extras: { name: string }[] = []
+): { totalPatties: number; basePatties: number; extraPatties: number } {
   const text = `${name} ${sku || ''}`.toLowerCase();
-  if (text.includes('triple')) return 3;
-  if (text.includes('doble') || text.includes('double')) return 2;
-  return 1;
+  let basePatties = 1;
+  if (text.includes('triple')) basePatties = 3;
+  else if (text.includes('doble') || text.includes('double')) basePatties = 2;
+
+  const extraPatties = extras.filter((e) => {
+    const eLower = e.name.toLowerCase();
+    return (
+      eLower.includes('carne') ||
+      eLower.includes('patty') ||
+      eLower.includes('patties') ||
+      eLower.includes('meat')
+    );
+  }).length;
+
+  return {
+    totalPatties: basePatties + extraPatties,
+    basePatties,
+    extraPatties,
+  };
 }
 
 /**
@@ -776,7 +798,11 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
         if (item.comboBurgers && item.comboBurgers.length > 0) {
           item.comboBurgers.forEach((cb) => {
             const burgerName = cb.name || 'Hamburguesa';
-            const pattiesPerUnit = estimatePattiesPerBurger(burgerName, cb.sku);
+            const { totalPatties: pattiesPerUnit, basePatties, extraPatties } = estimatePattiesPerBurger(
+              burgerName,
+              cb.sku,
+              cb.extras || []
+            );
             const cheesePerUnit = estimateCheeseSlicesPerBurger(
               burgerName,
               cb.sku,
@@ -804,10 +830,12 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
               readyQty: 0,
               individualQty: 0,
               comboQty: 0,
-              pattiesCount: pattiesPerUnit,
+              pattiesCount: basePatties,
+              extraPattiesCount: 0,
             };
             current.totalQty += item.qty;
             current.comboQty += item.qty;
+            current.extraPattiesCount += item.qty * extraPatties;
             if (isReady) {
               current.readyQty += item.qty;
             } else {
@@ -844,7 +872,11 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
           if (isCombo && burgerName.toLowerCase().startsWith('combo ')) {
             burgerName = burgerName.slice(6).trim();
           }
-          const pattiesPerUnit = estimatePattiesPerBurger(burgerName, item.sku);
+          const { totalPatties: pattiesPerUnit, basePatties, extraPatties } = estimatePattiesPerBurger(
+            burgerName,
+            item.sku,
+            item.extras || []
+          );
           const cheesePerUnit = estimateCheeseSlicesPerBurger(
             burgerName,
             item.sku,
@@ -872,9 +904,11 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
             readyQty: 0,
             individualQty: 0,
             comboQty: 0,
-            pattiesCount: pattiesPerUnit,
+            pattiesCount: basePatties,
+            extraPattiesCount: 0,
           };
           current.totalQty += item.qty;
+          current.extraPattiesCount += item.qty * extraPatties;
           if (isCombo) {
             current.comboQty += item.qty;
           } else {
