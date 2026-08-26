@@ -540,18 +540,25 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Incorporación de atributos ARIA explícitos (`aria-expanded`, `aria-controls`) en los acordeones de personalización de combos y `htmlFor` / `id` en `ProductDetailDrawer.tsx`.
   - Vinculación accesible de `htmlFor`, `id`, `aria-invalid` y `aria-describedby` con alertas en los inputs y errores inline de `CheckoutDrawer.tsx`.
   - Ampliación de targets táctiles en `FeaturedRail.tsx` y optimización de notificaciones con `role="status"` en `ToastContainer.tsx`.
-### 📅 2026-08-26 — Sesión 51: Sub-Barra de Píldoras de Torres, Modal con Foco Contextual & Sincronización en Checkout V3
-- **🏢 Sub-Barra Horizontal de Torres Corporativas en Vivo**:
-  - En `BrandHeader.tsx`, sustitución del botón único por una sub-barra horizontal con píldoras interactivas directas para cada edificio activo (`[ 🏢 Torre GGA · 🟢 Hoy ]` / `[ 🏢 Torre Valcob · 📅 Programar ]`) con indicador de estado en tiempo real y botón de acceso a horarios.
-- **✨ Modal de Rutas con Foco Contextual (`TowerScheduleModal.tsx`)**:
-  - Soporte de `selectedTowerKey` para resaltar la torre seleccionada con un banner superior informativo de alto contraste.
-  - Formateo de días de ruta en español natural (`Lunes, Miércoles y Viernes`), horarios claros de pedidos y entrega, botón `[ ✓ Seleccionar Torre ]` y tarjeta de preventa 24/7.
-- **🛒 Sincronización Inteligente en Paso 1 de `CheckoutDrawer.tsx`**:
-  - `handleSelectTower`: Al alternar torres en checkout, si la torre seleccionada no recibe pedidos hoy, conmuta automáticamente a `isScheduled = true` con la fecha más próxima calculada por `getNextAvailableDeliveryDate`.
-  - Tarjetas de selección con diseño enriquecido de badges y horario de entrega.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.35s), `npm run build:chekeo` ✅ (7.95s).
+### 📅 2026-08-26 — Sesión 52: Panel de Control de Admin V3 (Dashboard en 2 Columnas, Favoritos Rápidos, Breadcrumbs & PIN Exclusivo)
+- **🔓 Desacoplamiento de PIN Inicial en Chekeo**:
+  - En `ChekeoApp.tsx`, eliminado el bloqueo raíz `if (!isAuthenticated) return <AuthGate />;` permitiendo acceso inmediato y sin fricción a `Operación`, `Pedidos`, `Cocina (KDS)` y `Pagos` para todo el equipo operativo.
+- **🔒 Candado PIN Exclusivo en Admin (`AdminAuthGate.tsx`)**:
+  - En `AdminView.tsx`, la seguridad por PIN protege únicamente la pestaña de administración.
+  - Teclado táctil en pantalla de 48px optimizado para tablets/POS con números 1 a 9, C, 0, ⌫, auto-submit tras 4 dígitos, soporte de teclado físico y botón de cierre rápido `[ 🔒 Bloquear Admin ]`.
+- **🍞 Migas de Pan (Breadcrumbs) Semánticas (`AdminBreadcrumbs.tsx`)**:
+  - Navegación accesible jerárquica: `🏠 Panel Admin  ›  [Submódulo]` con botón destacado `[ ← Volver al Panel ]` y acción directa `[ 🔒 Bloquear Admin ]`.
+- **⚡ Franja de Accesos Rápidos & Favoritos (`AdminQuickFavorites.tsx`)**:
+  - Barra superior de 6 pastillas/cuadritos compactos (`⚡ Corte Hoy`, `🍔 Menú & Stock`, `🏢 Torres`, `🖼️ Banners`, `🎁 Sorteos`, `🌾 Insumos`) con micro-KPIs en tiempo real para saltar en 1 solo toque.
+- **📊 Dashboard Principal en 2 Columnas (`AdminDashboardGrid.tsx`)**:
+  - Grilla adaptativa de 2 columnas (`grid-cols-1 md:grid-cols-2`) con 6 tarjetas de módulos enriquecidas con KPIs en vivo, badges de estado operativo y botones de acción primaria/secundaria.
+- **🌐 Timezone CDMX & Terminología Canónica en Corte Z (`CashCutPanel.tsx`)**:
+  - Corrección de cálculo de fecha mediante `getCdmxTodayString()` de `@config/runtime-environment.ts` (`America/Mexico_City`).
+  - Estandarización de "SPEI" a **Transferencia**, **Efectivo** y **Por confirmar**.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (9.28s), `npm run build:public` ✅ (10.28s).
 
 ---
+
 
 
 

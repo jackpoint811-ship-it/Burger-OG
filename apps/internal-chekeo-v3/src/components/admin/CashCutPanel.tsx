@@ -27,6 +27,8 @@ import {
 import { Button } from '@ui/button';
 import { Badge } from '@ui/badge';
 import { Card } from '@ui/card';
+import { getCdmxTodayString } from '@config/index';
+import { getCdmxYesterdayString, getCdmxPastDaysString } from '../../features/payments';
 import { useAdminCashCut } from '../../features/admin/hooks/use-admin';
 import { getOrdersExportCsvUrl } from '../../features/admin/api/admin.api';
 import type { CashCutFilterPreset } from '../../features/admin/types/admin.types';
@@ -39,18 +41,18 @@ export function CashCutPanel() {
   const [cancelReason, setCancelReason] = useState('Cierre de turno');
   const [actionNotice, setActionNotice] = useState<string | null>(null);
 
-  // Compute date range based on preset
+  // Compute date range based on preset (Timezone CDMX)
   const dateRange = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getCdmxTodayString();
     if (preset === 'today') {
       return { from: today, to: today };
     }
     if (preset === 'yesterday') {
-      const y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const y = getCdmxYesterdayString();
       return { from: y, to: y };
     }
     if (preset === 'week') {
-      const fromDate = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+      const fromDate = getCdmxPastDaysString(7);
       return { from: fromDate, to: today };
     }
     return { from: customFrom || today, to: customTo || today };
@@ -297,12 +299,12 @@ export function CashCutPanel() {
           <div className="space-y-1.5">
             <div className="h-3 w-full rounded-full bg-surface-raised overflow-hidden flex">
               <div style={{ width: `${cashPct}%` }} className="bg-emerald-500 transition-all" title={`Efectivo ${cashPct}%`} />
-              <div style={{ width: `${transferPct}%` }} className="bg-sky-500 transition-all" title={`SPEI ${transferPct}%`} />
+              <div style={{ width: `${transferPct}%` }} className="bg-sky-500 transition-all" title={`Transferencia ${transferPct}%`} />
               <div style={{ width: `${cardPct}%` }} className="bg-purple-500 transition-all" title={`Tarjeta ${cardPct}%`} />
             </div>
             <div className="flex items-center justify-between text-[10px] text-text-muted font-mono">
               <span className="text-emerald-500 font-bold">● Efectivo ({cashPct}%)</span>
-              <span className="text-sky-500 font-bold">● SPEI ({transferPct}%)</span>
+              <span className="text-sky-500 font-bold">● Transferencia ({transferPct}%)</span>
               <span className="text-purple-500 font-bold">● Tarjeta ({cardPct}%)</span>
             </div>
           </div>
@@ -324,14 +326,14 @@ export function CashCutPanel() {
               </span>
             </div>
 
-            {/* Transferencia SPEI */}
+            {/* Transferencia */}
             <div className="p-3.5 rounded-2xl bg-surface-raised/50 border border-line flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center font-bold">
                   <Smartphone className="w-5 h-5" />
                 </div>
                 <div>
-                  <h5 className="text-xs font-bold text-text-primary">Transferencias SPEI</h5>
+                  <h5 className="text-xs font-bold text-text-primary">Transferencias</h5>
                   <p className="text-[11px] text-text-secondary">{transferOrders} pedidos transferidos</p>
                 </div>
               </div>

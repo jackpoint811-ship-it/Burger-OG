@@ -1,5 +1,5 @@
 /**
- * components/admin/index.ts — PR-V3-12
+ * components/admin/index.ts — Chekeo V3
  *
  * Barrel export para los componentes de Administración de Chekeo V3.
  */
@@ -12,3 +12,7 @@ export * from './RafflesAdminPanel';
 export * from './CashCutPanel';
 export * from './IngredientsAdminPanel';
 export * from './AdminWorkspace';
+export * from './AdminBreadcrumbs';
+export * from './AdminQuickFavorites';
+export * from './AdminDashboardGrid';
+export * from './AdminAuthGate';

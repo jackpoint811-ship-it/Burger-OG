@@ -26,7 +26,7 @@ import type {
   ProductIngredientRecipeV2,
 } from '@config/index';
 
-export type AdminActiveTab = 'menu' | 'towers' | 'banners' | 'raffles' | 'cashcut' | 'ingredients';
+export type AdminActiveTab = 'overview' | 'menu' | 'towers' | 'banners' | 'raffles' | 'cashcut' | 'ingredients';
 
 export type CreateMenuItemPayload = {
   sku: string;
