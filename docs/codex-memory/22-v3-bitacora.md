@@ -503,7 +503,24 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   5. 🥗 Mise en Place de Modificaciones de Línea (grid autoadaptable de remociones agrupadas).
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.59s), `npm run build:public` ✅ (5.72s).
 
+### 📅 2026-08-26 — Sesión 48: Refinamiento Integral de Pagos & Conciliación V3 (Selector de Período, Mini Calendario & Terminología Canónica)
+- **🗓️ Nuevo `PaymentPeriodSelector` & Mini Calendario Mensual Popover**:
+  - Reemplazo definitivo del riel horizontal de 14 tarjetas por una barra ejecutiva de períodos financieros: `[ ⚡ Hoy ]`, `[ ⏱️ Ayer ]` (para cuadre de caja/turno previo), `[ 📅 Esta Semana ]` (últimos 7 días) y `[ 🌐 Todo ]`.
+  - Selector interactivo de Fecha Específica con **Mini Calendario Mensual Popover** (`MiniCalendarPopover`): navegación mes a mes, días de la semana, indicadores verdes en días con cobros registrados, resalte del día de Hoy y selección de fecha exacta.
+  - Badge reactivo con el resumen financiero del período activo (Total facturado, órdenes y alerta ámbar pulsante si hay cobros por confirmar).
+- **🏷️ Estandarización de Terminología Canónica de Cobros**:
+  - Erradicación total de "SPEI / SPAI" sustituido por **Transferencia**.
+  - "Efectivo en Entrega" simplificado a **Efectivo**.
+  - "Por Validar / Por Conciliar" estandarizado a **Por confirmar**.
+  - Acciones de 1-toque en tarjetas de cobro: `1-Clic: Confirmar Pago` / `Pago Confirmado (Clic para revertir)`.
+  - Modales: `Cuenta para Transferencias` (BBVA) y `Recordatorio Transferencia` (WhatsApp Bridge).
+- **📊 KPI "Por confirmar" Universal**:
+  - El 4to KPI del encabezado ahora totaliza **TODOS los cobros pendientes** sin importar el método de pago (transferencia, efectivo o tarjeta).
+  - Al hacer clic, filtra inmediatamente a `status: 'pending'`, `method: 'all'` y `selectedDate: 'all'`.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.44s), `npm run build:public` ✅ (5.98s).
+
 ---
+
 
 
 ## 📌 Issues Abiertos

@@ -5,6 +5,7 @@
  */
 
 import type { OrderV2, OrderV2PaymentMethod, OrderV2PaymentStatus } from '@config/index';
+import { getCdmxTodayString, formatCdmxDateString } from '@config/index';
 import type {
   FinancialSummary,
   PaymentFilterMethod,
@@ -15,23 +16,56 @@ import type {
 } from '../types/payments.types';
 
 /**
+ * Obtiene la fecha de ayer (YYYY-MM-DD) en la zona horaria de la Ciudad de México.
+ */
+export function getCdmxYesterdayString(): string {
+  const todayStr = getCdmxTodayString();
+  const [year, month, day] = todayStr.split('-').map(Number);
+  const prevDate = new Date(year, month - 1, day - 1);
+  const y = prevDate.getFullYear();
+  const m = String(prevDate.getMonth() + 1).padStart(2, '0');
+  const d = String(prevDate.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Obtiene la fecha de hace N días (YYYY-MM-DD) en la zona horaria de la Ciudad de México.
+ */
+export function getCdmxPastDaysString(daysAgo: number): string {
+  const todayStr = getCdmxTodayString();
+  const [year, month, day] = todayStr.split('-').map(Number);
+  const pastDate = new Date(year, month - 1, day - daysAgo);
+  const y = pastDate.getFullYear();
+  const m = String(pastDate.getMonth() + 1).padStart(2, '0');
+  const d = String(pastDate.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Formatea una fecha YYYY-MM-DD en texto amigable y conciso (ej. "26 Ago 2026").
+ */
+export function formatCdmxFriendlyDate(dateStr: string): string {
+  if (!dateStr || !dateStr.includes('-')) return dateStr;
+  try {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+    const monthShort = d.toLocaleDateString('es-MX', { month: 'short' });
+    const capitalizedMonth = monthShort.charAt(0).toUpperCase() + monthShort.slice(1).replace('.', '');
+    return `${day} ${capitalizedMonth} ${year}`;
+  } catch {
+    return dateStr;
+  }
+}
+
+/**
  * Determina si una fecha ISO corresponde a "hoy" en la zona horaria de la Ciudad de México.
  */
 export function isOrderFromTodayCDMX(isoString?: string): boolean {
   if (!isoString) return false;
   try {
-    const orderDate = new Date(isoString);
-    if (isNaN(orderDate.getTime())) return false;
-
-    const now = new Date();
-    const formatter = new Intl.DateTimeFormat('es-MX', {
-      timeZone: 'America/Mexico_City',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-
-    return formatter.format(orderDate) === formatter.format(now);
+    const todayStr = getCdmxTodayString();
+    const orderDateStr = formatCdmxDateString(isoString);
+    return orderDateStr === todayStr;
   } catch {
     return false;
   }
@@ -127,7 +161,7 @@ import { formatCurrency, PAYMENT_METHOD_LABELS } from '../../orders';
 import { extractOrderTargetDate } from '../../../components/shared/HorizontalDateCalendarFilter';
 
 /**
- * Filtra una lista de pedidos según criterios de búsqueda, método, estado, modo, torre y fecha.
+ * Filtra una lista de pedidos según criterios de búsqueda, método, estado, modo, torre y período de fecha.
  */
 export function filterPaymentsOrders(
   orders: OrderV2[],
@@ -144,24 +178,27 @@ export function filterPaymentsOrders(
   } = criteria;
   const searchLower = search.trim().toLowerCase();
 
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const todayStr = getCdmxTodayString();
+  const yesterdayStr = getCdmxYesterdayString();
+  const sevenDaysAgoStr = getCdmxPastDaysString(7);
 
   return orders.filter((order) => {
-    // 1. Filtro por Riel Horizontal de Fechas
+    // 1. Filtro por Período / Fecha
     if (selectedDate !== 'all') {
       const targetDate = extractOrderTargetDate(order, todayStr);
-      if (selectedDate === 'today' && targetDate !== todayStr) {
-        return false;
-      }
-      if (selectedDate === 'past' && targetDate >= todayStr) {
-        return false;
-      }
-      if (selectedDate !== 'today' && selectedDate !== 'past' && targetDate !== selectedDate) {
-        return false;
+      if (selectedDate === 'today') {
+        if (targetDate !== todayStr) return false;
+      } else if (selectedDate === 'yesterday') {
+        if (targetDate !== yesterdayStr) return false;
+      } else if (selectedDate === 'week') {
+        if (targetDate < sevenDaysAgoStr || targetDate > todayStr) return false;
+      } else if (selectedDate === 'past') {
+        if (targetDate >= todayStr) return false;
+      } else if (selectedDate !== 'today' && selectedDate !== 'yesterday' && selectedDate !== 'week' && selectedDate !== 'past') {
+        // Fecha específica YYYY-MM-DD
+        if (targetDate !== selectedDate) return false;
       }
     } else if (dateHorizon === 'today' && !isOrderFromTodayCDMX(order.createdAt)) {
-      // Fallback para dateHorizon legacy si no se especificó selectedDate
       return false;
     }
 
@@ -226,13 +263,18 @@ export function generateBatchPaymentSummaryText(orders: OrderV2[]): string {
     '📊 RESUMEN DE ARQUEO / CONCILIACIÓN — BURGERS.EXE',
     `Fecha: ${new Date().toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })}`,
     `Total Órdenes: ${orders.length} | Monto Total: ${formatCurrency(totalAmount)}`,
-    `Pagadas: ${paidCount} | Por Validar: ${pendingCount}`,
+    `Pagadas: ${paidCount} | Por confirmar: ${pendingCount}`,
     '----------------------------------------',
   ];
 
   orders.forEach((order, index) => {
-    const method = PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod;
-    const status = order.paymentStatus === 'paid' ? 'PAGADO' : 'PENDIENTE';
+    const method =
+      order.paymentMethod === 'transfer'
+        ? 'Transferencia'
+        : order.paymentMethod === 'cash'
+        ? 'Efectivo'
+        : 'Tarjeta';
+    const status = order.paymentStatus === 'paid' ? 'PAGADO' : 'POR CONFIRMAR';
     lines.push(
       `${index + 1}. #${order.folio} — ${order.customerName} | ${method} | ${status} | ${formatCurrency(order.total)}`
     );

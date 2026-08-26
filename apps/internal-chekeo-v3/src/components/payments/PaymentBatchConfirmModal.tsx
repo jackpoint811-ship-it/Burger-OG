@@ -58,12 +58,12 @@ export function PaymentBatchConfirmModal({
           </div>
           <div>
             <h3 className="text-base font-black text-text-primary">
-              {isValidate ? 'Confirmar Validación en Lote' : 'Confirmar Reversión a Pendiente'}
+              {isValidate ? 'Confirmar Cobros en Lote' : 'Confirmar Reversión a Por confirmar'}
             </h3>
             <p className="text-xs text-text-secondary font-medium">
               {isValidate
                 ? 'Marcar múltiples pagos como confirmados'
-                : 'Revertir estado de cobro a pendiente'}
+                : 'Revertir estado de cobro a por confirmar'}
             </p>
           </div>
         </div>
@@ -95,8 +95,8 @@ export function PaymentBatchConfirmModal({
 
         <p className="text-xs text-text-secondary leading-relaxed">
           {isValidate
-            ? 'Los pagos seleccionados se marcarán como pagados y validados en el sistema y se actualizará el corte financiero en tiempo real.'
-            : 'Los pagos seleccionados volverán a estado por validar en la cola de cobranza.'}
+            ? 'Los pagos seleccionados se marcarán como pagados y confirmados en el sistema y se actualizará el corte financiero en tiempo real.'
+            : 'Los pagos seleccionados volverán a estado por confirmar en la cola de cobranza.'}
         </p>
       </div>
 
@@ -132,7 +132,7 @@ export function PaymentBatchConfirmModal({
           ) : (
             <Clock className="w-3.5 h-3.5 mr-1.5" />
           )}
-          <span>{isValidate ? `Validar ${totalCount} Cobros` : `Revertir ${totalCount} Cobros`}</span>
+          <span>{isValidate ? `Confirmar ${totalCount} Cobros` : `Revertir ${totalCount} Cobros`}</span>
         </Button>
       </div>
     </Dialog>

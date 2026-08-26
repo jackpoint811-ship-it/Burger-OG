@@ -71,7 +71,7 @@ export function PaymentBatchActionBar({
               </span>
             </div>
             <p className="text-[11px] text-text-muted">
-              {pendingCount} por validar · {paidCount} pagadas
+              {pendingCount} por confirmar · {paidCount} pagadas
             </p>
           </div>
         </div>
@@ -102,7 +102,7 @@ export function PaymentBatchActionBar({
             )}
           </Button>
 
-          {/* Botón: Revertir a Pendiente (si hay pagadas) */}
+          {/* Botón: Revertir a Por confirmar (si hay pagadas) */}
           {paidCount > 0 && (
             <Button
               type="button"
@@ -111,14 +111,14 @@ export function PaymentBatchActionBar({
               onClick={onBatchRevert}
               disabled={busy}
               className="text-xs font-bold h-9 px-3 rounded-xl border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer"
-              title="Marcar como pendientes"
+              title="Marcar como por confirmar"
             >
               <Clock className="w-3.5 h-3.5 mr-1" />
-              <span>Pendiente</span>
+              <span>Por confirmar</span>
             </Button>
           )}
 
-          {/* Botón: Validar Pagos en Lote */}
+          {/* Botón: Confirmar Pagos en Lote */}
           {pendingCount > 0 && (
             <Button
               type="button"
@@ -134,7 +134,7 @@ export function PaymentBatchActionBar({
               ) : (
                 <Check className="w-3.5 h-3.5 mr-1" />
               )}
-              <span>Validar ({pendingCount})</span>
+              <span>Confirmar ({pendingCount})</span>
             </Button>
           )}
 

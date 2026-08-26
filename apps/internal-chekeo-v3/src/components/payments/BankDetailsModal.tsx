@@ -68,7 +68,7 @@ export function BankDetailsModal({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-base font-black text-text-primary">
-                Cuenta Bancaria SPEI
+                Cuenta para Transferencias
               </h3>
               <Badge variant="default" className="text-[10px] font-extrabold bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20">
                 Oficial
