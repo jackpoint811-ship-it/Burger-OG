@@ -212,11 +212,11 @@ export function KitchenActiveStation({
                   >
                     <div className="min-w-0 pr-3">
                       <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                        <span className="font-black text-sm text-text-primary group-hover:text-accent transition-colors">
-                          #{ticket.folio}
-                        </span>
-                        <span className="font-bold text-xs text-text-secondary truncate max-w-[150px]">
+                        <span className="font-black text-sm text-text-primary group-hover:text-accent transition-colors truncate max-w-[220px]">
                           {ticket.customerName}
+                        </span>
+                        <span className="font-extrabold text-xs px-2 py-0.5 rounded-md bg-surface border border-line text-text-secondary">
+                          #{ticket.folio}
                         </span>
                         <span className="inline-flex items-center gap-1 text-[11px] font-black text-text-muted">
                           <MapPin className="w-3 h-3 text-accent" />
@@ -285,11 +285,11 @@ export function KitchenActiveStation({
                   >
                     <div className="min-w-0 pr-3">
                       <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                        <span className="font-black text-sm text-text-primary">
-                          #{ticket.folio}
-                        </span>
-                        <span className="font-bold text-xs text-text-secondary truncate max-w-[150px]">
+                        <span className="font-black text-sm text-text-primary truncate max-w-[220px]">
                           {ticket.customerName}
+                        </span>
+                        <span className="font-extrabold text-xs px-2 py-0.5 rounded-md bg-surface border border-line text-text-secondary">
+                          #{ticket.folio}
                         </span>
                         <span className="inline-flex items-center gap-1 text-[11px] font-black text-text-muted">
                           <MapPin className="w-3 h-3 text-accent" />
