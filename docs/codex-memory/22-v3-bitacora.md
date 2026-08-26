@@ -390,16 +390,35 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - **Despliegues directos de la rama `v3`**: `https://burgers-exe-internal-v3.pages.dev/` y `https://burgers-exe-public-v3.pages.dev/`.
 - **Verificación**: Comprobación remota en D1 (14 órdenes, 27 ítems, 14 eventos) y checks en verde.
 
-### 📅 2026-08-26 — Sesión 39: Corrección Integral de Visibilidad en Cocina & Sincronización de Resumen K (Paso 4)
-- **Corrección de Filtrado de Fechas en Cocina (`KitchenDisplay.tsx`)**:
-  - `KitchenDisplay.tsx` sincronizado con la función canónica `extractOrderTargetDate(ticket, todayStr)`.
-  - Corregido el bug donde `ticket.scheduledDate || todayStr` provocaba que órdenes pasadas o no programadas se descartaran al navegar por `⏱️ Anteriores`, `Ver Todos` o días específicos en el calendario.
-- **Inferencia Resiliente de Ítems en Cocina (`kitchen.types.ts`)**:
-  - Enriquecida la función `extractKitchenTicketItems` para inferir `itemKind` mediante coincidencia de nombres y SKU (ej. "The OG", "Clásica", "Doble", etc.), evitando que productos sin snapshot queden como `other` y sean omitidos por el filtro de carril.
-- **Sincronización de Resumen K con Riel de Fechas (Paso 4)**:
-  - `KitchenSummaryK` ahora recibe `selectedDate` desde `CocinaView.tsx` y computa los agregados (`computeKitchenAggregates`) en vivo para la fecha activa seleccionada.
-  - Eliminado el selector de fecha `<input type="date">` interno y unificado el botón de refresco.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.04s), `npm run build:public` ✅ (5.45s).
+### 📅 2026-08-26 — Sesión 40: Blindaje Permanente contra Invisibilidad de Comandas (Timezone CDMX & Source Resiliente) (PR #575)
+- **Cálculo Canónico de Fechas en Zona Horaria CDMX (`America/Mexico_City`)**:
+  - Implementación de `getCdmxTodayString()` y `formatCdmxDateString()` en `@config/runtime-environment.ts` usando `Intl.DateTimeFormat` oficial.
+  - `HorizontalDateCalendarFilter`, `CocinaView`, `KitchenDisplay` y `KitchenSummaryK` evalúan la jornada de "Hoy" y los 14 días del riel siempre en hora de CDMX, previniendo desalineaciones entre servidores UTC y navegadores locales.
+- **Resiliencia de Backend en Consultas de Preview**:
+  - En `functions/api/_orders-v2-utils.ts`, `buildOrderEnvironmentCondition` mapea tanto `public-v2-preview` como variantes (`preview`, `seed`, `test`), impidiendo que un pedido quede oculto por diferencias menores en la columna `source`.
+- **Gobernanza Permanente**:
+  - Incorporada la Regla #7 en `AGENTS.md`, `GEMINI.md` y `.agents/rules/00-hard-constraints.md`.
+
+### 📅 2026-08-26 — Sesión 41: Refinamiento de Preparación & Side Quest en Cocina KDS (PR #576)
+- **Ubicación Estricta y Normalizada (`formatKitchenLocation`)**:
+  - `formatKitchenLocation`: Normaliza la visualización exclusivamente a `Torre GGA` o `Torre Valcob`. Erradica departamentos, números o texto de "Pickup".
+- **Completado Granular Ítem por Ítem**:
+  - Desglose determinista en `KitchenProductionUnit` con `unitKey` único por cada producto físico a preparar.
+  - Hook reactivo `useKitchenItemTracking` con persistencia en `localStorage` (`burgers_kds_item_checks_v3`).
+  - Bloqueo de comanda incompleta: La orden no puede cerrarse globalmente hasta que el 100% de los ítems de todas sus estaciones (Plancha y Side Quest) estén confirmados como listos.
+- **División Visual Nítida entre Ítems**:
+  - Cada producto encapsulado en su propia tarjeta numerada (`Ítem #1`, `Ítem #2`, etc.) con bordes de alto contraste.
+- **Nombres Exactos en Side Quest**:
+  - Identificación precisa: `🍟 Papas Lemon & Pepper`, `🍟 Papas Especiales`, `🍟 Papas OG`, `🍟 Aros de Cebolla`, `🥤 Bebidas`.
+  - Micro-badge reducido `[ combo ]` exclusivamente cuando provenga de un combo.
+- **Modificadores 1 por 1 en Lista Vertical**:
+  - Remociones (`🔴 SIN [INGREDIENTE]`) y Extras (`🟢 +EXTRA [INGREDIENTE]`) en renglones verticales individuales.
+  - Distintivo `[ ✓ Receta Original ]` en verde suave cuando no tenga modificaciones.
+- **Nota de Cocina Fija en la Base**:
+  - Contenedor estructurado con fondo ámbar suave, borde e ícono fijo `📝 Nota:` al pie de la tarjeta del ítem.
+- **Botones Concisos**:
+  - Texto simplificado a `Listo` (y `✔ Listo` al completarse).
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (6.82s), `npm run build:public` ✅ (6.01s).
 
 ---
 
