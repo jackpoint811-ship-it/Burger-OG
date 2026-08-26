@@ -22,6 +22,7 @@ import { Button } from '@ui/button';
 import {
   formatKitchenLocation,
   type KitchenTicket,
+  useKitchenItemTracking,
 } from '../../features/kitchen';
 import { KitchenTicketCard } from './KitchenTicketCard';
 
@@ -46,26 +47,45 @@ export function KitchenActiveStation({
   const [isReadySectionOpen, setIsReadySectionOpen] = useState<boolean>(false);
   const [localBusyId, setLocalBusyId] = useState<string | null>(null);
 
+  const {
+    isStationDone,
+    markStationDone,
+    revertStationDone,
+    isUnitDone,
+    toggleUnitDone,
+  } = useKitchenItemTracking();
+
   // Filtrar tickets correspondientes a esta estación
   const stationTickets = useMemo(() => {
     return tickets.filter((t) => {
       if (laneMode === 'prep') {
-        return t.totalBurgersCount > 0;
+        return t.totalBurgersCount > 0 || (t.productionUnits || []).some((u) => u.station === 'prep');
       }
-      return t.totalGarnishesCount > 0 || t.totalDrinksCount > 0 || t.totalExtrasCount > 0;
+      return (
+        t.totalGarnishesCount > 0 ||
+        t.totalDrinksCount > 0 ||
+        t.totalExtrasCount > 0 ||
+        (t.productionUnits || []).some((u) => u.station === 'sideQuest')
+      );
     });
   }, [tickets, laneMode]);
 
-  // Separar pendientes vs listos
-  const pendingTickets = useMemo(
-    () => stationTickets.filter((t) => t.status === 'new' || t.status === 'preparing'),
-    [stationTickets]
-  );
+  // Separar pendientes vs listos para esta estación específica
+  const pendingTickets = useMemo(() => {
+    return stationTickets.filter((t) => {
+      if (t.status === 'ready' || t.status === 'delivered') return false;
+      if (isStationDone(t.id, laneMode)) return false;
+      return true;
+    });
+  }, [stationTickets, laneMode, isStationDone]);
 
-  const readyTickets = useMemo(
-    () => stationTickets.filter((t) => t.status === 'ready'),
-    [stationTickets]
-  );
+  const readyTickets = useMemo(() => {
+    return stationTickets.filter((t) => {
+      if (t.status === 'ready' || t.status === 'delivered') return true;
+      if (isStationDone(t.id, laneMode)) return true;
+      return false;
+    });
+  }, [stationTickets, laneMode, isStationDone]);
 
   // Ticket activo en foco
   const activeTicket = useMemo(() => {
@@ -76,28 +96,38 @@ export function KitchenActiveStation({
     return pendingTickets[0] || null;
   }, [pendingTickets, selectedTicketId]);
 
-  // Ítems a mostrar del ticket activo filtrados por la estación
-  const displayedItems = useMemo(() => {
-    if (!activeTicket) return [];
-    return activeTicket.items.filter((item) => {
-      if (laneMode === 'prep') {
-        return item.itemKind === 'burger' || item.itemKind === 'combo';
-      }
-      return (
-        item.itemKind === 'garnish' ||
-        item.itemKind === 'drink' ||
-        item.itemKind === 'extra' ||
-        (item.itemKind === 'combo' && (item.garnish || item.includedDrink))
-      );
-    });
-  }, [activeTicket, laneMode]);
+  // Manejador de completado de estación independiente
+  const handleCompleteStation = async (ticketId: string, station: 'prep' | 'sideQuest') => {
+    const targetTicket = tickets.find((t) => t.id === ticketId);
+    if (!targetTicket) return;
 
-  // Manejador de avance de estado de la comanda activa
-  const handleAdvanceActive = async () => {
-    if (!activeTicket) return;
     try {
-      setLocalBusyId(activeTicket.id);
-      await advanceTicketStatus(activeTicket.id, activeTicket.status);
+      setLocalBusyId(ticketId);
+
+      // 1. Marcar todas las unidades de esta estación como chequeadas
+      const stationUnits = (targetTicket.productionUnits || []).filter((u) => u.station === station);
+      stationUnits.forEach((u) => {
+        if (!isUnitDone(u.unitKey)) {
+          toggleUnitDone(u.unitKey);
+        }
+      });
+
+      // 2. Registrar el despacho local de esta estación
+      markStationDone(ticketId, station);
+
+      // 3. Comprobar si la otra estación también está terminada o no tiene ítems
+      const otherStation = station === 'prep' ? 'sideQuest' : 'prep';
+      const otherStationHasUnits = (targetTicket.productionUnits || []).some(
+        (u) => u.station === otherStation
+      );
+
+      const isOtherDone = !otherStationHasUnits || isStationDone(ticketId, otherStation);
+
+      // 4. Si ambas estaciones terminaron (o no hay otra), promover a 'ready' en base de datos
+      if (isOtherDone) {
+        await advanceTicketStatus(ticketId, targetTicket.status);
+      }
+
       setSelectedTicketId(null);
     } finally {
       setLocalBusyId(null);
@@ -108,27 +138,14 @@ export function KitchenActiveStation({
   const handleRevertTicket = async (ticketId: string, currentStatus: KitchenTicket['status']) => {
     try {
       setLocalBusyId(ticketId);
-      await revertTicketStatus(ticketId, currentStatus);
+      revertStationDone(ticketId, laneMode);
+      if (currentStatus === 'ready') {
+        await revertTicketStatus(ticketId, currentStatus);
+      }
     } finally {
       setLocalBusyId(null);
     }
   };
-
-  // Configuración de textos por estación
-  const stationHeader =
-    laneMode === 'prep'
-      ? {
-          title: 'PREPARACIÓN',
-          desc: 'Hamburguesas individuales y burgers dentro de combos.',
-          countBadge: `${pendingTickets.length} pendiente${pendingTickets.length !== 1 ? 's' : ''}`,
-          itemTypeBadge: (count: number) => `🍔 ${count} Burger${count !== 1 ? 's' : ''}`,
-        }
-      : {
-          title: 'SIDE QUEST',
-          desc: 'Papas, guarniciones, bebidas y extras no-burger.',
-          countBadge: `${pendingTickets.length} pendiente${pendingTickets.length !== 1 ? 's' : ''}`,
-          itemTypeBadge: (count: number) => `🍟 ${count} Side${count !== 1 ? 's' : ''}`,
-        };
 
   if (isLoading) {
     return (
@@ -148,6 +165,7 @@ export function KitchenActiveStation({
           laneMode={laneMode}
           onAdvance={advanceTicketStatus}
           onRevert={revertTicketStatus}
+          onCompleteStation={handleCompleteStation}
           isUpdating={isUpdating || localBusyId === activeTicket.id}
         />
       ) : (
@@ -258,18 +276,24 @@ export function KitchenActiveStation({
                   .map((i) => `${i.qty}x ${i.name}`)
                   .join(' · ');
 
+                const readyLocation = formatKitchenLocation(ticket.location);
+
                 return (
                   <div
                     key={ticket.id}
                     className="flex items-center justify-between p-3.5 rounded-2xl bg-surface-raised border border-line"
                   >
                     <div className="min-w-0 pr-3">
-                      <div className="flex items-center gap-2 mb-0.5">
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                         <span className="font-black text-sm text-text-primary">
                           #{ticket.folio}
                         </span>
-                        <span className="font-bold text-xs text-text-secondary truncate">
+                        <span className="font-bold text-xs text-text-secondary truncate max-w-[150px]">
                           {ticket.customerName}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-black text-text-muted">
+                          <MapPin className="w-3 h-3 text-accent" />
+                          <span>{readyLocation}</span>
                         </span>
                       </div>
                       <p className="text-xs text-text-muted truncate">

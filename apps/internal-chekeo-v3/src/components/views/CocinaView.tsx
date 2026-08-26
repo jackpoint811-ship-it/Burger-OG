@@ -14,7 +14,10 @@ import {
   extractOrderTargetDate,
 } from '../shared/HorizontalDateCalendarFilter';
 import { useChekeoOrdersQuery } from '../../features/orders';
-import { extractKitchenTicketItems } from '../../features/kitchen';
+import {
+  extractKitchenTicketItems,
+  useKitchenItemTracking,
+} from '../../features/kitchen';
 
 import { getCdmxTodayString } from '@config/index';
 
@@ -23,6 +26,8 @@ export type KitchenLaneTab = 'prep' | 'sideQuest' | 'summaryK';
 export function CocinaView() {
   const [activeTab, setActiveTab] = useState<KitchenLaneTab>('prep');
   const [selectedDate, setSelectedDate] = useState<string>('today');
+
+  const { isStationDone } = useKitchenItemTracking();
 
   // Consulta de pedidos para el calendario horizontal y contadores en vivo
   const { orders } = useChekeoOrdersQuery({
@@ -53,12 +58,17 @@ export function CocinaView() {
       const { totalBurgersCount, totalGarnishesCount, totalDrinksCount, totalExtrasCount } =
         extractKitchenTicketItems(order.items || []);
 
-      if (totalBurgersCount > 0) prepCount++;
-      if (totalGarnishesCount > 0 || totalDrinksCount > 0 || totalExtrasCount > 0) sideCount++;
+      if (totalBurgersCount > 0 && !isStationDone(order.id, 'prep')) prepCount++;
+      if (
+        (totalGarnishesCount > 0 || totalDrinksCount > 0 || totalExtrasCount > 0) &&
+        !isStationDone(order.id, 'sideQuest')
+      ) {
+        sideCount++;
+      }
     });
 
     return { prepPendingCount: prepCount, sideQuestPendingCount: sideCount };
-  }, [orders, selectedDate]);
+  }, [orders, selectedDate, isStationDone]);
 
   const laneTabs = [
     {
