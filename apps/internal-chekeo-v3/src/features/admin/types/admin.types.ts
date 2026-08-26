@@ -1,13 +1,12 @@
 /**
- * admin.types.ts — PR-V3-12
+ * admin.types.ts — Chekeo V3
  *
- * Definiciones de tipos para el módulo de Administración de Chekeo V3:
- * - Menú & Stock (productos, precios, combos, categorías)
- * - Torres & Horarios
- * - Banners Promocionales
- * - Sorteos & Boletos
- * - Corte de Caja & Arqueo
- * - Ingredientes & Recetas
+ * Definiciones de tipos para el Panel de Control Administrativo de Chekeo V3:
+ * - Categorías Maestras y Navegación Jerárquica Multinivel
+ * - Subcategorías y Herramientas Especializadas
+ * - Sistema de Favoritos Dinámicos (Pin/Unpin)
+ * - Buscador Command Palette
+ * - Menú, Torres, Banners, Sorteos, Corte Z e Insumos
  */
 
 import type {
@@ -26,7 +25,45 @@ import type {
   ProductIngredientRecipeV2,
 } from '@config/index';
 
-export type AdminActiveTab = 'overview' | 'menu' | 'towers' | 'banners' | 'raffles' | 'cashcut' | 'ingredients';
+export type AdminMasterCategory =
+  | 'menu'
+  | 'towers'
+  | 'banners'
+  | 'raffles'
+  | 'cashcut'
+  | 'ingredients';
+
+export type AdminActiveTab = 'overview' | AdminMasterCategory;
+
+export type AdminNavigationLevel = 'overview' | 'category' | 'tool';
+
+export interface AdminRouteState {
+  level: AdminNavigationLevel;
+  category?: AdminMasterCategory;
+  toolId?: string;
+}
+
+export interface AdminPinnedFavorite {
+  id: string;
+  title: string;
+  shortTitle: string;
+  category: AdminMasterCategory;
+  toolId?: string;
+  iconName: string;
+  tag: string;
+  description?: string;
+}
+
+export interface AdminSearchItem {
+  id: string;
+  title: string;
+  description: string;
+  category: AdminMasterCategory;
+  categoryLabel: string;
+  toolId?: string;
+  keywords: string[];
+  iconName: string;
+}
 
 export type CreateMenuItemPayload = {
   sku: string;
