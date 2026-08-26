@@ -30,6 +30,36 @@ export const isPreviewRuntimeHostname = (hostname: string) => {
   );
 };
 
+/**
+ * Obtiene la fecha actual en formato YYYY-MM-DD según la zona horaria canónica de Ciudad de México (America/Mexico_City).
+ * Es segura y consistente en navegadores, Cloudflare Workers y scripts de Node.js.
+ */
+export function getCdmxTodayString(now: Date = new Date()): string {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Mexico_City",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    return formatter.format(now);
+  } catch {
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+}
+
+/**
+ * Formatea cualquier Date o timestamp ISO en fecha YYYY-MM-DD en zona horaria CDMX.
+ */
+export function formatCdmxDateString(dateOrIso: Date | string): string {
+  const d = typeof dateOrIso === "string" ? new Date(dateOrIso) : dateOrIso;
+  if (isNaN(d.getTime())) return getCdmxTodayString();
+  return getCdmxTodayString(d);
+}
+
 export const getChekeoRuntimeEnvironment = (
   hostname =
     typeof window === "undefined" ? "" : window.location.hostname,

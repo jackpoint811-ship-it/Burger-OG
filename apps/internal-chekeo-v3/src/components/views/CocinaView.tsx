@@ -16,6 +16,8 @@ import {
 import { useChekeoOrdersQuery } from '../../features/orders';
 import { extractKitchenTicketItems } from '../../features/kitchen';
 
+import { getCdmxTodayString } from '@config/index';
+
 export type KitchenLaneTab = 'prep' | 'sideQuest' | 'summaryK';
 
 export function CocinaView() {
@@ -31,8 +33,7 @@ export function CocinaView() {
 
   // Contadores reactivos para los badges de las pestañas
   const { prepPendingCount, sideQuestPendingCount } = useMemo(() => {
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const todayStr = getCdmxTodayString();
 
     let prepCount = 0;
     let sideCount = 0;

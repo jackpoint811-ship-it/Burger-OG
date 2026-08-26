@@ -33,6 +33,7 @@ import {
 } from '../../features/kitchen';
 import { extractOrderTargetDate } from '../shared/HorizontalDateCalendarFilter';
 import type { OrderV2 } from '@config/index';
+import { getCdmxTodayString } from '@config/index';
 
 function formatCurrency(pesos: number): string {
   const safeNumber = Number.isFinite(pesos) ? pesos : 0;
@@ -49,8 +50,7 @@ export interface KitchenSummaryKProps {
 }
 
 export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps) {
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const todayStr = getCdmxTodayString();
 
   const targetDateParam =
     selectedDate === 'today'

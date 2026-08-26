@@ -33,6 +33,9 @@ Si el usuario envía únicamente **`Burgers.exe`** (o `burger.exe`), el agente d
    - Consumir única y exclusivamente los datos reales de Cloudflare D1 (`menu_items`, `ingredients_v2`, `product_ingredient_recipes_v2`, `orders_v2`), Cloudflare R2 y endpoints Hono.
    - Queda estrictamente prohibido simular o inventar productos, precios, SKUs, ingredientes, recetas, combos o estados de pedidos ficticios en el frontend o en scripts de prueba.
    - Si un dato o configuración no existe, debe reflejarse limpiamente o solicitarse su configuración en Chekeo, nunca ocultar errores con valores por omisión inventados.
+7. **NUNCA DESFASAR FECHAS NI ENTORNO EN PEDIDOS (HORA CDMX & PREVIEW SOURCE)**:
+   - Todo pedido de prueba o preview debe llevar `source: "public-v2-preview"`.
+   - Toda fecha operativa debe calcularse usando obligatoriamente la hora de Ciudad de México (`getCdmxTodayString()` / `America/Mexico_City`), previniendo desalineaciones entre servidores UTC y navegadores locales.
 
 ---
 

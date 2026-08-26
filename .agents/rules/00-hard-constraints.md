@@ -31,3 +31,7 @@ Estas reglas son inquebrantables bajo cualquier circunstancia en este repositori
    - Trabajar única y exclusivamente con los datos reales de Cloudflare D1 (`menu_items`, `ingredients_v2`, `product_ingredient_recipes_v2`, `orders_v2`), Cloudflare R2 y endpoints Hono.
    - Prohibido inventar SKUs, productos, precios, ingredientes, recetas, combos o estados de pedidos ficticios en el frontend, backend o scripts de prueba.
    - Si un dato o configuración no existe, debe reflejarse limpiamente o solicitarse su configuración real en Chekeo, nunca ocultar fallas con valores por omisión inventados.
+
+7. **NUNCA DESFASAR FECHAS NI ENTORNO EN PEDIDOS (HORA CDMX & PREVIEW SOURCE)**:
+   - Todo pedido de prueba o preview debe llevar `source: "public-v2-preview"`.
+   - Toda fecha operativa debe calcularse usando obligatoriamente la hora de Ciudad de México (`getCdmxTodayString()` / `America/Mexico_City`), previniendo desalineaciones entre servidores UTC y navegadores locales.
