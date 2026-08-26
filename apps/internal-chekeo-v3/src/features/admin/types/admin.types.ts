@@ -35,10 +35,10 @@ export type AdminMasterCategory =
 
 export type AdminActiveTab = 'overview' | AdminMasterCategory;
 
-export type AdminNavigationLevel = 'overview' | 'category' | 'tool';
+export type AdminViewState = 'hub' | 'workspace';
 
 export interface AdminRouteState {
-  level: AdminNavigationLevel;
+  view: AdminViewState;
   category?: AdminMasterCategory;
   toolId?: string;
 }

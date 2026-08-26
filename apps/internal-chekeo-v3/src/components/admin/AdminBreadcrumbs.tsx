@@ -44,24 +44,21 @@ export function AdminBreadcrumbs({
       ? categoryDef.subcategories.find((s) => s.id === routeState.toolId)
       : null;
 
-  const isOverview = routeState.level === 'overview';
-  const isCategory = routeState.level === 'category';
-  const isTool = routeState.level === 'tool';
+  const isHub = routeState.view === 'hub';
+  const isWorkspace = routeState.view === 'workspace';
 
   // Manejo de tecla Escape para retroceder un nivel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (isTool && routeState.category) {
-          onNavigateCategory(routeState.category);
-        } else if (isCategory) {
+        if (isWorkspace) {
           onNavigateHome();
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isTool, isCategory, routeState.category, onNavigateCategory, onNavigateHome]);
+  }, [isWorkspace, onNavigateHome]);
 
   const currentFavoriteId = subcategoryDef
     ? `fav-${routeState.category}-${subcategoryDef.id}`
@@ -107,11 +104,11 @@ export function AdminBreadcrumbs({
             type="button"
             onClick={onNavigateHome}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer select-none ${
-              isOverview
+              isHub
                 ? 'bg-surface-raised text-accent font-black ring-1 ring-accent/30'
                 : 'text-text-secondary hover:text-text-primary hover:bg-surface-raised'
             }`}
-            aria-current={isOverview ? 'page' : undefined}
+            aria-current={isHub ? 'page' : undefined}
           >
             <Home className="w-3.5 h-3.5 text-accent shrink-0" />
             <span>Panel Admin</span>
@@ -125,28 +122,18 @@ export function AdminBreadcrumbs({
               <ChevronRight className="w-3.5 h-3.5" />
             </li>
             <li className="shrink-0">
-              {isCategory ? (
-                <span
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-accent/10 text-accent font-black text-xs ring-1 ring-accent/20"
-                  aria-current="page"
-                >
-                  <span>{categoryDef.shortTitle}</span>
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => onNavigateCategory(categoryDef.id)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-text-secondary hover:text-text-primary hover:bg-surface-raised transition-all cursor-pointer"
-                >
-                  <span>{categoryDef.shortTitle}</span>
-                </button>
-              )}
+              <span
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-accent/10 text-accent font-black text-xs ring-1 ring-accent/20"
+                aria-current="page"
+              >
+                <span>{categoryDef.shortTitle}</span>
+              </span>
             </li>
           </>
         )}
 
         {/* Nivel 2: Sub-Herramienta */}
-        {subcategoryDef && isTool && (
+        {subcategoryDef && (
           <>
             <li aria-hidden="true" className="text-text-muted shrink-0">
               <ChevronRight className="w-3.5 h-3.5" />
@@ -166,7 +153,7 @@ export function AdminBreadcrumbs({
       {/* Acciones Rápidas */}
       <div className="flex items-center gap-2 shrink-0">
         {/* Botón ⭐ Fijar en Favoritos */}
-        {(isCategory || isTool) && (
+        {isWorkspace && (
           <Button
             type="button"
             variant="outline"
@@ -192,25 +179,17 @@ export function AdminBreadcrumbs({
         )}
 
         {/* Botón Volver */}
-        {!isOverview && (
+        {isWorkspace && (
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => {
-              if (isTool && routeState.category) {
-                onNavigateCategory(routeState.category);
-              } else {
-                onNavigateHome();
-              }
-            }}
+            onClick={onNavigateHome}
             className="h-8.5 px-3 rounded-xl text-xs font-bold gap-1.5 cursor-pointer text-text-secondary hover:text-text-primary border-line"
-            title="Regresar al nivel anterior (Esc)"
+            title="Regresar al Hub (Esc)"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">
-              {isTool ? 'Volver al Menú' : 'Volver al Panel'}
-            </span>
+            <span className="hidden sm:inline">Volver al Hub</span>
           </Button>
         )}
 
