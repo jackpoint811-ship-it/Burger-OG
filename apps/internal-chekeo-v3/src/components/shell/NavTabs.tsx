@@ -1,18 +1,20 @@
 /**
- * NavTabs.tsx — PR-V3-08
+ * NavTabs.tsx — Chekeo V3
  *
  * Navegación principal accesible por pestañas para Chekeo V3 usando @ui/tabs.
  *
  * Pestañas operativas:
- * 1. Pedidos (Gestión, folios y filtros)
- * 2. Cocina (KDS, comandas en tiempo real e insumos)
- * 3. Pagos (Tickets, WhatsApp y conciliación)
- * 4. Admin (Menú, Torres, Banners, Sorteos y Corte de caja)
+ * 1. Operación (Semáforo de turno y Resumen K)
+ * 2. Pedidos (Gestión, folios y filtros)
+ * 3. Cocina (KDS, comandas en tiempo real e insumos)
+ * 4. Pagos (Tickets, WhatsApp y conciliación)
+ * 5. Admin (Panel de Control V3 protegido por PIN)
  */
 
 import React from 'react';
-import { LayoutDashboard, ShoppingBag, ChefHat, CreditCard, Settings } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, ChefHat, CreditCard, Settings, Lock } from 'lucide-react';
 import { TabsList, TabsTrigger } from '@ui/tabs';
+import { useAuthStore } from '../../features/auth';
 
 export type ChekeoTab = 'operacion' | 'pedidos' | 'cocina' | 'pagos' | 'admin';
 
@@ -58,7 +60,7 @@ export const CHEKEO_TABS: TabItem[] = [
     id: 'admin',
     label: 'Admin',
     shortLabel: 'Admin',
-    subtitle: 'Menú & Corte',
+    subtitle: 'Panel de Control',
     icon: Settings,
   },
 ];
@@ -69,12 +71,15 @@ interface NavTabsProps {
 }
 
 export function NavTabs({ activeTab, onTabChange }: NavTabsProps) {
+  const { isAuthenticated } = useAuthStore();
+
   return (
     <div className="w-full bg-surface-card border-b border-line px-2 sm:px-6 py-2 transition-colors duration-200">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <TabsList className="w-full sm:w-auto h-auto p-1 bg-surface-raised border border-line rounded-2xl grid grid-cols-5 sm:flex gap-1">
           {CHEKEO_TABS.map((tab) => {
-            const Icon = tab.icon;
+            const isTabAdmin = tab.id === 'admin';
+            const Icon = isTabAdmin && !isAuthenticated ? Lock : tab.icon;
             const isActive = activeTab === tab.id;
 
             return (
@@ -91,13 +96,22 @@ export function NavTabs({ activeTab, onTabChange }: NavTabsProps) {
               >
                 <Icon
                   className={`w-4 h-4 sm:w-4.5 sm:h-4.5 shrink-0 ${
-                    isActive ? 'text-accent' : 'text-text-muted'
+                    isActive
+                      ? 'text-accent'
+                      : isTabAdmin && !isAuthenticated
+                      ? 'text-amber-500'
+                      : 'text-text-muted'
                   }`}
                 />
                 <div className="flex flex-col items-center sm:items-start text-center sm:text-left leading-tight">
-                  <span className="font-extrabold">{tab.label}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="font-extrabold">{tab.label}</span>
+                    {isTabAdmin && !isAuthenticated && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 sm:hidden" />
+                    )}
+                  </div>
                   <span className="hidden lg:inline text-[10px] font-medium text-text-muted">
-                    {tab.subtitle}
+                    {isTabAdmin && !isAuthenticated ? '🔒 PIN Requerido' : tab.subtitle}
                   </span>
                 </div>
 

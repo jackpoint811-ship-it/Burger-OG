@@ -10,11 +10,11 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Clock, Wifi, WifiOff, LogOut, Sun, Moon, Sparkles } from 'lucide-react';
+import { Clock, Wifi, WifiOff, LogOut, Lock, Sun, Moon, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../../features/auth';
 
 export function TopHeader() {
-  const { logout } = useAuthStore();
+  const { isAuthenticated, logout } = useAuthStore();
   const [timeStr, setTimeStr] = useState('');
   const [dateStr, setDateStr] = useState('');
   const [isOnline, setIsOnline] = useState(
@@ -185,16 +185,18 @@ export function TopHeader() {
             {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
           </button>
 
-          {/* Botón Salir */}
-          <button
-            type="button"
-            onClick={() => logout()}
-            className="h-9 px-3 rounded-xl border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-            title="Cerrar sesión operativa"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Salir</span>
-          </button>
+          {/* Botón Bloquear Admin (Solo visible cuando la sesión de administración está activa) */}
+          {isAuthenticated && (
+            <button
+              type="button"
+              onClick={() => logout()}
+              className="h-9 px-3 rounded-xl border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Bloquear y cerrar sesión administrativa"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Bloquear Admin</span>
+            </button>
+          )}
         </div>
       </div>
     </header>
