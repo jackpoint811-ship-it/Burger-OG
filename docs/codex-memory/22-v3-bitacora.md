@@ -453,7 +453,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Selector de pestañas para alternar entre `📊 Producción` en vivo e `⚖️ Insumos D1` con costos y gramajes.
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.44s), `npm run build:public` ✅ (6.75s).
 
-### 📅 2026-08-26 — Sesión 45: Acordeón Secuencial Automático y Badges de Personalización en Comandas KDS
+### 📅 2026-08-26 — Sesión 45: Acordeón Secuencial Automático y Badges de Personalización en Comandas KDS (PR #580, PR #581)
 - **Acordeón Secuencial de Ítems en Modo Multi-Ítem**:
   - En comandas con más de 1 ítem en la estación, el primer ítem no completado se mantiene desplegado/expandido en foco por defecto.
   - Los ítems subsecuentes permanecen colapsados en barras compactas de alto contraste, ahorrando espacio vertical en tablets KDS.
