@@ -3,7 +3,7 @@
  *
  * Barra de control y filtrado desaturada y sin ruido:
  * - Fila 1: Buscador Universal amplio, botón de Cuenta BBVA y Popover discreto de Filtros (Método & Torre GGA/Valcob).
- * - Fila 2: Único Ribbon Horizontal visible de Estados de Cobro (Todos, Por Validar, Pagados, Cancelados).
+ * - Fila 2: Único Ribbon Horizontal visible de Estados de Cobro (Todos, Por confirmar, Pagados, Cancelados).
  * - Fila 3: Chips interactivos de filtros secundarios activos y botón 1-click de restablecer.
  */
 
@@ -93,7 +93,7 @@ export function PaymentsFilterBar({
     { id: 'all', label: 'Todos los Estados', count: allOrdersCount },
     {
       id: 'pending',
-      label: 'Por Validar',
+      label: 'Por confirmar',
       count: financialSummary.pendingTotalCount,
       badgeClass: 'bg-amber-500/20 text-amber-600 dark:text-amber-400',
       icon: Clock,
@@ -207,7 +207,7 @@ export function PaymentsFilterBar({
                   <div className="grid grid-cols-2 gap-1 bg-surface-raised p-1 rounded-xl border border-line">
                     {[
                       { id: 'all' as const, label: 'Todos' },
-                      { id: 'transfer' as const, label: 'SPEI' },
+                      { id: 'transfer' as const, label: 'Transferencia' },
                       { id: 'cash' as const, label: 'Efectivo' },
                       { id: 'card' as const, label: 'Tarjeta' },
                     ].map((m) => {
@@ -323,7 +323,7 @@ export function PaymentsFilterBar({
               {method === 'transfer' ? (
                 <>
                   <ArrowRightLeft className="w-3 h-3 shrink-0" />
-                  <span>SPEI</span>
+                  <span>Transferencia</span>
                 </>
               ) : method === 'cash' ? (
                 <>

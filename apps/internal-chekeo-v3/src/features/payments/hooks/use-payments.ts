@@ -171,7 +171,7 @@ export function usePayments(options: UsePaymentsOptions = {}) {
   // Restablecer filtros
   const resetFilters = useCallback(() => {
     setSearch('');
-    setSelectedDate('all');
+    setSelectedDate('today');
     setMethodFilter('all');
     setStatusFilter('all');
     setModeFilter('all');

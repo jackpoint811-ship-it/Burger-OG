@@ -17,6 +17,7 @@ import {
   generateBatchPaymentSummaryText,
 } from '../../features/payments';
 import {
+  PaymentPeriodSelector,
   PaymentKpiHeader,
   PaymentsFilterBar,
   PaymentsList,
@@ -26,7 +27,6 @@ import {
   OrderTicketModal,
   WhatsAppActionModal,
 } from '../payments';
-import { HorizontalDateCalendarFilter } from '../shared/HorizontalDateCalendarFilter';
 import { OrderDetailDrawer } from '../orders/OrderDetailDrawer';
 
 export function PagosView() {
@@ -71,19 +71,19 @@ export function PagosView() {
     setUpdatingOrderId(order.id);
     try {
       if (order.paymentStatus === 'paid') {
-        await markAsPending(order.id, 'Marcado como pendiente desde módulo de Pagos');
+        await markAsPending(order.id, 'Marcado como por confirmar desde módulo de Pagos');
       } else {
-        await markAsPaid(order.id, 'Pago validado y confirmado en módulo de Pagos');
+        await markAsPaid(order.id, 'Pago confirmado en módulo de Pagos');
       }
     } finally {
       setUpdatingOrderId(null);
     }
   };
 
-  // Click inteligente en KPI "Por Conciliar (SPEI)" -> Conmuta a Todos + transfer + pending
-  const handleFilterByPendingSpei = () => {
+  // Click inteligente en KPI "Por confirmar" -> Conmuta a Todos + status: pending + method: all
+  const handleFilterByPending = () => {
     setSelectedDate('all');
-    setMethodFilter('transfer');
+    setMethodFilter('all');
     setStatusFilter('pending');
   };
 
@@ -147,9 +147,9 @@ export function PagosView() {
     try {
       const ids = Array.from(selectedOrderIds);
       if (batchActionType === 'validate') {
-        await markBatchAsPaid(ids, 'Validación en lote desde Chekeo Pagos');
+        await markBatchAsPaid(ids, 'Confirmación en lote desde Chekeo Pagos');
       } else {
-        await markBatchAsPending(ids, 'Reversión en lote a pendiente desde Chekeo Pagos');
+        await markBatchAsPending(ids, 'Reversión en lote a por confirmar desde Chekeo Pagos');
       }
       setSelectedOrderIds(new Set());
       setBatchConfirmOpen(false);
@@ -173,20 +173,18 @@ export function PagosView() {
 
   return (
     <div className="space-y-5 animate-in fade-in duration-300 pb-16">
-      {/* ─── 1. Riel Horizontal de Fechas (14 días CDMX + Anteriores) ──────── */}
-      <div className="bg-surface-card p-4 rounded-3xl border border-line shadow-xs">
-        <HorizontalDateCalendarFilter
-          orders={allOrders}
-          selectedDate={filters.selectedDate}
-          onSelectDate={setSelectedDate}
-        />
-      </div>
+      {/* ─── 1. Selector de Período Financiero & Mini Calendario ───────────── */}
+      <PaymentPeriodSelector
+        orders={allOrders}
+        selectedDate={filters.selectedDate}
+        onSelectDate={setSelectedDate}
+      />
 
       {/* ─── 2. Header Financiero / 4 KPIs Reactivos (Click-to-Filter) ───── */}
       <PaymentKpiHeader
         financialSummary={financialSummary}
         selectedMethod={filters.method}
-        onFilterByPendingSpei={handleFilterByPendingSpei}
+        onFilterByPending={handleFilterByPending}
         onFilterByMethod={(method) => setMethodFilter(method)}
       />
 

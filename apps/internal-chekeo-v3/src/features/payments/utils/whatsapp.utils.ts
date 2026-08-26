@@ -177,7 +177,7 @@ export function buildTicketSummaryMessage(order: OrderV2, extraNote?: string): s
 }
 
 /**
- * Plantilla 4: Recordatorio de Transferencia SPEI
+ * Plantilla 4: Recordatorio de Transferencia
  */
 export function buildSpeiReminderMessage(
   order: OrderV2,
@@ -191,7 +191,7 @@ export function buildSpeiReminderMessage(
   const lines = [
     `¡Hola ${customerName}! ⏳`,
     '',
-    `Tu pedido *#${folio}* por un total de *${total}* está registrado y en espera de tu comprobante de pago por transferencia SPEI.`,
+    `Tu pedido *#${folio}* por un total de *${total}* está registrado y en espera de tu comprobante de pago por transferencia.`,
     '',
     '*Datos Bancarios para Transferir:*',
     `• *Banco:* ${bankDetails.bankName}`,
@@ -199,7 +199,7 @@ export function buildSpeiReminderMessage(
     `• *CLABE Interbancaria:* ${bankDetails.clabe}`,
     `• *Concepto / Referencia:* ${bankDetails.referencePrefix} ${folio}`,
     '',
-    'En cuanto realices la transferencia, compártenos tu comprobante por este chat para validar tu pedido e ingresarlo a cocina de inmediato. 🍳🔥',
+    'En cuanto realices la transferencia, compártenos tu comprobante por este chat para confirmar tu pedido e ingresarlo a cocina de inmediato. 🍳🔥',
   ];
 
   if (extraNote?.trim()) {
@@ -217,7 +217,7 @@ export const WHATSAPP_TEMPLATES: WhatsAppMessageTemplate[] = [
     key: 'confirmation',
     title: 'Confirmación de Pago',
     shortLabel: 'Pago Confirmado',
-    description: 'Avisa al cliente que su transferencia o pago fue validado con éxito.',
+    description: 'Avisa al cliente que su transferencia o pago fue confirmado con éxito.',
     iconName: 'check-circle',
     generate: (order, note) => buildPaymentConfirmationMessage(order, note),
   },
@@ -239,9 +239,9 @@ export const WHATSAPP_TEMPLATES: WhatsAppMessageTemplate[] = [
   },
   {
     key: 'spei_reminder',
-    title: 'Recordatorio de Transferencia SPEI',
-    shortLabel: 'Recordatorio SPEI',
-    description: 'Envía los datos bancarios y CLABE para órdenes con pago pendiente.',
+    title: 'Recordatorio de Transferencia',
+    shortLabel: 'Recordatorio Transferencia',
+    description: 'Envía los datos bancarios y CLABE para órdenes con pago por transferencia pendiente.',
     iconName: 'clock',
     generate: (order, note) => buildSpeiReminderMessage(order, note),
   },

@@ -4,6 +4,7 @@
  * Barrel export para los componentes de Pagos, Conciliación, Tickets y WhatsApp.
  */
 
+export * from './PaymentPeriodSelector';
 export * from './PaymentKpiHeader';
 export * from './BankDetailsModal';
 export * from './PaymentsFilterBar';
