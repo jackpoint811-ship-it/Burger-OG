@@ -468,7 +468,28 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Diferenciación Visual Anti-Confusión en Botones**:
   - Dentro del ítem abierto: `[ ✔ Marcar Ítem Listo ]` en estado pendiente, y `[ ↩ Desmarcar / Volver a pendiente ]` en tono neutro outline si se abre un ítem ya listo.
   - Botón principal de la comanda: Destacado en verde esmeralda con copy contextual explícito (`✔ Despachar Plancha` / `✔ Despachar Side Quest` / `✔ Despachar Comanda`), eliminando botones duplicados y ambigüedad.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (6.43s), `npm run build:public` ✅ (7.73s).
+### 📅 2026-08-26 — Sesión 46: Resumen K V3 — Mise en Place, Precocción de Side Quests, Carne Extra & Checklist de Restock Diario (PR #582)
+- **📦 Checklist de Insumos Físicos & Control de Restock Diario**:
+  - Implementación de la calculadora matemática de 7 insumos clave indispensables para arrancar el turno:
+    - 🥩 **Patties de Carne**: Bolitas a descongelar y pesar según receta (Doble = 2, Sencilla/OG = 1, Triple = 3) **+ porciones de carne extra calculadas automáticamente** (`+Extra Carne` / `+Extra Patty`).
+    - 🍞 **Bollos de Pan**: Piezas de pan a tostar (1 por hamburguesa).
+    - 🧀 **Queso Americano**: Rebanadas necesarias calculadas por receta base y extras de queso.
+    - 🥓 **Tocino**: Porciones a dorar/precocinar calculadas por recetas estándar con tocino y porciones de `+Extra Tocino`.
+    - 🍟 **Guarniciones (Sides)**: Total de porciones de papas y aros a pesar.
+    - 🥤 **Bebidas Frías**: Latas a refrigerar para el turno.
+    - 🥫 **Dips / Salsas**: Vasitos de aderezos a porcionar.
+- **🥩 Unificación de Carne Estándar & Trazabilidad de Carne Extra**:
+  - Todas las burgers usan la misma carne física base (patty smash).
+  - En las tarjetas de `Plancha (Burgers)`, las recetas con carne extra reflejan el badge contextual `[ +X extra carne ]`.
+- **🍟 Módulo de Precocción & Pesaje de Side Quests**:
+  - Desglose directo y preciso de porciones por receta de papas (`Papas Lemon & Pepper`, `Papas Especiales`, `Papas OG`) y `Aros de Cebolla` con estado pendiente de freír vs listas.
+- **🎛️ Filtros Rápidos Tipo Chip por Estación**:
+  - Barra de chips interactivos: `[ 🌐 Todas ]`, `[ 🍔 Plancha ]`, `[ 🍟 Freidora / Sides ]`, `[ 🥤 Bebidas ]`, `[ 🥫 Extras & Dips ]` para alternar fluidamente entre la vista integral de 4 estaciones en paralelo y el foco en una estación individual.
+- **🥗 Panel de Modificaciones de Cocina con Burgers Afectadas**:
+  - Lista de remociones (`🔴 SIN [Ingrediente] xN`) acompañada de un subtexto claro indicando en qué hamburguesas aplica (ej. `↳ 2x Doble con Queso · 1x Sencilla`).
+- **🧹 Limpieza de Ruido Visual en Cabecera**:
+  - Eliminación total de la función de copiar WhatsApp (cero botones o estados innecesarios en la pantalla de cocina).
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.48s), `npm run build:public` ✅ (5.66s).
 
 ---
 
