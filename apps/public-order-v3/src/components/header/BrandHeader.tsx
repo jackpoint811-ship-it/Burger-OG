@@ -60,7 +60,13 @@ export function BrandHeader() {
   });
 
   const isAnyTowerOpen = towersOpenToday.length > 0;
-  const isGlobalOpen = isCatalogEnabled && !isAllTowersPaused && isAnyTowerOpen;
+
+  // Estado operativo general de la tienda (3 estados reales: Abierto Hoy, Preventa 24/7, Cerrado)
+  const storeStatus = !isCatalogEnabled || isAllTowersPaused
+    ? { label: 'Cerrado', type: 'closed' as const }
+    : isAnyTowerOpen
+    ? { label: 'Abierto Hoy', type: 'open' as const }
+    : { label: 'Preventa 24/7', type: 'scheduled' as const };
 
   const handleOpenTowerModal = (towerKey?: string) => {
     setSelectedTowerForModal(towerKey || null);
@@ -81,21 +87,31 @@ export function BrandHeader() {
                 <h1 className="text-xl font-extrabold tracking-tight text-text-primary leading-tight">
                   {brandName}
                 </h1>
-                {/* Badge Global de Tienda: Abierto / Cerrado */}
-                <span
-                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-extrabold border ${
-                    isGlobalOpen
-                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
-                      : 'bg-red-500/10 border-red-500/30 text-red-700 dark:text-red-400'
+                {/* Badge Global de Tienda: Abierto Hoy / Preventa 24/7 / Cerrado */}
+                <button
+                  type="button"
+                  onClick={() => handleOpenTowerModal()}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold border transition-all cursor-pointer select-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
+                    storeStatus.type === 'open'
+                      ? 'bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
+                      : storeStatus.type === 'scheduled'
+                      ? 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-800 dark:text-amber-300'
+                      : 'bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-700 dark:text-red-400'
                   }`}
+                  aria-label={`Estado del servicio: ${storeStatus.label}. Clic para consultar horarios y entregas.`}
+                  title="Consultar horarios y rutas de entrega"
                 >
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${
-                      isGlobalOpen ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
+                      storeStatus.type === 'open'
+                        ? 'bg-emerald-500 animate-pulse'
+                        : storeStatus.type === 'scheduled'
+                        ? 'bg-amber-500'
+                        : 'bg-red-500'
                     }`}
                   />
-                  <span>{isGlobalOpen ? 'Abierto' : 'Cerrado'}</span>
-                </span>
+                  <span>{storeStatus.label}</span>
+                </button>
               </div>
               <p className="text-xs text-text-secondary font-medium">
                 Smash Burgers Artesanales

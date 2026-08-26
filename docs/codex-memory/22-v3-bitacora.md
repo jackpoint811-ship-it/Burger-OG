@@ -560,8 +560,8 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 ---
 
 ### 📅 2026-08-26 — Sesión 54: Header Simplificado V3 & Semáforo de Torres por Color (Sin Scroll Horizontal)
-- **🟢 Reubicación del Estado Global de Tienda**:
-  - Estado global directo en la cabecera principal junto al nombre de la marca (`Burgers.exe` + `🟢 Abierto` / `🔴 Cerrado`), con punto luminoso animado y lectura instantánea del servicio.
+- **🟢 Estado Global de Tienda Trifásico (Abierto Hoy / Preventa 24/7 / Cerrado)**:
+  - Estado global directo e interactivo en la cabecera principal junto al nombre de la marca (`Burgers.exe` + `🟢 Abierto Hoy` / `📅 Preventa 24/7` / `🔴 Cerrado`), con lectura instantánea del servicio según la hora límite de corte (`orderEndTime` configurada en D1 / Chekeo) y apertura de modal al hacer clic.
 - **🏢 Semáforo de Torres por Color en Píldoras Compactas**:
   - Píldoras concisas con solo icono y nombre de edificio (`[ 🏢 Torre GGA ]`, `[ 🏢 Torre Valcob ]`).
   - Semáforo por color de fondo/texto sin texto redundante:
@@ -572,7 +572,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **🚫 Erradicación de Scroll Horizontal & Botón "Horarios"**:
   - Eliminado `overflow-x-auto` en favor de un contenedor flex wrap que se ajusta a 360px sin desbordar.
   - Eliminado el botón redundante de "Horarios".
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.31s), `npm run build:chekeo` ✅ (6.07s).
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.24s), `npm run build:chekeo` ✅ (6.03s).
 
 ---
 
