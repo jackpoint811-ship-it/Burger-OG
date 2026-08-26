@@ -98,6 +98,9 @@ export interface AggregatedRecipeCount {
   totalQty: number;
   pendingQty: number;
   readyQty: number;
+  individualQty: number;
+  comboQty: number;
+  pattiesCount: number;
   isComboChild?: boolean;
 }
 
@@ -123,16 +126,37 @@ export interface AggregatedExtraCount {
   totalQty: number;
 }
 
+export interface AggregatedRemovedIngredient {
+  name: string;
+  count: number;
+}
+
+export interface AggregatedTowerStats {
+  location: string;
+  totalOrders: number;
+  readyOrders: number;
+  pendingOrders: number;
+  totalBurgers: number;
+  totalGarnishes: number;
+  totalDrinks: number;
+}
+
 export interface AggregatedMiseEnPlace {
   totalBurgers: number;
   totalGarnishes: number;
   totalDrinks: number;
   totalExtras: number;
+  totalPatties: number;
+  totalBuns: number;
+  originalRecipeCount: number;
+  customizedRecipeCount: number;
   activeOrdersCount: number;
   recipes: AggregatedRecipeCount[];
   garnishes: AggregatedGarnishCount[];
   drinks: AggregatedDrinkCount[];
   extras: AggregatedExtraCount[];
+  removedIngredients: AggregatedRemovedIngredient[];
+  towerBreakdown: AggregatedTowerStats[];
 }
 
 // ─── Helpers de Normalización y Extracción ────────────────────────────────────
@@ -613,67 +637,180 @@ export function buildKitchenOrderQueueSummary(
 }
 
 /**
+ * Estima la cantidad de carnes/patties por hamburguesa a partir de su receta o SKU.
+ */
+function estimatePattiesPerBurger(name: string, sku?: string): number {
+  const text = `${name} ${sku || ''}`.toLowerCase();
+  if (text.includes('triple')) return 3;
+  if (text.includes('doble') || text.includes('double')) return 2;
+  return 1;
+}
+
+/**
  * Agrega los insumos y recetas de una lista de órdenes activas para Resumen K.
+ * Implementa el Principio de Unificación Canónica V3 (sin duplicidad de combos).
  */
 export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMiseEnPlace {
   const recipeMap = new Map<string, AggregatedRecipeCount>();
   const garnishMap = new Map<string, AggregatedGarnishCount>();
   const drinkMap = new Map<string, AggregatedDrinkCount>();
   const extraMap = new Map<string, AggregatedExtraCount>();
+  const removedMap = new Map<string, number>();
 
   let totalBurgers = 0;
   let totalGarnishes = 0;
   let totalDrinks = 0;
   let totalExtras = 0;
+  let totalPatties = 0;
+  let totalBuns = 0;
+  let originalRecipeCount = 0;
+  let customizedRecipeCount = 0;
+
+  // Inicializar desglose por torres conocidas
+  const towerMap = new Map<string, AggregatedTowerStats>();
+  ['Torre GGA', 'Torre Valcob'].forEach((loc) => {
+    towerMap.set(loc, {
+      location: loc,
+      totalOrders: 0,
+      readyOrders: 0,
+      pendingOrders: 0,
+      totalBurgers: 0,
+      totalGarnishes: 0,
+      totalDrinks: 0,
+    });
+  });
 
   tickets.forEach((ticket) => {
     const isReady = ticket.status === 'ready';
+    const loc = formatKitchenLocation(ticket.location);
+
+    // Actualizar estadísticas de torre
+    const currentTower = towerMap.get(loc) ?? {
+      location: loc,
+      totalOrders: 0,
+      readyOrders: 0,
+      pendingOrders: 0,
+      totalBurgers: 0,
+      totalGarnishes: 0,
+      totalDrinks: 0,
+    };
+    currentTower.totalOrders += 1;
+    if (isReady) {
+      currentTower.readyOrders += 1;
+    } else {
+      currentTower.pendingOrders += 1;
+    }
+    currentTower.totalBurgers += ticket.totalBurgersCount;
+    currentTower.totalGarnishes += ticket.totalGarnishesCount;
+    currentTower.totalDrinks += ticket.totalDrinksCount;
+    towerMap.set(loc, currentTower);
 
     ticket.items.forEach((item) => {
-      // 1. Hamburguesas y Combos
+      // 1. Hamburguesas y Combos (Unificación Canónica por Receta Real)
       if (item.itemKind === 'burger' || item.itemKind === 'combo') {
-        const recipeName = item.name;
-        totalBurgers += item.qty;
-
-        const currentRecipe = recipeMap.get(recipeName) ?? {
-          name: recipeName,
-          sku: item.sku,
-          totalQty: 0,
-          pendingQty: 0,
-          readyQty: 0,
-        };
-        currentRecipe.totalQty += item.qty;
-        if (isReady) {
-          currentRecipe.readyQty += item.qty;
-        } else {
-          currentRecipe.pendingQty += item.qty;
-        }
-        recipeMap.set(recipeName, currentRecipe);
-
-        // Si tiene combo burgers secundarias desglosadas
-        if (item.comboBurgers?.length) {
+        if (item.comboBurgers && item.comboBurgers.length > 0) {
           item.comboBurgers.forEach((cb) => {
-            const cbName = cb.name;
-            const currentCb = recipeMap.get(cbName) ?? {
-              name: cbName,
+            const burgerName = cb.name || 'Hamburguesa';
+            const pattiesPerUnit = estimatePattiesPerBurger(burgerName, cb.sku);
+            totalBurgers += item.qty;
+            totalBuns += item.qty;
+            totalPatties += item.qty * pattiesPerUnit;
+
+            const current = recipeMap.get(burgerName) ?? {
+              name: burgerName,
               sku: cb.sku,
               totalQty: 0,
               pendingQty: 0,
               readyQty: 0,
-              isComboChild: true,
+              individualQty: 0,
+              comboQty: 0,
+              pattiesCount: pattiesPerUnit,
             };
-            currentCb.totalQty += item.qty;
+            current.totalQty += item.qty;
+            current.comboQty += item.qty;
             if (isReady) {
-              currentCb.readyQty += item.qty;
+              current.readyQty += item.qty;
             } else {
-              currentCb.pendingQty += item.qty;
+              current.pendingQty += item.qty;
             }
-            recipeMap.set(cbName, currentCb);
+            recipeMap.set(burgerName, current);
+
+            // Registro de modificaciones
+            const hasRemovals = cb.removedIngredients && cb.removedIngredients.length > 0;
+            const hasExtras = cb.extras && cb.extras.length > 0;
+            const hasNote = Boolean(cb.burgerNote?.trim());
+            if (!hasRemovals && !hasExtras && !hasNote) {
+              originalRecipeCount += item.qty;
+            } else {
+              customizedRecipeCount += item.qty;
+            }
+
+            if (hasRemovals) {
+              cb.removedIngredients.forEach((rem) => {
+                const remKey = rem.trim();
+                if (remKey) {
+                  removedMap.set(remKey, (removedMap.get(remKey) ?? 0) + item.qty);
+                }
+              });
+            }
           });
+        } else {
+          // Hamburguesa individual o combo sin desglose específico
+          let burgerName = item.name;
+          const isCombo = item.itemKind === 'combo';
+          if (isCombo && burgerName.toLowerCase().startsWith('combo ')) {
+            burgerName = burgerName.slice(6).trim();
+          }
+          const pattiesPerUnit = estimatePattiesPerBurger(burgerName, item.sku);
+          totalBurgers += item.qty;
+          totalBuns += item.qty;
+          totalPatties += item.qty * pattiesPerUnit;
+
+          const current = recipeMap.get(burgerName) ?? {
+            name: burgerName,
+            sku: item.sku,
+            totalQty: 0,
+            pendingQty: 0,
+            readyQty: 0,
+            individualQty: 0,
+            comboQty: 0,
+            pattiesCount: pattiesPerUnit,
+          };
+          current.totalQty += item.qty;
+          if (isCombo) {
+            current.comboQty += item.qty;
+          } else {
+            current.individualQty += item.qty;
+          }
+          if (isReady) {
+            current.readyQty += item.qty;
+          } else {
+            current.pendingQty += item.qty;
+          }
+          recipeMap.set(burgerName, current);
+
+          // Registro de modificaciones
+          const hasRemovals = item.removedIngredients && item.removedIngredients.length > 0;
+          const hasExtras = item.extras && item.extras.length > 0;
+          const hasNote = Boolean(item.burgerNote?.trim());
+          if (!hasRemovals && !hasExtras && !hasNote) {
+            originalRecipeCount += item.qty;
+          } else {
+            customizedRecipeCount += item.qty;
+          }
+
+          if (hasRemovals) {
+            item.removedIngredients.forEach((rem) => {
+              const remKey = rem.trim();
+              if (remKey) {
+                removedMap.set(remKey, (removedMap.get(remKey) ?? 0) + item.qty);
+              }
+            });
+          }
         }
       }
 
-      // 2. Guarnición de combo o individual
+      // 2. Guarniciones (de combo o individuales consolidadas)
       if (item.garnish?.name) {
         const gName = item.garnish.name;
         totalGarnishes += item.qty;
@@ -712,7 +849,7 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
         garnishMap.set(gName, currentGarnish);
       }
 
-      // 3. Bebidas
+      // 3. Bebidas (de combo o individuales consolidadas)
       if (item.includedDrink?.name) {
         const dName = item.includedDrink.name;
         totalDrinks += item.qty;
@@ -751,7 +888,7 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
         drinkMap.set(dName, currentDrink);
       }
 
-      // 4. Extras a nivel de ítem
+      // 4. Extras y Dips
       if (item.extras?.length) {
         item.extras.forEach((extra) => {
           totalExtras += item.qty;
@@ -765,7 +902,6 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
         });
       }
 
-      // Extras dentro de comboBurgers
       if (item.comboBurgers?.length) {
         item.comboBurgers.forEach((cb) => {
           cb.extras?.forEach((extra) => {
@@ -795,16 +931,29 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
   const extras = Array.from(extraMap.values()).sort(
     (a, b) => b.totalQty - a.totalQty || a.name.localeCompare(b.name)
   );
+  const removedIngredients = Array.from(removedMap.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+
+  const towerBreakdown = Array.from(towerMap.values()).sort((a, b) =>
+    a.location.localeCompare(b.location)
+  );
 
   return {
     totalBurgers,
     totalGarnishes,
     totalDrinks,
     totalExtras,
+    totalPatties,
+    totalBuns,
+    originalRecipeCount,
+    customizedRecipeCount,
     activeOrdersCount: tickets.length,
     recipes,
     garnishes,
     drinks,
     extras,
+    removedIngredients,
+    towerBreakdown,
   };
 }
