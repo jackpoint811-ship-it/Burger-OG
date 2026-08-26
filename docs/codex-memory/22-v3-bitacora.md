@@ -423,9 +423,15 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Unificación Automática de Orden Global (`dispatchMap`)**:
   - `useKitchenItemTracking` incorpora `dispatchMap` con persistencia en `localStorage` (`burgers_kds_station_dispatches_v3`).
   - Cuando una estación termina su parte, si la otra estación ya está despachada o no aplica (ej. orden solo de burgers o solo de papas), el sistema ejecuta automáticamente `advanceTicketStatus` promoviendo la orden global a `ready` en Cloudflare D1.
-- **Sincronización Reactiva de Pestañas en Cocina (`CocinaView.tsx`)**:
-  - Los contadores numéricos en los badges de `🍔 Preparación` y `🍟 Side Quest` descuentan en vivo conforme cada estación despacha su parte.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.50s), `npm run build:public` ✅ (5.57s).
+### 📅 2026-08-26 — Sesión 43: Nombre de Cliente Prominente y Acordeón Colapsable para Notas en Comandas KDS (PR #578)
+- **Jerarquía Visual Centrada en el Cliente**:
+  - Encabezado con tipografía de máxima jerarquía visual (`text-2xl sm:text-3xl font-black text-text-primary tracking-tight`) para el Nombre del Cliente.
+  - El Folio se presenta como pastilla secundaria (`#PB-M0001`) junto a la ubicación estricta (`Torre GGA` o `Torre Valcob`) y fecha programada.
+  - En colas y listas de `KitchenActiveStation`, el nombre del cliente lidera la tarjeta antes del folio.
+- **Notas de Pedido e Ítems en Acordeón Colapsable (`OrderNoteAccordion` / `ItemNoteAccordion`)**:
+  - Si no existe nota, la sección correspondiente se omite por completo sin dejar espacios vacíos.
+  - Si la nota es larga (> 40 caracteres en orden, > 45 caracteres en ítem), se renderiza con acordeón interactivo y toggle `Desplegar`/`Ocultar` para optimizar el espacio útil en pantalla.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.16s), `npm run build:public` ✅ (5.87s).
 
 ---
 
