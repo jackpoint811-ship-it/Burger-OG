@@ -232,6 +232,9 @@ export function KitchenTicketCard({
 
       if (nextUnit) {
         setExpandedUnitKey(nextUnit.unitKey);
+      } else {
+        // Al completar el último ítem pendiente, colapsar para despejar la vista
+        setExpandedUnitKey(null);
       }
     }
   };
@@ -242,6 +245,14 @@ export function KitchenTicketCard({
   };
 
   const locationDisplay = formatKitchenLocation(ticket.location);
+
+  // Etiqueta clara del botón de despacho global
+  const dispatchButtonLabel =
+    laneMode === 'prep'
+      ? 'Despachar Plancha'
+      : laneMode === 'sideQuest'
+      ? 'Despachar Side Quest'
+      : 'Despachar Comanda';
 
   return (
     <div className="bg-surface-card rounded-3xl p-4 sm:p-5 border-2 border-line shadow-card flex flex-col justify-between transition-all hover:border-accent/40">
@@ -431,26 +442,29 @@ export function KitchenTicketCard({
                       {/* Nota Fija en la Base del Ítem (Acordeón si es larga, oculta si no existe) */}
                       <ItemNoteAccordion note={unit.burgerNote} />
 
-                      {/* Botón Individual de Completado (1-Tap con touch target >= 44px) */}
+                      {/* Botón Individual del Ítem (1-Tap con touch target >= 44px) */}
                       <div className="pt-2 border-t border-line/60">
                         <button
                           type="button"
                           onClick={() => handleUnitToggle(unit.unitKey)}
                           className={`w-full min-h-11 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all cursor-pointer select-none ${
                             isDone
-                              ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs'
-                              : 'bg-surface-card hover:bg-surface-raised border-2 border-line text-text-primary active:scale-[0.98]'
+                              ? 'bg-surface-card hover:bg-surface-raised border-2 border-line text-text-muted hover:text-text-primary active:scale-[0.98]'
+                              : 'bg-surface-card hover:bg-emerald-500/15 border-2 border-line hover:border-emerald-500/40 text-text-primary active:scale-[0.98]'
                           }`}
                           aria-pressed={isDone}
-                          aria-label={`Marcar ${unit.name} como listo`}
+                          aria-label={isDone ? `Desmarcar ${unit.name}` : `Marcar ${unit.name} como listo`}
                         >
                           {isDone ? (
                             <>
-                              <CheckCircle2 className="w-4 h-4" />
-                              <span>Listo (Hecho)</span>
+                              <RotateCcw className="w-3.5 h-3.5 text-text-muted" />
+                              <span className="text-xs sm:text-sm">Desmarcar / Volver a pendiente</span>
                             </>
                           ) : (
-                            <span>Listo</span>
+                            <>
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                              <span>Marcar Ítem Listo</span>
+                            </>
                           )}
                         </button>
                       </div>
@@ -463,7 +477,7 @@ export function KitchenTicketCard({
         </div>
       </div>
 
-      {/* ─── Botón Global de la Comanda (Listo) con Bloqueo de Incompletos ──────── */}
+      {/* ─── Botón Global de la Comanda (Despachar) con Bloqueo de Incompletos ──── */}
       <div className="pt-4 border-t border-line mt-4 space-y-2">
         {ticket.status !== 'new' && onRevert ? (
           <div className="flex items-center gap-2">
@@ -496,7 +510,7 @@ export function KitchenTicketCard({
               ) : (
                 <>
                   <CheckCircle2 className="w-5 h-5 text-white" />
-                  <span>Listo</span>
+                  <span>{dispatchButtonLabel}</span>
                 </>
               )}
             </button>
@@ -521,7 +535,7 @@ export function KitchenTicketCard({
               ) : (
                 <>
                   <CheckCircle2 className="w-5 h-5 text-white" />
-                  <span>Listo</span>
+                  <span>{dispatchButtonLabel}</span>
                 </>
               )}
             </button>
