@@ -29,6 +29,10 @@ Si el usuario envía únicamente **`Burgers.exe`** (o `burger.exe`), el agente d
    - Respetar estrictamente la estética **Premium Casual**: fondo cálido/crema (`#F5F2EE`), tarjetas blancas (`#FFFFFF`), acento verde bosque (`#16A34A`), dark mode slate (`#121212`) y tipografía Inter.
 5. **NUNCA EJECUTAR COMANDOS DESTRUCTORIOS**:
    - Prohibido `git reset --hard`, `git add .`, `git add -A` o scripts de semillas destructivos en bases de datos remotas.
+6. **NUNCA INVENTAR DATOS NI USAR FALLBACKS FICTICIOS**:
+   - Consumir única y exclusivamente los datos reales de Cloudflare D1 (`menu_items`, `ingredients_v2`, `product_ingredient_recipes_v2`, `orders_v2`), Cloudflare R2 y endpoints Hono.
+   - Queda estrictamente prohibido simular o inventar productos, precios, SKUs, ingredientes, recetas, combos o estados de pedidos ficticios en el frontend o en scripts de prueba.
+   - Si un dato o configuración no existe, debe reflejarse limpiamente o solicitarse su configuración en Chekeo, nunca ocultar errores con valores por omisión inventados.
 
 ---
 
