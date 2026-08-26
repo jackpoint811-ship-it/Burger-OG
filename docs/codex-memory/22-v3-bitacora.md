@@ -567,15 +567,13 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Semáforo por color de fondo/texto sin texto redundante:
     - `🟢 Verde`: Abierta / Recibe pedidos hoy.
     - `🟡 Amarillo`: No disponible hoy (es para programar en próxima ruta de entrega).
-### 📅 2026-08-26 — Sesión 57: Refinamiento Mobile-First del Workspace de Admin V3
-- **📱 Riel de Favoritos Horizontal en Móvil (`AdminQuickFavorites.tsx`)**:
-  - Sustituida la cuadrícula densa en móviles por un riel deslizable horizontal ultra fluido (`snap-x overflow-x-auto`) con píldoras compactas (`h-11 px-3.5`), manteniendo la grilla de 6 columnas en tablets y desktop.
-- **✨ Cabecera Condensada & Limpia en Móvil (`AdminHubGrid.tsx` & `AdminModuleWorkspace.tsx`)**:
-  - Reducido padding en móviles (`p-4`), icono `w-10 h-10` y título condensado para ganar espacio vertical útil.
-  - Botones de acción (`Master Activo` + `[ 🔒 Bloquear ]` y `[ ← Volver ]` + `[ ⭐ ]`) perfectamente alineados sin desbordes.
-- **🎛️ Segmented Rail para Herramientas en Móvil (`AdminModuleWorkspace.tsx`)**:
-  - En móviles (< 768px), el selector de herramientas del módulo se despliega como un riel de pestañas segmentadas flotantes (`h-10 px-3`) con estado activo de alto contraste, ahorrando más de 200px verticales.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.24s), `npm run build:public` ✅ (6.30s).
+### 📅 2026-08-26 — Sesión 58: Cuadrícula Estricta de 2 Columnas en Móvil para Favoritos & Categorías Maestras
+- **⭐ Cuadrícula de Favoritos en 2 Columnas Fijas (`AdminQuickFavorites.tsx`)**:
+  - Eliminado el riel deslizable; restaurada la cuadrícula de 2 columnas de cuadritos compactos táctiles en móvil (`grid-cols-2 min-h-[64px]`), 3 en tablet y 6 en desktop con 0 scrolls y visibilidad instantánea.
+- **📊 6 Categorías Maestras en 2 Columnas en Móvil (`AdminHubGrid.tsx`)**:
+  - Reemplazado `grid-cols-1 md:grid-cols-2` por `grid-cols-2 gap-2.5 sm:gap-4 lg:gap-5` para renderizar 2 columnas exactas en móvil.
+  - Tarjetas Bento adaptativas: títulos concisos (`text-xs sm:text-base`), iconos `w-8 h-8 sm:w-12 sm:h-12`, métricas optimizadas en pastillas compactas y botón directo `[ Abrir → ]`.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.07s), `npm run build:public` ✅ (6.25s).
 
 ---
 

@@ -39,42 +39,8 @@ export function AdminQuickFavorites({
         </span>
       </div>
 
-      {/* Vista Móvil: Riel Horizontal Deslizable / Snap */}
-      <div className="flex sm:hidden overflow-x-auto scrollbar-none gap-2 pb-1 pt-0.5">
-        {favorites.map((fav) => {
-          const Icon = getAdminIcon(fav.iconName);
-          const isSelected =
-            activeCategory === fav.category && (!fav.toolId || activeToolId === fav.toolId);
-
-          return (
-            <button
-              key={fav.id}
-              type="button"
-              onClick={() => onNavigate(fav.category, fav.toolId)}
-              className={`flex items-center gap-2.5 h-11 px-3.5 rounded-2xl border shrink-0 transition-all cursor-pointer select-none text-left ${
-                isSelected
-                  ? 'bg-surface-card border-accent shadow-card ring-2 ring-accent/25'
-                  : 'bg-surface-card border-line hover:border-accent/40 hover:bg-surface-raised active:scale-98 shadow-xs'
-              }`}
-            >
-              <div className="p-1 rounded-lg bg-surface-raised border border-line/60 text-accent">
-                <Icon className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-text-primary truncate">
-                  {fav.shortTitle || fav.title}
-                </p>
-              </div>
-              <span className="text-[9px] font-black uppercase tracking-wider text-text-muted px-1.5 py-0.5 rounded bg-surface-raised border border-line/60">
-                {fav.tag}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Vista Tablet / Desktop: Grilla Adaptativa en 6 Columnas */}
-      <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+      {/* Grid Estricto: 2 Columnas en Móvil, 3 en Tablet, 6 en Desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5">
         {favorites.map((fav) => {
           const Icon = getAdminIcon(fav.iconName);
           const isSelected =
@@ -83,7 +49,7 @@ export function AdminQuickFavorites({
           return (
             <div
               key={fav.id}
-              className={`relative rounded-2xl border text-left transition-all flex flex-col justify-between p-3 cursor-pointer select-none group min-h-[72px] ${
+              className={`relative rounded-2xl border text-left transition-all flex flex-col justify-between p-2.5 sm:p-3 cursor-pointer select-none group min-h-[64px] sm:min-h-[72px] active:scale-98 ${
                 isSelected
                   ? 'bg-surface-card border-accent shadow-card ring-2 ring-accent/25'
                   : 'bg-surface-card border-line hover:border-accent/40 hover:bg-surface-raised/60 shadow-xs'
@@ -99,13 +65,13 @@ export function AdminQuickFavorites({
               }}
               aria-label={`Acceso rápido a ${fav.title}`}
             >
-              <div className="flex items-center justify-between w-full">
-                <div className="p-1.5 rounded-xl bg-surface-raised border border-line/60 text-text-primary group-hover:text-accent transition-colors">
-                  <Icon className="w-4 h-4" />
+              <div className="flex items-center justify-between w-full gap-1">
+                <div className="p-1 sm:p-1.5 rounded-lg sm:rounded-xl bg-surface-raised border border-line/60 text-text-primary group-hover:text-accent transition-colors shrink-0">
+                  <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
 
-                <div className="flex items-center gap-1">
-                  <span className="text-[9px] font-black uppercase tracking-wider text-text-muted px-1.5 py-0.5 rounded-md bg-surface-raised border border-line/60">
+                <div className="flex items-center gap-0.5 sm:gap-1">
+                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-text-muted px-1 sm:px-1.5 py-0.5 rounded bg-surface-raised border border-line/60">
                     {fav.tag}
                   </span>
 
@@ -115,7 +81,7 @@ export function AdminQuickFavorites({
                       e.stopPropagation();
                       unpin(fav.id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 text-amber-500 hover:text-amber-600 transition-opacity cursor-pointer"
+                    className="opacity-70 sm:opacity-0 group-hover:opacity-100 focus:opacity-100 p-0.5 sm:p-1 text-amber-500 hover:text-amber-600 transition-opacity cursor-pointer shrink-0"
                     title="Desfijar de favoritos"
                     aria-label={`Desfijar ${fav.title} de favoritos`}
                   >
@@ -124,9 +90,9 @@ export function AdminQuickFavorites({
                 </div>
               </div>
 
-              <div>
-                <p className="text-xs font-black text-text-primary group-hover:text-accent transition-colors truncate">
-                  {fav.title}
+              <div className="mt-1">
+                <p className="text-[11px] sm:text-xs font-black text-text-primary group-hover:text-accent transition-colors truncate">
+                  {fav.shortTitle || fav.title}
                 </p>
               </div>
             </div>
