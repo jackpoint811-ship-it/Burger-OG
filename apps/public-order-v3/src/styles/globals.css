@@ -3,16 +3,16 @@
 @theme {
   --color-surface: #F5F2EE;
   --color-surface-card: #FFFFFF;
-  --color-surface-raised: #FFFFFF;
+  --color-surface-raised: #EAE6E1;
   --color-surface-alt: #F9FAFB;
   --color-accent: #16A34A;
   --color-accent-dark: #22C55E;
   --color-accent-soft: rgba(22, 163, 74, 0.1);
-  --color-text-primary: #1A1A1A;
-  --color-text-secondary: #6B7280;
-  --color-text-muted: #9CA3AF;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748B;
   --color-text-on-accent: #FFFFFF;
-  --color-line: #E5E7EB;
+  --color-line: #E2DCD5;
   --color-danger: #EF4444;
   --color-danger-soft: rgba(239, 68, 68, 0.1);
   --color-warning: #F59E0B;
@@ -29,15 +29,15 @@
 :root {
   --color-surface: #F5F2EE;
   --color-surface-card: #FFFFFF;
-  --color-surface-raised: #FFFFFF;
+  --color-surface-raised: #EAE6E1;
   --color-surface-alt: #F9FAFB;
   --color-accent: #16A34A;
   --color-accent-soft: rgba(22, 163, 74, 0.1);
-  --color-text-primary: #1A1A1A;
-  --color-text-secondary: #6B7280;
-  --color-text-muted: #9CA3AF;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748B;
   --color-text-on-accent: #FFFFFF;
-  --color-line: #E5E7EB;
+  --color-line: #E2DCD5;
   --color-danger: #EF4444;
   --color-warning: #F59E0B;
   --touch-target-min: 44px;
@@ -50,11 +50,11 @@
   --color-surface-alt: #181818;
   --color-accent: #22C55E;
   --color-accent-soft: rgba(34, 197, 94, 0.15);
-  --color-text-primary: #F9FAFB;
-  --color-text-secondary: #9CA3AF;
-  --color-text-muted: #6B7280;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #CBD5E1;
+  --color-text-muted: #64748B;
   --color-text-on-accent: #FFFFFF;
-  --color-line: #2E2E2E;
+  --color-line: #333333;
 }
 
 /* Utilería para ocultar barra de scroll en navegación horizontal */

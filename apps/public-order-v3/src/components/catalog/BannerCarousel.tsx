@@ -158,7 +158,16 @@ export function BannerCarousel() {
               if (info.offset.x < -40) handleNext();
               else if (info.offset.x > 40) handlePrev();
             }}
-            className="w-full min-h-[140px] flex flex-col justify-between p-4 sm:p-6 text-white cursor-pointer select-none touch-pan-y relative overflow-hidden"
+            tabIndex={0}
+            role="button"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleBannerClick(currentBanner);
+              }
+            }}
+            aria-label={`${currentBanner.title}. ${currentBanner.subtitle || ''}`}
+            className="w-full min-h-[140px] flex flex-col justify-between p-4 sm:p-6 text-white cursor-pointer select-none touch-pan-y relative overflow-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
             style={{ background: bgStyle }}
             onClick={() => handleBannerClick(currentBanner)}
           >

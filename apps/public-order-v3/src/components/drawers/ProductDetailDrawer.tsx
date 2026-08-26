@@ -729,10 +729,11 @@ export function ProductDetailDrawer() {
 
                       {/* 3. Instrucciones de cocina */}
                       <div>
-                        <label className="text-xs font-bold text-text-primary block mb-1.5">
+                        <label htmlFor="kitchen-special-note" className="text-xs font-bold text-text-primary block mb-1.5">
                           Instrucciones de cocina (opcional):
                         </label>
                         <textarea
+                          id="kitchen-special-note"
                           value={specialNote}
                           onChange={(e) => setSpecialNote(e.target.value)}
                           placeholder="Ej. Carne bien cocida, cebolla extra dorada..."
