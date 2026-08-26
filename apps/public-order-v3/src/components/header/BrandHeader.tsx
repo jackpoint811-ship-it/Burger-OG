@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Info, Sparkles, AlertCircle } from 'lucide-react';
+import { Sun, Moon, AlertCircle } from 'lucide-react';
 import {
   useActiveTowers,
   useActiveRaffleQuery,
@@ -60,15 +60,7 @@ export function BrandHeader() {
   });
 
   const isAnyTowerOpen = towersOpenToday.length > 0;
-
-  // Estado operativo general de la tienda
-  const storeStatus = !isCatalogEnabled
-    ? { text: 'Tienda en Mantenimiento', type: 'closed' }
-    : isAllTowersPaused
-    ? { text: 'Cocina Pausada', type: 'closed' }
-    : isAnyTowerOpen
-    ? { text: 'Tomando Pedidos Hoy', type: 'open' }
-    : { text: 'Preventa 24/7 (Programar)', type: 'scheduled' };
+  const isGlobalOpen = isCatalogEnabled && !isAllTowersPaused && isAnyTowerOpen;
 
   const handleOpenTowerModal = (towerKey?: string) => {
     setSelectedTowerForModal(towerKey || null);
@@ -85,9 +77,26 @@ export function BrandHeader() {
               🍔
             </div>
             <div>
-              <h1 className="text-xl font-extrabold tracking-tight text-text-primary leading-tight">
-                {brandName}
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-extrabold tracking-tight text-text-primary leading-tight">
+                  {brandName}
+                </h1>
+                {/* Badge Global de Tienda: Abierto / Cerrado */}
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-extrabold border ${
+                    isGlobalOpen
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
+                      : 'bg-red-500/10 border-red-500/30 text-red-700 dark:text-red-400'
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      isGlobalOpen ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
+                    }`}
+                  />
+                  <span>{isGlobalOpen ? 'Abierto' : 'Cerrado'}</span>
+                </span>
+              </div>
               <p className="text-xs text-text-secondary font-medium">
                 Smash Burgers Artesanales
               </p>
@@ -119,38 +128,13 @@ export function BrandHeader() {
           </div>
         </div>
 
-        {/* Sub-Barra de Estado de Tienda & Rutas Corporativas */}
-        <div className="pt-1 border-t border-line/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          {/* Badge de Estado Global de la Tienda */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => handleOpenTowerModal()}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-black transition-all cursor-pointer min-h-[40px] shrink-0 border focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
-                storeStatus.type === 'closed'
-                  ? 'bg-red-500/10 border-red-500/30 text-red-700 dark:text-red-300'
-                  : storeStatus.type === 'open'
-                  ? 'bg-accent/10 border-accent/30 text-accent font-black shadow-xs'
-                  : 'bg-amber-500/10 border-amber-500/25 text-amber-700 dark:text-amber-300'
-              }`}
-              aria-label={`Estado del servicio: ${storeStatus.text}`}
-              title="Ver horarios y disponibilidad de la tienda"
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  storeStatus.type === 'closed'
-                    ? 'bg-red-500'
-                    : storeStatus.type === 'open'
-                    ? 'bg-accent animate-pulse'
-                    : 'bg-amber-500'
-                }`}
-              />
-              <span>{storeStatus.text}</span>
-            </button>
-          </div>
+        {/* Sub-Barra de Rutas de Entrega (Sin scroll horizontal, píldoras con color semántico) */}
+        <div className="pt-2 border-t border-line/60 flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-bold text-text-secondary shrink-0">
+            📍 Entregas:
+          </span>
 
-          {/* Píldoras de Torres (Informativas) */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          <div className="flex items-center gap-2 flex-wrap">
             {towers.map((t) => {
               const isConfigActive = t.isActive !== false;
               const isToday =
@@ -162,50 +146,26 @@ export function BrandHeader() {
                 mxNow.hours > endH || (mxNow.hours === endH && mxNow.minutes >= endM);
               const isOpenToday = isConfigActive && isToday && !isPastCutoff;
 
+              const colorStyles = !isConfigActive
+                ? 'bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-700 dark:text-red-300'
+                : isOpenToday
+                ? 'bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
+                : 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-800 dark:text-amber-300';
+
               return (
                 <button
                   key={t.towerKey}
                   type="button"
                   onClick={() => handleOpenTowerModal(t.towerKey)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-2xl text-xs font-bold bg-surface hover:bg-surface-raised border border-line text-text-secondary hover:text-text-primary transition-all cursor-pointer min-h-[40px] shrink-0 select-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
-                  aria-label={`Ver ruta y horario de ${t.towerName}`}
-                  title={`Ver horario de ${t.towerName}`}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs border transition-all cursor-pointer min-h-[38px] select-none font-bold focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${colorStyles}`}
+                  aria-label={`Ver horario y ruta de entrega para ${t.towerName}`}
+                  title={`Ver horario y ruta de entrega para ${t.towerName}`}
                 >
                   <span className="text-sm" aria-hidden="true">{t.emoji || '🏢'}</span>
-                  <span className="font-extrabold text-text-primary">{t.towerName}</span>
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      !isConfigActive
-                        ? 'bg-red-500/15 text-red-600'
-                        : isOpenToday
-                        ? 'bg-accent text-white shadow-xs'
-                        : 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
-                    }`}
-                  >
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        isOpenToday
-                          ? 'bg-white animate-pulse'
-                          : !isConfigActive
-                          ? 'bg-red-500'
-                          : 'bg-amber-500'
-                      }`}
-                    />
-                    <span>{isOpenToday ? 'Hoy' : !isConfigActive ? 'Pausada' : 'Programar'}</span>
-                  </span>
+                  <span>{t.towerName}</span>
                 </button>
               );
             })}
-
-            <button
-              type="button"
-              onClick={() => handleOpenTowerModal()}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-2xl text-[11px] font-semibold text-text-muted hover:text-text-primary hover:bg-surface transition-colors cursor-pointer shrink-0 min-h-[36px] focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ml-auto"
-              aria-label="Consultar todos los horarios y rutas de entrega"
-            >
-              <Info className="w-3.5 h-3.5 text-accent" />
-              <span>Horarios</span>
-            </button>
           </div>
         </div>
 
