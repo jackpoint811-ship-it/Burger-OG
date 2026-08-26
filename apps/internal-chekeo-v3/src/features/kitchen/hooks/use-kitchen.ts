@@ -293,3 +293,95 @@ export function useUpdateKitchenItemMutation() {
     },
   });
 }
+
+// ─── Hook para Seguimiento Reactivo de Ítems Granulares ────────────────────────
+
+const KITCHEN_CHECKS_STORAGE_KEY = 'burgers_kds_item_checks_v3';
+
+function readStoredChecks(): Record<string, boolean> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(KITCHEN_CHECKS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeStoredChecks(checks: Record<string, boolean>) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(KITCHEN_CHECKS_STORAGE_KEY, JSON.stringify(checks));
+  } catch {
+    // Silencioso
+  }
+}
+
+export function useKitchenItemTracking() {
+  const [checkedMap, setCheckedMap] = useState<Record<string, boolean>>(() => readStoredChecks());
+
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === KITCHEN_CHECKS_STORAGE_KEY && e.newValue) {
+        try {
+          setCheckedMap(JSON.parse(e.newValue));
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  const isUnitDone = useCallback(
+    (unitKey: string): boolean => {
+      return Boolean(checkedMap[unitKey]);
+    },
+    [checkedMap]
+  );
+
+  const toggleUnitDone = useCallback((unitKey: string) => {
+    setCheckedMap((prev) => {
+      const next = { ...prev, [unitKey]: !prev[unitKey] };
+      writeStoredChecks(next);
+      return next;
+    });
+  }, []);
+
+  const getTicketProgress = useCallback(
+    (ticket: KitchenTicket) => {
+      const units = ticket.productionUnits || [];
+      const totalUnits = units.length;
+
+      const prepUnits = units.filter((u) => u.station === 'prep');
+      const sideUnits = units.filter((u) => u.station === 'sideQuest');
+
+      const prepCompleted = prepUnits.filter((u) => checkedMap[u.unitKey]).length;
+      const sideCompleted = sideUnits.filter((u) => checkedMap[u.unitKey]).length;
+      const completedUnits = prepCompleted + sideCompleted;
+
+      const isPrepDone = prepUnits.length === 0 || prepCompleted === prepUnits.length;
+      const isSideQuestDone = sideUnits.length === 0 || sideCompleted === sideUnits.length;
+      const isFullyDone = totalUnits > 0 && completedUnits === totalUnits;
+
+      return {
+        totalUnits,
+        completedUnits,
+        prepTotal: prepUnits.length,
+        prepCompleted,
+        sideTotal: sideUnits.length,
+        sideCompleted,
+        isPrepDone,
+        isSideQuestDone,
+        isFullyDone,
+      };
+    },
+    [checkedMap]
+  );
+
+  return {
+    checkedMap,
+    isUnitDone,
+    toggleUnitDone,
+    getTicketProgress,
+  };
+}

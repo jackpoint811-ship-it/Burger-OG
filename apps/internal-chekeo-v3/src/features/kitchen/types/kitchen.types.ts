@@ -44,6 +44,22 @@ export interface KitchenTicketItem {
   }>;
 }
 
+export interface KitchenProductionUnit {
+  unitKey: string;
+  ticketId: string;
+  itemIndex: number;
+  name: string;
+  sku?: string;
+  itemKind: 'burger' | 'garnish' | 'drink' | 'extra';
+  station: 'prep' | 'sideQuest';
+  qty: number;
+  isFromCombo: boolean;
+  parentComboName?: string;
+  removedIngredients: string[];
+  extras: Array<{ sku?: string; name: string; price?: number }>;
+  burgerNote?: string;
+}
+
 export interface KitchenTicket {
   id: string;
   folio: string;
@@ -57,10 +73,21 @@ export interface KitchenTicket {
   isScheduled?: boolean;
   orderNote?: string;
   items: KitchenTicketItem[];
+  productionUnits: KitchenProductionUnit[];
   totalBurgersCount: number;
   totalGarnishesCount: number;
   totalDrinksCount: number;
   totalExtrasCount: number;
+}
+
+/**
+ * Normaliza la ubicación para KDS de forma estricta:
+ * Solo devuelve "Torre GGA" o "Torre Valcob" (cero departamentos, cero números, cero Pickup).
+ */
+export function formatKitchenLocation(locationRaw?: string): string {
+  const loc = (locationRaw || '').toLowerCase();
+  if (loc.includes('valcob')) return 'Torre Valcob';
+  return 'Torre GGA';
 }
 
 // ─── Resumen K / Agregadores de Insumos (Mise en Place) ───────────────────────
@@ -322,6 +349,190 @@ export function extractKitchenTicketItems(rawItems: OrderV2Item[] = []): {
 }
 
 /**
+ * Desglosa una comanda en unidades de producción físicas e individuales para plancha y side quest.
+ */
+export function extractKitchenProductionUnits(
+  ticketId: string,
+  items: KitchenTicketItem[]
+): KitchenProductionUnit[] {
+  const units: KitchenProductionUnit[] = [];
+  let unitIndex = 1;
+
+  items.forEach((item) => {
+    // Si es un combo con burgers y complementos
+    if (item.itemKind === 'combo') {
+      const comboName = item.name;
+
+      // 1. Hamburguesas del combo (van a Plancha / Prep)
+      if (item.comboBurgers && item.comboBurgers.length > 0) {
+        for (let q = 0; q < item.qty; q++) {
+          item.comboBurgers.forEach((cb) => {
+            units.push({
+              unitKey: `${ticketId}-unit-${unitIndex}`,
+              ticketId,
+              itemIndex: unitIndex++,
+              name: cb.name || 'Hamburguesa Combo',
+              sku: cb.sku,
+              itemKind: 'burger',
+              station: 'prep',
+              qty: 1,
+              isFromCombo: true,
+              parentComboName: comboName,
+              removedIngredients: cb.removedIngredients || [],
+              extras: cb.extras || [],
+              burgerNote: cb.burgerNote,
+            });
+          });
+        }
+      } else {
+        // Fallback: el combo como burger si no tiene comboBurgers explícitos
+        for (let q = 0; q < item.qty; q++) {
+          units.push({
+            unitKey: `${ticketId}-unit-${unitIndex}`,
+            ticketId,
+            itemIndex: unitIndex++,
+            name: item.name,
+            sku: item.sku,
+            itemKind: 'burger',
+            station: 'prep',
+            qty: 1,
+            isFromCombo: true,
+            parentComboName: comboName,
+            removedIngredients: item.removedIngredients || [],
+            extras: item.extras || [],
+            burgerNote: item.burgerNote,
+          });
+        }
+      }
+
+      // 2. Guarnición del combo (va a Side Quest con nombre exacto)
+      if (item.garnish?.name) {
+        for (let q = 0; q < item.qty; q++) {
+          units.push({
+            unitKey: `${ticketId}-unit-${unitIndex}`,
+            ticketId,
+            itemIndex: unitIndex++,
+            name: item.garnish.name,
+            sku: item.garnish.sku,
+            itemKind: 'garnish',
+            station: 'sideQuest',
+            qty: 1,
+            isFromCombo: true,
+            parentComboName: comboName,
+            removedIngredients: [],
+            extras: [],
+          });
+        }
+      }
+
+      // 3. Bebida del combo (va a Side Quest con nombre exacto)
+      if (item.includedDrink?.name) {
+        for (let q = 0; q < item.qty; q++) {
+          units.push({
+            unitKey: `${ticketId}-unit-${unitIndex}`,
+            ticketId,
+            itemIndex: unitIndex++,
+            name: item.includedDrink.name,
+            sku: item.includedDrink.sku,
+            itemKind: 'drink',
+            station: 'sideQuest',
+            qty: 1,
+            isFromCombo: true,
+            parentComboName: comboName,
+            removedIngredients: [],
+            extras: [],
+          });
+        }
+      }
+      return;
+    }
+
+    // Si es una hamburguesa individual (Plancha / Prep)
+    if (item.itemKind === 'burger') {
+      for (let q = 0; q < item.qty; q++) {
+        units.push({
+          unitKey: `${ticketId}-unit-${unitIndex}`,
+          ticketId,
+          itemIndex: unitIndex++,
+          name: item.name,
+          sku: item.sku,
+          itemKind: 'burger',
+          station: 'prep',
+          qty: 1,
+          isFromCombo: false,
+          removedIngredients: item.removedIngredients || [],
+          extras: item.extras || [],
+          burgerNote: item.burgerNote,
+        });
+      }
+      return;
+    }
+
+    // Si es guarnición suelta (Side Quest)
+    if (item.itemKind === 'garnish') {
+      for (let q = 0; q < item.qty; q++) {
+        units.push({
+          unitKey: `${ticketId}-unit-${unitIndex}`,
+          ticketId,
+          itemIndex: unitIndex++,
+          name: item.name,
+          sku: item.sku,
+          itemKind: 'garnish',
+          station: 'sideQuest',
+          qty: 1,
+          isFromCombo: false,
+          removedIngredients: item.removedIngredients || [],
+          extras: item.extras || [],
+          burgerNote: item.burgerNote,
+        });
+      }
+      return;
+    }
+
+    // Si es bebida suelta (Side Quest)
+    if (item.itemKind === 'drink') {
+      for (let q = 0; q < item.qty; q++) {
+        units.push({
+          unitKey: `${ticketId}-unit-${unitIndex}`,
+          ticketId,
+          itemIndex: unitIndex++,
+          name: item.name,
+          sku: item.sku,
+          itemKind: 'drink',
+          station: 'sideQuest',
+          qty: 1,
+          isFromCombo: false,
+          removedIngredients: item.removedIngredients || [],
+          extras: item.extras || [],
+          burgerNote: item.burgerNote,
+        });
+      }
+      return;
+    }
+
+    // Otros extras o complementos (Side Quest)
+    for (let q = 0; q < item.qty; q++) {
+      units.push({
+        unitKey: `${ticketId}-unit-${unitIndex}`,
+        ticketId,
+        itemIndex: unitIndex++,
+        name: item.name,
+        sku: item.sku,
+        itemKind: 'extra',
+        station: 'sideQuest',
+        qty: 1,
+        isFromCombo: false,
+        removedIngredients: item.removedIngredients || [],
+        extras: item.extras || [],
+        burgerNote: item.burgerNote,
+      });
+    }
+  });
+
+  return units;
+}
+
+/**
  * Transforma un pedido de orden completa en un Ticket de Cocina KDS.
  */
 export function orderToKitchenTicket(order: OrderV2): KitchenTicket {
@@ -331,10 +542,7 @@ export function orderToKitchenTicket(order: OrderV2): KitchenTicket {
   const { items, totalBurgersCount, totalGarnishesCount, totalDrinksCount, totalExtrasCount } =
     extractKitchenTicketItems(order.items || []);
 
-  const location =
-    order.orderMode === 'pickup'
-      ? 'Pickup en Local'
-      : order.delivery?.location?.trim() || 'A Domicilio';
+  const location = formatKitchenLocation(order.delivery?.location);
 
   const delivery = order.delivery as Record<string, unknown> | undefined;
   const scheduledDate =
@@ -344,6 +552,8 @@ export function orderToKitchenTicket(order: OrderV2): KitchenTicket {
       ? delivery.scheduledDeliveryDate
       : undefined;
   const isScheduled = Boolean(delivery?.isScheduled || scheduledDate);
+
+  const productionUnits = extractKitchenProductionUnits(order.id, items);
 
   return {
     id: order.id,
@@ -358,6 +568,7 @@ export function orderToKitchenTicket(order: OrderV2): KitchenTicket {
     isScheduled,
     orderNote: order.notes?.trim() || undefined,
     items,
+    productionUnits,
     totalBurgersCount,
     totalGarnishesCount,
     totalDrinksCount,
