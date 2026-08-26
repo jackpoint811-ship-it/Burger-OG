@@ -217,7 +217,99 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
 
       {viewMode === 'production' ? (
         <>
-          {/* ─── 📦 Módulo 1: Checklist de Insumos Físicos & Control de Restock ──── */}
+          {/* ─── 🏢 Módulo 1: Desglose Logístico de Empaque por Torre (PRIMERO) ───── */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-surface-card border-2 border-line shadow-card space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-line">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-accent/15 text-accent flex items-center justify-center font-black shrink-0 shadow-xs">
+                  <Building2 className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-text-primary tracking-tight">
+                    🏢 Desglose Logístico de Empaque por Torre
+                  </h3>
+                  <p className="text-xs font-bold text-text-muted">
+                    Distribución de pedidos para entrega y armado de bolsas por torre de entrega.
+                  </p>
+                </div>
+              </div>
+              <Badge variant="outline" className="font-black text-xs border-line">
+                {aggregates.activeOrdersCount} pedidos totales
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {aggregates.towerBreakdown.map((tower) => {
+                const percentReady =
+                  tower.totalOrders > 0
+                    ? Math.round((tower.readyOrders / tower.totalOrders) * 100)
+                    : 0;
+
+                return (
+                  <div
+                    key={tower.location}
+                    className="p-4 rounded-2xl bg-surface-raised border border-line space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-black text-sm text-text-primary flex items-center gap-1.5">
+                        <span>🏢</span>
+                        <span>{tower.location}</span>
+                      </span>
+                      <span className="px-2 py-0.5 rounded-lg bg-text-primary text-surface-card text-xs font-black">
+                        {tower.totalOrders} pedidos
+                      </span>
+                    </div>
+
+                    {/* Métricas de Productos por Torre */}
+                    <div className="grid grid-cols-3 gap-1.5 text-center text-xs">
+                      <div className="p-1.5 rounded-xl bg-surface-card border border-line">
+                        <span className="text-[10px] font-extrabold text-text-muted block">
+                          BURGERS
+                        </span>
+                        <span className="font-black text-text-primary">
+                          {tower.totalBurgers}
+                        </span>
+                      </div>
+                      <div className="p-1.5 rounded-xl bg-surface-card border border-line">
+                        <span className="text-[10px] font-extrabold text-text-muted block">
+                          SIDES
+                        </span>
+                        <span className="font-black text-amber-600 dark:text-amber-400">
+                          {tower.totalGarnishes}
+                        </span>
+                      </div>
+                      <div className="p-1.5 rounded-xl bg-surface-card border border-line">
+                        <span className="text-[10px] font-extrabold text-text-muted block">
+                          BEBIDAS
+                        </span>
+                        <span className="font-black text-blue-600 dark:text-blue-400">
+                          {tower.totalDrinks}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Barra de Avance de Torre */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-bold text-text-muted">
+                        <span>Avance de empaque:</span>
+                        <span className="font-black text-text-primary">
+                          {tower.readyOrders}/{tower.totalOrders} ({percentReady}%)
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-surface-card rounded-full overflow-hidden border border-line">
+                        <div
+                          className="h-full bg-accent transition-all rounded-full"
+                          style={{ width: `${percentReady}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ─── 📦 Módulo 2: Checklist de Insumos Físicos & Control de Restock ──── */}
           <div className="p-5 sm:p-6 rounded-3xl bg-surface-card border-2 border-line shadow-card space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-line">
               <div className="flex items-center gap-2.5">
@@ -577,15 +669,13 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
                 </div>
 
                 <div className="pt-3 border-t border-line text-xs font-bold text-text-muted flex justify-between">
-                  <span>Total porciones a pesar:</span>
-                  <span className="font-black text-amber-600 dark:text-amber-400">
-                    {aggregates.totalGarnishes} porciones
-                  </span>
+                  <span>Total a freír:</span>
+                  <span className="font-black text-text-primary">{aggregates.totalGarnishes} porciones</span>
                 </div>
               </div>
             )}
 
-            {/* ─── 3. Bebidas & Fríos ─────────────────────────────────────────── */}
+            {/* ─── 3. Bebidas Frías (Refrigerador) ─────────────────────────────── */}
             {(stationFilter === 'all' || stationFilter === 'drinks') && (
               <div className="p-5 rounded-3xl bg-surface-card border-2 border-line shadow-card space-y-4 flex flex-col justify-between">
                 <div>
@@ -594,15 +684,15 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
                       <span className="text-xl">🥤</span>
                       <div>
                         <h3 className="font-black text-base text-text-primary tracking-tight">
-                          Bebidas & Fríos
+                          Bebidas Frías
                         </h3>
                         <p className="text-[11px] font-bold text-text-muted">
-                          Latas a enfriar para el turno
+                          Refrigerador & Empaque
                         </p>
                       </div>
                     </div>
                     <span className="px-2.5 py-0.5 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 font-black text-xs">
-                      {aggregates.drinks.length} marcas
+                      {aggregates.drinks.length} tipos
                     </span>
                   </div>
 
@@ -617,29 +707,29 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
                             {drink.name}
                           </p>
 
-                          <span className="w-9 h-9 rounded-xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs">
-                            {drink.totalQty}
-                          </span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="w-9 h-9 rounded-xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-xs">
+                              {drink.totalQty}
+                            </span>
+                          </div>
                         </div>
                       ))
                     ) : (
                       <div className="py-8 text-center text-text-muted text-xs font-bold">
-                        Sin bebidas registradas
+                        Sin bebidas activas
                       </div>
                     )}
                   </div>
                 </div>
 
                 <div className="pt-3 border-t border-line text-xs font-bold text-text-muted flex justify-between">
-                  <span>Total latas/piezas:</span>
-                  <span className="font-black text-blue-600 dark:text-blue-400">
-                    {aggregates.totalDrinks} piezas
-                  </span>
+                  <span>Total bebidas:</span>
+                  <span className="font-black text-text-primary">{aggregates.totalDrinks} unidades</span>
                 </div>
               </div>
             )}
 
-            {/* ─── 4. Extras & Dips ───────────────────────────────────────────── */}
+            {/* ─── 4. Extras y Dips (Salsas / Porcionado) ─────────────────────── */}
             {(stationFilter === 'all' || stationFilter === 'extras') && (
               <div className="p-5 rounded-3xl bg-surface-card border-2 border-line shadow-card space-y-4 flex flex-col justify-between">
                 <div>
@@ -651,12 +741,12 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
                           Extras & Dips
                         </h3>
                         <p className="text-[11px] font-bold text-text-muted">
-                          Porciones adicionales y aderezos
+                          Porcionado & Vasitos
                         </p>
                       </div>
                     </div>
                     <span className="px-2.5 py-0.5 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-black text-xs">
-                      {aggregates.extras.length} extras
+                      {aggregates.extras.length} tipos
                     </span>
                   </div>
 
@@ -667,18 +757,20 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
                           key={extra.name || i}
                           className="p-3 rounded-2xl bg-surface-raised border border-line flex items-center justify-between gap-3"
                         >
-                          <span className="font-black text-sm text-text-primary truncate">
+                          <p className="font-black text-sm text-text-primary truncate">
                             +{extra.name}
-                          </span>
+                          </p>
 
-                          <span className="w-9 h-9 rounded-xl bg-emerald-600 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs">
-                            {extra.totalQty}
-                          </span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="w-9 h-9 rounded-xl bg-emerald-600 text-white font-black text-sm flex items-center justify-center shadow-xs">
+                              {extra.totalQty}
+                            </span>
+                          </div>
                         </div>
                       ))
                     ) : (
                       <div className="py-8 text-center text-text-muted text-xs font-bold">
-                        Sin extras solicitados
+                        Sin extras adicionales
                       </div>
                     )}
                   </div>
@@ -686,156 +778,61 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
 
                 <div className="pt-3 border-t border-line text-xs font-bold text-text-muted flex justify-between">
                   <span>Total extras:</span>
-                  <span className="font-black text-emerald-600 dark:text-emerald-400">
-                    {aggregates.totalExtras} porciones
-                  </span>
+                  <span className="font-black text-text-primary">{aggregates.totalExtras} porciones</span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* ─── Modificaciones de Línea & Logística por Torre ────────────────── */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Panel de Modificaciones Acumuladas */}
-            <div className="p-5 sm:p-6 rounded-3xl bg-surface-card border-2 border-line shadow-card space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-line">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">🥗</span>
-                  <div>
-                    <h3 className="font-black text-base text-text-primary tracking-tight">
-                      Mise en Place de Modificaciones (Línea de Armado)
-                    </h3>
-                    <p className="text-xs font-bold text-text-muted">
-                      Ingredientes a omitir en el ensamblaje con desglose de hamburguesas afectadas.
-                    </p>
-                  </div>
+          {/* ─── 🥗 Panel de Modificaciones de Línea (Línea de Armado) ──────────── */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-surface-card border-2 border-line shadow-card space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-line">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🥗</span>
+                <div>
+                  <h3 className="font-black text-base text-text-primary tracking-tight">
+                    Mise en Place de Modificaciones (Línea de Armado)
+                  </h3>
+                  <p className="text-xs font-bold text-text-muted">
+                    Ingredientes a omitir en el ensamblaje con desglose de hamburguesas afectadas.
+                  </p>
                 </div>
-                <Badge variant="outline" className="font-black text-xs border-line">
-                  {aggregates.removedIngredients.length} ingredientes afectados
-                </Badge>
               </div>
-
-              <div className="space-y-3">
-                {aggregates.removedIngredients.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-2.5">
-                    {aggregates.removedIngredients.map((rem) => (
-                      <div
-                        key={rem.name}
-                        className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/25 space-y-1.5"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-black text-sm text-red-700 dark:text-red-300 truncate">
-                            🔴 SIN {rem.name.toUpperCase()}
-                          </span>
-                          <span className="px-2.5 py-1 rounded-xl bg-red-600 text-white font-black text-xs shrink-0 shadow-xs">
-                            x{rem.count}
-                          </span>
-                        </div>
-                        {rem.affectedBurgers && rem.affectedBurgers.length > 0 ? (
-                          <p className="text-[11px] font-extrabold text-red-700/80 dark:text-red-300/80 pl-1">
-                            ↳ {rem.affectedBurgers.join(' · ')}
-                          </p>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Todas las hamburguesas activas van con Receta Original al 100%.</span>
-                  </div>
-                )}
-              </div>
+              <Badge variant="outline" className="font-black text-xs border-line">
+                {aggregates.removedIngredients.length} ingredientes afectados
+              </Badge>
             </div>
 
-            {/* Panel de Desglose Logístico por Torre */}
-            <div className="p-5 sm:p-6 rounded-3xl bg-surface-card border-2 border-line shadow-card space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-line">
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-accent" />
-                  <div>
-                    <h3 className="font-black text-base text-text-primary tracking-tight">
-                      Desglose Logístico de Empaque por Torre
-                    </h3>
-                    <p className="text-xs font-bold text-text-muted">
-                      Distribución de pedidos para entrega y armado de bolsas.
-                    </p>
-                  </div>
-                </div>
-                <Badge variant="outline" className="font-black text-xs border-line">
-                  {aggregates.activeOrdersCount} pedidos totales
-                </Badge>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {aggregates.towerBreakdown.map((tower) => {
-                  const percentReady =
-                    tower.totalOrders > 0
-                      ? Math.round((tower.readyOrders / tower.totalOrders) * 100)
-                      : 0;
-
-                  return (
+            <div className="space-y-3">
+              {aggregates.removedIngredients.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                  {aggregates.removedIngredients.map((rem) => (
                     <div
-                      key={tower.location}
-                      className="p-4 rounded-2xl bg-surface-raised border border-line space-y-3"
+                      key={rem.name}
+                      className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/25 space-y-1.5"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-black text-sm text-text-primary flex items-center gap-1.5">
-                          <span>🏢</span>
-                          <span>{tower.location}</span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-black text-sm text-red-700 dark:text-red-300 truncate">
+                          🔴 SIN {rem.name.toUpperCase()}
                         </span>
-                        <span className="px-2 py-0.5 rounded-lg bg-text-primary text-surface-card text-xs font-black">
-                          {tower.totalOrders} pedidos
+                        <span className="px-2.5 py-1 rounded-xl bg-red-600 text-white font-black text-xs shrink-0 shadow-xs">
+                          x{rem.count}
                         </span>
                       </div>
-
-                      {/* Métricas de Productos por Torre */}
-                      <div className="grid grid-cols-3 gap-1.5 text-center text-xs">
-                        <div className="p-1.5 rounded-xl bg-surface-card border border-line">
-                          <span className="text-[10px] font-extrabold text-text-muted block">
-                            BURGERS
-                          </span>
-                          <span className="font-black text-text-primary">
-                            {tower.totalBurgers}
-                          </span>
-                        </div>
-                        <div className="p-1.5 rounded-xl bg-surface-card border border-line">
-                          <span className="text-[10px] font-extrabold text-text-muted block">
-                            SIDES
-                          </span>
-                          <span className="font-black text-amber-600 dark:text-amber-400">
-                            {tower.totalGarnishes}
-                          </span>
-                        </div>
-                        <div className="p-1.5 rounded-xl bg-surface-card border border-line">
-                          <span className="text-[10px] font-extrabold text-text-muted block">
-                            BEBIDAS
-                          </span>
-                          <span className="font-black text-blue-600 dark:text-blue-400">
-                            {tower.totalDrinks}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Barra de Avance de Torre */}
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[11px] font-bold text-text-muted">
-                          <span>Avance de empaque:</span>
-                          <span className="font-black text-text-primary">
-                            {tower.readyOrders}/{tower.totalOrders} ({percentReady}%)
-                          </span>
-                        </div>
-                        <div className="w-full h-2 bg-surface-card rounded-full overflow-hidden border border-line">
-                          <div
-                            className="h-full bg-accent transition-all rounded-full"
-                            style={{ width: `${percentReady}%` }}
-                          />
-                        </div>
-                      </div>
+                      {rem.affectedBurgers && rem.affectedBurgers.length > 0 ? (
+                        <p className="text-[11px] font-extrabold text-red-700/80 dark:text-red-300/80 pl-1">
+                          ↳ {rem.affectedBurgers.join(' · ')}
+                        </p>
+                      ) : null}
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Todas las hamburguesas activas van con Receta Original al 100%.</span>
+                </div>
+              )}
             </div>
           </div>
         </>
