@@ -92,6 +92,16 @@ export function formatKitchenLocation(locationRaw?: string): string {
 
 // ─── Resumen K / Agregadores de Insumos (Mise en Place) ───────────────────────
 
+export interface PhysicalSuppliesChecklist {
+  patties: number;
+  buns: number;
+  cheeseSlices: number;
+  baconPortions: number;
+  garnishPortions: number;
+  coldDrinks: number;
+  dipPortions: number;
+}
+
 export interface AggregatedRecipeCount {
   name: string;
   sku?: string;
@@ -129,6 +139,7 @@ export interface AggregatedExtraCount {
 export interface AggregatedRemovedIngredient {
   name: string;
   count: number;
+  affectedBurgers: string[];
 }
 
 export interface AggregatedTowerStats {
@@ -148,6 +159,9 @@ export interface AggregatedMiseEnPlace {
   totalExtras: number;
   totalPatties: number;
   totalBuns: number;
+  totalCheeseSlices: number;
+  totalBaconPortions: number;
+  suppliesChecklist: PhysicalSuppliesChecklist;
   originalRecipeCount: number;
   customizedRecipeCount: number;
   activeOrdersCount: number;
@@ -647,15 +661,63 @@ function estimatePattiesPerBurger(name: string, sku?: string): number {
 }
 
 /**
+ * Estima la cantidad de rebanadas de queso americano por hamburguesa a partir de su receta, remociones y extras.
+ */
+function estimateCheeseSlicesPerBurger(
+  name: string,
+  sku?: string,
+  removals: string[] = [],
+  extras: { name: string }[] = []
+): number {
+  const text = `${name} ${sku || ''}`.toLowerCase();
+  const withoutCheese = removals.some((r) => r.toLowerCase().includes('queso') || r.toLowerCase().includes('cheese'));
+  let baseSlices = 0;
+  if (!withoutCheese) {
+    if (text.includes('triple')) baseSlices = 3;
+    else if (text.includes('doble') || text.includes('double')) baseSlices = 2;
+    else baseSlices = 1;
+  }
+  const extraCheese = extras.filter((e) => e.name.toLowerCase().includes('queso') || e.name.toLowerCase().includes('cheese')).length;
+  return baseSlices + extraCheese;
+}
+
+/**
+ * Estima la cantidad de porciones de tocino por hamburguesa a partir de su receta, remociones y extras.
+ */
+function estimateBaconPortionsPerBurger(
+  name: string,
+  sku?: string,
+  removals: string[] = [],
+  extras: { name: string }[] = []
+): number {
+  const text = `${name} ${sku || ''}`.toLowerCase();
+  const withoutBacon = removals.some((r) => r.toLowerCase().includes('tocino') || r.toLowerCase().includes('bacon'));
+  let baseBacon = 0;
+  if (!withoutBacon) {
+    if (text.includes('tocino') || text.includes('bacon') || text.includes('og')) {
+      baseBacon = 1;
+    }
+  }
+  const extraBacon = extras.filter((e) => e.name.toLowerCase().includes('tocino') || e.name.toLowerCase().includes('bacon')).length;
+  return baseBacon + extraBacon;
+}
+
+interface RemovedDetailAccumulator {
+  count: number;
+  burgerCounts: Map<string, number>;
+}
+
+/**
  * Agrega los insumos y recetas de una lista de órdenes activas para Resumen K.
- * Implementa el Principio de Unificación Canónica V3 (sin duplicidad de combos).
+ * Implementa el Principio de Unificación Canónica V3 (sin duplicidad de combos)
+ * y la Calculadora de Insumos Físicos de Arranque & Control de Restock Diario.
  */
 export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMiseEnPlace {
   const recipeMap = new Map<string, AggregatedRecipeCount>();
   const garnishMap = new Map<string, AggregatedGarnishCount>();
   const drinkMap = new Map<string, AggregatedDrinkCount>();
   const extraMap = new Map<string, AggregatedExtraCount>();
-  const removedMap = new Map<string, number>();
+  const removedDetailMap = new Map<string, RemovedDetailAccumulator>();
 
   let totalBurgers = 0;
   let totalGarnishes = 0;
@@ -663,6 +725,9 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
   let totalExtras = 0;
   let totalPatties = 0;
   let totalBuns = 0;
+  let totalCheeseSlices = 0;
+  let totalBaconPortions = 0;
+  let totalDipPortions = 0;
   let originalRecipeCount = 0;
   let customizedRecipeCount = 0;
 
@@ -712,9 +777,24 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
           item.comboBurgers.forEach((cb) => {
             const burgerName = cb.name || 'Hamburguesa';
             const pattiesPerUnit = estimatePattiesPerBurger(burgerName, cb.sku);
+            const cheesePerUnit = estimateCheeseSlicesPerBurger(
+              burgerName,
+              cb.sku,
+              cb.removedIngredients || [],
+              cb.extras || []
+            );
+            const baconPerUnit = estimateBaconPortionsPerBurger(
+              burgerName,
+              cb.sku,
+              cb.removedIngredients || [],
+              cb.extras || []
+            );
+
             totalBurgers += item.qty;
             totalBuns += item.qty;
             totalPatties += item.qty * pattiesPerUnit;
+            totalCheeseSlices += item.qty * cheesePerUnit;
+            totalBaconPortions += item.qty * baconPerUnit;
 
             const current = recipeMap.get(burgerName) ?? {
               name: burgerName,
@@ -749,7 +829,10 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
               cb.removedIngredients.forEach((rem) => {
                 const remKey = rem.trim();
                 if (remKey) {
-                  removedMap.set(remKey, (removedMap.get(remKey) ?? 0) + item.qty);
+                  const detail = removedDetailMap.get(remKey) ?? { count: 0, burgerCounts: new Map<string, number>() };
+                  detail.count += item.qty;
+                  detail.burgerCounts.set(burgerName, (detail.burgerCounts.get(burgerName) ?? 0) + item.qty);
+                  removedDetailMap.set(remKey, detail);
                 }
               });
             }
@@ -762,9 +845,24 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
             burgerName = burgerName.slice(6).trim();
           }
           const pattiesPerUnit = estimatePattiesPerBurger(burgerName, item.sku);
+          const cheesePerUnit = estimateCheeseSlicesPerBurger(
+            burgerName,
+            item.sku,
+            item.removedIngredients || [],
+            item.extras || []
+          );
+          const baconPerUnit = estimateBaconPortionsPerBurger(
+            burgerName,
+            item.sku,
+            item.removedIngredients || [],
+            item.extras || []
+          );
+
           totalBurgers += item.qty;
           totalBuns += item.qty;
           totalPatties += item.qty * pattiesPerUnit;
+          totalCheeseSlices += item.qty * cheesePerUnit;
+          totalBaconPortions += item.qty * baconPerUnit;
 
           const current = recipeMap.get(burgerName) ?? {
             name: burgerName,
@@ -803,7 +901,10 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
             item.removedIngredients.forEach((rem) => {
               const remKey = rem.trim();
               if (remKey) {
-                removedMap.set(remKey, (removedMap.get(remKey) ?? 0) + item.qty);
+                const detail = removedDetailMap.get(remKey) ?? { count: 0, burgerCounts: new Map<string, number>() };
+                detail.count += item.qty;
+                detail.burgerCounts.set(burgerName, (detail.burgerCounts.get(burgerName) ?? 0) + item.qty);
+                removedDetailMap.set(remKey, detail);
               }
             });
           }
@@ -892,6 +993,10 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
       if (item.extras?.length) {
         item.extras.forEach((extra) => {
           totalExtras += item.qty;
+          const eLower = extra.name.toLowerCase();
+          if (eLower.includes('dip') || eLower.includes('salsa') || eLower.includes('ranch') || eLower.includes('bbq') || eLower.includes('aderezo')) {
+            totalDipPortions += item.qty;
+          }
           const currentExtra = extraMap.get(extra.name) ?? {
             name: extra.name,
             sku: extra.sku,
@@ -906,6 +1011,10 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
         item.comboBurgers.forEach((cb) => {
           cb.extras?.forEach((extra) => {
             totalExtras += item.qty;
+            const eLower = extra.name.toLowerCase();
+            if (eLower.includes('dip') || eLower.includes('salsa') || eLower.includes('ranch') || eLower.includes('bbq') || eLower.includes('aderezo')) {
+              totalDipPortions += item.qty;
+            }
             const currentExtra = extraMap.get(extra.name) ?? {
               name: extra.name,
               sku: extra.sku,
@@ -915,6 +1024,13 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
             extraMap.set(extra.name, currentExtra);
           });
         });
+      }
+
+      if (item.itemKind === 'extra') {
+        const eLower = item.name.toLowerCase();
+        if (eLower.includes('dip') || eLower.includes('salsa') || eLower.includes('ranch') || eLower.includes('bbq') || eLower.includes('aderezo')) {
+          totalDipPortions += item.qty;
+        }
       }
     });
   });
@@ -931,13 +1047,33 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
   const extras = Array.from(extraMap.values()).sort(
     (a, b) => b.totalQty - a.totalQty || a.name.localeCompare(b.name)
   );
-  const removedIngredients = Array.from(removedMap.entries())
-    .map(([name, count]) => ({ name, count }))
+
+  const removedIngredients: AggregatedRemovedIngredient[] = Array.from(removedDetailMap.entries())
+    .map(([name, detail]) => {
+      const affectedBurgers = Array.from(detail.burgerCounts.entries()).map(
+        ([bName, bQty]) => `${bQty}x ${bName}`
+      );
+      return {
+        name,
+        count: detail.count,
+        affectedBurgers,
+      };
+    })
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 
   const towerBreakdown = Array.from(towerMap.values()).sort((a, b) =>
     a.location.localeCompare(b.location)
   );
+
+  const suppliesChecklist: PhysicalSuppliesChecklist = {
+    patties: totalPatties,
+    buns: totalBuns,
+    cheeseSlices: totalCheeseSlices,
+    baconPortions: totalBaconPortions,
+    garnishPortions: totalGarnishes,
+    coldDrinks: totalDrinks,
+    dipPortions: totalDipPortions,
+  };
 
   return {
     totalBurgers,
@@ -946,6 +1082,9 @@ export function computeKitchenAggregates(tickets: KitchenTicket[]): AggregatedMi
     totalExtras,
     totalPatties,
     totalBuns,
+    totalCheeseSlices,
+    totalBaconPortions,
+    suppliesChecklist,
     originalRecipeCount,
     customizedRecipeCount,
     activeOrdersCount: tickets.length,
