@@ -567,18 +567,16 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Semáforo por color de fondo/texto sin texto redundante:
     - `🟢 Verde`: Abierta / Recibe pedidos hoy.
     - `🟡 Amarillo`: No disponible hoy (es para programar en próxima ruta de entrega).
-### 📅 2026-08-26 — Sesión 55: Panel de Control de Admin V3 Inmersivo en 2 Columnas & Submenús Dedicados
-- **📊 Hub de Categorías Maestras en 2 Columnas (`AdminDashboardGrid.tsx`)**:
-  - Reestructuración de la vista general en 6 tarjetas maestras distribuidas en cuadrícula estricta de 2 columnas (`grid-cols-1 md:grid-cols-2`), diseño limpio, desaturado y espacioso sin tablas apiñadas.
-- **📂 Submenús Interactivos por Categoría (`AdminCategorySubmenu.tsx`)**:
-  - Al pulsar una categoría, se accede a su Submenú dedicado en 2 columnas con tarjetas para cada herramienta y botón de entrada directa.
-- **🔍 Buscador Universal Command Palette (`AdminSearchBar.tsx`)**:
-  - Barra de búsqueda con atajo global `⌘K` / `Ctrl+K` para encontrar cualquier platillo, torre, banner, corte o insumo y saltar en 1 clic.
-- **⭐ Favoritos Dinámicos y Fijables (`AdminQuickFavorites.tsx` & `useAdminPinnedFavorites.ts`)**:
-  - Franja superior compacta con soporte para fijar/desfijar con ⭐ cualquier categoría o subcategoría, persistida en `localStorage`.
-- **🍞 Migas de Pan Guiadas & Atajo Escape (`AdminBreadcrumbs.tsx`)**:
-  - Navegación semántica multinivel (`🏠 Panel Admin › [Categoría] › [Herramienta]`), botón `[ ← Volver ]` y tecla `Escape` para retroceso ágil.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.92s), `npm run build:public` ✅ (7.21s).
+### 📅 2026-08-26 — Sesión 56: Workspace Maestro-Detalle de Nivel Industrial en Admin V3
+- **🏛️ Arquitectura Maestro-Detalle (Linear / Stripe / Toast POS)**:
+  - Pantalla 1: Hub de Entrada (`AdminHubGrid.tsx`) en 2 columnas con franja de Favoritos y métricas en vivo.
+  - Pantalla 2: Workspace Dedicado a Pantalla Completa (`AdminModuleWorkspace.tsx`) con Sidebar lateral izquierdo (Favoritos + Herramientas del módulo) y Lienzo principal espacioso a la derecha.
+- **📱 Adaptabilidad Responsiva**:
+  - Desktop y Tablets apaisadas: Sidebar lateral fijo (`w-64`).
+  - Móviles: Barra de pestañas segmentadas superior deslizable.
+- **♿ Accesibilidad & Control**:
+  - Tecla `Escape` para volver al Hub de inmediato, botón `⭐ Fijar` con feedback instantáneo y botón `🔒 Bloquear Admin`.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (6.63s), `npm run build:public` ✅ (6.47s).
 
 ---
 

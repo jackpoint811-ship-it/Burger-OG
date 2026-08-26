@@ -18,3 +18,5 @@ export * from './AdminDashboardGrid';
 export * from './AdminCategorySubmenu';
 export * from './AdminSearchBar';
 export * from './AdminAuthGate';
+export * from './AdminHubGrid';
+export * from './AdminModuleWorkspace';
