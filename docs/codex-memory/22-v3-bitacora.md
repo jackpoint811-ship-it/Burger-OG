@@ -458,13 +458,17 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - En comandas con más de 1 ítem en la estación, el primer ítem no completado se mantiene desplegado/expandido en foco por defecto.
   - Los ítems subsecuentes permanecen colapsados en barras compactas de alto contraste, ahorrando espacio vertical en tablets KDS.
   - Al marcar `Listo` en un ítem, este se colapsa inmediatamente y se despliega en automático el siguiente ítem pendiente sin clics adicionales.
+  - Al completar el último ítem pendiente de la orden, todos los ítems se colapsan automáticamente, dejando el foco limpio en el botón de despacho global.
   - Soporte de toggle manual en el encabezado de cada ítem con accesibilidad WCAG (`role="button"`, `aria-expanded`, `aria-label`).
 - **Badges de Estado en Encabezado Colapsado**:
   - Mientras el ítem está colapsado, muestra un badge destacado:
     - `[ 🛠️ Personalizada ]` (en ámbar/rojo con borde) si tiene remociones, extras o nota.
     - `[ ✓ Receta Original ]` (en verde esmeralda con borde) si es hamburguesa estándar.
   - Al desplegar el ítem, el badge del encabezado desaparece para dar protagonismo a los bloques visuales detallados (`🔴 SIN ...`, `🟢 +EXTRA ...`, nota, botón Listo).
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (7.70s), `npm run build:public` ✅ (7.53s).
+- **Diferenciación Visual Anti-Confusión en Botones**:
+  - Dentro del ítem abierto: `[ ✔ Marcar Ítem Listo ]` en estado pendiente, y `[ ↩ Desmarcar / Volver a pendiente ]` en tono neutro outline si se abre un ítem ya listo.
+  - Botón principal de la comanda: Destacado en verde esmeralda con copy contextual explícito (`✔ Despachar Plancha` / `✔ Despachar Side Quest` / `✔ Despachar Comanda`), eliminando botones duplicados y ambigüedad.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (6.43s), `npm run build:public` ✅ (7.73s).
 
 ---
 
