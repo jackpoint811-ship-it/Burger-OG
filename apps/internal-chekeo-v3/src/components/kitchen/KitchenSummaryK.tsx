@@ -8,7 +8,7 @@
  * - Integración con backend Cloudflare D1 para costeo de insumos e inventario
  */
 
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   Flame,
   Utensils,
@@ -29,7 +29,10 @@ import { Skeleton } from '@ui/skeleton';
 import {
   useKitchenDisplay,
   useKitchenSummaryKQuery,
+  computeKitchenAggregates,
 } from '../../features/kitchen';
+import { extractOrderTargetDate } from '../shared/HorizontalDateCalendarFilter';
+import type { OrderV2 } from '@config/index';
 
 function formatCurrency(pesos: number): string {
   const safeNumber = Number.isFinite(pesos) ? pesos : 0;
@@ -41,12 +44,27 @@ function formatCurrency(pesos: number): string {
   }).format(safeNumber);
 }
 
-export function KitchenSummaryK() {
-  const todayIso = new Date().toISOString().slice(0, 10);
-  const [selectedDate, setSelectedDate] = useState<string>(todayIso);
+export interface KitchenSummaryKProps {
+  selectedDate?: string;
+}
 
-  const { aggregates, isLoading: isOrdersLoading, isRefetching: isOrdersRefetching, refetch: refetchOrders } =
-    useKitchenDisplay();
+export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps) {
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  const targetDateParam =
+    selectedDate === 'today'
+      ? todayStr
+      : selectedDate === 'all' || selectedDate === 'past'
+      ? undefined
+      : selectedDate;
+
+  const {
+    tickets,
+    isLoading: isOrdersLoading,
+    isRefetching: isOrdersRefetching,
+    refetch: refetchOrders,
+  } = useKitchenDisplay();
 
   const {
     data: summaryKData,
@@ -54,7 +72,7 @@ export function KitchenSummaryK() {
     isRefetching: isSummaryKRefetching,
     refetch: refetchSummaryK,
     error: summaryKError,
-  } = useKitchenSummaryKQuery(selectedDate);
+  } = useKitchenSummaryKQuery(targetDateParam);
 
   const handleRefreshAll = () => {
     void refetchOrders();
@@ -63,6 +81,34 @@ export function KitchenSummaryK() {
 
   const isRefreshing = isOrdersRefetching || isSummaryKRefetching;
   const isLoading = isOrdersLoading && isSummaryKLoading;
+
+  // Filtrar tickets correspondientes a la fecha seleccionada
+  const filteredTickets = useMemo(() => {
+    return tickets.filter((ticket) => {
+      if (selectedDate === 'all') return true;
+
+      const targetDate = extractOrderTargetDate(
+        {
+          ...ticket,
+          delivery: {
+            scheduledDate: ticket.scheduledDate,
+            isScheduled: ticket.isScheduled,
+          },
+          createdAt: ticket.createdAtIso,
+        } as unknown as OrderV2,
+        todayStr
+      );
+
+      if (selectedDate === 'today') return targetDate === todayStr;
+      if (selectedDate === 'past') return targetDate < todayStr;
+      return targetDate === selectedDate;
+    });
+  }, [tickets, selectedDate, todayStr]);
+
+  const aggregates = useMemo(
+    () => computeKitchenAggregates(filteredTickets),
+    [filteredTickets]
+  );
 
   const totalBurgers = aggregates.totalBurgers;
   const totalGuarniciones = aggregates.totalGarnishes;
@@ -98,27 +144,17 @@ export function KitchenSummaryK() {
           </div>
         </div>
 
-        {/* Controles de Fecha y Refresco */}
+        {/* Control de Refresco Rápido */}
         <div className="flex items-center gap-2.5 self-end sm:self-auto">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-surface-raised border border-line text-xs font-bold text-text-primary">
-            <Calendar className="w-4 h-4 text-text-muted" />
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-transparent border-0 font-bold focus:outline-none text-text-primary text-xs cursor-pointer"
-            />
-          </div>
-
           <Button
             variant="outline"
             size="sm"
             onClick={handleRefreshAll}
             disabled={isRefreshing}
-            className="h-10 px-3.5 rounded-2xl border-line flex items-center gap-1.5 text-xs font-extrabold"
+            className="h-10 px-3.5 rounded-2xl border-line flex items-center gap-1.5 text-xs font-extrabold cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Refrescar</span>
+            <span>Refrescar</span>
           </Button>
         </div>
       </div>

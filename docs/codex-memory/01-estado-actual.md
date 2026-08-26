@@ -54,8 +54,13 @@ Burgers.exe tiene una app pública de pedidos (`apps/public-order-v3`) y una app
 
 ## Infraestructura y URLs Activas (Cloudflare Pages)
 
-- **Public Order V3**: `https://burgers-exe-public-v3.pages.dev` (Conectado a D1 `burgers-exe-menu-v2-preview` y R2 `burgers-exe-assets-v2-preview`).
-- **Internal Chekeo V3**: `https://burgers-exe-internal-v3.pages.dev` (Protegido por `BOG_INTERNAL_PIN`, con acceso a Pedidos, Cocina, Pagos y Admin).
+### Entorno Oficial de Preview (GitHub Branch: `preview`)
+- **Internal Chekeo Preview**: `https://burgers-exe-internal-v2-preview.pages.dev/` (Conectado a branch `preview`, D1 `burgers-exe-menu-v2-preview` y R2 `burgers-exe-assets-v2-preview`).
+- **Public Order Preview**: `https://burgers-exe-public-v2-preview.pages.dev/` (Tienda pública para pruebas y validación).
+
+### Despliegues Directos de Desarrollo V3 (GitHub Branch: `v3`)
+- **Public Order V3 Dev**: `https://burgers-exe-public-v3.pages.dev`
+- **Internal Chekeo V3 Dev**: `https://burgers-exe-internal-v3.pages.dev`
 - **CI/CD Automatizado**: Pipelines en GitHub Actions (`deploy-public-v3.yml` y `deploy-chekeo-v3.yml`) con deploy en <45s por push a `v3`.
 
 ## Bitácora V3
@@ -89,5 +94,6 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
 - **Interfaz General de Cocina V3 (Paso 1 - Jerarquía V3 & Erradicación de Ruido) (2026-08-25)**: Reestructuración de la vista de Cocina en 3 niveles directos (Nivel 1: Selector de Estación `role="tablist"` con `🍔 Preparación`, `🍟 Side Quest` y `📋 Resumen K` con badges numéricos reactivos; Nivel 2: Riel Horizontal de Fechas compacto; Nivel 3: Viewport Directo de Producción). Erradicación total de ruido visual (eliminados toggle foco/tablero, botones de bocina/audio, pantalla completa, refrescos manuales y banners de texto redundantes). Targets táctiles $\ge 44\text{px}$ y accesibilidad WCAG 2.1 AA.
 - **Subventana de Preparación en Cocina V3 (Paso 2 - Plancha & Receta Original) (2026-08-25)**: Incorporación del distintivo explícito `✓ Receta Original` para burgers individuales y combos sin modificaciones, filtro estricto de ítems de plancha (ocultados chips de papas y bebidas en combos), modificadores críticos en alto contraste (`🔴 SIN ...` en rojo intenso, `🟢 +EXTRA ...` en verde esmeralda y notas en ámbar), foco visible y targets táctiles accesibles.
 - **Subventana de Side Quest en Cocina V3 (Paso 3 - Freidora, Bebidas & Empaque) (2026-08-25)**: Especialización de la estación de Side Quest para empaque y freidora con badges semánticos (`COMBO (COMPLEMENTOS)`, `🍟 GUARNICIÓN`, `🥤 BEBIDA`, `🥫 DIP / EXTRA`), omisión de modificaciones de carnes de burgers en combos dentro de esta vista, botón de acción contextual `✔ Listo (Marcar Empacado / Listo)` y filtros de cola para visualización pura de complementos.
+- **Corrección de Visibilidad en Cocina & Sincronización de Resumen K (Paso 4) (2026-08-26)**: Sincronización precisa de `KitchenDisplay.tsx` con `extractOrderTargetDate(ticket, todayStr)` para permitir navegación exacta en `⏱️ Anteriores`, `Ver Todos` y fechas programadas, enriquecimiento de `extractKitchenTicketItems` con inferencia por nombres y SKUs, y sincronización reactiva de `KitchenSummaryK` con el Riel de Fechas global eliminando controles internos redundantes.
 
 
