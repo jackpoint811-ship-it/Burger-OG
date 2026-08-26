@@ -491,6 +491,18 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Eliminación total de la función de copiar WhatsApp (cero botones o estados innecesarios en la pantalla de cocina).
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.48s), `npm run build:public` ✅ (5.66s).
 
+### 📅 2026-08-26 — Sesión 47: Resumen K V3 — Reordenamiento de Layout con Desglose Logístico por Torre en Posición Primaria (PR #583)
+- **🏢 Desglose Logístico de Empaque por Torre en Posición Primaria**:
+  - Reubicación del módulo de distribución de empaque por torre (`Torre GGA` vs `Torre Valcob`) en la posición superior de la vista de producción de Resumen K, inmediatamente debajo del encabezado principal.
+  - Permite a los líderes de turno y empacadores visualizar al instante el avance de pedidos listos vs pendientes, balance de carga entre torres y cantidades de hamburguesas, guarniciones y bebidas por torre.
+- **📦 Jerarquía Operativa Optimizada**:
+  1. 🏢 Desglose Logístico de Empaque por Torre (`Torre GGA` / `Torre Valcob` con barras de avance).
+  2. 📦 Checklist de Insumos Físicos & Control de Restock Diario (7 métricas: carnes base + extras, panes, queso, tocino, sides, bebidas, dips).
+  3. 🎛️ Filtros Rápidos por Estación (`🌐 Todas`, `🍔 Plancha`, `🍟 Freidora`, `🥤 Bebidas`, `🥫 Extras`).
+  4. 4 Estaciones de Producción en Paralelo (Plancha con badge `+X extra carne`, Freidora con porciones de sides, Bebidas y Extras).
+  5. 🥗 Mise en Place de Modificaciones de Línea (grid autoadaptable de remociones agrupadas).
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.59s), `npm run build:public` ✅ (5.72s).
+
 ---
 
 
