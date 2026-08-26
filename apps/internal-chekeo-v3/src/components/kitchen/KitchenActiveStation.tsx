@@ -10,23 +10,20 @@
 
 import React, { useState, useMemo } from 'react';
 import {
-  Flame,
-  CheckCircle2,
-  PackageCheck,
   RotateCcw,
   MapPin,
-  FileText,
   ChevronDown,
   ChevronUp,
   Inbox,
-  Clock,
-  Sparkles,
-  AlertTriangle,
   Loader2,
 } from 'lucide-react';
 import { Badge } from '@ui/badge';
 import { Button } from '@ui/button';
-import type { KitchenTicket, KitchenTicketItem } from '../../features/kitchen/types/kitchen.types';
+import {
+  formatKitchenLocation,
+  type KitchenTicket,
+} from '../../features/kitchen';
+import { KitchenTicketCard } from './KitchenTicketCard';
 
 export interface KitchenActiveStationProps {
   laneMode: 'prep' | 'sideQuest';
@@ -46,7 +43,6 @@ export function KitchenActiveStation({
   isUpdating = false,
 }: KitchenActiveStationProps) {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-  const [isNoteExpanded, setIsNoteExpanded] = useState<boolean>(true);
   const [isReadySectionOpen, setIsReadySectionOpen] = useState<boolean>(false);
   const [localBusyId, setLocalBusyId] = useState<string | null>(null);
 
@@ -147,238 +143,13 @@ export function KitchenActiveStation({
     <div className="space-y-5 animate-in fade-in duration-300">
       {/* ─── Comanda Activa en Foco (PEDIDO ACTIVO) ─────────────────────────────── */}
       {activeTicket ? (
-        <div className="bg-surface-card p-5 sm:p-6 rounded-3xl border-2 border-accent/40 shadow-floating space-y-5">
-          {/* Header del Pedido Activo */}
-          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider rounded-md bg-accent text-white shadow-xs">
-                  PEDIDO ACTIVO
-                </span>
-                <span className="px-2 py-0.5 text-[11px] font-extrabold rounded-md bg-surface-raised border border-line text-text-secondary">
-                  {stationHeader.itemTypeBadge(
-                    laneMode === 'prep'
-                      ? activeTicket.totalBurgersCount
-                      : activeTicket.totalGarnishesCount + activeTicket.totalDrinksCount
-                  )}
-                </span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">
-                {activeTicket.customerName}
-              </h2>
-              <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-text-muted">
-                <span>#{activeTicket.folio}</span>
-                {activeTicket.location && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-raised border border-line text-text-secondary">
-                    <MapPin className="w-3.5 h-3.5 text-accent" />
-                    <span>{activeTicket.location}</span>
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Badge de Estado Actual */}
-            <Badge
-              variant={activeTicket.status === 'preparing' ? 'warning' : 'default'}
-              className="text-xs px-3 py-1 font-black"
-            >
-              {activeTicket.status === 'preparing' ? 'EN PLANCHA' : 'NUEVA'}
-            </Badge>
-          </div>
-
-          {/* Nota del Pedido Desplegable */}
-          {activeTicket.orderNote && (
-            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-900 dark:text-amber-200">
-              <button
-                type="button"
-                onClick={() => setIsNoteExpanded((prev) => !prev)}
-                className="w-full flex items-center justify-between font-black uppercase tracking-wide text-[11px] text-amber-800 dark:text-amber-300 cursor-pointer"
-              >
-                <span className="flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>📝 NOTA DEL PEDIDO</span>
-                </span>
-                <span className="flex items-center gap-1 text-[10px]">
-                  <span>{isNoteExpanded ? 'Ocultar' : 'Desplegar'}</span>
-                  {isNoteExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                </span>
-              </button>
-
-              {isNoteExpanded && (
-                <p className="mt-2 text-xs font-semibold leading-relaxed">
-                  {activeTicket.orderNote}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Lista de Ítems Individuales de la Comanda */}
-          <div className="space-y-3">
-            {displayedItems.map((item, idx) => {
-              // Badge de categoría según la estación
-              const itemKindBadge = () => {
-                if (laneMode === 'prep') {
-                  return item.itemKind === 'combo' ? 'COMBO' : 'BURGER';
-                }
-                if (item.itemKind === 'combo') return 'COMBO (COMPLEMENTOS)';
-                if (item.itemKind === 'garnish') return '🍟 GUARNICIÓN';
-                if (item.itemKind === 'drink') return '🥤 BEBIDA';
-                if (item.itemKind === 'extra') return '🥫 DIP / EXTRA';
-                return 'SIDE QUEST';
-              };
-
-              return (
-                <div
-                  key={`${item.id}-${idx}`}
-                  className="p-4 rounded-2xl bg-surface-raised border border-line space-y-2.5"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">
-                        {itemKindBadge()}
-                      </span>
-                      <h4 className="text-base sm:text-lg font-black text-text-primary">
-                        {item.qty > 1 ? `${item.qty}x ` : ''}
-                        {item.name}
-                      </h4>
-                    </div>
-                    <Badge variant="outline" className="text-[10px] uppercase font-black">
-                      POR HACER
-                    </Badge>
-                  </div>
-
-                  {/* Subtags según la estación */}
-                  <div className="flex flex-wrap gap-1.5 text-xs">
-                    {/* ─── En SIDE QUEST: Mostrar Guarnición y Bebida del combo destacadas ─── */}
-                    {laneMode === 'sideQuest' && (
-                      <>
-                        {item.garnish && (
-                          <span className="px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-black">
-                            🍟 {item.garnish.name}
-                          </span>
-                        )}
-
-                        {item.includedDrink && (
-                          <span className="px-2.5 py-1 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-800 dark:text-blue-300 text-xs font-black">
-                            🥤 {item.includedDrink.name}
-                          </span>
-                        )}
-
-                        {item.extras && item.extras.length > 0 && item.itemKind !== 'combo' && (
-                          <span className="px-2.5 py-1 rounded-xl bg-emerald-600 text-white font-black text-xs shadow-xs">
-                            🟢 +EXTRA {item.extras.map((e) => e.name).join(', ')}
-                          </span>
-                        )}
-
-                        {item.burgerNote && (
-                          <span className="px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 font-bold text-xs">
-                            💬 {item.burgerNote}
-                          </span>
-                        )}
-                      </>
-                    )}
-
-                    {/* ─── En PREPARACIÓN (PLANCHA): Solo carnes, remociones y extras ─── */}
-                    {laneMode === 'prep' && (
-                      <>
-                        {/* Receta Original si no tiene modificadores ni burgers secundarias */}
-                        {(!item.comboBurgers || item.comboBurgers.length === 0) &&
-                          (!item.removedIngredients || item.removedIngredients.length === 0) &&
-                          (!item.extras || item.extras.length === 0) &&
-                          !item.burgerNote && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-line text-text-muted text-[11px] font-bold">
-                              ✓ Receta Original
-                            </span>
-                          )}
-
-                        {item.removedIngredients && item.removedIngredients.length > 0 && (
-                          <span className="px-2.5 py-1 rounded-xl bg-red-600 text-white font-black text-xs shadow-xs">
-                            🔴 SIN {item.removedIngredients.join(', ')}
-                          </span>
-                        )}
-
-                        {item.extras && item.extras.length > 0 && (
-                          <span className="px-2.5 py-1 rounded-xl bg-emerald-600 text-white font-black text-xs shadow-xs">
-                            🟢 +EXTRA {item.extras.map((e) => e.name).join(', ')}
-                          </span>
-                        )}
-
-                        {item.burgerNote && (
-                          <span className="px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 font-bold text-xs">
-                            💬 {item.burgerNote}
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  {/* Desglose de burgers dentro del combo SOLO en PREPARACIÓN */}
-                  {laneMode === 'prep' && item.comboBurgers && item.comboBurgers.length > 0 && (
-                    <div className="pt-2 border-t border-line/60 space-y-1.5 pl-2">
-                      {item.comboBurgers.map((cb, cbIdx) => {
-                        const isOriginal =
-                          (!cb.removedIngredients || cb.removedIngredients.length === 0) &&
-                          (!cb.extras || cb.extras.length === 0) &&
-                          !cb.burgerNote;
-
-                        return (
-                          <div key={cbIdx} className="text-xs space-y-0.5">
-                            <span className="font-bold text-text-primary">🍔 {cb.name}</span>
-                            <div className="flex flex-wrap gap-1 text-[11px]">
-                              {isOriginal && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface border border-line text-text-muted text-[11px] font-bold">
-                                  ✓ Receta Original
-                                </span>
-                              )}
-                              {cb.removedIngredients && cb.removedIngredients.length > 0 && (
-                                <span className="px-2 py-0.5 rounded-lg bg-red-600 text-white font-black text-[11px]">
-                                  🔴 SIN {cb.removedIngredients.join(', ')}
-                                </span>
-                              )}
-                              {cb.extras && cb.extras.length > 0 && (
-                                <span className="px-2 py-0.5 rounded-lg bg-emerald-600 text-white font-black text-[11px]">
-                                  🟢 +EXTRA {cb.extras.map((e) => e.name).join(', ')}
-                                </span>
-                              )}
-                              {cb.burgerNote && (
-                                <span className="text-amber-700 dark:text-amber-300 font-medium">
-                                  💬 {cb.burgerNote}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Botón Principal de Acción Táctil */}
-          <div className="pt-2">
-            <Button
-              type="button"
-              variant="default"
-              size="lg"
-              onClick={handleAdvanceActive}
-              disabled={isUpdating || localBusyId === activeTicket.id}
-              className="w-full py-4 text-sm sm:text-base font-black rounded-2xl flex items-center justify-center gap-2 shadow-md cursor-pointer transition-transform active:scale-[0.98] min-h-[52px] bg-emerald-600 hover:bg-emerald-500 text-white focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
-            >
-              {localBusyId === activeTicket.id ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <CheckCircle2 className="w-5 h-5" />
-              )}
-              <span>
-                {laneMode === 'prep'
-                  ? '✔ Hecha (Marcar Lista para Empaque)'
-                  : '✔ Listo (Marcar Empacado / Listo)'}
-              </span>
-            </Button>
-          </div>
-        </div>
+        <KitchenTicketCard
+          ticket={activeTicket}
+          laneMode={laneMode}
+          onAdvance={advanceTicketStatus}
+          onRevert={revertTicketStatus}
+          isUpdating={isUpdating || localBusyId === activeTicket.id}
+        />
       ) : (
         <div className="p-8 rounded-3xl bg-surface-card border-2 border-dashed border-line text-center flex flex-col items-center justify-center gap-2 text-text-muted">
           <Inbox className="w-10 h-10 stroke-1 opacity-70" />
@@ -412,6 +183,8 @@ export function KitchenActiveStation({
                   .map((i) => `${i.qty}x ${i.name}`)
                   .join(' · ');
 
+                const queueLocation = formatKitchenLocation(ticket.location);
+
                 return (
                   <button
                     key={ticket.id}
@@ -420,12 +193,16 @@ export function KitchenActiveStation({
                     className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-surface-raised border border-line hover:border-accent/40 hover:bg-surface transition-all text-left cursor-pointer group focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none min-h-[48px]"
                   >
                     <div className="min-w-0 pr-3">
-                      <div className="flex items-center gap-2 mb-0.5">
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                         <span className="font-black text-sm text-text-primary group-hover:text-accent transition-colors">
                           #{ticket.folio}
                         </span>
-                        <span className="font-bold text-xs text-text-secondary truncate">
+                        <span className="font-bold text-xs text-text-secondary truncate max-w-[150px]">
                           {ticket.customerName}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-black text-text-muted">
+                          <MapPin className="w-3 h-3 text-accent" />
+                          <span>{queueLocation}</span>
                         </span>
                       </div>
                       <p className="text-xs text-text-muted truncate">
