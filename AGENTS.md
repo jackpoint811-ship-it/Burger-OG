@@ -35,7 +35,11 @@ Si el usuario envía únicamente `Burgers.exe` o `burger.exe`:
 - No dejar cambios locales sin PR salvo instrucción explícita.
 - El asistente puede preparar rama, commit, push y PR solo cuando el usuario apruebe el cierre; el usuario revisa y mergea.
 
-## Contratos de producto y datos
+## Contratos de producto y datos (Single Source of Truth)
+- **PROHIBICIÓN ESTRICTA Y PERMANENTE DE INVENTAR DATOS O USAR FALLBACKS FICTICIOS:**
+  - El sistema debe operar SIEMPRE con datos 100% reales provenientes de Cloudflare D1 (`menu_items`, `ingredients_v2`, `product_ingredient_recipes_v2`, `orders_v2`), Cloudflare R2 y endpoints Hono.
+  - Queda terminantemente prohibido inventar o simular SKUs, productos, precios, ingredientes, recetas, combos o estados de pedidos ficticios en el frontend, backend o scripts de prueba.
+  - El Frontend NUNCA debe enmascarar errores o ausencias de datos con valores por omisión inventados; si un producto o configuración no existe en D1, debe reflejarse limpiamente o solicitarse su configuración real en Chekeo.
 - No cambiar backend, payloads, contratos de datos, nombres de campos, precios, tickets, promociones ni reglas comerciales salvo autorización explícita.
 - No modificar migraciones, esquemas, seeds ni servicios backend si el PR es de UI o documentación.
 - No promover seeds destructivos, datos de preview/testing ni migraciones de limpieza a producción sin aprobación explícita.

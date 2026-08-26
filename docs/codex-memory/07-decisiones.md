@@ -291,18 +291,25 @@ Maximizar la conversión comercial y la velocidad de pedido en la app pública, 
 
 2026-08-21
 
+### Fecha
+
+2026-08-26
+
 ### Decisión
 
-**Sincronización de la Rama `preview` con Burgers.exe V3 (Staging Environment)**:
+**Regla Inquebrantable de Veracidad de Datos (Prohibición Estricta de Inventar Datos o Fallbacks Ficticios)**:
 
-Se actualiza la rama `preview` incorporando el árbol completo de `v3` y eliminando definitivamente la deuda técnica de V2 (`legacy/`, `apps/*-v2`).
+1. **Single Source of Truth Obligatorio**: Todo el sistema (Frontend público, Chekeo POS, Cocina KDS, conciliación y seeds) debe operar única y exclusivamente con datos 100% reales provenientes de Cloudflare D1 (`menu_items`, `ingredients_v2`, `product_ingredient_recipes_v2`, `orders_v2`), Cloudflare R2 y endpoints Hono.
+2. **Prohibición de Mocks y Fallbacks Simulados**: Queda terminantemente prohibido inventar o simular SKUs, productos, precios, ingredientes, recetas, combos o estados de pedidos ficticios en el código o en scripts de prueba.
+3. **Manejo Honesto de Datos**: Si un dato, ingrediente o configuración no existe en la base de datos, el sistema no debe enmascararlo ni generar valores artificiales por omisión; debe reflejar el estado real o solicitar su configuración en Chekeo.
+4. **Semillas y Testing Verificados**: Cualquier script de prueba o siembra debe consultar previamente el catálogo real de D1 y apegarse estrictamente a los esquemas oficiales Zod / TypeScript de V3.
 
 ### Motivo
 
-Permitir la validación de campo y pruebas de extremo a extremo en el entorno de Staging / Preview de Cloudflare Pages antes de realizar el Cutover definitivo hacia `main` (Producción), manteniendo `main` 100% protegida e inalterada.
+Prevenir desalineaciones entre la base de datos real y la interfaz de usuario, evitar bugs fantasma de renderizado y asegurar que la cocina y el restaurante operen siempre con productos, costos e ingredientes reales.
 
 ### Impacto
 
-- El entorno de preview despliega Burgers.exe V3 en vivo de forma autónoma.
-- Cero riesgo operativo para la versión en producción.
-- Alineación total de las ramas de trabajo del proyecto.
+- Cero productos o precios ficticios en la aplicación.
+- Comandas y desgloses de cocina 100% consistentes con el catálogo de D1.
+- Inclusión de la regla en `AGENTS.md`, `GEMINI.md` y `.agents/rules/00-hard-constraints.md` como prohibición permanente.

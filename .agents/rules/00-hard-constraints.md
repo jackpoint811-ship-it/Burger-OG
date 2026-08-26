@@ -26,3 +26,8 @@ Estas reglas son inquebrantables bajo cualquier circunstancia en este repositori
 
 5. **NUNCA DEJAR CAMBIOS SIN CHECKS TÉCNICOS**:
    - Todo cambio debe validar `git diff --check`, `npm run typecheck` (0 errores) y `npm run build` sin excepciones.
+
+6. **NUNCA INVENTAR DATOS NI USAR FALLBACKS FICTICIOS**:
+   - Trabajar única y exclusivamente con los datos reales de Cloudflare D1 (`menu_items`, `ingredients_v2`, `product_ingredient_recipes_v2`, `orders_v2`), Cloudflare R2 y endpoints Hono.
+   - Prohibido inventar SKUs, productos, precios, ingredientes, recetas, combos o estados de pedidos ficticios en el frontend, backend o scripts de prueba.
+   - Si un dato o configuración no existe, debe reflejarse limpiamente o solicitarse su configuración real en Chekeo, nunca ocultar fallas con valores por omisión inventados.
