@@ -12,7 +12,7 @@
  * - Botones concisos con texto "Listo"
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CheckCircle2,
   PackageCheck,
@@ -32,6 +32,13 @@ import {
   type KitchenTicket,
   type KitchenProductionUnit,
 } from '../../features/kitchen';
+
+function isUnitCustomized(unit: KitchenProductionUnit): boolean {
+  const hasRemovals = Boolean(unit.removedIngredients && unit.removedIngredients.length > 0);
+  const hasExtras = Boolean(unit.extras && unit.extras.length > 0);
+  const hasNote = Boolean(unit.burgerNote?.trim());
+  return hasRemovals || hasExtras || hasNote;
+}
 
 function OrderNoteAccordion({ note }: { note?: string }) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -145,6 +152,29 @@ export function KitchenTicketCard({
   const [localBusy, setLocalBusy] = useState(false);
   const { isUnitDone, toggleUnitDone, getTicketProgress } = useKitchenItemTracking();
 
+  // Filtrar unidades de producción por carril operativo activo
+  const displayedUnits = (ticket.productionUnits || []).filter((unit) => {
+    if (!laneMode) return true;
+    return unit.station === laneMode;
+  });
+
+  // Si hay más de 1 ítem, gestionar cuál ítem está desplegado en foco
+  const [expandedUnitKey, setExpandedUnitKey] = useState<string | null>(() => {
+    if (displayedUnits.length <= 1) return null;
+    const firstPending = displayedUnits.find((u) => !isUnitDone(u.unitKey));
+    return firstPending ? firstPending.unitKey : displayedUnits[0]?.unitKey || null;
+  });
+
+  // Sincronizar ítem expandido al cambiar de ticket o longitud de lista
+  useEffect(() => {
+    if (displayedUnits.length > 1) {
+      const firstPending = displayedUnits.find((u) => !isUnitDone(u.unitKey));
+      setExpandedUnitKey(firstPending ? firstPending.unitKey : displayedUnits[0]?.unitKey || null);
+    } else {
+      setExpandedUnitKey(null);
+    }
+  }, [ticket.id, displayedUnits.length]);
+
   const progress = getTicketProgress(ticket);
   const isStationReady =
     laneMode === 'prep'
@@ -176,11 +206,40 @@ export function KitchenTicketCard({
     }
   };
 
-  // Filtrar unidades de producción por carril operativo activo
-  const displayedUnits = (ticket.productionUnits || []).filter((unit) => {
-    if (!laneMode) return true;
-    return unit.station === laneMode;
-  });
+  const handleUnitToggle = (unitKey: string) => {
+    const wasDone = isUnitDone(unitKey);
+    toggleUnitDone(unitKey);
+
+    // Si se está marcando como LISTO (no desmarcando) y hay más de 1 ítem:
+    if (!wasDone && displayedUnits.length > 1) {
+      const currentIndex = displayedUnits.findIndex((u) => u.unitKey === unitKey);
+
+      // Buscar el siguiente ítem pendiente hacia adelante
+      let nextUnit: KitchenProductionUnit | undefined;
+      for (let i = currentIndex + 1; i < displayedUnits.length; i++) {
+        if (!isUnitDone(displayedUnits[i].unitKey)) {
+          nextUnit = displayedUnits[i];
+          break;
+        }
+      }
+
+      // Si no hay siguientes hacia adelante, buscar cualquier otro pendiente desde el inicio
+      if (!nextUnit) {
+        nextUnit = displayedUnits.find(
+          (u) => u.unitKey !== unitKey && !isUnitDone(u.unitKey)
+        );
+      }
+
+      if (nextUnit) {
+        setExpandedUnitKey(nextUnit.unitKey);
+      }
+    }
+  };
+
+  const handleUnitHeaderClick = (unitKey: string) => {
+    if (displayedUnits.length <= 1) return;
+    setExpandedUnitKey((prev) => (prev === unitKey ? null : unitKey));
+  };
 
   const locationDisplay = formatKitchenLocation(ticket.location);
 
@@ -233,114 +292,170 @@ export function KitchenTicketCard({
           ) : (
             displayedUnits.map((unit) => {
               const isDone = isUnitDone(unit.unitKey);
+              const isMultiItem = displayedUnits.length > 1;
+              const isExpanded = !isMultiItem || expandedUnitKey === unit.unitKey;
+              const customized = isUnitCustomized(unit);
 
               return (
                 <div
                   key={unit.unitKey}
-                  className={`p-3.5 sm:p-4 rounded-2xl border-2 transition-all space-y-2.5 ${
+                  className={`rounded-2xl border-2 transition-all overflow-hidden ${
                     isDone
                       ? 'bg-emerald-500/5 border-emerald-500/30 opacity-80'
-                      : 'bg-surface-raised border-line shadow-xs'
+                      : isExpanded
+                      ? 'bg-surface-raised border-accent/40 shadow-xs'
+                      : 'bg-surface-raised border-line hover:border-accent/30'
                   }`}
                 >
                   {/* Encabezado del Ítem: Número, Nombre y Micro-badge de combo */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="px-2 py-0.5 rounded-md bg-surface-card border border-line text-[10px] font-black uppercase text-text-muted">
+                  <div
+                    role={isMultiItem ? 'button' : undefined}
+                    tabIndex={isMultiItem ? 0 : undefined}
+                    onClick={() => isMultiItem && handleUnitHeaderClick(unit.unitKey)}
+                    onKeyDown={(e) => {
+                      if (isMultiItem && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        handleUnitHeaderClick(unit.unitKey);
+                      }
+                    }}
+                    aria-expanded={isMultiItem ? isExpanded : undefined}
+                    aria-label={isMultiItem ? `${isExpanded ? 'Colapsar' : 'Desplegar'} ${unit.name}` : undefined}
+                    className={`p-3.5 sm:p-4 flex items-center justify-between gap-2.5 select-none ${
+                      isMultiItem ? 'cursor-pointer' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                      <span className="px-2 py-0.5 rounded-md bg-surface-card border border-line text-[10px] font-black uppercase text-text-muted shrink-0">
                         Ítem #{unit.itemIndex}
                       </span>
+
                       {unit.isFromCombo ? (
-                        <span className="px-1.5 py-0.5 rounded-md bg-accent/15 text-accent text-[10px] font-black uppercase tracking-wider">
+                        <span className="px-1.5 py-0.5 rounded-md bg-accent/15 text-accent text-[10px] font-black uppercase tracking-wider shrink-0">
                           combo
                         </span>
                       ) : null}
-                    </div>
 
-                    {isDone ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-600 dark:text-emerald-400">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Listo</span>
+                      {/* Nombre del Producto */}
+                      <span className="text-base sm:text-lg font-black text-text-primary leading-tight truncate">
+                        {unit.itemKind === 'burger' && '🍔 '}
+                        {unit.itemKind === 'garnish' && '🍟 '}
+                        {unit.itemKind === 'drink' && '🥤 '}
+                        {unit.itemKind === 'extra' && '🥫 '}
+                        {unit.name}
                       </span>
-                    ) : null}
-                  </div>
-
-                  {/* Nombre del Producto con Emoji Correspondiente */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-base sm:text-lg font-black text-text-primary leading-tight">
-                      {unit.itemKind === 'burger' && '🍔 '}
-                      {unit.itemKind === 'garnish' && '🍟 '}
-                      {unit.itemKind === 'drink' && '🥤 '}
-                      {unit.itemKind === 'extra' && '🥫 '}
-                      {unit.name}
-                    </span>
-                  </div>
-
-                  {/* 🔴 Remociones: Listadas 1 por 1 en renglones verticales */}
-                  {unit.removedIngredients && unit.removedIngredients.length > 0 ? (
-                    <div className="space-y-1.5 pt-1">
-                      {unit.removedIngredients.map((mod, mIdx) => (
-                        <div
-                          key={mIdx}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-600 text-white text-xs font-black tracking-wide shadow-xs"
-                        >
-                          <span className="w-2 h-2 rounded-full bg-white shrink-0 animate-pulse" />
-                          <span>SIN {mod.toUpperCase()}</span>
-                        </div>
-                      ))}
                     </div>
-                  ) : null}
 
-                  {/* 🟢 Extras Añadidos: Listados 1 por 1 en renglones verticales */}
-                  {unit.extras && unit.extras.length > 0 ? (
-                    <div className="space-y-1.5 pt-1">
-                      {unit.extras.map((extra, eIdx) => (
-                        <div
-                          key={eIdx}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-black tracking-wide shadow-xs"
-                        >
-                          <span>🟢</span>
-                          <span>+EXTRA {extra.name.toUpperCase()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  {/* ✓ Receta Original si no tiene modificaciones */}
-                  {unit.itemKind === 'burger' &&
-                  (!unit.removedIngredients || unit.removedIngredients.length === 0) &&
-                  (!unit.extras || unit.extras.length === 0) ? (
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-black">
-                      <span>✓</span>
-                      <span>Receta Original</span>
-                    </div>
-                  ) : null}
-
-                  {/* Nota Fija en la Base del Ítem (Acordeón si es larga, oculta si no existe) */}
-                  <ItemNoteAccordion note={unit.burgerNote} />
-
-                  {/* Botón Individual de Completado (1-Tap con touch target >= 44px) */}
-                  <div className="pt-2 border-t border-line/60">
-                    <button
-                      type="button"
-                      onClick={() => toggleUnitDone(unit.unitKey)}
-                      className={`w-full min-h-11 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all cursor-pointer select-none ${
-                        isDone
-                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs'
-                          : 'bg-surface-card hover:bg-surface-raised border-2 border-line text-text-primary active:scale-[0.98]'
-                      }`}
-                      aria-pressed={isDone}
-                      aria-label={`Marcar ${unit.name} como listo`}
-                    >
-                      {isDone ? (
+                    <div className="flex items-center gap-2 shrink-0">
+                      {/* Badge de Personalizada vs Receta Original (Visible SOLO cuando está colapsado en multi-ítem) */}
+                      {isMultiItem && !isExpanded && !isDone && (
                         <>
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>Listo</span>
+                          {unit.itemKind === 'burger' ? (
+                            customized ? (
+                              <span className="px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] sm:text-[11px] font-black border border-amber-500/30 animate-in fade-in">
+                                🛠️ Personalizada
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[10px] sm:text-[11px] font-black border border-emerald-500/30 animate-in fade-in">
+                                ✓ Receta Original
+                              </span>
+                            )
+                          ) : customized ? (
+                            <span className="px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] sm:text-[11px] font-black border border-amber-500/30 animate-in fade-in">
+                              🛠️ Personalizada
+                            </span>
+                          ) : null}
                         </>
-                      ) : (
-                        <span>Listo</span>
                       )}
-                    </button>
+
+                      {isDone ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Listo</span>
+                        </span>
+                      ) : null}
+
+                      {/* Icono de Toggle en multi-ítem */}
+                      {isMultiItem && (
+                        <div className="w-6 h-6 rounded-lg bg-surface-card border border-line flex items-center justify-center text-text-muted">
+                          {isExpanded ? (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {/* ─── Cuerpo Desplegable del Ítem ─────────────────────────────────── */}
+                  {isExpanded && (
+                    <div className="px-3.5 pb-3.5 sm:px-4 sm:pb-4 space-y-2.5 pt-0 border-t border-line/40 animate-in fade-in duration-200">
+                      {/* 🔴 Remociones: Listadas 1 por 1 en renglones verticales */}
+                      {unit.removedIngredients && unit.removedIngredients.length > 0 ? (
+                        <div className="space-y-1.5 pt-2">
+                          {unit.removedIngredients.map((mod, mIdx) => (
+                            <div
+                              key={mIdx}
+                              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-600 text-white text-xs font-black tracking-wide shadow-xs"
+                            >
+                              <span className="w-2 h-2 rounded-full bg-white shrink-0 animate-pulse" />
+                              <span>SIN {mod.toUpperCase()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {/* 🟢 Extras Añadidos: Listados 1 por 1 en renglones verticales */}
+                      {unit.extras && unit.extras.length > 0 ? (
+                        <div className="space-y-1.5 pt-1">
+                          {unit.extras.map((extra, eIdx) => (
+                            <div
+                              key={eIdx}
+                              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-black tracking-wide shadow-xs"
+                            >
+                              <span>🟢</span>
+                              <span>+EXTRA {extra.name.toUpperCase()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {/* ✓ Receta Original si no tiene modificaciones */}
+                      {unit.itemKind === 'burger' && !customized ? (
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-black mt-2">
+                          <span>✓</span>
+                          <span>Receta Original</span>
+                        </div>
+                      ) : null}
+
+                      {/* Nota Fija en la Base del Ítem (Acordeón si es larga, oculta si no existe) */}
+                      <ItemNoteAccordion note={unit.burgerNote} />
+
+                      {/* Botón Individual de Completado (1-Tap con touch target >= 44px) */}
+                      <div className="pt-2 border-t border-line/60">
+                        <button
+                          type="button"
+                          onClick={() => handleUnitToggle(unit.unitKey)}
+                          className={`w-full min-h-11 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all cursor-pointer select-none ${
+                            isDone
+                              ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs'
+                              : 'bg-surface-card hover:bg-surface-raised border-2 border-line text-text-primary active:scale-[0.98]'
+                          }`}
+                          aria-pressed={isDone}
+                          aria-label={`Marcar ${unit.name} como listo`}
+                        >
+                          {isDone ? (
+                            <>
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span>Listo (Hecho)</span>
+                            </>
+                          ) : (
+                            <span>Listo</span>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })
