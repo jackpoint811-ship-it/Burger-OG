@@ -559,13 +559,20 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 ---
 
-### 📅 2026-08-26 — Sesión 53: Indicador de Estado Global de Tienda & Desacoplamiento Informativo de Torres en Public Order V3
-- **🏪 Indicador de Estado Global de la Tienda**:
-  - En `BrandHeader.tsx`, integración de badge de estado global dinámico (`🟢 Tomando Pedidos Hoy` / `📅 Preventa 24/7` / `🔴 Cocina Pausada` / `🔴 Tienda en Mantenimiento`) con punto reactivo y banner de alerta crítica si la tienda o cocina están cerradas.
-- **ℹ️ Desacoplamiento Informativo de Torres en Header & Modal**:
-  - En `BrandHeader.tsx` y `TowerScheduleModal.tsx`, las píldoras de torres y las tarjetas del modal son puramente visuales e informativas para consultar rutas y horarios sin alterar el estado de ubicación de checkout.
-  - La selección de edificio se realiza de forma explícita e intuitiva en el paso 1 de `CheckoutDrawer.tsx`.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (5.99s), `npm run build:chekeo` ✅ (5.35s).
+### 📅 2026-08-26 — Sesión 54: Header Simplificado V3 & Semáforo de Torres por Color (Sin Scroll Horizontal)
+- **🟢 Reubicación del Estado Global de Tienda**:
+  - Estado global directo en la cabecera principal junto al nombre de la marca (`Burgers.exe` + `🟢 Abierto` / `🔴 Cerrado`), con punto luminoso animado y lectura instantánea del servicio.
+- **🏢 Semáforo de Torres por Color en Píldoras Compactas**:
+  - Píldoras concisas con solo icono y nombre de edificio (`[ 🏢 Torre GGA ]`, `[ 🏢 Torre Valcob ]`).
+  - Semáforo por color de fondo/texto sin texto redundante:
+    - `🟢 Verde`: Abierta / Recibe pedidos hoy.
+    - `🟡 Amarillo`: No disponible hoy (es para programar en próxima ruta de entrega).
+    - `🔴 Rojo`: Pausada / Cerrada por cocina.
+  - Al hacer clic en cualquiera de las torres se abre de inmediato `TowerScheduleModal.tsx` con los horarios y días detallados.
+- **🚫 Erradicación de Scroll Horizontal & Botón "Horarios"**:
+  - Eliminado `overflow-x-auto` en favor de un contenedor flex wrap que se ajusta a 360px sin desbordar.
+  - Eliminado el botón redundante de "Horarios".
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.31s), `npm run build:chekeo` ✅ (6.07s).
 
 ---
 
