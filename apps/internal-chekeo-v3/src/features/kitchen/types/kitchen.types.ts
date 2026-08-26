@@ -132,23 +132,64 @@ export function extractKitchenTicketItems(rawItems: OrderV2Item[] = []): {
 
     const itemKindRaw = typeof snapshot.itemKind === 'string' ? snapshot.itemKind.toLowerCase() : '';
     const categoryRaw = typeof snapshot.category === 'string' ? snapshot.category.toLowerCase() : '';
+    const skuLower = (rawItem.sku || '').toLowerCase();
+    const nameLower = (rawItem.name || '').toLowerCase();
 
     let itemKind: KitchenTicketItem['itemKind'] = 'other';
-    if (itemKindRaw === 'burger' || categoryRaw === 'burgers') {
-      itemKind = 'burger';
-      totalBurgersCount += rawItem.qty;
-    } else if (itemKindRaw === 'combo' || categoryRaw === 'combos') {
+    if (
+      itemKindRaw === 'combo' ||
+      categoryRaw === 'combos' ||
+      skuLower.includes('combo') ||
+      nameLower.includes('combo')
+    ) {
       itemKind = 'combo';
       totalBurgersCount += rawItem.qty;
-    } else if (itemKindRaw === 'garnish' || categoryRaw === 'guarniciones') {
+    } else if (
+      itemKindRaw === 'garnish' ||
+      categoryRaw === 'guarniciones' ||
+      categoryRaw === 'sides' ||
+      skuLower.includes('garnish') ||
+      skuLower.includes('side') ||
+      skuLower.includes('papa') ||
+      nameLower.includes('papa') ||
+      nameLower.includes('aros') ||
+      nameLower.includes('fries')
+    ) {
       itemKind = 'garnish';
       totalGarnishesCount += rawItem.qty;
-    } else if (itemKindRaw === 'drink' || categoryRaw === 'bebidas') {
+    } else if (
+      itemKindRaw === 'drink' ||
+      categoryRaw === 'bebidas' ||
+      categoryRaw === 'drinks' ||
+      skuLower.includes('drink') ||
+      skuLower.includes('bebida') ||
+      nameLower.includes('coca') ||
+      nameLower.includes('sprite') ||
+      nameLower.includes('agua') ||
+      nameLower.includes('refresco') ||
+      nameLower.includes('jugo') ||
+      nameLower.includes('boing') ||
+      nameLower.includes('dr pepper')
+    ) {
       itemKind = 'drink';
       totalDrinksCount += rawItem.qty;
-    } else if (itemKindRaw === 'extra' || categoryRaw === 'extras') {
+    } else if (
+      itemKindRaw === 'extra' ||
+      categoryRaw === 'extras' ||
+      categoryRaw === 'dips' ||
+      skuLower.includes('extra') ||
+      skuLower.includes('dip') ||
+      nameLower.includes('dip') ||
+      nameLower.includes('extra') ||
+      nameLower.includes('salsa') ||
+      nameLower.includes('aderezo')
+    ) {
       itemKind = 'extra';
       totalExtrasCount += rawItem.qty;
+    } else {
+      // Fallback seguro: burger (hamburguesa individual o receta)
+      itemKind = 'burger';
+      totalBurgersCount += rawItem.qty;
     }
 
     // Remociones

@@ -379,18 +379,27 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Foco visible en botones de la cola y acordeón (`focus-visible:ring-2 focus-visible:ring-accent`), targets táctiles $\ge 44\text{px}$ y botón gigante `✔ Hecha` ($\ge 52\text{px}$).
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (4.90s), `npm run build:public` ✅ (5.36s).
 
-### 📅 2026-08-25 — Sesión 37: Subventana de Side Quest en Cocina V3 (Paso 3 - Freidora, Bebidas & Empaque)
-- **Foco 100% en Complementos y Empaque**:
-  - En `Side Quest` (`laneMode === 'sideQuest'`), los combos desglosan en primer plano sus complementos (`🍟 Papas Francesas`, `🥤 Bebida`) y omiten las modificaciones de carne de las hamburguesas para evitar distracciones en freidora y ensamble.
-- **Badges Semánticos de Categoría**:
-  - `COMBO (COMPLEMENTOS)` para paquetes y menús con guarniciones.
-  - `🍟 GUARNICIÓN` para papas, aros y guarniciones sueltas.
-  - `🥤 BEBIDA` para refrescos, aguas y malteadas.
-  - `🥫 DIP / EXTRA` para aderezos, salsas y extras sueltos.
-- **Botón de Acción Adaptativo y Filtros de Cola**:
-  - Botón táctil adaptado: `✔ Listo (Marcar Empacado / Listo)`.
-  - Resúmenes de texto de la cola de espera y listas filtrados para desplegar únicamente complementos en Side Quest.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (4.92s), `npm run build:public` ✅ (5.39s).
+### 📅 2026-08-26 — Sesión 38: Inyección Limpia de Comandas V3 en Preview & Fijación Permanente de URLs Oficiales
+- **Limpieza e Inyección Limpia en Cloudflare D1 Preview (`burgers-exe-menu-v2-preview`)**:
+  - Limpieza total previa de registros obsoletos en `order_items_v2`, `order_events_v2`, `raffle_referrals_v2` y `orders_v2`.
+  - Inyección de 14 órdenes realistas con snapshots V3 completos para 4 fechas consecutivas de servicio (Hoy 26 Ago, Jue 27 Ago, Vie 28 Ago y Lun 31 Ago).
+  - Cobertura completa de casos: Receta Original (`✓ Receta Original`), personalización con modificadores de alto contraste (`🔴 SIN ...`, `🟢 +EXTRA ...`, notas), combos desglosados en Plancha y Side Quest, pedidos de freidora listos (`ready`), pedidos completados (`delivered`), cancelados (`cancelled`) y archivados (`archived_at`).
+- **Fijación Permanente de URLs Oficiales de Entorno**:
+  - **Chekeo Preview Oficial (GitHub branch `preview`)**: `https://burgers-exe-internal-v2-preview.pages.dev/`
+  - **Public Order Preview Oficial (GitHub branch `preview`)**: `https://burgers-exe-public-v2-preview.pages.dev/`
+  - **Despliegues directos de la rama `v3`**: `https://burgers-exe-internal-v3.pages.dev/` y `https://burgers-exe-public-v3.pages.dev/`.
+- **Verificación**: Comprobación remota en D1 (14 órdenes, 27 ítems, 14 eventos) y checks en verde.
+
+### 📅 2026-08-26 — Sesión 39: Corrección Integral de Visibilidad en Cocina & Sincronización de Resumen K (Paso 4)
+- **Corrección de Filtrado de Fechas en Cocina (`KitchenDisplay.tsx`)**:
+  - `KitchenDisplay.tsx` sincronizado con la función canónica `extractOrderTargetDate(ticket, todayStr)`.
+  - Corregido el bug donde `ticket.scheduledDate || todayStr` provocaba que órdenes pasadas o no programadas se descartaran al navegar por `⏱️ Anteriores`, `Ver Todos` o días específicos en el calendario.
+- **Inferencia Resiliente de Ítems en Cocina (`kitchen.types.ts`)**:
+  - Enriquecida la función `extractKitchenTicketItems` para inferir `itemKind` mediante coincidencia de nombres y SKU (ej. "The OG", "Clásica", "Doble", etc.), evitando que productos sin snapshot queden como `other` y sean omitidos por el filtro de carril.
+- **Sincronización de Resumen K con Riel de Fechas (Paso 4)**:
+  - `KitchenSummaryK` ahora recibe `selectedDate` desde `CocinaView.tsx` y computa los agregados (`computeKitchenAggregates`) en vivo para la fecha activa seleccionada.
+  - Eliminado el selector de fecha `<input type="date">` interno y unificado el botón de refresco.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.04s), `npm run build:public` ✅ (5.45s).
 
 ---
 

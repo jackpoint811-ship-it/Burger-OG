@@ -151,7 +151,9 @@ export function CocinaView() {
         {activeTab === 'sideQuest' && (
           <KitchenDisplay laneMode="sideQuest" selectedDate={selectedDate} />
         )}
-        {activeTab === 'summaryK' && <KitchenSummaryK />}
+        {activeTab === 'summaryK' && (
+          <KitchenSummaryK selectedDate={selectedDate} />
+        )}
       </div>
     </div>
   );

@@ -63,7 +63,15 @@ npx wrangler r2 object put burgers-exe-assets-v2-preview/catalogo/ejemplo.webp -
 
 ---
 
-## 3. ⚡ Cloudflare Pages & Emulación Local
+## 3. ⚡ Cloudflare Pages & Entornos de Despliegue
+
+### URLs Oficiales de Entornos
+- **Preview Chekeo (GitHub `preview`)**: `https://burgers-exe-internal-v2-preview.pages.dev/`
+- **Preview Public Order (GitHub `preview`)**: `https://burgers-exe-public-v2-preview.pages.dev/`
+- **Producción Chekeo (GitHub `main`)**: `https://burgers-exe-internal-v2.pages.dev/`
+- **Producción Public Order (GitHub `main`)**: `https://burgers-exe.pages.dev/`
+- **Dev V3 Chekeo (GitHub `v3`)**: `https://burgers-exe-internal-v3.pages.dev/`
+- **Dev V3 Public (GitHub `v3`)**: `https://burgers-exe-public-v3.pages.dev/`
 
 ### A. Desarrollo Local con Funciones Hono
 ```bash
