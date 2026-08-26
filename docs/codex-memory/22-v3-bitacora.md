@@ -431,7 +431,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Notas de Pedido e Ítems en Acordeón Colapsable (`OrderNoteAccordion` / `ItemNoteAccordion`)**:
   - Si no existe nota, la sección correspondiente se omite por completo sin dejar espacios vacíos.
   - Si la nota es larga (> 40 caracteres en orden, > 45 caracteres en ítem), se renderiza con acordeón interactivo y toggle `Desplegar`/`Ocultar` para optimizar el espacio útil en pantalla.
-### 📅 2026-08-26 — Sesión 44: Refinamiento Integral de Resumen K, Unificación Canónica y Herramientas Operativas V3
+### 📅 2026-08-26 — Sesión 44: Refinamiento Integral de Resumen K, Unificación Canónica y Herramientas Operativas V3 (PR #579)
 - **Principio de Unificación Canónica de Producto Físico**:
   - Eliminada la duplicidad entre productos individuales y combos. En plancha, una burger individual y una de combo se agrupan en una única fila canónica (ej. `2x Hamburguesa Sencilla` con micro-badge discreto `1 indiv · 1 combo`).
   - Guarniciones y bebidas agregadas directamente bajo sus nombres exactos.
