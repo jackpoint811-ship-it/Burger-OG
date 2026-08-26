@@ -282,7 +282,15 @@ export function CartDrawer() {
 
                       {/* Customization Badges Breakdown */}
                       {hasCustomizations && custom && (
-                        <div className="pt-2 border-t border-line/60 text-[11px] space-y-1 text-text-secondary">
+                        <div className="pt-2 border-t border-line/60 text-[11px] space-y-1.5 text-text-secondary">
+                          {/* Insignia reaseguradora de personalización por volumen */}
+                          {item.quantity > 1 && (
+                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-accent/10 text-accent font-black text-[10px] mb-0.5">
+                              <Sparkles className="w-3 h-3 text-accent shrink-0" />
+                              <span>Aplica a las {item.quantity} unidades</span>
+                            </div>
+                          )}
+
                           {/* Guarnición */}
                           {custom.garnish && (
                             <div className="font-bold text-text-primary">
