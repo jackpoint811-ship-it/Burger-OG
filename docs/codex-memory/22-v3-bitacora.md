@@ -567,16 +567,15 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Semáforo por color de fondo/texto sin texto redundante:
     - `🟢 Verde`: Abierta / Recibe pedidos hoy.
     - `🟡 Amarillo`: No disponible hoy (es para programar en próxima ruta de entrega).
-### 📅 2026-08-26 — Sesión 56: Workspace Maestro-Detalle de Nivel Industrial en Admin V3
-- **🏛️ Arquitectura Maestro-Detalle (Linear / Stripe / Toast POS)**:
-  - Pantalla 1: Hub de Entrada (`AdminHubGrid.tsx`) en 2 columnas con franja de Favoritos y métricas en vivo.
-  - Pantalla 2: Workspace Dedicado a Pantalla Completa (`AdminModuleWorkspace.tsx`) con Sidebar lateral izquierdo (Favoritos + Herramientas del módulo) y Lienzo principal espacioso a la derecha.
-- **📱 Adaptabilidad Responsiva**:
-  - Desktop y Tablets apaisadas: Sidebar lateral fijo (`w-64`).
-  - Móviles: Barra de pestañas segmentadas superior deslizable.
-- **♿ Accesibilidad & Control**:
-  - Tecla `Escape` para volver al Hub de inmediato, botón `⭐ Fijar` con feedback instantáneo y botón `🔒 Bloquear Admin`.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (6.63s), `npm run build:public` ✅ (6.47s).
+### 📅 2026-08-26 — Sesión 57: Refinamiento Mobile-First del Workspace de Admin V3
+- **📱 Riel de Favoritos Horizontal en Móvil (`AdminQuickFavorites.tsx`)**:
+  - Sustituida la cuadrícula densa en móviles por un riel deslizable horizontal ultra fluido (`snap-x overflow-x-auto`) con píldoras compactas (`h-11 px-3.5`), manteniendo la grilla de 6 columnas en tablets y desktop.
+- **✨ Cabecera Condensada & Limpia en Móvil (`AdminHubGrid.tsx` & `AdminModuleWorkspace.tsx`)**:
+  - Reducido padding en móviles (`p-4`), icono `w-10 h-10` y título condensado para ganar espacio vertical útil.
+  - Botones de acción (`Master Activo` + `[ 🔒 Bloquear ]` y `[ ← Volver ]` + `[ ⭐ ]`) perfectamente alineados sin desbordes.
+- **🎛️ Segmented Rail para Herramientas en Móvil (`AdminModuleWorkspace.tsx`)**:
+  - En móviles (< 768px), el selector de herramientas del módulo se despliega como un riel de pestañas segmentadas flotantes (`h-10 px-3`) con estado activo de alto contraste, ahorrando más de 200px verticales.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.24s), `npm run build:public` ✅ (6.30s).
 
 ---
 

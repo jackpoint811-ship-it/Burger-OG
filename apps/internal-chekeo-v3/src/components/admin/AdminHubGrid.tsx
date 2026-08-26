@@ -73,30 +73,30 @@ export function AdminHubGrid({
   }, [menuItems, towers, banners, raffleSummary, cashCutData, summaryData, ingredients]);
 
   return (
-    <div className={`space-y-6 animate-in fade-in duration-200 ${className}`}>
+    <div className={`space-y-4 sm:space-y-6 animate-in fade-in duration-200 ${className}`}>
       {/* Cabecera Minimalista del Hub */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-card p-5 rounded-3xl border border-line shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-surface-card p-4 sm:p-5 rounded-3xl border border-line shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-accent-soft flex items-center justify-center text-accent shrink-0 border border-accent/20">
-            <ShieldCheck className="w-6 h-6" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-accent-soft flex items-center justify-center text-accent shrink-0 border border-accent/20">
+            <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-black text-text-primary">
+              <h2 className="text-base sm:text-lg font-black text-text-primary">
                 Panel de Control Administrativo
               </h2>
               <Badge variant="default" className="text-[10px] bg-accent font-black">
-                Sesión Master
+                Master
               </Badge>
             </div>
-            <p className="text-xs text-text-secondary mt-0.5">
-              Gestión centralizada de catálogo, inventario en tiempo real, logística de torres, promociones y arqueo de caja.
+            <p className="text-[11px] sm:text-xs text-text-secondary mt-0.5 line-clamp-1 sm:line-clamp-none">
+              Gestión centralizada de catálogo, inventario en vivo, logística y arqueo.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-surface-raised border border-line text-xs font-bold text-text-primary shadow-xs">
+        <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-line/40">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl sm:rounded-2xl bg-surface-raised border border-line text-[11px] sm:text-xs font-bold text-text-primary shadow-xs">
             <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
             <span>Master Activo</span>
           </div>
@@ -105,12 +105,13 @@ export function AdminHubGrid({
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={onLockAdmin}
-              className="h-9 px-3 rounded-2xl text-xs font-bold text-red-600 dark:text-red-400 border-red-500/20 bg-red-500/5 hover:bg-red-500/15 gap-1.5 cursor-pointer"
+              className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl text-xs font-bold text-red-600 dark:text-red-400 border-red-500/20 bg-red-500/5 hover:bg-red-500/15 gap-1.5 cursor-pointer"
               title="Bloquear panel de administración"
             >
               <Lock className="w-3.5 h-3.5" />
-              <span>Bloquear Admin</span>
+              <span>Bloquear</span>
             </Button>
           )}
         </div>
@@ -120,7 +121,7 @@ export function AdminHubGrid({
       <AdminQuickFavorites onNavigate={(cat, tool) => onOpenModule(cat, tool)} />
 
       {/* Grilla Estricta en 2 Columnas de las 6 Categorías Maestras */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
         {ADMIN_CATEGORIES_CONFIG.map((category) => {
           const Icon = getAdminIcon(category.iconName);
           const favoriteId = `fav-${category.id}-root`;
@@ -130,22 +131,22 @@ export function AdminHubGrid({
           return (
             <div
               key={category.id}
-              className="bg-surface-card rounded-3xl p-5 sm:p-6 border border-line shadow-card hover:border-accent/40 transition-all flex flex-col justify-between space-y-4 group"
+              className="bg-surface-card rounded-3xl p-4 sm:p-6 border border-line shadow-card hover:border-accent/40 transition-all flex flex-col justify-between space-y-3.5 sm:space-y-4 group"
             >
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {/* Encabezado de la Tarjeta */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3.5">
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-center gap-3">
                     <div
-                      className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold shrink-0 border ${category.colorClass}`}
+                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center font-bold shrink-0 border ${category.colorClass}`}
                     >
-                      <Icon className="w-6 h-6" />
+                      <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     <div>
-                      <h3 className="text-base font-black text-text-primary group-hover:text-accent transition-colors">
+                      <h3 className="text-sm sm:text-base font-black text-text-primary group-hover:text-accent transition-colors">
                         {category.title}
                       </h3>
-                      <p className="text-xs text-text-secondary mt-0.5">
+                      <p className="text-[11px] sm:text-xs text-text-secondary mt-0.5">
                         {category.subtitle}
                       </p>
                     </div>
@@ -164,7 +165,7 @@ export function AdminHubGrid({
                         tag: category.tag,
                       });
                     }}
-                    className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                    className={`p-1.5 sm:p-2 rounded-xl border transition-all cursor-pointer shrink-0 ${
                       pinned
                         ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
                         : 'bg-surface-raised border-line/60 text-text-muted hover:text-amber-500'
@@ -172,16 +173,16 @@ export function AdminHubGrid({
                     title={pinned ? 'Desfijar de favoritos' : 'Fijar categoría en favoritos'}
                     aria-label={`Fijar categoría ${category.title} en favoritos`}
                   >
-                    <Star className={`w-4 h-4 ${pinned ? 'fill-amber-500' : ''}`} />
+                    <Star className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${pinned ? 'fill-amber-500' : ''}`} />
                   </button>
                 </div>
 
                 {/* Métrica Operativa en Vivo */}
-                <div className="p-3 rounded-2xl bg-surface-raised border border-line/60 flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
+                <div className="p-2.5 sm:p-3 rounded-2xl bg-surface-raised border border-line/60 flex items-center justify-between">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider">
                     Estado Operativo
                   </span>
-                  <span className="text-xs font-black text-accent font-mono">
+                  <span className="text-xs font-black text-accent font-mono truncate ml-2">
                     {metricText}
                   </span>
                 </div>
@@ -199,10 +200,10 @@ export function AdminHubGrid({
                           key={sub.id}
                           type="button"
                           onClick={() => onOpenModule(category.id, sub.id)}
-                          className="flex items-center gap-1.5 p-2 rounded-xl bg-surface hover:bg-surface-raised border border-line/60 text-left transition-colors cursor-pointer group/item"
+                          className="flex items-center gap-1.5 p-2 rounded-xl bg-surface hover:bg-surface-raised border border-line/60 text-left transition-colors cursor-pointer group/item min-w-0"
                         >
                           <SubIcon className="w-3.5 h-3.5 text-text-muted group-hover/item:text-accent shrink-0" />
-                          <span className="text-xs font-bold text-text-secondary group-hover/item:text-text-primary truncate">
+                          <span className="text-[11px] sm:text-xs font-bold text-text-secondary group-hover/item:text-text-primary truncate">
                             {sub.shortTitle}
                           </span>
                         </button>
@@ -213,11 +214,11 @@ export function AdminHubGrid({
               </div>
 
               {/* Botón Principal para entrar al Workspace Dedicado */}
-              <div className="pt-2">
+              <div className="pt-1 sm:pt-2">
                 <Button
                   type="button"
                   onClick={() => onOpenModule(category.id)}
-                  className="w-full h-10 rounded-2xl font-bold text-xs bg-text-primary text-surface-card hover:bg-accent hover:text-white transition-all gap-1.5 cursor-pointer shadow-xs"
+                  className="w-full h-10 rounded-2xl font-bold text-xs bg-text-primary text-surface-card hover:bg-accent hover:text-white transition-all gap-1.5 cursor-pointer shadow-xs active:scale-98"
                 >
                   <span>Abrir Módulo de {category.shortTitle}</span>
                   <ArrowRight className="w-4 h-4" />
