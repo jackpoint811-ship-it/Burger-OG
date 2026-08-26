@@ -15,6 +15,7 @@
 import React, { useMemo } from 'react';
 import { Calendar, Filter, Clock } from 'lucide-react';
 import type { OrderV2 } from '@config/index';
+import { getCdmxTodayString, formatCdmxDateString } from '@config/index';
 
 export interface CalendarDateOption {
   key: string;
@@ -36,19 +37,9 @@ export interface HorizontalDateCalendarFilterProps {
 }
 
 /**
- * Formatea un objeto Date en formato YYYY-MM-DD según zona horaria local o CDMX.
+ * Extrae la fecha objetivo (YYYY-MM-DD) de un pedido OrderV2 en zona horaria CDMX.
  */
-function formatIsoDate(d: Date): string {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-/**
- * Extrae la fecha objetivo (YYYY-MM-DD) de un pedido OrderV2.
- */
-export function extractOrderTargetDate(order: OrderV2, todayStr: string): string {
+export function extractOrderTargetDate(order: OrderV2, todayStr: string = getCdmxTodayString()): string {
   // 1. Verificar si tiene scheduledDate en delivery
   const delivery = order.delivery as Record<string, unknown> | undefined;
   if (delivery) {
@@ -63,10 +54,7 @@ export function extractOrderTargetDate(order: OrderV2, todayStr: string): string
   // 2. Si se creó con createdAt ISO
   if (order.createdAt) {
     try {
-      const d = new Date(order.createdAt);
-      if (!isNaN(d.getTime())) {
-        return formatIsoDate(d);
-      }
+      return formatCdmxDateString(order.createdAt);
     } catch {
       // ignore
     }
@@ -82,8 +70,7 @@ export function HorizontalDateCalendarFilter({
   className = '',
 }: HorizontalDateCalendarFilterProps) {
   const calendarOptions = useMemo(() => {
-    const today = new Date();
-    const todayStr = formatIsoDate(today);
+    const todayStr = getCdmxTodayString();
 
     const pendingByDate = new Map<string, number>();
     const totalByDate = new Map<string, number>();
@@ -115,12 +102,15 @@ export function HorizontalDateCalendarFilter({
       }
     });
 
-    // Construir los 14 días consecutivos desde hoy
+    // Construir los 14 días consecutivos desde hoy en CDMX
     const dateStrSet = new Set<string>();
+    const [tY, tM, tD] = todayStr.split('-').map(Number);
     for (let i = 0; i < 14; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      dateStrSet.add(formatIsoDate(d));
+      const d = new Date(tY, tM - 1, tD + i);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      dateStrSet.add(`${year}-${month}-${day}`);
     }
 
     // Incluir cualquier fecha futura que tenga pedidos más allá de 14 días

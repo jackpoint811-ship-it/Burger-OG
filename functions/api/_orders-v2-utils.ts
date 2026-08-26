@@ -54,23 +54,38 @@ export const parseOrderEnvironmentFromRequest = (request: Request, fallback: Ord
 
 export const getOrderSourceForEnvironment = (environment: OrderV2Environment) => ORDER_SOURCE_BY_ENVIRONMENT[environment];
 
-export const getOrderEnvironmentFromSource = (source: unknown): OrderV2Environment =>
-  String(source) === PREVIEW_ORDER_SOURCE ? 'preview' : 'production';
+export const getOrderEnvironmentFromSource = (source: unknown): OrderV2Environment => {
+  const src = String(source ?? '').trim().toLowerCase();
+  return (src === PREVIEW_ORDER_SOURCE || src === 'preview' || src === 'seed' || src === 'test') ? 'preview' : 'production';
+};
 
 export const buildOrderEnvironmentCondition = (
   environment: OrderV2Environment,
   alias = ''
-): { condition: string; binding: string } => ({
-  condition: `${alias ? `${alias}.` : ''}source = ?`,
-  binding: getOrderSourceForEnvironment(environment)
-});
+): { condition: string; binding: string } => {
+  const col = `${alias ? `${alias}.` : ''}source`;
+  if (environment === 'preview') {
+    return {
+      condition: `(${col} = ? OR ${col} = 'preview' OR ${col} = 'seed' OR ${col} = 'test')`,
+      binding: PREVIEW_ORDER_SOURCE
+    };
+  }
+  return {
+    condition: `${col} = ?`,
+    binding: PUBLIC_ORDER_SOURCE
+  };
+};
 
 export const assertOrderMatchesEnvironment = (
   row: { source?: unknown },
   environment: OrderV2Environment
 ): Response | null => {
   const expectedSource = getOrderSourceForEnvironment(environment);
-  if (String(row.source) === expectedSource) return null;
+  const src = String(row.source ?? '').trim().toLowerCase();
+  if (src === expectedSource) return null;
+  if (environment === 'preview' && (src === 'preview' || src === 'seed' || src === 'test' || src === 'public-v2-preview')) {
+    return null;
+  }
   return errorResponse(409, 'ENVIRONMENT_MISMATCH', 'La orden pertenece a otro ambiente operativo.');
 };
 
