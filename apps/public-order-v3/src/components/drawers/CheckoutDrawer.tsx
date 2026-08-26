@@ -38,6 +38,7 @@ import {
   useTowerSchedulesQuery,
   useTowerAvailability,
   getNextAvailableDeliveryDate,
+  getMexicoCityDateTime,
   useSiteConfig,
   useActiveRaffleQuery,
   useCreateOrderMutation,
@@ -201,6 +202,31 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
       }
     }
   }, [selectedTower, towerAvailability, currentIsScheduled, currentScheduledDate, minScheduledDate, setValue]);
+
+  const mxNow = getMexicoCityDateTime();
+
+  const handleSelectTower = (tower: (typeof towers)[number]) => {
+    setValue('locationKey', tower.towerName, { shouldValidate: true });
+    const isTodayActive =
+      Array.isArray(tower.activeDays) && tower.activeDays.includes(mxNow.dayOfWeek);
+    const [endH, endM] = (tower.orderEndTime || '13:30')
+      .split(':')
+      .map((v) => parseInt(v, 10));
+    const isPastCutoff =
+      mxNow.hours > endH || (mxNow.hours === endH && mxNow.minutes >= endM);
+    const isOpenToday = tower.isActive !== false && isTodayActive && !isPastCutoff;
+
+    if (!isOpenToday) {
+      setValue('isScheduled', true, { shouldValidate: true });
+      const nextDate = getNextAvailableDeliveryDate(tower.towerKey, allTowers);
+      if (nextDate) {
+        setValue('scheduledDate', nextDate, { shouldValidate: true });
+      }
+    } else {
+      setValue('isScheduled', false, { shouldValidate: true });
+      setValue('scheduledDate', '', { shouldValidate: true });
+    }
+  };
 
   // Sync default location if none selected
   useEffect(() => {
@@ -465,33 +491,62 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
                   <label className="block text-xs font-bold text-text-primary uppercase tracking-wider">
                     Punto de Entrega (Torre Corporativa) *
                   </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {towers.map((tower) => {
                       const isSelected =
                         currentLocationKey.toLowerCase() === tower.towerName.toLowerCase() ||
                         currentLocationKey.toLowerCase() === tower.towerKey.toLowerCase();
+                      const isConfigActive = tower.isActive !== false;
+                      const isTodayActive =
+                        Array.isArray(tower.activeDays) && tower.activeDays.includes(mxNow.dayOfWeek);
+                      const [endH, endM] = (tower.orderEndTime || '13:30')
+                        .split(':')
+                        .map((v) => parseInt(v, 10));
+                      const isPastCutoff =
+                        mxNow.hours > endH || (mxNow.hours === endH && mxNow.minutes >= endM);
+                      const isOpenToday = isConfigActive && isTodayActive && !isPastCutoff;
 
                       return (
                         <button
                           key={tower.towerKey}
                           type="button"
-                          onClick={() => {
-                            setValue('locationKey', tower.towerName, { shouldValidate: true });
-                          }}
-                          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer min-h-[48px] flex items-center justify-between ${
+                          onClick={() => handleSelectTower(tower)}
+                          className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer min-h-[54px] flex items-center justify-between gap-2.5 ${
                             isSelected
                               ? 'bg-accent/10 border-accent text-text-primary shadow-xs ring-1 ring-accent'
                               : 'bg-surface border-line hover:border-text-secondary/40 text-text-secondary'
                           }`}
                         >
-                          <div className="flex items-center gap-2.5">
-                            <span className="text-xl" aria-hidden="true">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className="text-2xl shrink-0" aria-hidden="true">
                               {tower.emoji || '🏢'}
                             </span>
-                            <div>
-                              <p className="text-sm font-bold text-text-primary">{tower.towerName}</p>
-                              <p className="text-[11px] text-text-muted">
-                                Entrega diaria {tower.deliveryLabel || '1:30 PM'}
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="text-sm font-bold text-text-primary truncate">{tower.towerName}</p>
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    !isConfigActive
+                                      ? 'bg-red-500/15 text-red-600'
+                                      : isOpenToday
+                                      ? 'bg-accent text-white shadow-xs'
+                                      : 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+                                  }`}
+                                >
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full ${
+                                      isOpenToday
+                                        ? 'bg-white'
+                                        : !isConfigActive
+                                        ? 'bg-red-500'
+                                        : 'bg-amber-500'
+                                    }`}
+                                  />
+                                  <span>{isOpenToday ? 'Recibe Hoy' : !isConfigActive ? 'Pausada' : 'Programar'}</span>
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-text-muted truncate">
+                                Entrega {tower.deliveryLabel || '1:30 PM'} · {tower.orderStartTime} a {tower.orderEndTime}
                               </p>
                             </div>
                           </div>

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Clock, ChevronDown, Sun, Moon } from 'lucide-react';
-import { useTowerAvailability, useActiveTowers, useActiveRaffleQuery, useSiteConfig } from '../../features';
+import { Sun, Moon, Info, Sparkles } from 'lucide-react';
+import { useActiveTowers, useActiveRaffleQuery, useSiteConfig, getMexicoCityDateTime } from '../../features';
 import { useCheckoutStore } from '../../stores';
 import { TowerScheduleModal } from './TowerScheduleModal';
 
 export function BrandHeader() {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [selectedTowerForModal, setSelectedTowerForModal] = useState<string | null>(null);
   const [isDark, setIsDark] = useState(false);
   const locationKey = useCheckoutStore((s) => s.form.locationKey);
   const { towers } = useActiveTowers();
@@ -36,15 +37,19 @@ export function BrandHeader() {
       localStorage.setItem('public_theme', 'dark');
     } else {
       document.documentElement.classList.remove('theme-dark');
-      localStorage.setItem('public_theme', 'light');
     }
   };
 
-  // If no locationKey is set, default to first available tower or empty
-  const activeTowerKey = locationKey || (towers[0]?.towerKey ?? '');
-  const { status, tower } = useTowerAvailability(activeTowerKey);
-
+  const mxNow = getMexicoCityDateTime();
   const brandName = siteConfig?.brandName || 'Burgers.exe';
+
+  // Si no hay torre seleccionada en checkoutStore, la primera de la lista actúa como activa
+  const currentActiveKey = locationKey || towers[0]?.towerName || '';
+
+  const handleOpenTowerModal = (towerKey?: string) => {
+    setSelectedTowerForModal(towerKey || null);
+    setIsScheduleOpen(true);
+  };
 
   return (
     <header className="w-full bg-surface-card border-b border-line px-4 py-3 sm:py-4">
@@ -90,62 +95,87 @@ export function BrandHeader() {
           </div>
         </div>
 
-        {/* Delivery Tower & Time Status Pill */}
-        <div className="flex items-center justify-between gap-2 pt-0.5">
-          <button
-            type="button"
-            onClick={() => setIsScheduleOpen(true)}
-            aria-haspopup="dialog"
-            aria-expanded={isScheduleOpen}
-            className="flex-1 flex items-center justify-between gap-2 px-3.5 py-2 rounded-2xl bg-surface hover:bg-surface-raised border border-line transition-colors text-left cursor-pointer min-h-[44px] focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
-            aria-label="Seleccionar torre y ver horarios de entrega"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-xl bg-surface-card border border-line flex items-center justify-center text-accent shrink-0">
-                <MapPin className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-text-primary">
-                  <span className="truncate">
-                    {tower ? `${tower.emoji || '🏢'} ${tower.towerName}` : 'Seleccionar Torre'}
-                  </span>
-                  <span
-                    className={`w-2 h-2 rounded-full shrink-0 ${
-                      status?.isOpen
-                        ? 'bg-accent'
-                        : status?.isPaused
-                        ? 'bg-red-500'
-                        : 'bg-amber-500'
-                    }`}
-                  />
-                </div>
-                <div className="text-[11px] text-text-secondary truncate">
-                  {status?.isOpen ? (
-                    <span className="text-accent font-medium">
-                      Recibe pedidos hoy (hasta las {status.orderEndTime})
-                    </span>
-                  ) : status?.isPaused ? (
-                    <span className="text-red-500 font-medium">Servicio pausado</span>
-                  ) : status?.isBeforeOpen ? (
-                    <span>Abre a las {status.orderStartTime}</span>
-                  ) : (
-                    <span>Pedidos programados activos</span>
-                  )}
-                </div>
-              </div>
-            </div>
+        {/* Sub-Barra de Torres & Rutas Corporativas (Directo & Visible) */}
+        <div className="pt-1 border-t border-line/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-xs text-text-secondary font-semibold shrink-0">
+            <span className="text-sm" aria-hidden="true">🏢</span>
+            <span>Entregas en:</span>
+          </div>
 
-            <div className="flex items-center gap-1 text-text-muted shrink-0 pl-1">
-              <Clock className="w-3.5 h-3.5" />
-              <ChevronDown className="w-4 h-4" />
-            </div>
-          </button>
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+            {towers.map((t) => {
+              const isSelected =
+                currentActiveKey.toLowerCase() === t.towerName.toLowerCase() ||
+                currentActiveKey.toLowerCase() === t.towerKey.toLowerCase();
+              const isConfigActive = t.isActive !== false;
+              const isToday =
+                Array.isArray(t.activeDays) && t.activeDays.includes(mxNow.dayOfWeek);
+              const [endH, endM] = (t.orderEndTime || '13:30')
+                .split(':')
+                .map((v) => parseInt(v, 10));
+              const isPastCutoff =
+                mxNow.hours > endH || (mxNow.hours === endH && mxNow.minutes >= endM);
+              const isOpenToday = isConfigActive && isToday && !isPastCutoff;
+
+              return (
+                <button
+                  key={t.towerKey}
+                  type="button"
+                  onClick={() => handleOpenTowerModal(t.towerKey)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl text-xs font-bold transition-all cursor-pointer min-h-[40px] shrink-0 select-none border focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
+                    isSelected
+                      ? 'bg-accent/10 border-accent text-text-primary shadow-xs ring-1 ring-accent/30'
+                      : 'bg-surface hover:bg-surface-raised border-line text-text-secondary hover:text-text-primary'
+                  }`}
+                  aria-label={`Ver ruta y horario de ${t.towerName}`}
+                  title={`Ver horario de ${t.towerName}`}
+                >
+                  <span className="text-sm" aria-hidden="true">{t.emoji || '🏢'}</span>
+                  <span className="font-extrabold">{t.towerName}</span>
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      !isConfigActive
+                        ? 'bg-red-500/15 text-red-600'
+                        : isOpenToday
+                        ? 'bg-accent text-white shadow-xs'
+                        : 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        isOpenToday
+                          ? 'bg-white animate-pulse'
+                          : !isConfigActive
+                          ? 'bg-red-500'
+                          : 'bg-amber-500'
+                      }`}
+                    />
+                    <span>{isOpenToday ? 'Hoy' : !isConfigActive ? 'Pausada' : 'Programar'}</span>
+                  </span>
+                </button>
+              );
+            })}
+
+            <button
+              type="button"
+              onClick={() => handleOpenTowerModal()}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-2xl text-[11px] font-semibold text-text-muted hover:text-text-primary hover:bg-surface transition-colors cursor-pointer shrink-0 min-h-[36px] focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ml-auto"
+              aria-label="Consultar todos los horarios y rutas de entrega"
+            >
+              <Info className="w-3.5 h-3.5 text-accent" />
+              <span>Horarios</span>
+            </button>
+          </div>
         </div>
       </div>
 
       <TowerScheduleModal
         isOpen={isScheduleOpen}
-        onClose={() => setIsScheduleOpen(false)}
+        selectedTowerKey={selectedTowerForModal}
+        onClose={() => {
+          setIsScheduleOpen(false);
+          setSelectedTowerForModal(null);
+        }}
       />
     </header>
   );

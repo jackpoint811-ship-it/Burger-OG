@@ -540,7 +540,16 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Incorporación de atributos ARIA explícitos (`aria-expanded`, `aria-controls`) en los acordeones de personalización de combos y `htmlFor` / `id` en `ProductDetailDrawer.tsx`.
   - Vinculación accesible de `htmlFor`, `id`, `aria-invalid` y `aria-describedby` con alertas en los inputs y errores inline de `CheckoutDrawer.tsx`.
   - Ampliación de targets táctiles en `FeaturedRail.tsx` y optimización de notificaciones con `role="status"` en `ToastContainer.tsx`.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (8.10s), `npm run build:chekeo` ✅ (5.76s).
+### 📅 2026-08-26 — Sesión 51: Sub-Barra de Píldoras de Torres, Modal con Foco Contextual & Sincronización en Checkout V3
+- **🏢 Sub-Barra Horizontal de Torres Corporativas en Vivo**:
+  - En `BrandHeader.tsx`, sustitución del botón único por una sub-barra horizontal con píldoras interactivas directas para cada edificio activo (`[ 🏢 Torre GGA · 🟢 Hoy ]` / `[ 🏢 Torre Valcob · 📅 Programar ]`) con indicador de estado en tiempo real y botón de acceso a horarios.
+- **✨ Modal de Rutas con Foco Contextual (`TowerScheduleModal.tsx`)**:
+  - Soporte de `selectedTowerKey` para resaltar la torre seleccionada con un banner superior informativo de alto contraste.
+  - Formateo de días de ruta en español natural (`Lunes, Miércoles y Viernes`), horarios claros de pedidos y entrega, botón `[ ✓ Seleccionar Torre ]` y tarjeta de preventa 24/7.
+- **🛒 Sincronización Inteligente en Paso 1 de `CheckoutDrawer.tsx`**:
+  - `handleSelectTower`: Al alternar torres en checkout, si la torre seleccionada no recibe pedidos hoy, conmuta automáticamente a `isScheduled = true` con la fecha más próxima calculada por `getNextAvailableDeliveryDate`.
+  - Tarjetas de selección con diseño enriquecido de badges y horario de entrega.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.35s), `npm run build:chekeo` ✅ (7.95s).
 
 ---
 
