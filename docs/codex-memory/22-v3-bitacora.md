@@ -559,6 +559,16 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 ---
 
+### 📅 2026-08-26 — Sesión 53: Indicador de Estado Global de Tienda & Desacoplamiento Informativo de Torres en Public Order V3
+- **🏪 Indicador de Estado Global de la Tienda**:
+  - En `BrandHeader.tsx`, integración de badge de estado global dinámico (`🟢 Tomando Pedidos Hoy` / `📅 Preventa 24/7` / `🔴 Cocina Pausada` / `🔴 Tienda en Mantenimiento`) con punto reactivo y banner de alerta crítica si la tienda o cocina están cerradas.
+- **ℹ️ Desacoplamiento Informativo de Torres en Header & Modal**:
+  - En `BrandHeader.tsx` y `TowerScheduleModal.tsx`, las píldoras de torres y las tarjetas del modal son puramente visuales e informativas para consultar rutas y horarios sin alterar el estado de ubicación de checkout.
+  - La selección de edificio se realiza de forma explícita e intuitiva en el paso 1 de `CheckoutDrawer.tsx`.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (5.99s), `npm run build:chekeo` ✅ (5.35s).
+
+---
+
 
 
 
