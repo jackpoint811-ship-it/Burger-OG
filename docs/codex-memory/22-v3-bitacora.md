@@ -453,6 +453,19 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Selector de pestañas para alternar entre `📊 Producción` en vivo e `⚖️ Insumos D1` con costos y gramajes.
 - **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.44s), `npm run build:public` ✅ (6.75s).
 
+### 📅 2026-08-26 — Sesión 45: Acordeón Secuencial Automático y Badges de Personalización en Comandas KDS
+- **Acordeón Secuencial de Ítems en Modo Multi-Ítem**:
+  - En comandas con más de 1 ítem en la estación, el primer ítem no completado se mantiene desplegado/expandido en foco por defecto.
+  - Los ítems subsecuentes permanecen colapsados en barras compactas de alto contraste, ahorrando espacio vertical en tablets KDS.
+  - Al marcar `Listo` en un ítem, este se colapsa inmediatamente y se despliega en automático el siguiente ítem pendiente sin clics adicionales.
+  - Soporte de toggle manual en el encabezado de cada ítem con accesibilidad WCAG (`role="button"`, `aria-expanded`, `aria-label`).
+- **Badges de Estado en Encabezado Colapsado**:
+  - Mientras el ítem está colapsado, muestra un badge destacado:
+    - `[ 🛠️ Personalizada ]` (en ámbar/rojo con borde) si tiene remociones, extras o nota.
+    - `[ ✓ Receta Original ]` (en verde esmeralda con borde) si es hamburguesa estándar.
+  - Al desplegar el ítem, el badge del encabezado desaparece para dar protagonismo a los bloques visuales detallados (`🔴 SIN ...`, `🟢 +EXTRA ...`, nota, botón Listo).
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (7.70s), `npm run build:public` ✅ (7.53s).
+
 ---
 
 
