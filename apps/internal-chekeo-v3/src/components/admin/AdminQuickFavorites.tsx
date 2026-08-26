@@ -34,12 +34,47 @@ export function AdminQuickFavorites({
     <div className={`w-full space-y-2 ${className}`}>
       <div className="flex items-center justify-between px-1">
         <span className="text-[11px] font-black uppercase tracking-wider text-text-muted flex items-center gap-1.5">
-          <Zap className="w-3 h-3 text-accent" />
+          <Zap className="w-3.5 h-3.5 text-accent" />
           <span>Accesos Rápidos & Favoritos</span>
         </span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5">
+      {/* Vista Móvil: Riel Horizontal Deslizable / Snap */}
+      <div className="flex sm:hidden overflow-x-auto scrollbar-none gap-2 pb-1 pt-0.5">
+        {favorites.map((fav) => {
+          const Icon = getAdminIcon(fav.iconName);
+          const isSelected =
+            activeCategory === fav.category && (!fav.toolId || activeToolId === fav.toolId);
+
+          return (
+            <button
+              key={fav.id}
+              type="button"
+              onClick={() => onNavigate(fav.category, fav.toolId)}
+              className={`flex items-center gap-2.5 h-11 px-3.5 rounded-2xl border shrink-0 transition-all cursor-pointer select-none text-left ${
+                isSelected
+                  ? 'bg-surface-card border-accent shadow-card ring-2 ring-accent/25'
+                  : 'bg-surface-card border-line hover:border-accent/40 hover:bg-surface-raised active:scale-98 shadow-xs'
+              }`}
+            >
+              <div className="p-1 rounded-lg bg-surface-raised border border-line/60 text-accent">
+                <Icon className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-text-primary truncate">
+                  {fav.shortTitle || fav.title}
+                </p>
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-wider text-text-muted px-1.5 py-0.5 rounded bg-surface-raised border border-line/60">
+                {fav.tag}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Vista Tablet / Desktop: Grilla Adaptativa en 6 Columnas */}
+      <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
         {favorites.map((fav) => {
           const Icon = getAdminIcon(fav.iconName);
           const isSelected =
