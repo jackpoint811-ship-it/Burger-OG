@@ -280,6 +280,54 @@ export function ProductDetailDrawer() {
     comboBurgersExtrasTotal;
   const lineTotal = unitPrice * quantity;
 
+  // Detección de si el ítem actual tiene personalizaciones activas
+  const hasCustomizations = useMemo(() => {
+    if (isCombo) {
+      const hasSideUpcharge = Boolean(selectedSide && selectedSide.upcharge > 0);
+      const hasCustomBurgers = Object.values(comboBurgerDrafts).some(
+        (d) =>
+          d.removedIngredients.length > 0 ||
+          d.extras.length > 0 ||
+          Boolean(d.note?.trim())
+      );
+      return hasSideUpcharge || hasCustomBurgers;
+    }
+    if (product?.category.toLowerCase() === 'burgers') {
+      return (
+        mode === 'customize' &&
+        (removedIngredients.length > 0 || extras.length > 0 || Boolean(specialNote.trim()))
+      );
+    }
+    return false;
+  }, [isCombo, selectedSide, comboBurgerDrafts, product, mode, removedIngredients, extras, specialNote]);
+
+  // Texto contextual del botón CTA
+  const ctaButtonLabel = useMemo(() => {
+    const itemType = isCombo ? 'combos' : 'burgers';
+    const singleItemType = isCombo ? 'combo' : 'burger';
+
+    if (editingCartItem) {
+      if (quantity > 1) {
+        return hasCustomizations
+          ? `Guardar (${quantity} ${itemType} personalizadas)`
+          : `Guardar (${quantity} ${itemType})`;
+      }
+      return 'Guardar Cambios';
+    }
+
+    if (quantity > 1) {
+      if (hasCustomizations) {
+        return `Agregar ${quantity} ${itemType} personalizadas`;
+      }
+      return `Agregar ${quantity} ${itemType} (Original)`;
+    }
+
+    if (hasCustomizations) {
+      return `Agregar 1 ${singleItemType} personalizada`;
+    }
+    return 'Agregar al pedido';
+  }, [editingCartItem, quantity, hasCustomizations, isCombo]);
+
   // Handlers for single burger modifications
   const handleToggleRemoveIngredient = (ing: string) => {
     setRemovedIngredients((prev) =>
@@ -928,43 +976,80 @@ export function ProductDetailDrawer() {
                   )}
                 </div>
               )}
+
+              {/* Banner Reasegurador cuando se seleccionan 2 o más unidades personalizadas */}
+              {hasCustomizations && quantity > 1 && (
+                <motion.div
+                  role="status"
+                  aria-live="polite"
+                  initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
+                  animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                  className="p-3.5 rounded-2xl bg-accent/10 border border-accent/25 flex items-start gap-2.5 text-xs text-text-primary shadow-xs"
+                >
+                  <Sparkles className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <p className="font-black text-accent">
+                      {isCombo
+                        ? `Los ${quantity} combos se prepararán con estas mismas elecciones.`
+                        : `Las ${quantity} hamburguesas se prepararán con esta misma personalización.`}
+                    </p>
+                    <p className="text-[11px] text-text-secondary leading-relaxed">
+                      ¿Quieres otra hamburguesa con receta original o personalización distinta? Agrégalas por separado a tu pedido.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
             </div>
 
             {/* Sticky CTA Footer */}
-            <div className="border-t border-line bg-surface-card p-4 sm:p-5 flex items-center justify-between gap-4 shadow-panel shrink-0">
-              {/* Quantity Stepper */}
-              <div className="flex items-center gap-2 bg-surface p-1.5 rounded-2xl border border-line shrink-0">
+            <div className="border-t border-line bg-surface-card p-4 sm:p-5 flex flex-col gap-2 shadow-panel shrink-0">
+              <div className="flex items-center justify-between gap-3 sm:gap-4">
+                {/* Quantity Stepper */}
+                <div className="flex items-center gap-2 bg-surface p-1.5 rounded-2xl border border-line shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                    className="w-9 h-9 rounded-xl bg-surface-card border border-line flex items-center justify-center text-text-primary hover:bg-surface-raised disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
+                    aria-label="Disminuir cantidad"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="w-6 text-center font-extrabold text-sm text-text-primary">
+                    {quantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => q + 1)}
+                    className="w-9 h-9 rounded-xl bg-surface-card border border-line flex items-center justify-center text-text-primary hover:bg-surface-raised transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
+                    aria-label="Aumentar cantidad"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Add/Save CTA */}
                 <button
                   type="button"
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  disabled={quantity <= 1}
-                  className="w-9 h-9 rounded-xl bg-surface-card border border-line flex items-center justify-center text-text-primary hover:bg-surface-raised disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
-                  aria-label="Disminuir cantidad"
+                  onClick={handleAddToCart}
+                  className="flex-1 py-3.5 px-4 rounded-2xl bg-accent text-white font-extrabold text-xs sm:text-base hover:bg-accent-dark transition-colors shadow-cta cursor-pointer min-h-[48px] flex items-center justify-between gap-2"
                 >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <span className="w-6 text-center font-extrabold text-sm text-text-primary">
-                  {quantity}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setQuantity((q) => q + 1)}
-                  className="w-9 h-9 rounded-xl bg-surface-card border border-line flex items-center justify-center text-text-primary hover:bg-surface-raised transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
-                  aria-label="Aumentar cantidad"
-                >
-                  <Plus className="w-4 h-4" />
+                  <span className="truncate">{ctaButtonLabel}</span>
+                  <span className="shrink-0">{formatCurrency(lineTotal)}</span>
                 </button>
               </div>
 
-              {/* Add/Save CTA */}
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                className="flex-1 py-3.5 px-4 rounded-2xl bg-accent text-white font-extrabold text-sm sm:text-base hover:bg-accent-dark transition-colors shadow-cta cursor-pointer min-h-[48px] flex items-center justify-between"
-              >
-                <span>{editingCartItem ? 'Guardar Cambios' : 'Agregar al pedido'}</span>
-                <span>{formatCurrency(lineTotal)}</span>
-              </button>
+              {/* Helper caption debajo del stepper cuando quantity > 1 */}
+              {quantity > 1 && (
+                <div className="text-[11px] font-bold px-1 text-text-secondary flex items-center gap-1.5 animate-in fade-in">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                  <span>
+                    {hasCustomizations
+                      ? `Las ${quantity} unidades tendrán la misma personalización.`
+                      : `Las ${quantity} unidades se prepararán con Receta Original.`}
+                  </span>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

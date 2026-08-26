@@ -517,9 +517,20 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **📊 KPI "Por confirmar" Universal**:
   - El 4to KPI del encabezado ahora totaliza **TODOS los cobros pendientes** sin importar el método de pago (transferencia, efectivo o tarjeta).
   - Al hacer clic, filtra inmediatamente a `status: 'pending'`, `method: 'all'` y `selectedDate: 'all'`.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.44s), `npm run build:public` ✅ (5.98s).
+### 📅 2026-08-26 — Sesión 49: Claridad & Certeza de Personalización Múltiple en Tienda Pública V3
+- **✨ Banner Reasegurador de Personalización por Volumen**:
+  - En `ProductDetailDrawer.tsx`, cuando el cliente personaliza una burger o combo y selecciona `quantity > 1`, se despliega una tarjeta animada (`Sparkles`, verde bosque `#16A34A` / `#22C55E`):
+    *`Las N hamburguesas se prepararán con esta misma personalización. ¿Quieres otra con receta original o personalización distinta? Agrégalas por separado a tu pedido.`*
+  - Cumplimiento de WCAG 2.1 AA con `role="status"` y `aria-live="polite"`.
+- **🏷️ Micro-Copy Semántico en Stepper y CTA Contextual**:
+  - Caption reactivo debajo del stepper: `×N personalizadas iguales` vs `×N receta original`.
+  - Botón CTA dinámico: `[ Agregar N burgers personalizadas · $XXX ]` vs `[ Agregar N burgers (Original) · $XXX ]`.
+- **🛒 Insignia de Volumen en Carrito**:
+  - En `CartDrawer.tsx`, cuando una línea tiene `quantity > 1` y modificaciones activas, se añade el badge `✨ Aplica a las N unidades`.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
 
 ---
+
 
 
 
