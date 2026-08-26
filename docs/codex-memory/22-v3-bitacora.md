@@ -567,14 +567,21 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Semáforo por color de fondo/texto sin texto redundante:
     - `🟢 Verde`: Abierta / Recibe pedidos hoy.
     - `🟡 Amarillo`: No disponible hoy (es para programar en próxima ruta de entrega).
-    - `🔴 Rojo`: Pausada / Cerrada por cocina.
-  - Al hacer clic en cualquiera de las torres se abre de inmediato `TowerScheduleModal.tsx` con los horarios y días detallados.
-- **🚫 Erradicación de Scroll Horizontal & Botón "Horarios"**:
-  - Eliminado `overflow-x-auto` en favor de un contenedor flex wrap que se ajusta a 360px sin desbordar.
-  - Eliminado el botón redundante de "Horarios".
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.24s), `npm run build:chekeo` ✅ (6.03s).
+### 📅 2026-08-26 — Sesión 55: Panel de Control de Admin V3 Inmersivo en 2 Columnas & Submenús Dedicados
+- **📊 Hub de Categorías Maestras en 2 Columnas (`AdminDashboardGrid.tsx`)**:
+  - Reestructuración de la vista general en 6 tarjetas maestras distribuidas en cuadrícula estricta de 2 columnas (`grid-cols-1 md:grid-cols-2`), diseño limpio, desaturado y espacioso sin tablas apiñadas.
+- **📂 Submenús Interactivos por Categoría (`AdminCategorySubmenu.tsx`)**:
+  - Al pulsar una categoría, se accede a su Submenú dedicado en 2 columnas con tarjetas para cada herramienta y botón de entrada directa.
+- **🔍 Buscador Universal Command Palette (`AdminSearchBar.tsx`)**:
+  - Barra de búsqueda con atajo global `⌘K` / `Ctrl+K` para encontrar cualquier platillo, torre, banner, corte o insumo y saltar en 1 clic.
+- **⭐ Favoritos Dinámicos y Fijables (`AdminQuickFavorites.tsx` & `useAdminPinnedFavorites.ts`)**:
+  - Franja superior compacta con soporte para fijar/desfijar con ⭐ cualquier categoría o subcategoría, persistida en `localStorage`.
+- **🍞 Migas de Pan Guiadas & Atajo Escape (`AdminBreadcrumbs.tsx`)**:
+  - Navegación semántica multinivel (`🏠 Panel Admin › [Categoría] › [Herramienta]`), botón `[ ← Volver ]` y tecla `Escape` para retroceso ágil.
+- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.92s), `npm run build:public` ✅ (7.21s).
 
 ---
+
 
 
 
