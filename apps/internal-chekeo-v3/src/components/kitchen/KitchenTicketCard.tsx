@@ -36,6 +36,7 @@ export interface KitchenTicketCardProps {
   laneMode?: 'prep' | 'sideQuest';
   onAdvance: (ticketId: string, currentStatus: KitchenTicket['status']) => Promise<void>;
   onRevert?: (ticketId: string, currentStatus: KitchenTicket['status']) => Promise<void>;
+  onCompleteStation?: (ticketId: string, station: 'prep' | 'sideQuest') => Promise<void>;
   isUpdating?: boolean;
 }
 
@@ -44,18 +45,28 @@ export function KitchenTicketCard({
   laneMode,
   onAdvance,
   onRevert,
+  onCompleteStation,
   isUpdating = false,
 }: KitchenTicketCardProps) {
   const [localBusy, setLocalBusy] = useState(false);
   const { isUnitDone, toggleUnitDone, getTicketProgress } = useKitchenItemTracking();
 
   const progress = getTicketProgress(ticket);
-  const isTicketFullyDone = progress.isFullyDone;
+  const isStationReady =
+    laneMode === 'prep'
+      ? progress.isPrepDone
+      : laneMode === 'sideQuest'
+      ? progress.isSideQuestDone
+      : progress.isFullyDone;
 
   const handleAdvance = async () => {
     try {
       setLocalBusy(true);
-      await onAdvance(ticket.id, ticket.status);
+      if (laneMode && onCompleteStation) {
+        await onCompleteStation(ticket.id, laneMode);
+      } else {
+        await onAdvance(ticket.id, ticket.status);
+      }
     } finally {
       setLocalBusy(false);
     }
@@ -278,10 +289,10 @@ export function KitchenTicketCard({
 
             <button
               type="button"
-              disabled={localBusy || isUpdating || !isTicketFullyDone}
+              disabled={localBusy || isUpdating || !isStationReady}
               onClick={handleAdvance}
               className={`flex-1 h-12 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 transition-all cursor-pointer ${
-                isTicketFullyDone
+                isStationReady
                   ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md active:scale-[0.98]'
                   : 'bg-surface-raised border-2 border-line text-text-muted opacity-60 cursor-not-allowed'
               }`}
@@ -303,10 +314,10 @@ export function KitchenTicketCard({
           <div>
             <button
               type="button"
-              disabled={localBusy || isUpdating || !isTicketFullyDone}
+              disabled={localBusy || isUpdating || !isStationReady}
               onClick={handleAdvance}
               className={`w-full h-12 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 transition-all cursor-pointer ${
-                isTicketFullyDone
+                isStationReady
                   ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md active:scale-[0.98]'
                   : 'bg-surface-raised border-2 border-line text-text-muted opacity-60 cursor-not-allowed'
               }`}
@@ -326,17 +337,17 @@ export function KitchenTicketCard({
           </div>
         )}
 
-        {/* Indicador Informativo si la comanda no está 100% lista */}
-        {!isTicketFullyDone && (
+        {/* Indicador Informativo contextual */}
+        {!isStationReady && (
           <div className="text-center text-[11px] font-extrabold text-amber-600 dark:text-amber-400">
-            {!progress.isPrepDone && !progress.isSideQuestDone && (
-              <span>Faltan ítems en Plancha y en Side Quest ({progress.completedUnits}/{progress.totalUnits})</span>
+            {laneMode === 'prep' && (
+              <span>Faltan hamburguesas por marcar en Plancha ({progress.prepCompleted}/{progress.prepTotal})</span>
             )}
-            {progress.isPrepDone && !progress.isSideQuestDone && (
-              <span>Plancha lista · Esperando Side Quest ({progress.sideCompleted}/{progress.sideTotal})</span>
+            {laneMode === 'sideQuest' && (
+              <span>Faltan complementos por marcar en Side Quest ({progress.sideCompleted}/{progress.sideTotal})</span>
             )}
-            {!progress.isPrepDone && progress.isSideQuestDone && (
-              <span>Side Quest listo · Esperando Plancha ({progress.prepCompleted}/{progress.prepTotal})</span>
+            {!laneMode && (
+              <span>Faltan ítems ({progress.completedUnits}/{progress.totalUnits})</span>
             )}
           </div>
         )}

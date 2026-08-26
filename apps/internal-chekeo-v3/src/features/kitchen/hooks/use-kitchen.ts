@@ -294,9 +294,12 @@ export function useUpdateKitchenItemMutation() {
   });
 }
 
-// ─── Hook para Seguimiento Reactivo de Ítems Granulares ────────────────────────
+// ─── Hook para Seguimiento Reactivo de Ítems Granulares & Despacho de Estación ──
 
 const KITCHEN_CHECKS_STORAGE_KEY = 'burgers_kds_item_checks_v3';
+const STATION_DISPATCH_STORAGE_KEY = 'burgers_kds_station_dispatches_v3';
+
+export type StationDispatchMap = Record<string, { prepDone?: boolean; sideDone?: boolean }>;
 
 function readStoredChecks(): Record<string, boolean> {
   if (typeof window === 'undefined') return {};
@@ -317,14 +320,39 @@ function writeStoredChecks(checks: Record<string, boolean>) {
   }
 }
 
+function readStoredDispatches(): StationDispatchMap {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(STATION_DISPATCH_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeStoredDispatches(dispatches: StationDispatchMap) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STATION_DISPATCH_STORAGE_KEY, JSON.stringify(dispatches));
+  } catch {
+    // Silencioso
+  }
+}
+
 export function useKitchenItemTracking() {
   const [checkedMap, setCheckedMap] = useState<Record<string, boolean>>(() => readStoredChecks());
+  const [dispatchMap, setDispatchMap] = useState<StationDispatchMap>(() => readStoredDispatches());
 
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
       if (e.key === KITCHEN_CHECKS_STORAGE_KEY && e.newValue) {
         try {
           setCheckedMap(JSON.parse(e.newValue));
+        } catch {}
+      }
+      if (e.key === STATION_DISPATCH_STORAGE_KEY && e.newValue) {
+        try {
+          setDispatchMap(JSON.parse(e.newValue));
         } catch {}
       }
     };
@@ -347,6 +375,45 @@ export function useKitchenItemTracking() {
     });
   }, []);
 
+  const isStationDone = useCallback(
+    (ticketId: string, station: 'prep' | 'sideQuest'): boolean => {
+      const record = dispatchMap[ticketId];
+      if (!record) return false;
+      return station === 'prep' ? Boolean(record.prepDone) : Boolean(record.sideDone);
+    },
+    [dispatchMap]
+  );
+
+  const markStationDone = useCallback((ticketId: string, station: 'prep' | 'sideQuest') => {
+    setDispatchMap((prev) => {
+      const existing = prev[ticketId] || {};
+      const next = {
+        ...prev,
+        [ticketId]: {
+          ...existing,
+          [station === 'prep' ? 'prepDone' : 'sideDone']: true,
+        },
+      };
+      writeStoredDispatches(next);
+      return next;
+    });
+  }, []);
+
+  const revertStationDone = useCallback((ticketId: string, station: 'prep' | 'sideQuest') => {
+    setDispatchMap((prev) => {
+      const existing = prev[ticketId] || {};
+      const next = {
+        ...prev,
+        [ticketId]: {
+          ...existing,
+          [station === 'prep' ? 'prepDone' : 'sideDone']: false,
+        },
+      };
+      writeStoredDispatches(next);
+      return next;
+    });
+  }, []);
+
   const getTicketProgress = useCallback(
     (ticket: KitchenTicket) => {
       const units = ticket.productionUnits || [];
@@ -355,13 +422,22 @@ export function useKitchenItemTracking() {
       const prepUnits = units.filter((u) => u.station === 'prep');
       const sideUnits = units.filter((u) => u.station === 'sideQuest');
 
-      const prepCompleted = prepUnits.filter((u) => checkedMap[u.unitKey]).length;
-      const sideCompleted = sideUnits.filter((u) => checkedMap[u.unitKey]).length;
+      const isPrepDispatched = Boolean(dispatchMap[ticket.id]?.prepDone);
+      const isSideDispatched = Boolean(dispatchMap[ticket.id]?.sideDone);
+
+      const prepCompleted = isPrepDispatched
+        ? prepUnits.length
+        : prepUnits.filter((u) => checkedMap[u.unitKey]).length;
+
+      const sideCompleted = isSideDispatched
+        ? sideUnits.length
+        : sideUnits.filter((u) => checkedMap[u.unitKey]).length;
+
       const completedUnits = prepCompleted + sideCompleted;
 
-      const isPrepDone = prepUnits.length === 0 || prepCompleted === prepUnits.length;
-      const isSideQuestDone = sideUnits.length === 0 || sideCompleted === sideUnits.length;
-      const isFullyDone = totalUnits > 0 && completedUnits === totalUnits;
+      const isPrepDone = isPrepDispatched || prepUnits.length === 0 || prepCompleted === prepUnits.length;
+      const isSideQuestDone = isSideDispatched || sideUnits.length === 0 || sideCompleted === sideUnits.length;
+      const isFullyDone = totalUnits > 0 && isPrepDone && isSideQuestDone;
 
       return {
         totalUnits,
@@ -373,15 +449,21 @@ export function useKitchenItemTracking() {
         isPrepDone,
         isSideQuestDone,
         isFullyDone,
+        isPrepDispatched,
+        isSideDispatched,
       };
     },
-    [checkedMap]
+    [checkedMap, dispatchMap]
   );
 
   return {
     checkedMap,
+    dispatchMap,
     isUnitDone,
     toggleUnitDone,
+    isStationDone,
+    markStationDone,
+    revertStationDone,
     getTicketProgress,
   };
 }
