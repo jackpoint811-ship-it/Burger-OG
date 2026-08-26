@@ -136,58 +136,34 @@ export function extractKitchenTicketItems(rawItems: OrderV2Item[] = []): {
     const nameLower = (rawItem.name || '').toLowerCase();
 
     let itemKind: KitchenTicketItem['itemKind'] = 'other';
-    if (
-      itemKindRaw === 'combo' ||
-      categoryRaw === 'combos' ||
-      skuLower.includes('combo') ||
-      nameLower.includes('combo')
-    ) {
+    if (itemKindRaw === 'burger' || categoryRaw === 'burgers') {
+      itemKind = 'burger';
+      totalBurgersCount += rawItem.qty;
+    } else if (itemKindRaw === 'combo' || categoryRaw === 'combos') {
       itemKind = 'combo';
       totalBurgersCount += rawItem.qty;
-    } else if (
-      itemKindRaw === 'garnish' ||
-      categoryRaw === 'guarniciones' ||
-      categoryRaw === 'sides' ||
-      skuLower.includes('garnish') ||
-      skuLower.includes('side') ||
-      skuLower.includes('papa') ||
-      nameLower.includes('papa') ||
-      nameLower.includes('aros') ||
-      nameLower.includes('fries')
-    ) {
+    } else if (itemKindRaw === 'garnish' || categoryRaw === 'guarniciones' || categoryRaw === 'sides') {
       itemKind = 'garnish';
       totalGarnishesCount += rawItem.qty;
-    } else if (
-      itemKindRaw === 'drink' ||
-      categoryRaw === 'bebidas' ||
-      categoryRaw === 'drinks' ||
-      skuLower.includes('drink') ||
-      skuLower.includes('bebida') ||
-      nameLower.includes('coca') ||
-      nameLower.includes('sprite') ||
-      nameLower.includes('agua') ||
-      nameLower.includes('refresco') ||
-      nameLower.includes('jugo') ||
-      nameLower.includes('boing') ||
-      nameLower.includes('dr pepper')
-    ) {
+    } else if (itemKindRaw === 'drink' || categoryRaw === 'bebidas' || categoryRaw === 'drinks') {
       itemKind = 'drink';
       totalDrinksCount += rawItem.qty;
-    } else if (
-      itemKindRaw === 'extra' ||
-      categoryRaw === 'extras' ||
-      categoryRaw === 'dips' ||
-      skuLower.includes('extra') ||
-      skuLower.includes('dip') ||
-      nameLower.includes('dip') ||
-      nameLower.includes('extra') ||
-      nameLower.includes('salsa') ||
-      nameLower.includes('aderezo')
-    ) {
+    } else if (itemKindRaw === 'extra' || categoryRaw === 'extras' || categoryRaw === 'dips') {
+      itemKind = 'extra';
+      totalExtrasCount += rawItem.qty;
+    } else if (skuLower.includes('combo') || nameLower.includes('combo')) {
+      itemKind = 'combo';
+      totalBurgersCount += rawItem.qty;
+    } else if (skuLower.includes('garnish') || skuLower.includes('side') || nameLower.includes('papa') || nameLower.includes('aros')) {
+      itemKind = 'garnish';
+      totalGarnishesCount += rawItem.qty;
+    } else if (skuLower.includes('drink') || skuLower.includes('bebida') || nameLower.includes('coca') || nameLower.includes('sprite') || nameLower.includes('boing')) {
+      itemKind = 'drink';
+      totalDrinksCount += rawItem.qty;
+    } else if (skuLower.includes('extra') || skuLower.includes('dip') || nameLower.includes('extra') || nameLower.includes('salsa')) {
       itemKind = 'extra';
       totalExtrasCount += rawItem.qty;
     } else {
-      // Fallback seguro: burger (hamburguesa individual o receta)
       itemKind = 'burger';
       totalBurgersCount += rawItem.qty;
     }
