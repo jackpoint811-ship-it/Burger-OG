@@ -35,6 +35,7 @@ import {
   CircleSlash2,
   Utensils,
   CupSoda,
+  ChevronDown,
 } from 'lucide-react';
 import { Button } from '@ui/button';
 import type { OrderV2, OrderV2Status } from '@config/index';
@@ -78,9 +79,12 @@ export function OrderCard({
   onUnarchive,
 }: OrderCardProps) {
   const [copiedFolio, setCopiedFolio] = useState(false);
+  const [isItemsExpanded, setIsItemsExpanded] = useState(false);
   const updateStatusMutation = useUpdateOrderStatusMutation();
 
   const normalizedItems = normalizeOrderItems(order.items);
+  const totalItemsCount = normalizedItems.reduce((acc, item) => acc + item.qty, 0);
+  const itemsSummaryText = normalizedItems.map((item) => `${item.qty}x ${item.name}`).join(', ');
   const dateInfo = formatOrderTargetDateInfo(order);
 
   // Si la orden es 'new' pero es programada/anterior (!dateInfo.isToday), se muestra como 'Preparando'
@@ -279,112 +283,151 @@ export function OrderCard({
           </div>
         </div>
 
-        {/* ─── Desglose Visual Limpio con Iconografía Lucide ──────────────────── */}
-        <div className="p-3 rounded-2xl bg-surface-raised/70 border border-line space-y-2 text-xs">
-          {normalizedItems.map((item, idx) => (
-            <div key={item.id || idx} className="space-y-1">
-              <div className="flex justify-between items-baseline font-bold text-text-primary">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="w-4 h-4 rounded bg-accent/15 text-accent text-[10px] font-black flex items-center justify-center shrink-0">
-                    {item.qty}
-                  </span>
-                  <span className="truncate">{item.name}</span>
-                </div>
-                <span className="text-text-secondary font-semibold shrink-0 ml-2">
-                  {formatCurrency(item.lineTotal || item.unitPrice * item.qty)}
+        {/* ─── Desglose Colapsable de Comanda ──────────────────────────────────── */}
+        <div className="rounded-2xl bg-surface-raised/70 border border-line overflow-hidden text-xs transition-all">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsItemsExpanded((prev) => !prev);
+            }}
+            aria-expanded={isItemsExpanded}
+            aria-controls={`order-items-${order.id}`}
+            className="w-full flex items-center justify-between p-3 hover:bg-surface-raised transition-colors cursor-pointer text-left min-h-[44px]"
+          >
+            <div className="flex items-center gap-2 min-w-0 pr-2">
+              <span className="inline-flex items-center gap-1 font-bold text-text-primary">
+                <span>🛒 Pedido ({totalItemsCount})</span>
+              </span>
+              {!isItemsExpanded && (
+                <span className="text-[11px] text-text-secondary truncate hidden sm:inline">
+                  • {itemsSummaryText}
                 </span>
-              </div>
-
-              {/* Guarnición y Bebida de combo */}
-              {(item.garnish || item.includedDrink) && (
-                <div className="pl-5 space-y-0.5 text-[11px] text-text-secondary font-medium">
-                  {item.garnish && (
-                    <div className="flex items-center gap-1.5">
-                      <Utensils className="w-3 h-3 text-accent shrink-0" />
-                      <span>{item.garnish.name}</span>
-                      {item.garnish.upcharge ? (
-                        <span className="text-accent font-bold">
-                          (+{formatCurrency(item.garnish.upcharge)})
-                        </span>
-                      ) : null}
-                    </div>
-                  )}
-                  {item.includedDrink && (
-                    <div className="flex items-center gap-1.5">
-                      <CupSoda className="w-3 h-3 text-sky-500 shrink-0" />
-                      <span>{item.includedDrink.name}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Modificaciones Unificadas (- Remociones / + Extras) */}
-              {(item.removedIngredients.length > 0 || item.extras.length > 0) && (
-                <div className="pl-5 flex flex-wrap gap-1 pt-0.5">
-                  {item.removedIngredients.map((ing, i) => (
-                    <span
-                      key={`rem-${i}`}
-                      className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-black border border-red-500/20"
-                    >
-                      {formatKitchenRemovalLabel(ing)}
-                    </span>
-                  ))}
-                  {item.extras.map((extra, i) => (
-                    <span
-                      key={`ext-${i}`}
-                      className="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[10px] font-black border border-emerald-500/20"
-                    >
-                      {formatKitchenExtraLabel(extra)}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Modificaciones de Hamburguesas en Combos */}
-              {item.comboBurgers && item.comboBurgers.length > 0 && (
-                <div className="pl-5 space-y-1 pt-1">
-                  {item.comboBurgers.map((cb, cbIdx) => {
-                    const hasCbMods = (cb.removedIngredients?.length ?? 0) > 0 || (cb.extras?.length ?? 0) > 0 || Boolean(cb.burgerNote);
-                    if (!hasCbMods) return null;
-                    return (
-                      <div key={`cb-${cbIdx}`} className="flex flex-wrap items-center gap-1">
-                        <span className="text-[10px] font-bold text-text-secondary">
-                          🍔 {cb.name}:
-                        </span>
-                        {cb.removedIngredients?.map((ing, i) => (
-                          <span
-                            key={`cb-rem-${i}`}
-                            className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-black border border-red-500/20"
-                          >
-                            {formatKitchenRemovalLabel(ing)}
-                          </span>
-                        ))}
-                        {cb.extras?.map((extra, i) => (
-                          <span
-                            key={`cb-ext-${i}`}
-                            className="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[10px] font-black border border-emerald-500/20"
-                          >
-                            {formatKitchenExtraLabel(extra)}
-                          </span>
-                        ))}
-                        {cb.burgerNote && (
-                          <span className="text-[10px] italic text-text-muted">
-                            "{cb.burgerNote}"
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
               )}
             </div>
-          ))}
+            <div className="flex items-center gap-1.5 shrink-0 text-text-muted">
+              <span className="text-[11px] font-semibold">
+                {isItemsExpanded ? 'Ocultar' : 'Ver'}
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 transition-transform duration-200 ${
+                  isItemsExpanded ? 'rotate-180 text-accent' : ''
+                }`}
+              />
+            </div>
+          </button>
 
-          {/* Nota general */}
-          {order.notes && (
-            <div className="pt-2 border-t border-line/60 text-[11px] text-amber-700 dark:text-amber-300 font-medium flex items-start gap-1">
-              <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
-              <span className="line-clamp-2">{order.notes}</span>
+          {isItemsExpanded && (
+            <div
+              id={`order-items-${order.id}`}
+              className="p-3 pt-0 border-t border-line/60 space-y-2"
+            >
+              {normalizedItems.map((item, idx) => (
+                <div key={item.id || idx} className="space-y-1 pt-2">
+                  <div className="flex justify-between items-baseline font-bold text-text-primary">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="w-4 h-4 rounded bg-accent/15 text-accent text-[10px] font-black flex items-center justify-center shrink-0">
+                        {item.qty}
+                      </span>
+                      <span className="truncate">{item.name}</span>
+                    </div>
+                    <span className="text-text-secondary font-semibold shrink-0 ml-2">
+                      {formatCurrency(item.lineTotal || item.unitPrice * item.qty)}
+                    </span>
+                  </div>
+
+                  {/* Guarnición y Bebida de combo */}
+                  {(item.garnish || item.includedDrink) && (
+                    <div className="pl-5 space-y-0.5 text-[11px] text-text-secondary font-medium">
+                      {item.garnish && (
+                        <div className="flex items-center gap-1.5">
+                          <Utensils className="w-3 h-3 text-accent shrink-0" />
+                          <span>{item.garnish.name}</span>
+                          {item.garnish.upcharge ? (
+                            <span className="text-accent font-bold">
+                              (+{formatCurrency(item.garnish.upcharge)})
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
+                      {item.includedDrink && (
+                        <div className="flex items-center gap-1.5">
+                          <CupSoda className="w-3 h-3 text-sky-500 shrink-0" />
+                          <span>{item.includedDrink.name}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Modificaciones Unificadas (- Remociones / + Extras) */}
+                  {(item.removedIngredients.length > 0 || item.extras.length > 0) && (
+                    <div className="pl-5 flex flex-wrap gap-1 pt-0.5">
+                      {item.removedIngredients.map((ing, i) => (
+                        <span
+                          key={`rem-${i}`}
+                          className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-black border border-red-500/20"
+                        >
+                          {formatKitchenRemovalLabel(ing)}
+                        </span>
+                      ))}
+                      {item.extras.map((extra, i) => (
+                        <span
+                          key={`ext-${i}`}
+                          className="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[10px] font-black border border-emerald-500/20"
+                        >
+                          {formatKitchenExtraLabel(extra)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Modificaciones de Hamburguesas en Combos */}
+                  {item.comboBurgers && item.comboBurgers.length > 0 && (
+                    <div className="pl-5 space-y-1 pt-1">
+                      {item.comboBurgers.map((cb, cbIdx) => {
+                        const hasCbMods = (cb.removedIngredients?.length ?? 0) > 0 || (cb.extras?.length ?? 0) > 0 || Boolean(cb.burgerNote);
+                        if (!hasCbMods) return null;
+                        return (
+                          <div key={`cb-${cbIdx}`} className="flex flex-wrap items-center gap-1">
+                            <span className="text-[10px] font-bold text-text-secondary">
+                              🍔 {cb.name}:
+                            </span>
+                            {cb.removedIngredients?.map((ing, i) => (
+                              <span
+                                key={`cb-rem-${i}`}
+                                className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-black border border-red-500/20"
+                              >
+                                {formatKitchenRemovalLabel(ing)}
+                              </span>
+                            ))}
+                            {cb.extras?.map((extra, i) => (
+                              <span
+                                key={`cb-ext-${i}`}
+                                className="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[10px] font-black border border-emerald-500/20"
+                              >
+                                {formatKitchenExtraLabel(extra)}
+                              </span>
+                            ))}
+                            {cb.burgerNote && (
+                              <span className="text-[10px] italic text-text-muted">
+                                "{cb.burgerNote}"
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Nota general */}
+              {order.notes && (
+                <div className="pt-2 border-t border-line/60 text-[11px] text-amber-700 dark:text-amber-300 font-medium flex items-start gap-1">
+                  <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
+                  <span className="line-clamp-2">{order.notes}</span>
+                </div>
+              )}
             </div>
           )}
         </div>
