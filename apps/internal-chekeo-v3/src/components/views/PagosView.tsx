@@ -15,6 +15,7 @@ import type { OrderV2 } from '@config/index';
 import {
   usePayments,
   generateBatchPaymentSummaryText,
+  type PaymentFilterMethod,
 } from '../../features/payments';
 import {
   PaymentPeriodSelector,
@@ -32,6 +33,8 @@ import { OrderDetailDrawer } from '../orders/OrderDetailDrawer';
 export function PagosView() {
   const {
     allOrders,
+    periodOrders,
+    periodOrdersCount,
     filteredOrders,
     financialSummary,
     availableTowers,
@@ -80,11 +83,14 @@ export function PagosView() {
     }
   };
 
-  // Click inteligente en KPI "Por confirmar" -> Conmuta a Todos + status: pending + method: all
+  // Click inteligente en KPI "Por confirmar" -> Alterna filtro 'pending' dentro del período seleccionado
   const handleFilterByPending = () => {
-    setSelectedDate('all');
-    setMethodFilter('all');
-    setStatusFilter('pending');
+    setStatusFilter((prev) => (prev === 'pending' ? 'all' : 'pending'));
+  };
+
+  // Click inteligente en KPI de método -> Alterna el método seleccionado
+  const handleFilterByMethod = (method: PaymentFilterMethod) => {
+    setMethodFilter((prev) => (prev === method ? 'all' : method));
   };
 
   // Selección múltiple
@@ -183,9 +189,11 @@ export function PagosView() {
       {/* ─── 2. Header Financiero / 4 KPIs Reactivos (Click-to-Filter) ───── */}
       <PaymentKpiHeader
         financialSummary={financialSummary}
+        selectedDate={filters.selectedDate}
         selectedMethod={filters.method}
+        selectedStatus={filters.status}
         onFilterByPending={handleFilterByPending}
-        onFilterByMethod={(method) => setMethodFilter(method)}
+        onFilterByMethod={handleFilterByMethod}
       />
 
       {/* ─── 3. Barra de Filtros y Búsqueda Unificada ──────────────────────── */}
@@ -200,7 +208,7 @@ export function PagosView() {
         onTowerChange={setTowerFilter}
         isFetching={isFetching}
         financialSummary={financialSummary}
-        allOrdersCount={allOrders.length}
+        allOrdersCount={periodOrdersCount}
         onOpenBankDetails={() => setBankDetailsOpen(true)}
         onResetFilters={resetFilters}
       />
