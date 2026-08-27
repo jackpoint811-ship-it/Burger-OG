@@ -3,10 +3,13 @@
 Estas reglas aplican a todo el repositorio salvo que un `AGENTS.md` más específico indique algo distinto.
 
 ## ⚡ Activador Maestro: `Burgers.exe`
-Si el usuario envía únicamente `Burgers.exe` o `burger.exe`:
-- Leer de inmediato `docs/codex-memory/01-estado-actual.md` y `docs/codex-memory/22-v3-bitacora.md`.
-- Inspeccionar rama activa y estado de compilación.
-- Responder con un resumen del estado actual y ponerse a la orden para la siguiente tarea siguiendo el flujo de trabajo estricto.
+- **Modo Estatus** (Si el prompt es únicamente `Burgers.exe`, `burger.exe` o `/burgers`):
+  - Leer de inmediato `docs/codex-memory/01-estado-actual.md` y `docs/codex-memory/22-v3-bitacora.md`.
+  - Inspeccionar rama activa y estado de compilación.
+  - Responder con un resumen del estado actual y ponerse a la orden para la siguiente tarea siguiendo el flujo de trabajo estricto.
+- **Modo Acción Directa** (Si el prompt incluye una tarea, ej: `Burgers.exe: <tarea>`, `/plan burgers.exe: <tarea>` o `/burgers <tarea>`):
+  - Cargar silenciosamente la memoria viva (`01-estado-actual.md` y `22-v3-bitacora.md`) y validar restricciones.
+  - Proceder de inmediato a planificar o ejecutar la tarea especificada sin requerir una interacción previa de confirmación.
 
 ## Forma de trabajo
 - Trabajar por PRs pequeños, controlados y fáciles de revisar.

@@ -642,6 +642,15 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `npm run build-storybook`: Compilación estática optimizada en `dist/storybook/`.
 - **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build-storybook` ✅ (0 errores), `npm run build:chekeo` ✅ (5.59s), `npm run build:public` ✅ (5.93s).
 
+### 📅 2026-08-27 — Sesión 39: Soporte Dual de Activador Maestro & Nomenclatura Descriptiva
+- **Objetivo**: Habilitar ejecución inmediata con tareas descriptivas y compatibilidad con slash commands (`/plan`, `/burgers`).
+- **Implementación**:
+  - `AGENTS.md`, `GEMINI.md`, `.agents/skills/burgers-exe/SKILL.md` y `.agents/rules/00-hard-constraints.md` actualizados para soportar:
+    1. **Modo Estatus**: `burgers.exe` / `burger.exe` / `/burgers` $\rightarrow$ Resumen de estado + a la orden.
+    2. **Modo Acción Directa**: `burgers.exe: <tarea>` / `/plan burgers.exe: <tarea>` / `/burgers <tarea>` $\rightarrow$ Carga silenciosa de memoria y arranque inmediato de la tarea.
+  - Títulos de conversación descriptivos en el TUI/IDE basados en la instrucción real enviada en el primer mensaje.
+- **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
+
 ---
 
 ## 📌 Issues Abiertos

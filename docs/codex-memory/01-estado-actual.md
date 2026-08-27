@@ -124,3 +124,6 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Eliminación de la redundancia de precio (conservado exclusivamente en la cabecera superior derecha) y optimización de la caja de Hechos Clave a 2 columnas amplias (`Entrega` a Torre/Depto y `Fecha` operativa CDMX con `getCdmxTodayString()`).
   - Estandarización de accesibilidad WCAG 2.1 AA con targets táctiles $\ge 44\text{px}$ en botones de copiado de folio y WhatsApp directo, y anillos de foco visibles en acordeones.
   - Sincronización fiel de los Skeletons de carga en `OrdersList.tsx` y `PaymentsList.tsx` a la nueva cuadrícula de 2 hechos clave.
+- **Soporte Dual para Activador Maestro & Nomenclatura Descriptiva de Conversaciones (2026-08-27)**:
+  - Actualización de `AGENTS.md`, `GEMINI.md`, `.agents/skills/burgers-exe/SKILL.md` y `.agents/rules/00-hard-constraints.md` para soportar Modo Estatus (`burgers.exe` solo) y Modo Acción Directa (`burgers.exe: <tarea>`, `/plan burgers.exe: <tarea>`, `/burgers <tarea>`).
+  - Permite titular conversaciones de forma descriptiva en la UI de Antigravity y ejecutar tareas inmediatamente con contexto precargado.
