@@ -398,7 +398,11 @@ export function extractKitchenTicketItems(rawItems: OrderV2Item[] = []): {
               if (e && typeof e === 'object') {
                 const eRec = e as Record<string, unknown>;
                 const eName = typeof eRec.name === 'string' ? eRec.name.trim() : '';
-                return eName ? [{ name: eName }] : [];
+                if (!eName) return [];
+                const sku = typeof eRec.sku === 'string' ? eRec.sku.trim() : undefined;
+                const price = typeof eRec.price === 'number' ? eRec.price : undefined;
+                const qty = typeof eRec.qty === 'number' ? eRec.qty : undefined;
+                return [{ name: eName, ...(sku ? { sku } : {}), ...(price !== undefined ? { price } : {}), ...(qty ? { qty } : {}) }];
               }
               return [];
             })

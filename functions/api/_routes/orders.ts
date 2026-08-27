@@ -38,6 +38,8 @@ type CatalogRow = {
   sku: string;
   name: string;
   price_cents: number;
+  promo_price_cents?: number | null;
+  is_promo_active?: number;
   is_available: number;
   category_key: string;
   tags_json: string;
@@ -536,7 +538,7 @@ const loadCatalogRows = async (db: D1Database, skus: string[]): Promise<CatalogR
   try {
     const result = await db
       .prepare(
-        `SELECT sku, name, price_cents, CASE WHEN COALESCE(is_hidden, 0) = 1 THEN 0 WHEN stock_managed = 1 AND COALESCE(stock_remaining, 0) <= 0 THEN 0 ELSE is_available END AS is_available, category_key, tags_json, badge, promo_label, stock_managed, stock_remaining
+        `SELECT sku, name, price_cents, promo_price_cents, is_promo_active, CASE WHEN COALESCE(is_hidden, 0) = 1 THEN 0 WHEN stock_managed = 1 AND COALESCE(stock_remaining, 0) <= 0 THEN 0 ELSE is_available END AS is_available, category_key, tags_json, badge, promo_label, stock_managed, stock_remaining
        FROM menu_items
        WHERE sku IN (${placeholders})`
       )
@@ -546,7 +548,7 @@ const loadCatalogRows = async (db: D1Database, skus: string[]): Promise<CatalogR
   } catch {
     const result = await db
       .prepare(
-        `SELECT sku, name, price_cents, CASE WHEN stock_managed = 1 AND COALESCE(stock_remaining, 0) <= 0 THEN 0 ELSE is_available END AS is_available, category_key, tags_json, badge, promo_label, stock_managed, stock_remaining
+        `SELECT sku, name, price_cents, promo_price_cents, is_promo_active, CASE WHEN stock_managed = 1 AND COALESCE(stock_remaining, 0) <= 0 THEN 0 ELSE is_available END AS is_available, category_key, tags_json, badge, promo_label, stock_managed, stock_remaining
        FROM menu_items
        WHERE sku IN (${placeholders})`
       )
@@ -891,7 +893,13 @@ ordersRouter.post('/', async (c) => {
         if (!catalogExtra || Number(catalogExtra.is_available) !== 1 || catalogExtra.category_key !== 'extras') {
           return errorResponse(400, 'INVALID_CUSTOMIZATIONS', 'Uno o más extras no existen, no están disponibles o no son extras.');
         }
-        validExtras.push({ sku: catalogExtra.sku, name: catalogExtra.name, price: Number(catalogExtra.price_cents) / 100 });
+        const qtyMatch = extra.name ? extra.name.match(/^(\d+)x/i) : null;
+        const qty = typeof (extra as any).qty === 'number' && (extra as any).qty > 0
+          ? (extra as any).qty
+          : (qtyMatch ? parseInt(qtyMatch[1], 10) : 1);
+        const name = qty > 1 ? `${qty}x ${catalogExtra.name}` : catalogExtra.name;
+        const price = (Number(catalogExtra.price_cents) / 100) * qty;
+        validExtras.push({ sku: catalogExtra.sku, name, price, qty });
       }
       item.extras = validExtras;
       if (item.garnish) {
@@ -927,7 +935,13 @@ ordersRouter.post('/', async (c) => {
           if (!catalogExtra || Number(catalogExtra.is_available) !== 1 || catalogExtra.category_key !== 'extras') {
             return errorResponse(400, 'INVALID_CUSTOMIZATIONS', 'Uno o más extras de burger de combo no existen o no están disponibles.');
           }
-          validBurgerExtras.push({ sku: catalogExtra.sku, name: catalogExtra.name, price: Number(catalogExtra.price_cents) / 100 });
+          const qtyMatch = extra.name ? extra.name.match(/^(\d+)x/i) : null;
+          const qty = typeof (extra as any).qty === 'number' && (extra as any).qty > 0
+            ? (extra as any).qty
+            : (qtyMatch ? parseInt(qtyMatch[1], 10) : 1);
+          const name = qty > 1 ? `${qty}x ${catalogExtra.name}` : catalogExtra.name;
+          const price = (Number(catalogExtra.price_cents) / 100) * qty;
+          validBurgerExtras.push({ sku: catalogExtra.sku, name, price, qty });
         }
         validComboBurgers.push({ ...burger, extras: validBurgerExtras });
       }
@@ -952,10 +966,21 @@ ordersRouter.post('/', async (c) => {
     const purchasedQtyBySku = new Map<string, number>();
     for (const item of parsed.items) {
       purchasedQtyBySku.set(item.sku, (purchasedQtyBySku.get(item.sku) ?? 0) + item.qty);
-      for (const extra of item.extras) purchasedQtyBySku.set(extra.sku!, (purchasedQtyBySku.get(extra.sku!) ?? 0) + item.qty);
+      for (const extra of item.extras) {
+        const extraQty = (extra as any).qty || 1;
+        purchasedQtyBySku.set(extra.sku!, (purchasedQtyBySku.get(extra.sku!) ?? 0) + (extraQty * item.qty));
+      }
       if (item.garnish?.sku) purchasedQtyBySku.set(item.garnish.sku, (purchasedQtyBySku.get(item.garnish.sku) ?? 0) + item.qty);
       if (item.includedDrink?.sku) purchasedQtyBySku.set(item.includedDrink.sku, (purchasedQtyBySku.get(item.includedDrink.sku) ?? 0) + item.qty);
-      for (const extra of item.sideQuestExtras) purchasedQtyBySku.set(extra.sku!, (purchasedQtyBySku.get(extra.sku!) ?? 0) + item.qty);
+      for (const extra of item.sideQuestExtras) {
+        purchasedQtyBySku.set(extra.sku!, (purchasedQtyBySku.get(extra.sku!) ?? 0) + item.qty);
+      }
+      for (const cb of item.comboBurgers) {
+        for (const extra of cb.extras) {
+          const extraQty = (extra as any).qty || 1;
+          purchasedQtyBySku.set(extra.sku!, (purchasedQtyBySku.get(extra.sku!) ?? 0) + (extraQty * item.qty));
+        }
+      }
     }
     for (const [sku, qty] of purchasedQtyBySku.entries()) {
       const row = catalogBySku.get(sku);
@@ -969,7 +994,8 @@ ordersRouter.post('/', async (c) => {
     const folio = isPreviewOrder ? generatePreviewFolio(new Date(now)) : generateFolio(new Date(now));
     const orderItems = parsed.items.map((item) => {
       const catalogItem = catalogBySku.get(item.sku)!;
-      const unitPriceCents = Number(catalogItem.price_cents);
+      const isPromo = Number(catalogItem.is_promo_active) === 1 && catalogItem.promo_price_cents != null && Number(catalogItem.promo_price_cents) < Number(catalogItem.price_cents);
+      const unitPriceCents = isPromo ? Number(catalogItem.promo_price_cents) : Number(catalogItem.price_cents);
       const extrasTotalCents = item.extras.reduce((acc, extra) => acc + Math.round((extra.price ?? 0) * 100), 0);
       const sideQuestExtrasTotalCents = item.sideQuestExtras.reduce((acc, extra) => acc + Math.round((extra.price ?? 0) * 100), 0);
       const includedGarnishUpchargeCents = item.garnish?.sku ? Math.round((item.garnish.upcharge ?? 0) * 100) : 0;
