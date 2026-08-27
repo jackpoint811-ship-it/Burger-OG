@@ -38,6 +38,8 @@ import {
   useKitchenDisplay,
   useKitchenSummaryKQuery,
   computeKitchenAggregates,
+  formatKitchenExtraLabel,
+  formatKitchenRemovalLabel,
   type AggregatedMiseEnPlace,
 } from '../../features/kitchen';
 import { extractOrderTargetDate } from '../shared/HorizontalDateCalendarFilter';
@@ -758,7 +760,7 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
                           className="p-3 rounded-2xl bg-surface-raised border border-line flex items-center justify-between gap-3"
                         >
                           <p className="font-black text-sm text-text-primary truncate">
-                            +{extra.name}
+                            {formatKitchenExtraLabel(extra)}
                           </p>
 
                           <div className="flex items-center gap-2 shrink-0">
@@ -813,7 +815,7 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-black text-sm text-red-700 dark:text-red-300 truncate">
-                          🔴 SIN {rem.name.toUpperCase()}
+                          {formatKitchenRemovalLabel(rem.name)}
                         </span>
                         <span className="px-2.5 py-1 rounded-xl bg-red-600 text-white font-black text-xs shrink-0 shadow-xs">
                           x{rem.count}

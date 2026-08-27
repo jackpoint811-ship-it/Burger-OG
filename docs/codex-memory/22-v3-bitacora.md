@@ -567,13 +567,21 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Semáforo por color de fondo/texto sin texto redundante:
     - `🟢 Verde`: Abierta / Recibe pedidos hoy.
     - `🟡 Amarillo`: No disponible hoy (es para programar en próxima ruta de entrega).
-### 📅 2026-08-26 — Sesión 58: Cuadrícula Estricta de 2 Columnas en Móvil para Favoritos & Categorías Maestras
-- **⭐ Cuadrícula de Favoritos en 2 Columnas Fijas (`AdminQuickFavorites.tsx`)**:
-  - Eliminado el riel deslizable; restaurada la cuadrícula de 2 columnas de cuadritos compactos táctiles en móvil (`grid-cols-2 min-h-[64px]`), 3 en tablet y 6 en desktop con 0 scrolls y visibilidad instantánea.
-- **📊 6 Categorías Maestras en 2 Columnas en Móvil (`AdminHubGrid.tsx`)**:
-  - Reemplazado `grid-cols-1 md:grid-cols-2` por `grid-cols-2 gap-2.5 sm:gap-4 lg:gap-5` para renderizar 2 columnas exactas en móvil.
-  - Tarjetas Bento adaptativas: títulos concisos (`text-xs sm:text-base`), iconos `w-8 h-8 sm:w-12 sm:h-12`, métricas optimizadas en pastillas compactas y botón directo `[ Abrir → ]`.
-- **Verificación**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.07s), `npm run build:public` ✅ (6.25s).
+### 📅 2026-08-27 — Sesión 59: Personalizaciones, Extras, Desaturación Visual & Aislamiento Estricto de Estaciones en Cocina V3
+- **🛡️ Aislamiento Estricto por Estación (Cero Órdenes sin Side Quest en Side Quest)**:
+  - Eliminado el incremento erróneo de `totalExtrasCount` por extras de hamburguesas en `extractKitchenTicketItems`.
+  - `KitchenDisplay.tsx` y `KitchenActiveStation.tsx` ahora filtran de forma determinista basándose estrictamente en las unidades físicas reales (`productionUnits.some(u => u.station === 'sideQuest')` y `u.station === 'prep'`).
+  - `CocinaView.tsx` calcula los badges numéricos de las pestañas `🍔 Preparación` y `🍟 Side Quest` basándose exclusivamente en las unidades asignadas a cada estación.
+- **🍔 Flujo de Personalización Resiliente & Combos (`ProductDetailDrawer.tsx`)**:
+  - Inferencia automática de hamburguesas base para cualquier combo si `comboLinks` no está poblado en D1, garantizando que siempre se exponga el acordeón de personalización de ingredientes y extras.
+  - Filtrado estricto de extras con `qty > 0` para preservar cantidades exactas.
+- **🧩 Unificación de Modificaciones & Desaturación Visual en KDS (`KitchenTicketCard.tsx`)**:
+  - Eliminados los dos bloques separados para remociones y extras; unificadas todas las modificaciones en un solo contenedor fluido de pastillas de alto contraste.
+  - Nomenclatura desaturada y compacta: `- [Ingrediente]` (ej. `- Cebolla`, `- Pepinillos`) y `+ [Cantidad] [Extra]` (ej. `+2 Tocino`, `+2 Carne Extra`, `+ Queso Americano`).
+  - Erradicados textos saturados `🔴 SIN ...` con puntos parpadeantes y `🟢 +EXTRA 2X ...`.
+- **🏷️ Estandarización en Pedidos, Drawer y Tickets Térmicos**:
+  - `OrderCard.tsx`, `OrderDetailDrawer.tsx`, `OrderTicketModal.tsx`, `ticket.utils.ts` y `KitchenSummaryK.tsx` adaptados a la misma sintaxis compacta `-` y `+`.
+- **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (9.35s), `npm run build:chekeo` ✅ (8.17s).
 
 ---
 

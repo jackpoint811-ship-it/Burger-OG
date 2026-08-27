@@ -55,18 +55,16 @@ export function KitchenActiveStation({
     toggleUnitDone,
   } = useKitchenItemTracking();
 
-  // Filtrar tickets correspondientes a esta estación
+  // Filtrar tickets correspondientes a esta estación de forma estricta por productionUnits
   const stationTickets = useMemo(() => {
     return tickets.filter((t) => {
       if (laneMode === 'prep') {
-        return t.totalBurgersCount > 0 || (t.productionUnits || []).some((u) => u.station === 'prep');
+        return (t.productionUnits || []).some((u) => u.station === 'prep');
       }
-      return (
-        t.totalGarnishesCount > 0 ||
-        t.totalDrinksCount > 0 ||
-        t.totalExtrasCount > 0 ||
-        (t.productionUnits || []).some((u) => u.station === 'sideQuest')
-      );
+      if (laneMode === 'sideQuest') {
+        return (t.productionUnits || []).some((u) => u.station === 'sideQuest');
+      }
+      return true;
     });
   }, [tickets, laneMode]);
 
@@ -192,13 +190,15 @@ export function KitchenActiveStation({
             {pendingTickets
               .filter((t) => t.id !== activeTicket?.id)
               .map((ticket) => {
-                const laneItemsSummary = ticket.items
-                  .filter((i) => {
-                    if (laneMode === 'prep') return i.itemKind === 'burger' || i.itemKind === 'combo';
-                    if (laneMode === 'sideQuest') return i.itemKind !== 'burger';
-                    return true;
+                const laneUnits = (ticket.productionUnits || []).filter((u) => u.station === laneMode);
+                const laneItemsSummary = laneUnits
+                  .map((u) => {
+                    const mods = [
+                      ...(u.removedIngredients || []).map((m) => `-${m}`),
+                      ...(u.extras || []).map((e) => `+${e.name}`),
+                    ];
+                    return mods.length > 0 ? `${u.name} (${mods.join(', ')})` : u.name;
                   })
-                  .map((i) => `${i.qty}x ${i.name}`)
                   .join(' · ');
 
                 const queueLocation = formatKitchenLocation(ticket.location);

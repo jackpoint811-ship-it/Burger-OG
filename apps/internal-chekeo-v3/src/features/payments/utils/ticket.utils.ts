@@ -16,6 +16,10 @@ import {
   PAYMENT_METHOD_LABELS,
   PAYMENT_STATUS_CONFIGS,
 } from '../../orders';
+import {
+  formatKitchenExtraLabel,
+  formatKitchenRemovalLabel,
+} from '../../kitchen';
 
 /**
  * Genera el contenido en texto monoespaciado estandarizado para impresión o copia.
@@ -69,11 +73,11 @@ export function generateVerticalTicketText(order: OrderV2): string {
     }
 
     if (item.removedIngredients.length > 0) {
-      lines.push(`      • [SIN]: ${item.removedIngredients.join(', ')}`);
+      lines.push(`      • ${item.removedIngredients.map((r) => formatKitchenRemovalLabel(r)).join(', ')}`);
     }
 
     if (item.extras.length > 0) {
-      lines.push(`      • [+EXTRA]: ${item.extras.map((e) => e.name).join(', ')}`);
+      lines.push(`      • ${item.extras.map((e) => formatKitchenExtraLabel(e)).join(', ')}`);
     }
 
     if (item.burgerNote) {

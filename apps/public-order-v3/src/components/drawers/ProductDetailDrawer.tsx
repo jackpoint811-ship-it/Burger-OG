@@ -133,7 +133,7 @@ export function ProductDetailDrawer() {
       }));
   }, [isCombo, drinkGroup, allMenuItems]);
 
-  // Burgers included in combo (FILTRADAS ESTRICTAMENTE POR CATEGORÍA BURGERS)
+  // Burgers included in combo (FILTRADAS ESTRICTAMENTE POR CATEGORÍA BURGERS CON INFERENCIA RESILIENTE)
   const comboBurgerProducts = useMemo(() => {
     if (!isCombo || !product) return [];
     const fromLinks = (product.comboLinks ?? [])
@@ -141,7 +141,24 @@ export function ProductDetailDrawer() {
       .filter((p): p is MenuItem => Boolean(p && p.category.toLowerCase() === 'burgers' && p.isAvailable !== false));
 
     if (fromLinks.length > 0) return fromLinks;
-    return product.category.toLowerCase() === 'burgers' ? [product] : [];
+
+    // Fallback resiliente: Buscar hamburguesa coincidente en el menú por SKU limpio o nombre
+    const cleanSku = product.sku.replace(/^COMBO_?/i, '');
+    const matched = allMenuItems.find(
+      (p) =>
+        p.category.toLowerCase() === 'burgers' &&
+        p.isAvailable !== false &&
+        (p.sku.toUpperCase() === cleanSku.toUpperCase() ||
+          product.name.toLowerCase().includes(p.name.toLowerCase()))
+    );
+
+    if (matched) return [matched];
+
+    // Fallback final: Primera burger disponible
+    const firstBurger = allMenuItems.find(
+      (p) => p.category.toLowerCase() === 'burgers' && p.isAvailable !== false
+    );
+    return firstBurger ? [firstBurger] : (product.category.toLowerCase() === 'burgers' ? [product] : []);
   }, [isCombo, product, allMenuItems]);
 
   // Reset or initialize state when product changes or drawer opens
@@ -418,7 +435,7 @@ export function ProductDetailDrawer() {
       removedIngredients: mode === 'customize' ? removedIngredients : [],
       extras:
         mode === 'customize'
-          ? extras.map((e) => ({ sku: e.sku, name: `${e.qty}x ${e.name}`, price: e.price * e.qty }))
+          ? extras.filter((e) => e.qty > 0).map((e) => ({ sku: e.sku, name: `${e.qty}x ${e.name}`, price: e.price * e.qty }))
           : [],
       burgerNote: specialNote.trim() || undefined,
       garnish:
@@ -444,7 +461,7 @@ export function ProductDetailDrawer() {
                 sku: burger.sku,
                 name: burger.name,
                 removedIngredients: draft?.removedIngredients ?? [],
-                extras: (draft?.extras ?? []).map((e) => ({
+                extras: (draft?.extras ?? []).filter((e) => e.qty > 0).map((e) => ({
                   sku: e.sku,
                   name: `${e.qty}x ${e.name}`,
                   price: e.price * e.qty,

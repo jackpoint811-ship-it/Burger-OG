@@ -90,6 +90,31 @@ export function formatKitchenLocation(locationRaw?: string): string {
   return 'Torre GGA';
 }
 
+/**
+ * Formatea un extra con prefijo '+' y cantidad explícita si es > 1 (o '+ Nombre' si es 1).
+ * Ejemplos: "2x Tocino" -> "+2 Tocino", "1x Tocino" -> "+ Tocino", "Carne Extra" -> "+ Carne Extra"
+ */
+export function formatKitchenExtraLabel(extra: { name: string; sku?: string }): string {
+  const raw = (extra.name || '').trim();
+  const match = raw.match(/^(\d+)\s*x\s*(.*)$/i) || raw.match(/^\+?(\d+)\s+(.*)$/i);
+  if (match) {
+    const qty = parseInt(match[1], 10);
+    const cleanName = match[2].trim().replace(/^\+EXTRA\s*/i, '').replace(/^\+?\s*/, '');
+    return qty > 1 ? `+${qty} ${cleanName}` : `+ ${cleanName}`;
+  }
+  const cleanName = raw.replace(/^\+EXTRA\s*/i, '').replace(/^\+?\s*/, '');
+  return `+ ${cleanName}`;
+}
+
+/**
+ * Formatea una remoción con prefijo '-' de forma limpia y concisa (ej. "- Cebolla").
+ * Ejemplos: "Cebolla" -> "- Cebolla", "SIN PEPINILLOS" -> "- Pepinillos"
+ */
+export function formatKitchenRemovalLabel(mod: string): string {
+  const clean = mod.trim().replace(/^SIN\s+/i, '').replace(/^-?\s*/, '');
+  return `- ${clean}`;
+}
+
 // ─── Resumen K / Agregadores de Insumos (Mise en Place) ───────────────────────
 
 export interface PhysicalSuppliesChecklist {
@@ -272,8 +297,6 @@ export function extractKitchenTicketItems(rawItems: OrderV2Item[] = []): {
         }));
     }
 
-    totalExtrasCount += extras.length * rawItem.qty;
-
     // Guarnición
     let garnish: { sku?: string; name: string; upcharge?: number } | null = null;
     if (snapshot.garnish && typeof snapshot.garnish === 'object') {
@@ -352,8 +375,6 @@ export function extractKitchenTicketItems(rawItems: OrderV2Item[] = []): {
             })
           : [];
         const burgerNote = typeof rec.burgerNote === 'string' && rec.burgerNote.trim() ? rec.burgerNote.trim() : undefined;
-
-        totalExtrasCount += extraList.length * rawItem.qty;
 
         return [{
           name,

@@ -45,6 +45,10 @@ import {
   getWhatsAppLink,
   useUpdateOrderStatusMutation,
 } from '../../features/orders';
+import {
+  formatKitchenExtraLabel,
+  formatKitchenRemovalLabel,
+} from '../../features/kitchen';
 
 export interface OrderDetailDrawerProps {
   order: OrderV2 | null;
@@ -246,31 +250,24 @@ export function OrderDetailDrawer({
                   </div>
                 )}
 
-                {/* Remociones */}
-                {item.removedIngredients.length > 0 && (
-                  <div className="pl-8 flex flex-wrap gap-1">
+                {/* Modificaciones Unificadas (- Remociones / + Extras) */}
+                {(item.removedIngredients.length > 0 || item.extras.length > 0) && (
+                  <div className="pl-8 flex flex-wrap gap-1.5 pt-0.5">
                     {item.removedIngredients.map((ing, i) => (
                       <span
-                        key={i}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/10 text-red-600 dark:text-red-400 text-[11px] font-bold border border-red-500/20"
+                        key={`rem-${i}`}
+                        className="inline-flex items-center px-2 py-0.5 rounded-md bg-red-500/10 text-red-600 dark:text-red-400 text-[11px] font-black border border-red-500/20"
                       >
-                        <CircleSlash2 className="w-2.5 h-2.5 shrink-0" />
-                        <span>Sin {ing}</span>
+                        {formatKitchenRemovalLabel(ing)}
                       </span>
                     ))}
-                  </div>
-                )}
-
-                {/* Extras */}
-                {item.extras.length > 0 && (
-                  <div className="pl-8 flex flex-wrap gap-1">
                     {item.extras.map((extra, i) => (
                       <span
-                        key={i}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-accent-soft text-accent text-[11px] font-bold border border-accent/20"
+                        key={`ext-${i}`}
+                        className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[11px] font-black border border-emerald-500/20"
                       >
-                        <Plus className="w-2.5 h-2.5 shrink-0" />
-                        <span>{extra.name} {extra.price ? `(${formatCurrency(extra.price)})` : ''}</span>
+                        {formatKitchenExtraLabel(extra)}
+                        {extra.price ? ` (${formatCurrency(extra.price)})` : ''}
                       </span>
                     ))}
                   </div>
@@ -292,22 +289,16 @@ export function OrderDetailDrawer({
                           <Utensils className="w-3 h-3 text-accent shrink-0" />
                           <span>{burger.name}</span>
                         </span>
-                        {burger.removedIngredients.length > 0 && (
+                        {(burger.removedIngredients.length > 0 || burger.extras.length > 0) && (
                           <div className="flex flex-wrap gap-1">
                             {burger.removedIngredients.map((ing, bi) => (
-                              <span key={bi} className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-red-500/10 text-red-600 text-[10px] font-bold">
-                                <CircleSlash2 className="w-2.5 h-2.5 shrink-0" />
-                                <span>Sin {ing}</span>
+                              <span key={`cb-rem-${bi}`} className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 text-[10px] font-black border border-red-500/20">
+                                {formatKitchenRemovalLabel(ing)}
                               </span>
                             ))}
-                          </div>
-                        )}
-                        {burger.extras.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
                             {burger.extras.map((ext, bi) => (
-                              <span key={bi} className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-accent/10 text-accent text-[10px] font-bold">
-                                <Plus className="w-2.5 h-2.5 shrink-0" />
-                                <span>{ext.name}</span>
+                              <span key={`cb-ext-${bi}`} className="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[10px] font-black border border-emerald-500/20">
+                                {formatKitchenExtraLabel(ext)}
                               </span>
                             ))}
                           </div>
