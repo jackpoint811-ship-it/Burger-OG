@@ -57,9 +57,8 @@ export function CancelOrderModal({ order, open, onClose }: CancelOrderModalProps
         reason: finalReason,
       });
       onClose();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'No se pudo cancelar el pedido. Inténtalo de nuevo.';
-      setErrorMsg(message);
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'No se pudo cancelar el pedido. Inténtalo de nuevo.');
     }
   };
 
@@ -82,18 +81,15 @@ export function CancelOrderModal({ order, open, onClose }: CancelOrderModalProps
           <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">
             Motivo de Cancelación
           </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="radiogroup" aria-label="Motivo de cancelación">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {CANCEL_REASON_PRESETS.map((preset) => {
               const isSelected = selectedPreset === preset;
               return (
                 <button
                   key={preset}
                   type="button"
-                  role="radio"
-                  aria-checked={isSelected}
-                  tabIndex={isSelected ? 0 : -1}
                   onClick={() => handlePresetSelect(preset)}
-                  className={`text-left p-3 rounded-2xl text-xs font-semibold border transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger ${
+                  className={`text-left p-3 rounded-2xl text-xs font-semibold border transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-danger/10 border-danger text-danger ring-1 ring-danger/30'
                       : 'bg-surface-raised border-line text-text-primary hover:border-line/80'

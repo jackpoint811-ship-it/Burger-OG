@@ -27,23 +27,23 @@ export function ChekeoApp() {
   // Si está autenticado, renderizar AppShell con pestañas
   return (
     <AppShell activeTab={activeTab} onTabChange={setActiveTab}>
-      <TabsContent value="operacion" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-3xl m-0">
+      <TabsContent value="operacion" className="focus-visible:outline-none m-0">
         <OperacionView onTabChange={setActiveTab} />
       </TabsContent>
 
-      <TabsContent value="pedidos" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-3xl m-0">
+      <TabsContent value="pedidos" className="focus-visible:outline-none m-0">
         <PedidosView />
       </TabsContent>
 
-      <TabsContent value="cocina" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-3xl m-0">
+      <TabsContent value="cocina" className="focus-visible:outline-none m-0">
         <CocinaView />
       </TabsContent>
 
-      <TabsContent value="pagos" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-3xl m-0">
+      <TabsContent value="pagos" className="focus-visible:outline-none m-0">
         <PagosView />
       </TabsContent>
 
-      <TabsContent value="admin" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-3xl m-0">
+      <TabsContent value="admin" className="focus-visible:outline-none m-0">
         <AdminView />
       </TabsContent>
     </AppShell>

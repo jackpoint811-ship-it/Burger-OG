@@ -31,7 +31,7 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
     headers,
   });
 
-  let data: unknown = null;
+  let data: any = null;
   const contentType = response.headers.get('content-type') || '';
   if (contentType.includes('application/json')) {
     try {
@@ -52,21 +52,20 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
     let errorMessage = `Request failed with status ${response.status}`;
 
     if (data && typeof data === 'object') {
-      const rec = data as Record<string, unknown>;
-      if (typeof rec.code === 'string') {
-        errorCode = rec.code;
-      } else if (rec.error && typeof rec.error === 'object' && typeof (rec.error as Record<string, unknown>).code === 'string') {
-        errorCode = (rec.error as Record<string, unknown>).code as string;
-      } else if (typeof rec.error === 'string') {
-        errorCode = rec.error;
+      if (typeof data.code === 'string') {
+        errorCode = data.code;
+      } else if (data.error && typeof data.error === 'object' && typeof data.error.code === 'string') {
+        errorCode = data.error.code;
+      } else if (typeof data.error === 'string') {
+        errorCode = data.error;
       }
 
-      if (typeof rec.message === 'string') {
-        errorMessage = rec.message;
-      } else if (rec.error && typeof rec.error === 'object' && typeof (rec.error as Record<string, unknown>).message === 'string') {
-        errorMessage = (rec.error as Record<string, unknown>).message as string;
-      } else if (typeof rec.error === 'string') {
-        errorMessage = rec.error;
+      if (typeof data.message === 'string') {
+        errorMessage = data.message;
+      } else if (data.error && typeof data.error === 'object' && typeof data.error.message === 'string') {
+        errorMessage = data.error.message;
+      } else if (typeof data.error === 'string') {
+        errorMessage = data.error;
       }
     }
 

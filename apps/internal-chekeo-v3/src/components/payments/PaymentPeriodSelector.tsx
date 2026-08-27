@@ -63,27 +63,18 @@ export function PaymentPeriodSelector({
   const [currentYear, setCurrentYear] = useState(initialYearMonth.year);
   const [currentMonth, setCurrentMonth] = useState(initialYearMonth.month);
 
-  // Cerrar popover al hacer clic fuera o presionar Escape
+  // Cerrar popover al hacer clic fuera
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
         setCalendarOpen(false);
       }
     }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setCalendarOpen(false);
-      }
-    }
-
     if (calendarOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [calendarOpen]);
 
@@ -420,14 +411,12 @@ export function PaymentPeriodSelector({
             )}
           </button>
 
-          {/* Selector de Fecha Específica con Mini Calendario Popover */}
+          {/* 🗓️ Selector de Fecha Específica con Mini Calendario Popover */}
           <div className="relative" ref={popoverRef}>
             <button
               type="button"
               onClick={() => setCalendarOpen((prev) => !prev)}
-              aria-expanded={calendarOpen}
-              aria-haspopup="dialog"
-              className={`h-10 px-3.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+              className={`h-10 px-3.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer select-none ${
                 isSpecificDateSelected
                   ? 'bg-blue-600 text-white shadow-xs ring-2 ring-blue-600/30'
                   : 'bg-surface-raised border border-line text-text-secondary hover:text-text-primary hover:border-line/80'
@@ -443,12 +432,7 @@ export function PaymentPeriodSelector({
 
             {/* Popover Mini Calendario Mensual */}
             {calendarOpen && (
-              <div
-                role="dialog"
-                aria-modal="true"
-                aria-label="Calendario de selección de fechas"
-                className="absolute left-0 top-12 mt-1 z-50 w-80 p-4 bg-surface-card border border-line rounded-3xl shadow-floating space-y-3 animate-in fade-in zoom-in-95 duration-150"
-              >
+              <div className="absolute left-0 top-12 mt-1 z-50 w-80 p-4 bg-surface-card border border-line rounded-3xl shadow-floating space-y-3 animate-in fade-in zoom-in-95 duration-150">
                 {/* Header del Calendario: Mes/Año y Controles */}
                 <div className="flex items-center justify-between border-b border-line pb-2.5">
                   <div className="flex items-center gap-1.5">

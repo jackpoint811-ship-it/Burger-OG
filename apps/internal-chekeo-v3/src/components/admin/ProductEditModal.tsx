@@ -124,18 +124,6 @@ export function ProductEditModal({
     setError(null);
   }, [isOpen, item, categories]);
 
-  // Listener para cerrar con tecla Escape
-  useEffect(() => {
-    if (!isOpen) return;
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
   if (!isOpen) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,75 +145,48 @@ export function ProductEditModal({
     setSelectedFile(null);
     setImagePreview(null);
     setRemoveExistingImage(true);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Validation
     const cleanSku = sku.trim().toUpperCase();
-    const cleanName = name.trim();
-    const cleanPrice = parseFloat(price);
-
     if (!cleanSku) {
-      setError('El SKU es obligatorio (ej. BURGER_OG_SENCILLA)');
+      setError('El SKU es obligatorio (ej. BURGER-OG)');
       return;
     }
-    if (!cleanName) {
+
+    if (!name.trim()) {
       setError('El nombre del producto es obligatorio');
       return;
     }
-    if (isNaN(cleanPrice) || cleanPrice < 0) {
-      setError('El precio debe ser un número válido mayor o igual a 0');
+
+    const numPrice = Number(price);
+    if (Number.isNaN(numPrice) || numPrice < 0) {
+      setError('El precio debe ser un número mayor o igual a 0');
       return;
-    }
-
-    let parsedPromoPrice: number | null = null;
-    if (isPromoActive) {
-      parsedPromoPrice = parseFloat(promoPrice);
-      if (isNaN(parsedPromoPrice) || parsedPromoPrice < 0) {
-        setError('El precio promocional debe ser un número válido');
-        return;
-      }
-    }
-
-    let parsedStockLimit: number | null = null;
-    let parsedStockRemaining: number | null = null;
-    if (stockManaged) {
-      parsedStockLimit = parseInt(stockLimit, 10);
-      parsedStockRemaining = parseInt(stockRemaining, 10);
-      if (isNaN(parsedStockLimit) || parsedStockLimit < 0) {
-        setError('El límite de stock debe ser un entero positivo');
-        return;
-      }
-      if (isNaN(parsedStockRemaining) || parsedStockRemaining < 0) {
-        setError('El stock restante debe ser un entero positivo');
-        return;
-      }
     }
 
     const payload: CreateMenuItemPayload = {
       sku: cleanSku,
-      name: cleanName,
+      name: name.trim(),
       description: description.trim(),
       category,
-      price: cleanPrice,
+      price: numPrice,
       badge: badge.trim() || undefined,
-      sortOrder: parseInt(sortOrder, 10) || 0,
+      sortOrder: Number(sortOrder) || 0,
       isAvailable,
       isHidden,
       isFeatured,
       isPromoActive,
-      promoPrice: parsedPromoPrice,
       promoLabel: promoLabel.trim() || undefined,
-      promoExpiresAt: promoExpiresAt ? new Date(promoExpiresAt).toISOString() : null,
+      promoPrice: isPromoActive && promoPrice ? Number(promoPrice) : null,
+      promoExpiresAt: isPromoActive && promoExpiresAt ? new Date(promoExpiresAt).toISOString() : null,
       stockManaged,
-      stockLimit: parsedStockLimit,
-      stockRemaining: parsedStockRemaining,
+      stockLimit: stockManaged && stockLimit ? Number(stockLimit) : null,
+      stockRemaining: stockManaged && stockRemaining ? Number(stockRemaining) : null,
       comboLinks: item?.comboLinks || [],
     };
 
@@ -235,9 +196,8 @@ export function ProductEditModal({
       }
       await onSave(cleanSku, payload, selectedFile);
       onClose();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error al guardar el producto';
-      setError(message);
+    } catch (err: any) {
+      setError(err?.message || 'Error al guardar el producto');
     }
   };
 

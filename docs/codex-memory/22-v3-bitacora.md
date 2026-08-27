@@ -579,22 +579,9 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Eliminados los dos bloques separados para remociones y extras; unificadas todas las modificaciones en un solo contenedor fluido de pastillas de alto contraste.
   - Nomenclatura desaturada y compacta: `- [Ingrediente]` (ej. `- Cebolla`, `- Pepinillos`) y `+ [Cantidad] [Extra]` (ej. `+2 Tocino`, `+2 Carne Extra`, `+ Queso Americano`).
   - Erradicados textos saturados `🔴 SIN ...` con puntos parpadeantes y `🟢 +EXTRA 2X ...`.
-### 📅 2026-08-27 — Sesión 60: Auditoría Integral 360° Chekeo V3 + Hardening A11y, Timezone y Tokens
-- **🔍 Auditoría Integral 360° en 86 Archivos**:
-  - Creación del documento exhaustivo permanente en `docs/auditorias/chekeo-v3-auditoria-completa.md` (828 líneas) cubriendo las 5 pestañas: Operación, Pedidos, Cocina (KDS), Pagos y Admin.
-- **⚡ Corrección de Timezone CDMX en Operación (`OperacionView.tsx`)**:
-  - Sustituido `new Date()` local por `getCdmxTodayString()` de `@config` para cálculo exacto del turno y venta del día en `America/Mexico_City`.
-- **♿ Accesibilidad WCAG 2.1 AA & Teclado**:
-  - `PaymentKpiHeader.tsx`: Incorporación de `onKeyDown` con soporte para Enter y Espacio en las 4 tarjetas KPI con `role="button"`.
-  - `OrdersFilterBar.tsx` / `PaymentsFilterBar.tsx` / `PaymentPeriodSelector.tsx`: Soporte de cierre con tecla <kbd>Escape</kbd>, atributos `role="dialog"`, `aria-modal="true"`, `aria-expanded` y `aria-haspopup`.
-  - `CancelOrderModal.tsx`: Soporte de `role="radiogroup"`, `role="radio"`, `aria-checked` y navegación accesible por teclado.
-  - `AuthGate.tsx` / `AdminAuthGate.tsx`: Removido `tabIndex={-1}` del botón toggle de PIN para permitir foco con teclado, y vinculado `aria-describedby` al alert de error.
-  - `TopHeader.tsx` / `OrderCard.tsx` / `BatchActionBar.tsx`: Ampliación de targets táctiles a `min-h-11` (≥ 44px) y adición de `focus-visible:ring-2 focus-visible:ring-accent`.
-- **🎨 Erradicación de Emojis en Interactivos (Lucide SVG)**:
-  - `OperacionView.tsx`, `CocinaView.tsx`, `KitchenSummaryK.tsx` y `RafflesAdminPanel.tsx` migrados a iconos SVG Lucide en botones de acción y tabs.
-- **🛡️ Tipado Estricto TypeScript**:
-  - Sustituido `any` por `unknown` y type guards en `api-client.ts`, `auth.store.ts`, `ProductEditModal.tsx` y `CancelOrderModal.tsx`.
-- **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.56s), `npm run build:public` ✅ (6.00s).
+- **🏷️ Estandarización en Pedidos, Drawer y Tickets Térmicos**:
+  - `OrderCard.tsx`, `OrderDetailDrawer.tsx`, `OrderTicketModal.tsx`, `ticket.utils.ts` y `KitchenSummaryK.tsx` adaptados a la misma sintaxis compacta `-` y `+`.
+- **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (9.35s), `npm run build:chekeo` ✅ (8.17s).
 
 ---
 

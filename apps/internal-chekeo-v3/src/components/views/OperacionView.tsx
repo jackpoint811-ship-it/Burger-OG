@@ -28,7 +28,6 @@ import { useChekeoOrdersQuery } from '../../features/orders';
 import { useKitchenDisplay } from '../../features/kitchen';
 import type { ChekeoTab } from '../shell';
 import type { OrderV2 } from '@config/index';
-import { getCdmxTodayString } from '@config/index';
 
 interface OperacionViewProps {
   onTabChange: (tab: ChekeoTab) => void;
@@ -44,8 +43,12 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
     autoRefresh: true,
   });
 
-  // Fecha de hoy en formato YYYY-MM-DD (Zona Horaria Oficial CDMX)
-  const todayStr = useMemo(() => getCdmxTodayString(), []);
+
+  // Fecha de hoy en formato YYYY-MM-DD
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, []);
 
   // Métricas calculadas reactivamente
   const metrics = useMemo(() => {
@@ -82,8 +85,8 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
     if (metrics.pendingPaymentsCount > 0) {
       return {
         title: 'Confirmar pagos pendientes',
-        detail: `${metrics.pendingPaymentsCount} orden${metrics.pendingPaymentsCount === 1 ? '' : 'es'} requieren validación de cobro o comprobante Transferencia.`,
-        cta: 'Abrir Pagos',
+        detail: `${metrics.pendingPaymentsCount} orden${metrics.pendingPaymentsCount === 1 ? '' : 'es'} requieren validación de cobro o comprobante SPEI.`,
+        cta: 'Abrir Pagos 💳',
         tab: 'pagos' as ChekeoTab,
         badgeColor: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30',
       };
@@ -92,7 +95,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
       return {
         title: 'Preparar comandas en cocina',
         detail: `${metrics.prepCount} orden${metrics.prepCount === 1 ? '' : 'es'} están en cola de plancha / freidora.`,
-        cta: 'Abrir Cocina',
+        cta: 'Abrir Cocina 👨‍🍳',
         tab: 'cocina' as ChekeoTab,
         badgeColor: 'bg-accent-soft text-accent border-accent/30',
       };
@@ -101,7 +104,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
       return {
         title: 'Entregar pedidos listos',
         detail: `${metrics.readyCount} orden${metrics.readyCount === 1 ? '' : 'es'} listas para empaque y despacho al cliente.`,
-        cta: 'Abrir Pedidos',
+        cta: 'Abrir Pedidos 📦',
         tab: 'pedidos' as ChekeoTab,
         badgeColor: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
       };
@@ -147,7 +150,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
           <button
             type="button"
             onClick={() => onTabChange('cocina')}
-            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-accent/50 hover:bg-accent-soft/30 transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-accent/50 hover:bg-accent-soft/30 transition-all text-left cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
               <span className="text-xs font-bold text-text-secondary group-hover:text-accent transition-colors flex items-center gap-1.5">
@@ -169,7 +172,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
           <button
             type="button"
             onClick={() => onTabChange('pagos')}
-            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-amber-500/50 hover:bg-amber-500/5 transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-amber-500/50 hover:bg-amber-500/5 transition-all text-left cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
               <span className="text-xs font-bold text-text-secondary group-hover:text-amber-500 transition-colors flex items-center gap-1.5">
@@ -190,7 +193,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
           <button
             type="button"
             onClick={() => onTabChange('pedidos')}
-            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-accent/50 hover:bg-accent-soft/30 transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-accent/50 hover:bg-accent-soft/30 transition-all text-left cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
               <span className="text-xs font-bold text-text-secondary group-hover:text-accent transition-colors flex items-center gap-1.5">
@@ -211,7 +214,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
           <button
             type="button"
             onClick={() => onTabChange('pedidos')}
-            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-left cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
               <span className="text-xs font-bold text-text-secondary group-hover:text-emerald-500 transition-colors flex items-center gap-1.5">
@@ -235,7 +238,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-0.5">
             <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md border ${nextAction.badgeColor}`}>
-              Siguiente Acción Prioritaria
+              🎯 Siguiente Acción Prioritaria
             </span>
             <h3 className="text-lg font-black text-text-primary tracking-tight mt-1">
               {nextAction.title}
@@ -265,7 +268,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
                 key={order.id}
                 type="button"
                 onClick={() => onTabChange(order.paymentStatus === 'pending' ? 'pagos' : 'pedidos')}
-                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-surface-raised border border-line hover:border-accent/40 hover:bg-surface transition-all text-left cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-surface-raised border border-line hover:border-accent/40 hover:bg-surface transition-all text-left cursor-pointer group"
               >
                 <div className="min-w-0 pr-3">
                   <div className="flex items-center gap-2 mb-0.5">
@@ -277,7 +280,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
                     </span>
                   </div>
                   <p className="text-xs text-text-muted truncate">
-                    {order.items.map((i) => `${i.qty ?? 1}x ${i.name}`).join(' · ')}
+                    {order.items.map((i) => `${i.qty}x ${i.name}`).join(' · ')}
                   </p>
                 </div>
 

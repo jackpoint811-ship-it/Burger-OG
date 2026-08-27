@@ -8,7 +8,6 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Flame, UtensilsCrossed, ClipboardList } from 'lucide-react';
 import { KitchenDisplay, KitchenSummaryK } from '../kitchen';
 import {
   HorizontalDateCalendarFilter,
@@ -73,22 +72,19 @@ export function CocinaView() {
   const laneTabs = [
     {
       id: 'prep' as KitchenLaneTab,
-      label: 'Preparación',
-      icon: Flame,
+      label: '🍔 Preparación',
       badge: prepPendingCount,
       ariaControls: 'kitchen-prep-panel',
     },
     {
       id: 'sideQuest' as KitchenLaneTab,
-      label: 'Side Quest',
-      icon: UtensilsCrossed,
+      label: '🍟 Side Quest',
       badge: sideQuestPendingCount,
       ariaControls: 'kitchen-sidequest-panel',
     },
     {
       id: 'summaryK' as KitchenLaneTab,
-      label: 'Resumen K',
-      icon: ClipboardList,
+      label: '📋 Resumen K',
       badge: null,
       ariaControls: 'kitchen-summaryk-panel',
     },
@@ -105,7 +101,6 @@ export function CocinaView() {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
           {laneTabs.map((tab) => {
             const isActive = activeTab === tab.id;
-            const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
@@ -121,7 +116,6 @@ export function CocinaView() {
                     : 'text-text-secondary hover:text-text-primary hover:bg-surface-raised'
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-surface-card' : 'text-accent'}`} />
                 <span>{tab.label}</span>
                 {typeof tab.badge === 'number' && tab.badge > 0 ? (
                   <span

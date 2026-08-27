@@ -160,7 +160,7 @@ export function RafflesAdminPanel() {
   const handleToggleCodeActive = async (id: string, currentActive: boolean) => {
     try {
       await updateReferralCodeMutation.mutateAsync({ id, payload: { isActive: !currentActive } });
-      setNotice(`Código ${!currentActive ? 'activado' : 'pausado'}`);
+      setNotice(`Código ${!currentActive ? 'activado ✓' : 'pausado ⏸️'}`);
       setTimeout(() => setNotice(null), 2500);
     } catch {
       // Handled
@@ -400,15 +400,7 @@ export function RafflesAdminPanel() {
                     participants.map((p, idx) => (
                       <tr key={p.participantKey} className="hover:bg-surface-raised/40 transition-colors">
                         <td className="py-3 px-4 font-bold text-text-secondary">
-                          {idx === 0 ? (
-                            <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 text-xs font-black">1° Lugar</span>
-                          ) : idx === 1 ? (
-                            <span className="px-2 py-0.5 rounded-md bg-slate-500/15 text-slate-600 dark:text-slate-400 text-xs font-black">2° Lugar</span>
-                          ) : idx === 2 ? (
-                            <span className="px-2 py-0.5 rounded-md bg-amber-700/15 text-amber-800 dark:text-amber-300 text-xs font-black">3° Lugar</span>
-                          ) : (
-                            `${idx + 1}°`
-                          )}
+                          {idx === 0 ? '🥇 1°' : idx === 1 ? '🥈 2°' : idx === 2 ? '🥉 3°' : `${idx + 1}°`}
                         </td>
                         <td className="py-3 px-4 font-bold text-text-primary">
                           {p.customerName}
@@ -431,7 +423,7 @@ export function RafflesAdminPanel() {
                           {p.manualExtraTickets > 0 ? `+${p.manualExtraTickets}` : p.manualExtraTickets}
                         </td>
                         <td className="py-3 px-4 text-center font-extrabold text-accent text-sm">
-                          {p.totalTickets} tickets
+                          {p.totalTickets} 🎟️
                         </td>
                         <td className="py-3 px-4 text-right">
                           <Button
@@ -596,7 +588,7 @@ export function RafflesAdminPanel() {
           <div className="bg-surface-card w-full max-w-md rounded-3xl border border-line shadow-2xl p-6 space-y-4">
             <h3 className="text-base font-bold text-text-primary">Ajuste Manual de Boletos</h3>
             <p className="text-xs text-text-secondary">
-              Participante: <span className="font-bold text-text-primary">{selectedParticipant.customerName}</span> (Total actual: {selectedParticipant.totalTickets} tickets)
+              Participante: <span className="font-bold text-text-primary">{selectedParticipant.customerName}</span> (Total actual: {selectedParticipant.totalTickets} 🎟️)
             </p>
 
             <form onSubmit={handleSaveAdjustment} className="space-y-3">
@@ -732,7 +724,7 @@ export function RafflesAdminPanel() {
             {isSpinning ? (
               <div className="space-y-3 py-4">
                 <h3 className="text-lg font-bold text-text-primary animate-pulse">
-                  Mezclando boletos y seleccionando ganador...
+                  🎲 Mezclando boletos y seleccionando ganador...
                 </h3>
                 <p className="text-xs text-text-secondary">
                   Ponderando probabilidades según la cantidad de tickets acumulados.
@@ -744,7 +736,7 @@ export function RafflesAdminPanel() {
             ) : winnerResult ? (
               <div className="space-y-4 py-2 animate-in zoom-in-95 duration-300">
                 <Badge variant="default" className="text-xs py-1 px-3 bg-amber-500 text-white">
-                  ¡TENEMOS UN GANADOR!
+                  ¡TENEMOS UN GANADOR! 🎉
                 </Badge>
                 <h3 className="text-2xl font-extrabold text-text-primary">
                   {winnerResult.customerName}

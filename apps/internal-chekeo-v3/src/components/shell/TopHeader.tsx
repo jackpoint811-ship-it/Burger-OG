@@ -178,7 +178,7 @@ export function TopHeader() {
           <button
             type="button"
             onClick={toggleTheme}
-            className="min-h-11 min-w-11 w-11 h-11 rounded-xl border border-line bg-surface-raised hover:bg-surface text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="w-9 h-9 rounded-xl border border-line bg-surface-raised hover:bg-surface text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer"
             aria-label={isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
             title={isDark ? 'Modo Claro' : 'Modo Oscuro'}
           >
@@ -190,7 +190,7 @@ export function TopHeader() {
             <button
               type="button"
               onClick={() => logout()}
-              className="min-h-11 h-11 px-3.5 rounded-xl border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+              className="h-9 px-3 rounded-xl border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
               title="Bloquear y cerrar sesión administrativa"
             >
               <Lock className="w-3.5 h-3.5" />
