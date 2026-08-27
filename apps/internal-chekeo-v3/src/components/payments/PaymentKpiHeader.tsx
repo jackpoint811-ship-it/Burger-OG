@@ -37,7 +37,13 @@ export function PaymentKpiHeader({
       {/* KPI 1: Total Ventas Activas */}
       <div
         onClick={() => onFilterByMethod?.('all')}
-        className={`bg-surface-card p-3.5 sm:p-4 rounded-3xl border shadow-card space-y-1.5 transition-all cursor-pointer select-none ${
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onFilterByMethod?.('all');
+          }
+        }}
+        className={`bg-surface-card p-3.5 sm:p-4 rounded-3xl border shadow-card space-y-1.5 transition-all cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
           selectedMethod === 'all'
             ? 'border-accent/40 ring-1 ring-accent/20'
             : 'border-line hover:border-accent/30'
@@ -45,6 +51,7 @@ export function PaymentKpiHeader({
         title="Clic para ver todas las ventas"
         role="button"
         tabIndex={0}
+        aria-label="Filtrar todas las ventas"
       >
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-text-muted">
@@ -67,7 +74,13 @@ export function PaymentKpiHeader({
       {/* KPI 2: Transferencias */}
       <div
         onClick={() => onFilterByMethod?.('transfer')}
-        className={`bg-surface-card p-3.5 sm:p-4 rounded-3xl border shadow-card space-y-1.5 transition-all cursor-pointer select-none ${
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onFilterByMethod?.('transfer');
+          }
+        }}
+        className={`bg-surface-card p-3.5 sm:p-4 rounded-3xl border shadow-card space-y-1.5 transition-all cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
           selectedMethod === 'transfer'
             ? 'border-blue-500/50 ring-1 ring-blue-500/20 bg-blue-500/[0.02]'
             : 'border-line hover:border-blue-500/30'
@@ -75,6 +88,7 @@ export function PaymentKpiHeader({
         title="Clic para filtrar únicamente pagos por transferencia"
         role="button"
         tabIndex={0}
+        aria-label="Filtrar por pagos con transferencia"
       >
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-text-muted">
@@ -97,7 +111,13 @@ export function PaymentKpiHeader({
       {/* KPI 3: Efectivo */}
       <div
         onClick={() => onFilterByMethod?.('cash')}
-        className={`bg-surface-card p-3.5 sm:p-4 rounded-3xl border shadow-card space-y-1.5 transition-all cursor-pointer select-none ${
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onFilterByMethod?.('cash');
+          }
+        }}
+        className={`bg-surface-card p-3.5 sm:p-4 rounded-3xl border shadow-card space-y-1.5 transition-all cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
           selectedMethod === 'cash'
             ? 'border-emerald-500/50 ring-1 ring-emerald-500/20 bg-emerald-500/[0.02]'
             : 'border-line hover:border-emerald-500/30'
@@ -105,6 +125,7 @@ export function PaymentKpiHeader({
         title="Clic para filtrar únicamente cobros en efectivo"
         role="button"
         tabIndex={0}
+        aria-label="Filtrar por pagos en efectivo"
       >
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-text-muted">
@@ -126,15 +147,22 @@ export function PaymentKpiHeader({
 
       {/* KPI 4: Por confirmar (Universal para todos los métodos) */}
       <div
-        className={`p-3.5 sm:p-4 rounded-3xl border shadow-card space-y-1.5 transition-all cursor-pointer select-none group ${
+        className={`p-3.5 sm:p-4 rounded-3xl border shadow-card space-y-1.5 transition-all cursor-pointer select-none group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
           financialSummary.pendingTotalCount > 0
             ? 'bg-amber-500/10 border-amber-500/30 ring-2 ring-amber-500/20 hover:border-amber-500/50'
             : 'bg-surface-card border-line hover:border-line/80'
         }`}
         onClick={handlePendingClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handlePendingClick?.();
+          }
+        }}
         title="Filtrar todos los pagos por confirmar (conmuta fecha a Todos)"
         role="button"
         tabIndex={0}
+        aria-label="Filtrar pedidos por confirmar"
       >
         <div className="flex items-center justify-between">
           <span
