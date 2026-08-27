@@ -1,6 +1,6 @@
 ---
 name: dynamic-ui-components
-description: Catálogo y patrones de componentes dinámicos de Frontend (Drawers gestuales, KDS Timers, KPI Cards, Floating Bars y Steppers) para Burgers.exe.
+description: Catálogo y patrones de componentes dinámicos de Frontend (Drawers gestuales, KPI Cards, Segmented Controls, Floating Bars y Steppers) para Burgers.exe.
 ---
 
 # ⚡ Skill: Componentes Dinámicos de Frontend (Burgers.exe)
@@ -31,14 +31,7 @@ Usa esta habilidad para diseñar, componer o refactorizar componentes interactiv
 
 ## 2. 🖥️ Patrones para `internal-chekeo-v3` (POS, KDS y Dashboards)
 
-### A. Live Timer Badge (Semáforo de Tiempo en Vivo KDS)
-* **Tick reactivo:** Hook interno con `setInterval(10000)` para recalcular los minutos transcurridos sin recargar la página.
-* **Semáforo de urgencia:**
-  * 🟢 **Normal ($< 10\text{ min}$):** `bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30`
-  * 🟡 **Atención ($10 - 20\text{ min}$):** `bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30`
-  * 🔴 **Urgente ($> 20\text{ min}$):** `bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30 animate-pulse`
-
-### B. KPI Metric Cards (Dashboard & Resumen Financiero)
+### A. KPI Metric Cards (Dashboard & Resumen Financiero)
 * **Estructura visual:**
   1. *Encabezado:* Título contextual en mayúsculas (`text-xs font-bold uppercase text-text-secondary`) + Icono temático dentro de cápsula circular suave.
   2. *Métrica principal:* Número en gran formato (`text-2xl sm:text-3xl font-black text-text-primary`).
@@ -46,7 +39,7 @@ Usa esta habilidad para diseñar, componer o refactorizar componentes interactiv
   4. *Subtexto:* Contexto del período activo (ej. `⚡ Hoy`, `⏱️ Ayer`, `📅 Esta Semana`).
 * **Interacción:** Soporte para modo clickeable / filtro activo con borde resaltado `ring-2 ring-accent`.
 
-### C. Dynamic Segmented Control
+### B. Dynamic Segmented Control
 * **Indicador deslizante:** Uso de `framer-motion` con `layoutId="activeSegment"` para que la pastilla de fondo se deslice con física fluida entre opciones sin saltos bruscos.
 * **Navegación por teclado:** Atributos ARIA `role="tablist"` y `role="tab"` con soporte para flechas izquierda/derecha.
 
@@ -55,4 +48,4 @@ Usa esta habilidad para diseñar, componer o refactorizar componentes interactiv
 ## 3. ♿ Directrices de Accesibilidad y Performance
 1. **`prefers-reduced-motion`:** Consultar siempre `useReducedMotion()` de Framer Motion. Si el usuario tiene animaciones reducidas activas, conmutar a transiciones de opacidad estáticas.
 2. **Gestión de Foco:** Al abrir modales y drawers, atrapar el foco dentro del contenedor y devolverlo al elemento disparador al cerrar.
-3. **Cero Dependencias Bloqueantes:** Usar exclusivamente `packages/ui` (`@ui/drawer`, `@ui/kpi-card`, `@ui/timer-badge`, `@ui/stepper`, `@ui/segmented-control`) construidos sobre `@radix-ui`, `clsx` y `framer-motion`.
+3. **Cero Dependencias Bloqueantes:** Usar exclusivamente `packages/ui` (`@ui/drawer`, `@ui/kpi-card`, `@ui/stepper`, `@ui/segmented-control`) construidos sobre `@radix-ui`, `clsx` y `framer-motion`.

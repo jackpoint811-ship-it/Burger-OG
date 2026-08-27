@@ -13,5 +13,4 @@ export * from './components';
 export * from './shell-card';
 export * from './stepper';
 export * from './kpi-card';
-export * from './timer-badge';
 export * from './segmented-control';

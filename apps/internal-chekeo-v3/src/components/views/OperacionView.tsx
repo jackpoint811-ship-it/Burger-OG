@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 import { Badge } from '@ui/badge';
 import { Button } from '@ui/button';
-import { LiveTimerBadge } from '@ui/timer-badge';
 import { useChekeoOrdersQuery } from '../../features/orders';
 import { useKitchenDisplay } from '../../features/kitchen';
 import type { ChekeoTab } from '../shell';
@@ -269,14 +268,13 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
                 className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-surface-raised border border-line hover:border-accent/40 hover:bg-surface transition-all text-left cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <div className="min-w-0 pr-3">
-                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                  <div className="flex items-center gap-2 mb-0.5">
                     <span className="font-black text-sm text-text-primary group-hover:text-accent transition-colors">
                       #{order.folio}
                     </span>
-                    <span className="font-bold text-xs text-text-secondary truncate max-w-[140px] sm:max-w-[200px]">
+                    <span className="font-bold text-xs text-text-secondary truncate">
                       {order.customerName}
                     </span>
-                    <LiveTimerBadge createdAt={order.createdAt} />
                   </div>
                   <p className="text-xs text-text-muted truncate">
                     {order.items.map((i) => `${i.qty ?? 1}x ${i.name}`).join(' · ')}

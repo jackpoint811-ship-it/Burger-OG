@@ -134,5 +134,8 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Filtro interactivo 1-clic toggle en KPIs que mantiene al operador en el día/período en curso sin forzar la fecha a Todo.
 - **Skill Especializado de Componentes Dinámicos & Suite de UI Interactiva para Public y Chekeo (2026-08-27)**:
   - Creación del skill `.agents/skills/dynamic-ui-components/` con estándares y recetas para componentes interactivos de Frontend.
-  - Suite en `packages/ui`: `QuantityStepper` con feedback táctil $\ge 44\text{px}$, `Drawer` con física de resorte y gesto de arrastre (*drag-to-dismiss*), `LiveTimerBadge` para KDS con semáforo por minutos en tiempo real, `KpiCard` para dashboards y `SegmentedControl` con pastilla deslizante `layoutId`.
+  - Suite en `packages/ui`: `QuantityStepper` con feedback táctil $\ge 44\text{px}$, `Drawer` con física de resorte y gesto de arrastre (*drag-to-dismiss*), `KpiCard` para dashboards y `SegmentedControl` con pastilla deslizante `layoutId`.
   - Integración en `ProductDetailDrawer`, `CartDrawer` y `OperacionView`.
+- **Erradicación Definitiva de Reloj de Estrés Prohibido en Chekeo V3 (2026-08-27)**:
+  - Eliminación total del componente `LiveTimerBadge` (`packages/ui/src/timer-badge.tsx`) y su consumo en `OperacionView.tsx`.
+  - Reafirmación estricta de la regla de oro operativa de la Sesión 18 / PR #549 (Cero relojes de presión o semáforos de urgencia por minutos en cocina/operación).
