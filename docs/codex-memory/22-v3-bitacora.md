@@ -666,7 +666,20 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Tarjetas de platillo despojadas de códigos crudos de base de datos (SKU técnico), con precio destacado, controles de stock del turno y botones de acción rápida con $\ge 38\text{px}$ de altura y cursor interactivo.
 - **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.52s), `npm run build:public` ✅ (5.94s).
 
+### 📅 2026-08-27 — Sesión 61: Skill Especializado de Componentes Dinámicos & Suite de UI Interactiva para Public y Chekeo (PR #610)
+- **🧠 Creación del Skill `.agents/skills/dynamic-ui-components/`**:
+  - Documentación canónica de patrones interactivos para Burgers.exe: Drawers con física de resortes y gestos de arrastre (*drag-to-dismiss*), steppers con feedback háptico visual, islas flotantes de acción, KDS cards con semáforo de tiempo reactivo, KPI metric cards con deltas comparativos y segmented controls accesibles.
+- **📱 Componentes Dinámicos en `packages/ui` para `public-order-v3`**:
+  - `stepper.tsx` (`QuantityStepper`): Control de cantidad interactivo con micro-animación `whileTap={{ scale: 0.9 }}`, targets táctiles cómodos ($\ge 44\text{px}$), límites deshabilitados y soporte de teclado. Integrado en `ProductDetailDrawer.tsx` y `CartDrawer.tsx`.
+  - `drawer.tsx` (`Drawer`): Rediseñado con física de resorte (`framer-motion`), backdrop blur animado, gesto de arrastre vertical hacia abajo para cerrar (`drag="y"`), grab handle superior móvil y accesibilidad completa `role="dialog"`, `aria-modal` y atajo <kbd>Escape</kbd>.
+- **🖥️ Componentes Dinámicos en `packages/ui` para `internal-chekeo-v3`**:
+  - `timer-badge.tsx` (`LiveTimerBadge`): Badge de comanda reactivo con intervalo automático cada 15s para actualizar minutos transcurridos (`Xm`) y semáforo visual de urgencia (<10m verde, 10-20m ámbar, >20m rojo pulsante). Integrado en la cola de comandas de `OperacionView.tsx`.
+  - `kpi-card.tsx` (`KpiCard`): Tarjeta de métricas para dashboards con soporte de deltas porcentuales (↑/↓), icono estilizado, variantes de color y modo clickeable/filtro activo con foco visible.
+  - `segmented-control.tsx` (`SegmentedControl`): Selector de opciones por pastillas con indicador de fondo animado deslizante (`layoutId`) y accesibilidad ARIA `role="tablist"` / `role="tab"`.
+- **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (8.80s), `npm run build:chekeo` ✅ (9.40s).
+
 ---
+
 
 ## 📌 Issues Abiertos
 

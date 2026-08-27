@@ -6,6 +6,7 @@ import { useMenuRecipes, useMenuItems } from '../../features';
 import { resolveCatalogAssetUrl } from '@config/assets';
 import { formatCurrency } from '../../utils/format';
 import { ProductFallbackSvg } from '../shared/ProductFallbackSvg';
+import { QuantityStepper } from '@ui/stepper';
 import type { MenuItem, ComboOptionGroup } from '@config/contracts';
 
 interface ComboBurgerDraft {
@@ -1026,28 +1027,13 @@ export function ProductDetailDrawer() {
             <div className="border-t border-line bg-surface-card p-4 sm:p-5 flex flex-col gap-2 shadow-panel shrink-0">
               <div className="flex items-center justify-between gap-3 sm:gap-4">
                 {/* Quantity Stepper */}
-                <div className="flex items-center gap-2 bg-surface p-1.5 rounded-2xl border border-line shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    disabled={quantity <= 1}
-                    className="w-9 h-9 rounded-xl bg-surface-card border border-line flex items-center justify-center text-text-primary hover:bg-surface-raised disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
-                    aria-label="Disminuir cantidad"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="w-6 text-center font-extrabold text-sm text-text-primary">
-                    {quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((q) => q + 1)}
-                    className="w-9 h-9 rounded-xl bg-surface-card border border-line flex items-center justify-center text-text-primary hover:bg-surface-raised transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
-                    aria-label="Aumentar cantidad"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
+                <QuantityStepper
+                  value={quantity}
+                  onChange={setQuantity}
+                  min={1}
+                  size="default"
+                  ariaLabel="Cantidad del producto"
+                />
 
                 {/* Add/Save CTA */}
                 <button

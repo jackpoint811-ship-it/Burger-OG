@@ -132,3 +132,7 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Inclusión de métricas de efectivo pendiente (`pendingCashCount`, `pendingCashAmount`) junto a transferencias (`pendingTransferCount`, `pendingTransferAmount`) en `FinancialSummary`.
   - Rediseño enriquecido de las 4 tarjetas KPI en `PaymentKpiHeader` con títulos contextuales (`Venta de Hoy`, `Venta de Ayer`, etc.), subtextos de cobros realizados vs pendientes y desglose explícito en la tarjeta 4 (**Por Cobrar / Confirmar**) para saber de inmediato cuánto dinero falta por cobrar hoy.
   - Filtro interactivo 1-clic toggle en KPIs que mantiene al operador en el día/período en curso sin forzar la fecha a Todo.
+- **Skill Especializado de Componentes Dinámicos & Suite de UI Interactiva para Public y Chekeo (2026-08-27)**:
+  - Creación del skill `.agents/skills/dynamic-ui-components/` con estándares y recetas para componentes interactivos de Frontend.
+  - Suite en `packages/ui`: `QuantityStepper` con feedback táctil $\ge 44\text{px}$, `Drawer` con física de resorte y gesto de arrastre (*drag-to-dismiss*), `LiveTimerBadge` para KDS con semáforo por minutos en tiempo real, `KpiCard` para dashboards y `SegmentedControl` con pastilla deslizante `layoutId`.
+  - Integración en `ProductDetailDrawer`, `CartDrawer` y `OperacionView`.
