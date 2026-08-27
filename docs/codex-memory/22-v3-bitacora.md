@@ -673,10 +673,16 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `stepper.tsx` (`QuantityStepper`): Control de cantidad interactivo con micro-animación `whileTap={{ scale: 0.9 }}`, targets táctiles cómodos ($\ge 44\text{px}$), límites deshabilitados y soporte de teclado. Integrado en `ProductDetailDrawer.tsx` y `CartDrawer.tsx`.
   - `drawer.tsx` (`Drawer`): Rediseñado con física de resorte (`framer-motion`), backdrop blur animado, gesto de arrastre vertical hacia abajo para cerrar (`drag="y"`), grab handle superior móvil y accesibilidad completa `role="dialog"`, `aria-modal` y atajo <kbd>Escape</kbd>.
 - **🖥️ Componentes Dinámicos en `packages/ui` para `internal-chekeo-v3`**:
-  - `timer-badge.tsx` (`LiveTimerBadge`): Badge de comanda reactivo con intervalo automático cada 15s para actualizar minutos transcurridos (`Xm`) y semáforo visual de urgencia (<10m verde, 10-20m ámbar, >20m rojo pulsante). Integrado en la cola de comandas de `OperacionView.tsx`.
   - `kpi-card.tsx` (`KpiCard`): Tarjeta de métricas para dashboards con soporte de deltas porcentuales (↑/↓), icono estilizado, variantes de color y modo clickeable/filtro activo con foco visible.
   - `segmented-control.tsx` (`SegmentedControl`): Selector de opciones por pastillas con indicador de fondo animado deslizante (`layoutId`) y accesibilidad ARIA `role="tablist"` / `role="tab"`.
 - **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (8.80s), `npm run build:chekeo` ✅ (9.40s).
+
+### 📅 2026-08-27 — Sesión 62: Erradicación Definitiva de Reloj de Estrés Prohibido en Chekeo V3 (PR #611)
+- **🛡️ Cumplimiento Estricto de Reglas Operativas (Sesión 18 / PR #549)**:
+  - Eliminación total del componente `LiveTimerBadge` (`packages/ui/src/timer-badge.tsx`) y su exportación en `packages/ui/src/index.ts`.
+  - Remoción de `<LiveTimerBadge />` en `OperacionView.tsx`, preservando una jerarquía visual limpia centrada en el Folio y Nombre de Cliente sin semáforos de presión o alertas falsas en pedidos programados por lotes.
+  - Actualización del skill `.agents/skills/dynamic-ui-components/` y documentación de gobernanza.
+- **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
 
 ---
 
