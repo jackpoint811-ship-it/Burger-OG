@@ -34,7 +34,12 @@ const UNIT_OPTIONS: Array<{ value: IngredientV2Unit; label: string }> = [
   { value: 'bolsa', label: 'Bolsa' },
 ];
 
-export function IngredientsAdminPanel() {
+export interface IngredientsAdminPanelProps {
+  activeToolId?: string;
+  onSelectTool?: (toolId: string) => void;
+}
+
+export function IngredientsAdminPanel({ activeToolId, onSelectTool }: IngredientsAdminPanelProps = {}) {
   const [selectedSku, setSelectedSku] = useState<string>('BURGER-OG');
   const { items } = useAdminMenu();
   const {

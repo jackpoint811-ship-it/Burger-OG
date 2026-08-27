@@ -35,7 +35,12 @@ const DAYS_OF_WEEK = [
   { id: 6, label: 'Sáb', full: 'Sábado' },
 ];
 
-export function TowersAdminPanel() {
+export interface TowersAdminPanelProps {
+  activeToolId?: string;
+  onSelectTool?: (toolId: string) => void;
+}
+
+export function TowersAdminPanel({ activeToolId, onSelectTool }: TowersAdminPanelProps = {}) {
   const { towers, isLoading, isError, error, refetchTowers, updateTowerMutation } = useAdminTowers();
 
   // Local editing states per tower

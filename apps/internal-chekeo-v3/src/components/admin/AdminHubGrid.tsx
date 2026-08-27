@@ -117,11 +117,14 @@ export function AdminHubGrid({
         </div>
       </div>
 
-      {/* Franja de Favoritos Rápidos */}
-      <AdminQuickFavorites onNavigate={(cat, tool) => onOpenModule(cat, tool)} />
+      {/* Franja de Favoritos Rápidos (Solo en Tablet / Desktop para evitar duplicidad en móvil) */}
+      <AdminQuickFavorites
+        onNavigate={(cat, tool) => onOpenModule(cat, tool)}
+        className="hidden md:block"
+      />
 
-      {/* Grilla Estricta en 2 Columnas de las 6 Categorías Maestras */}
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:gap-5">
+      {/* Grilla Responsiva: 1 Columna Amplia en Móvil, 2 en Tablet, 3 en Desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5">
         {ADMIN_CATEGORIES_CONFIG.map((category) => {
           const Icon = getAdminIcon(category.iconName);
           const favoriteId = `fav-${category.id}-root`;
@@ -131,22 +134,31 @@ export function AdminHubGrid({
           return (
             <div
               key={category.id}
-              className="bg-surface-card rounded-2xl sm:rounded-3xl p-3 sm:p-5 lg:p-6 border border-line shadow-card hover:border-accent/40 transition-all flex flex-col justify-between space-y-2.5 sm:space-y-4 group"
+              onClick={() => onOpenModule(category.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onOpenModule(category.id);
+                }
+              }}
+              className="bg-surface-card rounded-2xl sm:rounded-3xl p-4 sm:p-5 lg:p-6 border border-line shadow-card hover:border-accent/40 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none transition-all flex flex-col justify-between space-y-3 sm:space-y-4 group cursor-pointer select-none"
             >
-              <div className="space-y-2 sm:space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {/* Encabezado de la Tarjeta */}
-                <div className="flex items-start justify-between gap-1.5 sm:gap-2.5">
-                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className={`w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center font-bold shrink-0 border ${category.colorClass}`}
+                      className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center font-bold shrink-0 border ${category.colorClass}`}
                     >
-                      <Icon className="w-4 h-4 sm:w-6 sm:h-6" />
+                      <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-xs sm:text-base font-black text-text-primary group-hover:text-accent transition-colors truncate">
-                        {category.shortTitle || category.title}
+                      <h3 className="text-sm sm:text-base font-black text-text-primary group-hover:text-accent transition-colors">
+                        {category.title}
                       </h3>
-                      <p className="hidden sm:block text-xs text-text-secondary mt-0.5">
+                      <p className="text-xs text-text-secondary mt-0.5 line-clamp-1 sm:line-clamp-2">
                         {category.subtitle}
                       </p>
                     </div>
@@ -165,7 +177,7 @@ export function AdminHubGrid({
                         tag: category.tag,
                       });
                     }}
-                    className={`p-1 sm:p-2 rounded-lg sm:rounded-xl border transition-all cursor-pointer shrink-0 ${
+                    className={`p-2 rounded-xl border transition-all cursor-pointer shrink-0 ${
                       pinned
                         ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
                         : 'bg-surface-raised border-line/60 text-text-muted hover:text-amber-500'
@@ -173,22 +185,22 @@ export function AdminHubGrid({
                     title={pinned ? 'Desfijar de favoritos' : 'Fijar categoría en favoritos'}
                     aria-label={`Fijar categoría ${category.title} en favoritos`}
                   >
-                    <Star className={`w-3 h-3 sm:w-4 sm:h-4 ${pinned ? 'fill-amber-500' : ''}`} />
+                    <Star className={`w-4 h-4 ${pinned ? 'fill-amber-500' : ''}`} />
                   </button>
                 </div>
 
                 {/* Métrica Operativa en Vivo */}
-                <div className="p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl bg-surface-raised border border-line/60 flex items-center justify-between min-w-0">
-                  <span className="hidden sm:inline text-[10px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider">
-                    Estado
+                <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-surface-raised border border-line/60 flex items-center justify-between min-w-0">
+                  <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
+                    Estado en Vivo
                   </span>
-                  <span className="text-[10px] sm:text-xs font-black text-accent font-mono truncate w-full sm:w-auto text-center sm:text-right">
+                  <span className="text-xs sm:text-xs font-black text-accent font-mono truncate">
                     {metricText}
                   </span>
                 </div>
 
                 {/* Lista de Herramientas (Solo en Tablet / Desktop) */}
-                <div className="hidden sm:block space-y-1.5">
+                <div className="hidden sm:block space-y-1.5 pt-1">
                   <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">
                     Herramientas de este Módulo:
                   </span>
@@ -199,7 +211,10 @@ export function AdminHubGrid({
                         <button
                           key={sub.id}
                           type="button"
-                          onClick={() => onOpenModule(category.id, sub.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenModule(category.id, sub.id);
+                          }}
                           className="flex items-center gap-1.5 p-2 rounded-xl bg-surface hover:bg-surface-raised border border-line/60 text-left transition-colors cursor-pointer group/item min-w-0"
                         >
                           <SubIcon className="w-3.5 h-3.5 text-text-muted group-hover/item:text-accent shrink-0" />
@@ -214,15 +229,17 @@ export function AdminHubGrid({
               </div>
 
               {/* Botón Principal para entrar al Workspace Dedicado */}
-              <div className="pt-0.5 sm:pt-2">
+              <div className="pt-1 sm:pt-2">
                 <Button
                   type="button"
-                  onClick={() => onOpenModule(category.id)}
-                  className="w-full h-8.5 sm:h-10 rounded-xl sm:rounded-2xl font-bold text-xs bg-text-primary text-surface-card hover:bg-accent hover:text-white transition-all gap-1 sm:gap-1.5 cursor-pointer shadow-xs active:scale-98"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenModule(category.id);
+                  }}
+                  className="w-full h-11 sm:h-10 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm bg-text-primary text-surface-card hover:bg-accent hover:text-white transition-all gap-1.5 cursor-pointer shadow-xs active:scale-98"
                 >
-                  <span className="hidden sm:inline">Abrir Módulo de {category.shortTitle}</span>
-                  <span className="sm:hidden">Abrir Módulo</span>
-                  <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span>Abrir Módulo de {category.shortTitle}</span>
+                  <ArrowRight className="w-4 h-4" />
                 </Button>
               </div>
             </div>

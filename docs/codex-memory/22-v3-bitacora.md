@@ -652,6 +652,22 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 ---
 
+### 📅 2026-08-27 — Sesión 60: Rediseño Mobile-First & Claridad Operativa del Panel de Administración en Chekeo V3 (Potenciado con Skills)
+- **📱 Erradicación de Duplicidad en el Hub de Admin (`AdminHubGrid.tsx`)**:
+  - En móviles (`< md:`), oculta la franja superior redundante de favoritos (`AdminQuickFavorites` con `className="hidden md:block"`) evitando la saturación de 12 tarjetas idénticas apretadas en pantallas de 375px.
+  - Grilla adaptativa: 1 columna amplia y respirable en móvil (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`), mostrando los 6 módulos con títulos completos sin truncar, subtítulos descriptivos y métricas operativas en vivo.
+  - Tarjetas 100% interactivas y accesibles con rol `button`, `tabIndex={0}`, foco visible y botón táctil ergonómico de 44px (`h-11`).
+- **🎛️ Segmented Rail Accesible & Sincronización de Herramientas (`AdminModuleWorkspace.tsx`)**:
+  - Riel móvil horizontal de sub-herramientas con atributos semánticos `role="tablist"` y `role="tab"`, `aria-selected` y targets táctiles de 44px (`min-h-11`).
+  - Sincronización bidireccional de `activeToolId` y `onSelectTool` en los 6 paneles administrativos (`MenuStockPanel`, `CashCutPanel`, `TowersAdminPanel`, `BannersAdminPanel`, `RafflesAdminPanel`, `IngredientsAdminPanel`).
+- **🍔 Reingeniería Operativa de Menú & Stock (`MenuStockPanel.tsx`)**:
+  - Filtrado reactivo por `activeToolId`: vista dedicada de existencias (`quick-stock`) con steppers directos `-` / `+`, vista de ofertas (`promos`) con filtro automático de descuentos y vista de catálogo completo (`catalog`).
+  - Barra de KPIs compacta de 1 sola línea en móvil (`flex sm:hidden`), ahorrando >250px de altura para que los platillos aparezcan en el primer pliegue de la pantalla sin scroll excesivo.
+  - Tarjetas de platillo despojadas de códigos crudos de base de datos (SKU técnico), con precio destacado, controles de stock del turno y botones de acción rápida con $\ge 38\text{px}$ de altura y cursor interactivo.
+- **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.52s), `npm run build:public` ✅ (5.94s).
+
+---
+
 ## 📌 Issues Abiertos
 
 | # | Descripción | Severidad | Estado |

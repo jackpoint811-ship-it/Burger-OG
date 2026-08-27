@@ -33,13 +33,25 @@ import { useAdminCashCut } from '../../features/admin/hooks/use-admin';
 import { getOrdersExportCsvUrl } from '../../features/admin/api/admin.api';
 import type { CashCutFilterPreset } from '../../features/admin/types/admin.types';
 
-export function CashCutPanel() {
+export interface CashCutPanelProps {
+  activeToolId?: string;
+  onSelectTool?: (toolId: string) => void;
+}
+
+export function CashCutPanel({ activeToolId, onSelectTool }: CashCutPanelProps = {}) {
   const [preset, setPreset] = useState<CashCutFilterPreset>('today');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('Cierre de turno');
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+
+  // Reaccionar a activeToolId
+  React.useEffect(() => {
+    if (activeToolId === 'z-cut') {
+      setIsArchiveModalOpen(true);
+    }
+  }, [activeToolId]);
 
   // Compute date range based on preset (Timezone CDMX)
   const dateRange = useMemo(() => {
