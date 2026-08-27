@@ -8,10 +8,15 @@
 
 ## ⚡ PALABRA CLAVE DE ACTIVACIÓN: `Burgers.exe`
 
-Si el usuario envía únicamente **`Burgers.exe`** (o `burger.exe`), el agente debe activar inmediatamente el modo operativo completo:
-1. Leer `docs/codex-memory/01-estado-actual.md` y `docs/codex-memory/22-v3-bitacora.md`.
-2. Verificar la rama actual de git (`git status`) y compilación.
-3. Responder con un resumen conciso del estado actual y ponerse a la orden para la siguiente tarea siguiendo el flujo de trabajo estricto sin sugerir nada prohibido.
+El activador maestro opera en dos modalidades:
+1. **Modo Estatus (Solo comando)**: Si el prompt es únicamente **`Burgers.exe`**, `burger.exe` o `/burgers`:
+   - Leer `docs/codex-memory/01-estado-actual.md` y `docs/codex-memory/22-v3-bitacora.md`.
+   - Verificar rama activa (`git status`) y estado de compilación.
+   - Responder con resumen conciso del estado actual y ponerse a la orden.
+2. **Modo Acción Directa (Con tarea)**: Si el prompt incluye una tarea (ej: `burgers.exe: <tarea>`, `/plan burgers.exe: <tarea>` o `/burgers <tarea>`):
+   - Cargar silenciosamente la memoria viva (`01-estado-actual.md` y `22-v3-bitacora.md`) y validar restricciones.
+   - Si se invoca con `/plan`, elaborar el plan de diseño/implementación antes de modificar código.
+   - Proceder inmediatamente con la planificación o ejecución de la tarea.
 
 ---
 

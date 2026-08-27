@@ -1,7 +1,8 @@
 # 🛑 Prohibiciones Estrictas (Hard Constraints)
 
 ## ⚡ Activador Maestro: `Burgers.exe`
-Si el usuario envía únicamente `Burgers.exe` o `burger.exe`, el agente debe activar inmediatamente el modo operativo completo: leer `docs/codex-memory/01-estado-actual.md` y `docs/codex-memory/22-v3-bitacora.md`, verificar el entorno y ponerse a la orden siguiendo las reglas.
+- **Modo Estatus**: Si el prompt es solo `Burgers.exe`, `burger.exe` o `/burgers`, leer memoria viva, verificar entorno y ponerse a la orden.
+- **Modo Acción Directa**: Si incluye una tarea (ej: `burgers.exe: <tarea>`, `/plan burgers.exe: <tarea>`), cargar memoria silenciosamente y proceder inmediatamente con la tarea.
 
 ---
 
