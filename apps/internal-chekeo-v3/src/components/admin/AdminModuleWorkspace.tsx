@@ -211,8 +211,12 @@ export function AdminModuleWorkspace({
         </div>
       </div>
 
-      {/* Selector de Herramientas Horizontal en Móvil (Segmented Rail) */}
-      <div className="flex md:hidden overflow-x-auto scrollbar-none gap-2 pb-1">
+      {/* Selector de Herramientas Horizontal en Móvil (Segmented Rail Accesible) */}
+      <div
+        role="tablist"
+        aria-label={`Herramientas de ${categoryDef.title}`}
+        className="flex md:hidden overflow-x-auto scrollbar-none gap-2 pb-1"
+      >
         {categoryDef.subcategories.map((sub) => {
           const SubIcon = getAdminIcon(sub.iconName);
           const isSelected = activeToolId === sub.id;
@@ -221,17 +225,20 @@ export function AdminModuleWorkspace({
             <button
               key={sub.id}
               type="button"
+              role="tab"
+              aria-selected={isSelected}
+              aria-label={sub.title}
               onClick={() => setActiveToolId(sub.id)}
-              className={`flex items-center gap-2 h-10 px-3 rounded-2xl border shrink-0 transition-all cursor-pointer select-none text-left active:scale-98 ${
+              className={`flex items-center gap-2 min-h-11 px-3.5 rounded-2xl border shrink-0 transition-all cursor-pointer select-none text-left active:scale-98 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
                 isSelected
                   ? 'bg-text-primary text-surface-card shadow-xs font-black border-text-primary'
                   : 'bg-surface-card border-line hover:border-accent/40 text-text-secondary hover:text-text-primary shadow-xs'
               }`}
             >
               <SubIcon
-                className={`w-3.5 h-3.5 ${isSelected ? 'text-accent' : 'text-text-muted'}`}
+                className={`w-4 h-4 ${isSelected ? 'text-accent' : 'text-text-muted'}`}
               />
-              <span className="text-xs">{sub.shortTitle}</span>
+              <span className="text-xs font-bold">{sub.shortTitle}</span>
             </button>
           );
         })}
@@ -252,7 +259,7 @@ export function AdminModuleWorkspace({
               </span>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1" role="tablist" aria-label={`Herramientas de ${categoryDef.title}`}>
               {categoryDef.subcategories.map((sub) => {
                 const SubIcon = getAdminIcon(sub.iconName);
                 const isSelected = activeToolId === sub.id;
@@ -261,8 +268,11 @@ export function AdminModuleWorkspace({
                   <button
                     key={sub.id}
                     type="button"
+                    role="tab"
+                    aria-selected={isSelected}
+                    aria-label={sub.title}
                     onClick={() => setActiveToolId(sub.id)}
-                    className={`w-full flex items-center justify-between gap-2.5 p-2.5 rounded-2xl text-left transition-all cursor-pointer select-none ${
+                    className={`w-full flex items-center justify-between gap-2.5 p-2.5 rounded-2xl text-left transition-all cursor-pointer select-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
                       isSelected
                         ? 'bg-text-primary text-surface-card shadow-xs font-black'
                         : 'bg-surface hover:bg-surface-raised border border-line/60 text-text-secondary hover:text-text-primary'
@@ -319,7 +329,7 @@ export function AdminModuleWorkspace({
                       key={fav.id}
                       type="button"
                       onClick={() => onNavigateModule(fav.category, fav.toolId)}
-                      className={`w-full flex items-center justify-between gap-2 p-2 rounded-xl text-left transition-all cursor-pointer select-none ${
+                      className={`w-full flex items-center justify-between gap-2 p-2 rounded-xl text-left transition-all cursor-pointer select-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
                         isCurrent
                           ? 'bg-accent/10 text-accent font-bold ring-1 ring-accent/20'
                           : 'text-text-secondary hover:text-text-primary hover:bg-surface-raised'
@@ -345,12 +355,24 @@ export function AdminModuleWorkspace({
         {/* Lienzo Principal Derecho (Ancho Total a Pantalla Completa) */}
         <main className="flex-1 min-w-0 w-full">
           <div className="min-h-[550px]">
-            {category === 'menu' && <MenuStockPanel />}
-            {category === 'towers' && <TowersAdminPanel />}
-            {category === 'banners' && <BannersAdminPanel />}
-            {category === 'raffles' && <RafflesAdminPanel />}
-            {category === 'cashcut' && <CashCutPanel />}
-            {category === 'ingredients' && <IngredientsAdminPanel />}
+            {category === 'menu' && (
+              <MenuStockPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
+            )}
+            {category === 'towers' && (
+              <TowersAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
+            )}
+            {category === 'banners' && (
+              <BannersAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
+            )}
+            {category === 'raffles' && (
+              <RafflesAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
+            )}
+            {category === 'cashcut' && (
+              <CashCutPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
+            )}
+            {category === 'ingredients' && (
+              <IngredientsAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
+            )}
           </div>
         </main>
       </div>

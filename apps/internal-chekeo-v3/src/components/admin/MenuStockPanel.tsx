@@ -22,6 +22,7 @@ import {
   Sparkles,
   RefreshCw,
   SlidersHorizontal,
+  Zap,
 } from 'lucide-react';
 import type { MenuItem } from '@config/index';
 import { Button } from '@ui/button';
@@ -31,7 +32,12 @@ import { useAdminMenu } from '../../features/admin/hooks/use-admin';
 import { ProductEditModal } from './ProductEditModal';
 import type { CreateMenuItemPayload, UpdateMenuItemPayload } from '../../features/admin/types/admin.types';
 
-export function MenuStockPanel() {
+export interface MenuStockPanelProps {
+  activeToolId?: string;
+  onSelectTool?: (toolId: string) => void;
+}
+
+export function MenuStockPanel({ activeToolId = 'catalog', onSelectTool }: MenuStockPanelProps) {
   const {
     items,
     categories,
@@ -54,9 +60,23 @@ export function MenuStockPanel() {
   const [deletingSku, setDeletingSku] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  // Filter items
+  // Auto-open modal if activeToolId is 'create'
+  React.useEffect(() => {
+    if (activeToolId === 'create') {
+      setSelectedItem(null);
+      setIsModalOpen(true);
+    }
+  }, [activeToolId]);
+
+  // Filter items based on activeToolId, activeCategory and search
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
+      // Si el tool activo es 'promos', filtrar solo productos con oferta activa
+      if (activeToolId === 'promos' && !item.isPromoActive) {
+        return false;
+      }
+
+      // Filtro por categoría seleccionada
       const matchCat = activeCategory === 'all' || item.category === activeCategory;
       const matchSearch =
         !searchQuery.trim() ||
@@ -64,7 +84,7 @@ export function MenuStockPanel() {
         item.sku.toLowerCase().includes(searchQuery.toLowerCase());
       return matchCat && matchSearch;
     });
-  }, [items, activeCategory, searchQuery]);
+  }, [items, activeCategory, searchQuery, activeToolId]);
 
   // Summary counts
   const stats = useMemo(() => {
@@ -172,8 +192,80 @@ export function MenuStockPanel() {
         </div>
       )}
 
-      {/* KPI Header Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      {/* Sub-tool Info Banners */}
+      {activeToolId === 'quick-stock' && (
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <Zap className="w-4 h-4 text-amber-500 shrink-0" />
+            <span className="font-bold shrink-0">Control de Stock:</span>
+            <span className="text-text-secondary truncate">
+              Pausa o activa platillos y ajusta existencias del turno en 1 toque.
+            </span>
+          </div>
+          {onSelectTool && (
+            <button
+              type="button"
+              onClick={() => onSelectTool('catalog')}
+              className="text-accent underline font-bold cursor-pointer shrink-0 text-xs"
+            >
+              Ver catálogo
+            </button>
+          )}
+        </div>
+      )}
+
+      {activeToolId === 'promos' && (
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-800 dark:text-purple-300 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />
+            <span className="font-bold shrink-0">Promociones Activas:</span>
+            <span className="text-text-secondary truncate">
+              Mostrando platillos con oferta y precio promocional activo.
+            </span>
+          </div>
+          {onSelectTool && (
+            <button
+              type="button"
+              onClick={() => onSelectTool('catalog')}
+              className="text-accent underline font-bold cursor-pointer shrink-0 text-xs"
+            >
+              Ver catálogo
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* KPI Summary Bar en Móvil (1 sola línea limpia, ahorra 250px verticales) */}
+      <div className="flex sm:hidden items-center justify-between gap-2 p-3 rounded-2xl bg-surface-card border border-line shadow-xs text-xs font-bold">
+        <div className="flex items-center gap-1.5 text-text-primary">
+          <UtensilsCrossed className="w-3.5 h-3.5 text-text-muted" />
+          <span>{stats.total}</span>
+          <span className="text-[10px] text-text-muted font-normal">platillos</span>
+        </div>
+        <div className="w-px h-3.5 bg-line" />
+        <div className="flex items-center gap-1.5 text-accent">
+          <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+          <span>{stats.available}</span>
+          <span className="text-[10px] font-normal">activos</span>
+        </div>
+        <div className="w-px h-3.5 bg-line" />
+        <div className="flex items-center gap-1.5 text-destructive">
+          <span>{stats.soldOut}</span>
+          <span className="text-[10px] font-normal">agotados</span>
+        </div>
+        {stats.promoCount > 0 && (
+          <>
+            <div className="w-px h-3.5 bg-line" />
+            <div className="flex items-center gap-1 text-amber-500">
+              <span>{stats.promoCount}</span>
+              <span className="text-[10px] font-normal">ofertas</span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* KPI Header Bar en Tablet / Desktop */}
+      <div className="hidden sm:grid sm:grid-cols-5 gap-3">
         <div className="p-4 rounded-3xl bg-surface-card border border-line shadow-xs space-y-1">
           <span className="text-[11px] font-semibold text-text-secondary">Total Platillos</span>
           <p className="text-xl font-bold text-text-primary">{stats.total}</p>
@@ -194,22 +286,22 @@ export function MenuStockPanel() {
           <p className="text-xl font-bold text-text-primary">{stats.stockManagedCount}</p>
         </div>
 
-        <div className="p-4 rounded-3xl bg-surface-card border border-line shadow-xs space-y-1 col-span-2 sm:col-span-1">
+        <div className="p-4 rounded-3xl bg-surface-card border border-line shadow-xs space-y-1">
           <span className="text-[11px] font-semibold text-amber-500">Con Oferta Activa</span>
           <p className="text-xl font-bold text-amber-500">{stats.promoCount}</p>
         </div>
       </div>
 
       {/* Control Bar: Categorías, Buscador y Botón Crear */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-surface-card p-4 rounded-3xl border border-line shadow-xs">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4 bg-surface-card p-3.5 sm:p-4 rounded-3xl border border-line shadow-xs">
         {/* Categorías */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
           <button
             type="button"
             onClick={() => setActiveCategory('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
               activeCategory === 'all'
-                ? 'bg-text-primary text-surface-card shadow-xs'
+                ? 'bg-text-primary text-surface-card shadow-xs font-black'
                 : 'bg-surface-raised text-text-secondary hover:text-text-primary'
             }`}
           >
@@ -223,15 +315,15 @@ export function MenuStockPanel() {
                 key={cat.key}
                 type="button"
                 onClick={() => setActiveCategory(cat.key)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                   isCatActive
-                    ? 'bg-text-primary text-surface-card shadow-xs'
+                    ? 'bg-text-primary text-surface-card shadow-xs font-black'
                     : 'bg-surface-raised text-text-secondary hover:text-text-primary'
                 }`}
               >
                 {cat.emoji && <span>{cat.emoji}</span>}
                 <span>{cat.name}</span>
-                <span className="text-[10px] opacity-70">({count})</span>
+                <span className="text-[10px] opacity-70 font-mono">({count})</span>
               </button>
             );
           })}
@@ -243,7 +335,7 @@ export function MenuStockPanel() {
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
             <input
               type="text"
-              placeholder="Buscar por nombre o SKU..."
+              placeholder="Buscar platillo..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 pr-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary placeholder-text-muted outline-none focus:border-accent"
@@ -253,17 +345,17 @@ export function MenuStockPanel() {
           <Button
             type="button"
             onClick={handleOpenCreate}
-            className="text-xs font-bold bg-accent text-white shrink-0 px-3.5"
+            className="text-xs font-bold bg-accent text-white shrink-0 px-3 h-9 rounded-xl cursor-pointer"
           >
             <Plus className="w-4 h-4 mr-1" />
-            Nuevo Producto
+            Nuevo
           </Button>
 
           <Button
             type="button"
             variant="outline"
             onClick={() => refetchMenu()}
-            className="p-2 shrink-0 h-9 w-9 text-text-secondary hover:text-text-primary"
+            className="p-2 shrink-0 h-9 w-9 text-text-secondary hover:text-text-primary rounded-xl cursor-pointer"
             title="Refrescar catálogo"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -273,25 +365,29 @@ export function MenuStockPanel() {
 
       {/* Grid de Productos */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {[1, 2, 3, 4, 5, 6].map((idx) => (
             <div key={idx} className="h-44 rounded-3xl bg-surface-card border border-line animate-pulse p-4 space-y-3" />
           ))}
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="p-12 rounded-3xl bg-surface-card border border-line text-center space-y-3">
+        <div className="p-8 sm:p-12 rounded-3xl bg-surface-card border border-line text-center space-y-3">
           <UtensilsCrossed className="w-10 h-10 text-text-muted mx-auto" />
-          <h3 className="text-sm font-bold text-text-primary">No se encontraron platillos</h3>
+          <h3 className="text-sm font-bold text-text-primary">
+            {activeToolId === 'promos' ? 'No hay platillos en promoción' : 'No se encontraron platillos'}
+          </h3>
           <p className="text-xs text-text-secondary">
-            Ajusta los filtros o crea un nuevo producto en este catálogo.
+            {activeToolId === 'promos'
+              ? 'Edita un platillo para asignarle un precio de oferta y activarlo.'
+              : 'Ajusta los filtros o crea un nuevo producto en este catálogo.'}
           </p>
-          <Button type="button" onClick={handleOpenCreate} className="text-xs bg-accent text-white font-bold">
+          <Button type="button" onClick={handleOpenCreate} className="text-xs bg-accent text-white font-bold cursor-pointer">
             <Plus className="w-4 h-4 mr-1" />
             Crear Primer Producto
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filteredItems.map((item) => {
             const isItemAvailable = item.isAvailable && (!item.stockManaged || (item.stockRemaining ?? 0) > 0);
             const imageUrl = item.imageUrl || (item.imageKey ? `/api/assets-v2/${encodeURIComponent(item.imageKey)}` : null);
@@ -299,15 +395,15 @@ export function MenuStockPanel() {
             return (
               <div
                 key={item.sku}
-                className={`bg-surface-card rounded-3xl border p-5 shadow-card flex flex-col justify-between transition-all space-y-4 ${
+                className={`bg-surface-card rounded-2xl sm:rounded-3xl border p-4 sm:p-5 shadow-card flex flex-col justify-between transition-all space-y-3 sm:space-y-4 ${
                   !isItemAvailable ? 'border-destructive/30 bg-destructive/5' : 'border-line hover:border-accent/40'
                 }`}
               >
                 {/* Header de la Tarjeta */}
-                <div className="space-y-3">
+                <div className="space-y-2.5 sm:space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     {/* Thumbnail */}
-                    <div className="w-14 h-14 rounded-2xl bg-surface-raised border border-line flex items-center justify-center overflow-hidden shrink-0">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-surface-raised border border-line flex items-center justify-center overflow-hidden shrink-0">
                       {imageUrl ? (
                         <img src={imageUrl} alt={item.name} className="w-full h-full object-cover" />
                       ) : (
@@ -318,14 +414,11 @@ export function MenuStockPanel() {
                     {/* Metadata & Status */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                        <Badge variant="outline" className="text-[10px] font-mono font-bold uppercase">
-                          {item.sku}
-                        </Badge>
-                        <Badge variant="secondary" className="text-[10px]">
+                        <Badge variant="secondary" className="text-[10px] font-bold">
                           {item.category}
                         </Badge>
                         {item.badge && (
-                          <Badge variant="default" className="text-[10px]">
+                          <Badge variant="default" className="text-[10px] bg-accent font-black">
                             {item.badge}
                           </Badge>
                         )}
@@ -336,11 +429,11 @@ export function MenuStockPanel() {
                         )}
                       </div>
 
-                      <h4 className="text-sm font-bold text-text-primary truncate" title={item.name}>
+                      <h4 className="text-sm sm:text-base font-black text-text-primary truncate" title={item.name}>
                         {item.name}
                       </h4>
                       {item.description && (
-                        <p className="text-[11px] text-text-secondary line-clamp-1">
+                        <p className="text-[11px] text-text-secondary line-clamp-1 mt-0.5">
                           {item.description}
                         </p>
                       )}
@@ -349,12 +442,12 @@ export function MenuStockPanel() {
 
                   {/* Precios & Promo */}
                   <div className="flex items-baseline gap-2 pt-1 border-t border-line">
-                    <span className="text-base font-extrabold text-text-primary">
+                    <span className="text-base font-extrabold text-text-primary font-mono">
                       ${(item.isPromoActive && item.promoPrice != null ? item.promoPrice : item.price).toFixed(2)}{' '}
                       <span className="text-[10px] font-normal text-text-secondary">MXN</span>
                     </span>
                     {item.isPromoActive && item.promoPrice != null && (
-                      <span className="text-xs text-text-muted line-through">
+                      <span className="text-xs text-text-muted line-through font-mono">
                         ${item.price.toFixed(2)}
                       </span>
                     )}
@@ -365,30 +458,32 @@ export function MenuStockPanel() {
                     )}
                   </div>
 
-                  {/* Stock Management Bar (Si aplica) */}
-                  {item.stockManaged && (
-                    <div className="p-3 rounded-2xl bg-surface-raised border border-line flex items-center justify-between gap-2">
-                      <div className="text-[11px]">
-                        <span className="font-semibold text-text-secondary">Stock diario: </span>
-                        <span className={`font-bold ${(item.stockRemaining ?? 0) <= 5 ? 'text-destructive' : 'text-accent'}`}>
+                  {/* Stock Management Bar (Si aplica o en vista quick-stock) */}
+                  {(item.stockManaged || activeToolId === 'quick-stock') && (
+                    <div className="p-2.5 rounded-2xl bg-surface-raised border border-line flex items-center justify-between gap-2">
+                      <div className="text-[11px] min-w-0">
+                        <span className="font-semibold text-text-secondary">Stock: </span>
+                        <span className={`font-bold font-mono ${(item.stockRemaining ?? 0) <= 5 ? 'text-destructive' : 'text-accent'}`}>
                           {item.stockRemaining ?? 0}
                         </span>
-                        <span className="text-text-muted"> / {item.stockLimit ?? '—'}</span>
+                        <span className="text-text-muted font-mono"> / {item.stockLimit ?? '—'}</span>
                       </div>
 
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => handleQuickStockChange(item, -1)}
                           disabled={(item.stockRemaining ?? 0) <= 0}
-                          className="w-6 h-6 rounded-lg bg-surface-card border border-line font-bold text-xs flex items-center justify-center hover:bg-surface-raised disabled:opacity-30"
+                          className="w-7 h-7 rounded-xl bg-surface-card border border-line font-bold text-xs flex items-center justify-center hover:bg-surface-raised disabled:opacity-30 cursor-pointer active:scale-95 shadow-xs"
+                          aria-label={`Restar stock a ${item.name}`}
                         >
                           -
                         </button>
                         <button
                           type="button"
                           onClick={() => handleQuickStockChange(item, 1)}
-                          className="w-6 h-6 rounded-lg bg-surface-card border border-line font-bold text-xs flex items-center justify-center hover:bg-surface-raised"
+                          className="w-7 h-7 rounded-xl bg-surface-card border border-line font-bold text-xs flex items-center justify-center hover:bg-surface-raised cursor-pointer active:scale-95 shadow-xs"
+                          aria-label={`Sumar stock a ${item.name}`}
                         >
                           +
                         </button>
@@ -405,7 +500,7 @@ export function MenuStockPanel() {
                       type="button"
                       variant={isItemAvailable ? 'secondary' : 'outline'}
                       onClick={() => handleToggleAvailability(item)}
-                      className={`text-xs font-bold flex-1 h-8 rounded-xl justify-center ${
+                      className={`text-xs font-bold flex-1 min-h-[38px] rounded-xl justify-center cursor-pointer ${
                         isItemAvailable ? 'text-accent border-accent/30' : 'text-destructive border-destructive/30'
                       }`}
                     >
@@ -427,8 +522,9 @@ export function MenuStockPanel() {
                       type="button"
                       variant="outline"
                       onClick={() => handleToggleHidden(item)}
-                      className="text-xs h-8 px-2.5 rounded-xl text-text-secondary hover:text-text-primary"
+                      className="text-xs min-h-[38px] px-2.5 rounded-xl text-text-secondary hover:text-text-primary cursor-pointer"
                       title={item.isHidden ? 'Mostrar en catálogo' : 'Ocultar del catálogo'}
+                      aria-label={item.isHidden ? 'Mostrar en catálogo' : 'Ocultar del catálogo'}
                     >
                       {item.isHidden ? <EyeOff className="w-3.5 h-3.5 text-amber-500" /> : <Eye className="w-3.5 h-3.5" />}
                     </Button>
@@ -438,7 +534,7 @@ export function MenuStockPanel() {
                       type="button"
                       variant="secondary"
                       onClick={() => handleOpenEdit(item)}
-                      className="text-xs h-8 px-3 rounded-xl font-bold"
+                      className="text-xs min-h-[38px] px-3 rounded-xl font-bold cursor-pointer"
                     >
                       <Edit2 className="w-3.5 h-3.5 mr-1" />
                       Editar
@@ -451,7 +547,7 @@ export function MenuStockPanel() {
                           type="button"
                           variant="destructive"
                           onClick={() => handleDeleteItem(item.sku)}
-                          className="text-[10px] h-8 px-2 rounded-xl font-bold"
+                          className="text-[10px] min-h-[38px] px-2 rounded-xl font-bold cursor-pointer"
                         >
                           Confirmar
                         </Button>
@@ -459,7 +555,7 @@ export function MenuStockPanel() {
                           type="button"
                           variant="outline"
                           onClick={() => setDeletingSku(null)}
-                          className="text-[10px] h-8 px-2 rounded-xl"
+                          className="text-[10px] min-h-[38px] px-2 rounded-xl cursor-pointer"
                         >
                           No
                         </Button>
@@ -469,8 +565,9 @@ export function MenuStockPanel() {
                         type="button"
                         variant="outline"
                         onClick={() => setDeletingSku(item.sku)}
-                        className="text-xs h-8 px-2.5 rounded-xl text-destructive hover:bg-destructive/10"
+                        className="text-xs min-h-[38px] px-2.5 rounded-xl text-destructive hover:bg-destructive/10 cursor-pointer"
                         title="Eliminar producto"
+                        aria-label={`Eliminar ${item.name}`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>

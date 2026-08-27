@@ -54,10 +54,26 @@ const BURGER_WORDS = [
   'OG',
 ];
 
-export function RafflesAdminPanel() {
+export interface RafflesAdminPanelProps {
+  activeToolId?: string;
+  onSelectTool?: (toolId: string) => void;
+}
+
+export function RafflesAdminPanel({ activeToolId, onSelectTool }: RafflesAdminPanelProps = {}) {
   const [activeTab, setActiveTab] = useState<'participants' | 'codes' | 'referrals' | 'settings'>('participants');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+
+  // Sincronizar activeToolId con activeTab
+  React.useEffect(() => {
+    if (activeToolId === 'codes') {
+      setActiveTab('codes');
+    } else if (activeToolId === 'referrals') {
+      setActiveTab('referrals');
+    } else if (activeToolId === 'participants') {
+      setActiveTab('participants');
+    }
+  }, [activeToolId]);
 
   const {
     campaigns,

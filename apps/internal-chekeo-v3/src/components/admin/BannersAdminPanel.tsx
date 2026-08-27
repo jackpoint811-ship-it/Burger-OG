@@ -45,7 +45,12 @@ const BADGE_COLORS = [
   { key: 'cyan', label: 'Cyan', cls: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' },
 ];
 
-export function BannersAdminPanel() {
+export interface BannersAdminPanelProps {
+  activeToolId?: string;
+  onSelectTool?: (toolId: string) => void;
+}
+
+export function BannersAdminPanel({ activeToolId, onSelectTool }: BannersAdminPanelProps = {}) {
   const {
     banners,
     isLoading,
@@ -97,6 +102,13 @@ export function BannersAdminPanel() {
     setImagePreview(null);
     setIsModalOpen(true);
   };
+
+  // Reaccionar a activeToolId
+  React.useEffect(() => {
+    if (activeToolId === 'create') {
+      handleOpenCreate();
+    }
+  }, [activeToolId]);
 
   const handleOpenEdit = (banner: CatalogBanner) => {
     setEditingBanner(banner);

@@ -53,6 +53,7 @@ Burgers.exe tiene una app pública de pedidos (`apps/public-order-v3`) y una app
 | V3-FixAssets | Fix Asset Route Regex & R2 Image Routing | ✅ Mergeado (#547) |
 | V3-KitchenMods | Aislamiento Estricto Estaciones + Mods Desaturados | ✅ Mergeado (#596) |
 | V3-ChekeoAudit | Auditoría Integral 360° Chekeo V3 + Hardening A11y & Timezone | ✅ Mergeado (#602) |
+| V3-AdminMobile | Rediseño Mobile-First Admin + Sincronización Sub-Herramientas | 🚀 En PR |
 
 ## Infraestructura y URLs Activas (Cloudflare Pages)
 
