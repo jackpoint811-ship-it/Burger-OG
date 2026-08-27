@@ -640,6 +640,16 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Títulos de conversación descriptivos en el TUI/IDE basados en la instrucción real enviada en el primer mensaje.
 - **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
 
+### 📅 2026-08-27 — Sesión 40: KPIs Financieros Reactivos por Período & Claridad Total de Cobros en Chekeo Pagos V3
+- **Objetivo**: Hacer que las 4 tarjetas KPI de Pagos y los ribbons de estado sean 100% reactivos al día o rango seleccionado (Hoy, Ayer, Esta Semana, Fecha de calendario, Anteriores, Todo) y responder con certeza absoluta a cuánto hay que cobrar el día de hoy.
+- **Implementación**:
+  - `types/payments.types.ts`: Incorporadas métricas de cobros pendientes en efectivo (`pendingCashCount`, `pendingCashAmount`) en `FinancialSummary`.
+  - `utils/payments.utils.ts`: Creada la función pura `filterOrdersByDate(orders, selectedDate)` con soporte para zona horaria CDMX y enriquecido `computeFinancialSummary` para calcular métricas de efectivo y transferencias por cobrar.
+  - `hooks/use-payments.ts`: Scoping de `financialSummary` directamente sobre `periodOrders`, exponiendo `periodOrdersCount` y `globalSummary`.
+  - `components/payments/PaymentKpiHeader.tsx`: Rediseño enriquecido de las 4 tarjetas KPI con títulos dinámicos (`Venta de Hoy`, `Venta de Ayer`, etc.), subtextos de cobros realizados y desglose en la tarjeta 4 (**Por Cobrar / Confirmar**) de transferencias por validar vs efectivo al entregar.
+  - `components/views/PagosView.tsx`: Sincronización del conteo total del ribbon de estados con `periodOrdersCount` e interacción toggle 1-clic en KPIs sin expulsar al operador del día en curso.
+- **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (6.52s), `npm run build:public` ✅ (6.45s).
+
 ---
 
 ## 📌 Issues Abiertos

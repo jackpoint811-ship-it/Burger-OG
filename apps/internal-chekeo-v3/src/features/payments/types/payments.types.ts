@@ -38,6 +38,8 @@ export interface FinancialSummary {
   // Conciliación y estados
   pendingTransferCount: number;
   pendingTransferAmount: number;
+  pendingCashCount: number;
+  pendingCashAmount: number;
   pendingTotalCount: number;
   pendingTotalAmount: number;
   paidTotalCount: number;

@@ -126,3 +126,8 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
 - **Soporte Dual para Activador Maestro & Nomenclatura Descriptiva de Conversaciones (2026-08-27)**:
   - Actualización de `AGENTS.md`, `GEMINI.md`, `.agents/skills/burgers-exe/SKILL.md` y `.agents/rules/00-hard-constraints.md` para soportar Modo Estatus (`burgers.exe` solo) y Modo Acción Directa (`burgers.exe: <tarea>`, `/plan burgers.exe: <tarea>`, `/burgers <tarea>`).
   - Permite titular conversaciones de forma descriptiva en la UI de Antigravity y ejecutar tareas inmediatamente con contexto precargado.
+- **KPIs Financieros Reactivos por Período & Claridad Total de Cobros en Chekeo Pagos V3 (2026-08-27)**:
+  - Scoping reactivo de `financialSummary` y conteos de estado en `usePayments` hacia el período seleccionado (`periodOrders`: Hoy, Ayer, Esta Semana, Fecha de calendario, Anteriores o Todo), erradicando métricas globales engañosas.
+  - Inclusión de métricas de efectivo pendiente (`pendingCashCount`, `pendingCashAmount`) junto a transferencias (`pendingTransferCount`, `pendingTransferAmount`) en `FinancialSummary`.
+  - Rediseño enriquecido de las 4 tarjetas KPI en `PaymentKpiHeader` con títulos contextuales (`Venta de Hoy`, `Venta de Ayer`, etc.), subtextos de cobros realizados vs pendientes y desglose explícito en la tarjeta 4 (**Por Cobrar / Confirmar**) para saber de inmediato cuánto dinero falta por cobrar hoy.
+  - Filtro interactivo 1-clic toggle en KPIs que mantiene al operador en el día/período en curso sin forzar la fecha a Todo.

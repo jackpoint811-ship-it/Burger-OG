@@ -6,6 +6,8 @@
 
 import type { OrderV2, OrderV2PaymentMethod, OrderV2PaymentStatus } from '@config/index';
 import { getCdmxTodayString, formatCdmxDateString } from '@config/index';
+import { formatCurrency, PAYMENT_METHOD_LABELS } from '../../orders';
+import { extractOrderTargetDate } from '../../../components/shared/HorizontalDateCalendarFilter';
 import type {
   FinancialSummary,
   PaymentFilterMethod,
@@ -72,6 +74,36 @@ export function isOrderFromTodayCDMX(isoString?: string): boolean {
 }
 
 /**
+ * Filtra órdenes por período o fecha objetivo (Timezone CDMX).
+ */
+export function filterOrdersByDate(
+  orders: OrderV2[],
+  selectedDate: string,
+  todayStr: string = getCdmxTodayString()
+): OrderV2[] {
+  if (selectedDate === 'all') return orders;
+
+  const yesterdayStr = getCdmxYesterdayString();
+  const sevenDaysAgoStr = getCdmxPastDaysString(7);
+
+  return orders.filter((order) => {
+    const targetDate = extractOrderTargetDate(order, todayStr);
+    if (selectedDate === 'today') {
+      return targetDate === todayStr;
+    } else if (selectedDate === 'yesterday') {
+      return targetDate === yesterdayStr;
+    } else if (selectedDate === 'week') {
+      return targetDate >= sevenDaysAgoStr && targetDate <= todayStr;
+    } else if (selectedDate === 'past') {
+      return targetDate < todayStr;
+    } else {
+      // Fecha específica YYYY-MM-DD
+      return targetDate === selectedDate;
+    }
+  });
+}
+
+/**
  * Calcula el resumen financiero consolidado para una lista de pedidos.
  */
 export function computeFinancialSummary(orders: OrderV2[]): FinancialSummary {
@@ -87,6 +119,8 @@ export function computeFinancialSummary(orders: OrderV2[]): FinancialSummary {
 
   let pendingTransferCount = 0;
   let pendingTransferAmount = 0;
+  let pendingCashCount = 0;
+  let pendingCashAmount = 0;
   let pendingTotalCount = 0;
   let pendingTotalAmount = 0;
   let paidTotalCount = 0;
@@ -133,6 +167,9 @@ export function computeFinancialSummary(orders: OrderV2[]): FinancialSummary {
       if (method === 'transfer') {
         pendingTransferCount += 1;
         pendingTransferAmount += amount;
+      } else if (method === 'cash') {
+        pendingCashCount += 1;
+        pendingCashAmount += amount;
       }
     }
   }
@@ -148,6 +185,8 @@ export function computeFinancialSummary(orders: OrderV2[]): FinancialSummary {
     cardCount,
     pendingTransferCount,
     pendingTransferAmount,
+    pendingCashCount,
+    pendingCashAmount,
     pendingTotalCount,
     pendingTotalAmount,
     paidTotalCount,
@@ -157,12 +196,6 @@ export function computeFinancialSummary(orders: OrderV2[]): FinancialSummary {
   };
 }
 
-import { formatCurrency, PAYMENT_METHOD_LABELS } from '../../orders';
-import { extractOrderTargetDate } from '../../../components/shared/HorizontalDateCalendarFilter';
-
-/**
- * Filtra una lista de pedidos según criterios de búsqueda, método, estado, modo, torre y período de fecha.
- */
 export function filterPaymentsOrders(
   orders: OrderV2[],
   criteria: PaymentFilterCriteria
@@ -178,30 +211,15 @@ export function filterPaymentsOrders(
   } = criteria;
   const searchLower = search.trim().toLowerCase();
 
-  const todayStr = getCdmxTodayString();
-  const yesterdayStr = getCdmxYesterdayString();
-  const sevenDaysAgoStr = getCdmxPastDaysString(7);
+  // 1. Filtrar por fecha / período
+  const dateFiltered =
+    selectedDate !== 'all'
+      ? filterOrdersByDate(orders, selectedDate)
+      : dateHorizon === 'today'
+      ? orders.filter((o) => isOrderFromTodayCDMX(o.createdAt))
+      : orders;
 
-  return orders.filter((order) => {
-    // 1. Filtro por Período / Fecha
-    if (selectedDate !== 'all') {
-      const targetDate = extractOrderTargetDate(order, todayStr);
-      if (selectedDate === 'today') {
-        if (targetDate !== todayStr) return false;
-      } else if (selectedDate === 'yesterday') {
-        if (targetDate !== yesterdayStr) return false;
-      } else if (selectedDate === 'week') {
-        if (targetDate < sevenDaysAgoStr || targetDate > todayStr) return false;
-      } else if (selectedDate === 'past') {
-        if (targetDate >= todayStr) return false;
-      } else if (selectedDate !== 'today' && selectedDate !== 'yesterday' && selectedDate !== 'week' && selectedDate !== 'past') {
-        // Fecha específica YYYY-MM-DD
-        if (targetDate !== selectedDate) return false;
-      }
-    } else if (dateHorizon === 'today' && !isOrderFromTodayCDMX(order.createdAt)) {
-      return false;
-    }
-
+  return dateFiltered.filter((order) => {
     // 2. Filtro por método de pago
     if (method !== 'all' && order.paymentMethod !== method) {
       return false;

@@ -14,7 +14,11 @@ import {
   useUpdateOrderPaymentMutation,
   useUpdateOrderStatusMutation,
 } from '../../orders';
-import { computeFinancialSummary, filterPaymentsOrders } from '../utils/payments.utils';
+import {
+  computeFinancialSummary,
+  filterPaymentsOrders,
+  filterOrdersByDate,
+} from '../utils/payments.utils';
 import type {
   PaymentFilterMethod,
   PaymentFilterStatus,
@@ -70,8 +74,18 @@ export function usePayments(options: UsePaymentsOptions = {}) {
     return Array.from(towersSet);
   }, [allOrders]);
 
-  // Resumen financiero global (calculado sobre todos los pedidos activos de la base de datos)
+  // Órdenes correspondientes al período seleccionado (Hoy, Ayer, Esta Semana, Fecha específica o Todo)
+  const periodOrders = useMemo(() => {
+    return filterOrdersByDate(allOrders, selectedDate);
+  }, [allOrders, selectedDate]);
+
+  // Resumen financiero reactivo del período seleccionado
   const financialSummary: FinancialSummary = useMemo(() => {
+    return computeFinancialSummary(periodOrders);
+  }, [periodOrders]);
+
+  // Resumen financiero global histórico (acumulado total)
+  const globalSummary: FinancialSummary = useMemo(() => {
     return computeFinancialSummary(allOrders);
   }, [allOrders]);
 
@@ -181,8 +195,11 @@ export function usePayments(options: UsePaymentsOptions = {}) {
   return {
     // Datos y estados
     allOrders,
+    periodOrders,
+    periodOrdersCount: periodOrders.length,
     filteredOrders,
     financialSummary,
+    globalSummary,
     availableTowers,
     isLoading: ordersQuery.isLoading,
     isFetching: ordersQuery.isFetching,
