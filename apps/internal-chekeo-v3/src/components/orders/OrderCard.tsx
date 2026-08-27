@@ -49,6 +49,10 @@ import {
   getWhatsAppLink,
   useUpdateOrderStatusMutation,
 } from '../../features/orders';
+import {
+  formatKitchenExtraLabel,
+  formatKitchenRemovalLabel,
+} from '../../features/kitchen';
 
 export interface OrderCardProps {
   order: OrderV2;
@@ -314,31 +318,23 @@ export function OrderCard({
                 </div>
               )}
 
-              {/* Remociones */}
-              {item.removedIngredients.length > 0 && (
-                <div className="pl-5 flex flex-wrap gap-1">
+              {/* Modificaciones Unificadas (- Remociones / + Extras) */}
+              {(item.removedIngredients.length > 0 || item.extras.length > 0) && (
+                <div className="pl-5 flex flex-wrap gap-1 pt-0.5">
                   {item.removedIngredients.map((ing, i) => (
                     <span
-                      key={i}
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-bold border border-red-500/20"
+                      key={`rem-${i}`}
+                      className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-black border border-red-500/20"
                     >
-                      <CircleSlash2 className="w-2.5 h-2.5 shrink-0" />
-                      <span>Sin {ing}</span>
+                      {formatKitchenRemovalLabel(ing)}
                     </span>
                   ))}
-                </div>
-              )}
-
-              {/* Extras */}
-              {item.extras.length > 0 && (
-                <div className="pl-5 flex flex-wrap gap-1">
                   {item.extras.map((extra, i) => (
                     <span
-                      key={i}
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent-soft text-accent text-[10px] font-bold border border-accent/20"
+                      key={`ext-${i}`}
+                      className="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[10px] font-black border border-emerald-500/20"
                     >
-                      <Plus className="w-2.5 h-2.5 shrink-0" />
-                      <span>{extra.name}</span>
+                      {formatKitchenExtraLabel(extra)}
                     </span>
                   ))}
                 </div>

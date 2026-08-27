@@ -36,6 +36,10 @@ import {
   PAYMENT_STATUS_CONFIGS,
 } from '../../features/orders';
 import {
+  formatKitchenExtraLabel,
+  formatKitchenRemovalLabel,
+} from '../../features/kitchen';
+import {
   generateVerticalTicketText,
   printVerticalTicket,
 } from '../../features/payments';
@@ -211,14 +215,14 @@ export function OrderTicketModal({
                   )}
 
                   {item.removedIngredients.length > 0 && (
-                    <div className="text-red-600 font-medium">
-                      • SIN: {item.removedIngredients.join(', ')}
+                    <div className="text-red-600 font-bold">
+                      • {item.removedIngredients.map((r) => formatKitchenRemovalLabel(r)).join(', ')}
                     </div>
                   )}
 
                   {item.extras.length > 0 && (
-                    <div className="text-emerald-700 font-medium">
-                      • +EXTRA: {item.extras.map((e) => e.name).join(', ')}
+                    <div className="text-emerald-700 font-bold">
+                      • {item.extras.map((e) => formatKitchenExtraLabel(e)).join(', ')}
                     </div>
                   )}
 

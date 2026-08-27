@@ -16,6 +16,7 @@ import {
 import { useChekeoOrdersQuery } from '../../features/orders';
 import {
   extractKitchenTicketItems,
+  extractKitchenProductionUnits,
   useKitchenItemTracking,
 } from '../../features/kitchen';
 
@@ -36,7 +37,7 @@ export function CocinaView() {
     refetchIntervalMs: 15000,
   });
 
-  // Contadores reactivos para los badges de las pestañas
+  // Contadores reactivos para los badges de las pestañas basados estrictamente en unidades físicas reales
   const { prepPendingCount, sideQuestPendingCount } = useMemo(() => {
     const todayStr = getCdmxTodayString();
 
@@ -55,16 +56,14 @@ export function CocinaView() {
         if (selectedDate !== 'today' && selectedDate !== 'past' && targetDate !== selectedDate) return;
       }
 
-      const { totalBurgersCount, totalGarnishesCount, totalDrinksCount, totalExtrasCount } =
-        extractKitchenTicketItems(order.items || []);
+      const { items } = extractKitchenTicketItems(order.items || []);
+      const units = extractKitchenProductionUnits(order.id, items);
 
-      if (totalBurgersCount > 0 && !isStationDone(order.id, 'prep')) prepCount++;
-      if (
-        (totalGarnishesCount > 0 || totalDrinksCount > 0 || totalExtrasCount > 0) &&
-        !isStationDone(order.id, 'sideQuest')
-      ) {
-        sideCount++;
-      }
+      const hasPrep = units.some((u) => u.station === 'prep');
+      const hasSide = units.some((u) => u.station === 'sideQuest');
+
+      if (hasPrep && !isStationDone(order.id, 'prep')) prepCount++;
+      if (hasSide && !isStationDone(order.id, 'sideQuest')) sideCount++;
     });
 
     return { prepPendingCount: prepCount, sideQuestPendingCount: sideCount };

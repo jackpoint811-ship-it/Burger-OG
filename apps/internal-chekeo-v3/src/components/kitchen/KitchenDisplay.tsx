@@ -60,26 +60,12 @@ export function KitchenDisplay({
       }
     }
 
-    // 2. Filtro de carril operativo
+    // 2. Filtro de carril operativo estricto por unidades de producción reales
     if (laneMode === 'prep') {
-      return (
-        ticket.totalBurgersCount > 0 ||
-        ticket.items.some((i) => i.itemKind === 'burger' || i.itemKind === 'combo')
-      );
+      return (ticket.productionUnits || []).some((u) => u.station === 'prep');
     }
     if (laneMode === 'sideQuest') {
-      return (
-        ticket.totalGarnishesCount > 0 ||
-        ticket.totalDrinksCount > 0 ||
-        ticket.totalExtrasCount > 0 ||
-        ticket.items.some(
-          (i) =>
-            i.itemKind === 'garnish' ||
-            i.itemKind === 'drink' ||
-            i.itemKind === 'extra' ||
-            (i.itemKind === 'combo' && (i.garnish || i.includedDrink))
-        )
-      );
+      return (ticket.productionUnits || []).some((u) => u.station === 'sideQuest');
     }
 
     return true;

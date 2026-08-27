@@ -28,6 +28,8 @@ import {
 import { Button } from '@ui/button';
 import {
   formatKitchenLocation,
+  formatKitchenExtraLabel,
+  formatKitchenRemovalLabel,
   useKitchenItemTracking,
   type KitchenTicket,
   type KitchenProductionUnit,
@@ -401,33 +403,33 @@ export function KitchenTicketCard({
                   {/* ─── Cuerpo Desplegable del Ítem ─────────────────────────────────── */}
                   {isExpanded && (
                     <div className="px-3.5 pb-3.5 sm:px-4 sm:pb-4 space-y-2.5 pt-0 border-t border-line/40 animate-in fade-in duration-200">
-                      {/* 🔴 Remociones: Listadas 1 por 1 en renglones verticales */}
-                      {unit.removedIngredients && unit.removedIngredients.length > 0 ? (
-                        <div className="space-y-1.5 pt-2">
-                          {unit.removedIngredients.map((mod, mIdx) => (
-                            <div
-                              key={mIdx}
-                              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-600 text-white text-xs font-black tracking-wide shadow-xs"
-                            >
-                              <span className="w-2 h-2 rounded-full bg-white shrink-0 animate-pulse" />
-                              <span>SIN {mod.toUpperCase()}</span>
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
+                      {/* ─── Unificación de Modificaciones (Remociones '-' y Extras '+') ───────── */}
+                      {((unit.removedIngredients && unit.removedIngredients.length > 0) ||
+                        (unit.extras && unit.extras.length > 0)) ? (
+                        <div className="pt-2" role="list" aria-label="Modificaciones del producto">
+                          <div className="flex flex-wrap gap-1.5">
+                            {/* Remociones (-) */}
+                            {unit.removedIngredients?.map((mod, mIdx) => (
+                              <span
+                                key={`rem-${mIdx}`}
+                                role="listitem"
+                                className="inline-flex items-center px-2.5 py-1 rounded-lg bg-red-500/15 text-red-700 dark:text-red-300 text-xs sm:text-sm font-black border border-red-500/30 tracking-tight"
+                              >
+                                {formatKitchenRemovalLabel(mod)}
+                              </span>
+                            ))}
 
-                      {/* 🟢 Extras Añadidos: Listados 1 por 1 en renglones verticales */}
-                      {unit.extras && unit.extras.length > 0 ? (
-                        <div className="space-y-1.5 pt-1">
-                          {unit.extras.map((extra, eIdx) => (
-                            <div
-                              key={eIdx}
-                              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-black tracking-wide shadow-xs"
-                            >
-                              <span>🟢</span>
-                              <span>+EXTRA {extra.name.toUpperCase()}</span>
-                            </div>
-                          ))}
+                            {/* Extras (+) con cantidad explícita */}
+                            {unit.extras?.map((extra, eIdx) => (
+                              <span
+                                key={`ext-${eIdx}`}
+                                role="listitem"
+                                className="inline-flex items-center px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-xs sm:text-sm font-black border border-emerald-500/30 tracking-tight"
+                              >
+                                {formatKitchenExtraLabel(extra)}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       ) : null}
 
