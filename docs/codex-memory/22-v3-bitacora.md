@@ -624,23 +624,12 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `OrdersList.tsx` y `PaymentsList.tsx` adaptados con la estructura idéntica de 2 columnas en su estado de carga.
 - **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.22s), `npm run build:chekeo` ✅ (5.93s).
 
-### 📅 2026-08-27 — Sesión 62: Integración de Storybook V3 (Design System & Mockup Interactivo)
-- **📖 Configuración de Storybook 8 sobre Vite 6 & Tailwind CSS v4**:
-  - Configurado `.storybook/main.ts` con framework `@storybook/react-vite`, soporte dinámico para `@tailwindcss/vite` y aliases `@ui`, `@config` y `@`.
-  - Configurado `.storybook/preview.tsx` con `QueryClientProvider` global, tokens de `globals.css`, viewports personalizados (iPhone 14, iPad Mini POS, Desktop POS) y auditoría a11y integrada (`@storybook/addon-a11y`).
-- **🎛️ Historias Iniciales de Componentes (Stories)**:
-  - **Design System (`packages/ui`)**:
-    - `Button.stories.tsx`: Variantes (`default`, `secondary`, `outline`, `destructive`, `largeCTA`, `disabled`).
-    - `Badge.stories.tsx`: Variantes semánticas (`default`, `success`, `warning`, `destructive`, `outline`).
-  - **Chekeo V3**:
-    - `OrderCard.stories.tsx`: Comanda nueva pagada, urgente prioritaria con realce visual, en preparación, lista y por confirmar pago.
-    - `PaymentKpiHeader.stories.tsx`: Métricas financieras interactivas con click-to-filter y navegación accesible por teclado.
-  - **Public Order V3**:
-    - `ProductCard.stories.tsx`: Producto estándar, producto en promoción flash con badge, y producto agotado.
-- **⚡ Scripts de Ejecución**:
-  - `npm run storybook`: Servidor de desarrollo interactivo en puerto 6006.
-  - `npm run build-storybook`: Compilación estática optimizada en `dist/storybook/`.
-- **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build-storybook` ✅ (0 errores), `npm run build:chekeo` ✅ (5.59s), `npm run build:public` ✅ (5.93s).
+### 📅 2026-08-27 — Sesión 62: Rollback de Storybook V3 (Repositorio 100% Limpio)
+- **🧹 Limpieza Integral de Dependencias & Archivos de Storybook**:
+  - Eliminadas las dependencias `@storybook/*` de `devDependencies` y restaurado `package.json` y `package-lock.json`.
+  - Eliminado el directorio `.storybook/` y todas las historias `.stories.tsx`.
+  - Cancelados los túneles y procesos secundarios.
+- **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅ (5.56s), `npm run build:public` ✅ (6.00s).
 
 ### 📅 2026-08-27 — Sesión 39: Soporte Dual de Activador Maestro & Nomenclatura Descriptiva
 - **Objetivo**: Habilitar ejecución inmediata con tareas descriptivas y compatibilidad con slash commands (`/plan`, `/burgers`).
