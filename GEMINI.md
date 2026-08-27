@@ -36,6 +36,9 @@ Si el usuario envía únicamente **`Burgers.exe`** (o `burger.exe`), el agente d
 7. **NUNCA DESFASAR FECHAS NI ENTORNO EN PEDIDOS (HORA CDMX & PREVIEW SOURCE)**:
    - Todo pedido de prueba o preview debe llevar `source: "public-v2-preview"`.
    - Toda fecha operativa debe calcularse usando obligatoriamente la hora de Ciudad de México (`getCdmxTodayString()` / `America/Mexico_City`), previniendo desalineaciones entre servidores UTC y navegadores locales.
+8. **NUNCA MERGEAR PRS AUTOMÁTICAMENTE (EL USUARIO REVISA Y MERGEA)**:
+   - Prohibido ejecutar `gh pr merge` o mergear Pull Requests por cuenta propia.
+   - El agente solo valida checks, abre el PR, reporta la URL y se detiene. El usuario es el único que revisa y hace el merge en GitHub.
 
 ---
 
@@ -51,10 +54,10 @@ Si el usuario envía únicamente **`Burgers.exe`** (o `burger.exe`), el agente d
    - `npm run build:public` y `npm run build:chekeo` (Builds limpios)
 4. **Actualización de Memoria**:
    - Registrar los cambios en `docs/codex-memory/22-v3-bitacora.md` y actualizar `01-estado-actual.md`.
-5. **Cierre Automático (Autorización Permanente)**:
+5. **Apertura de PR y Entrega al Usuario (Sin Merge Automático)**:
    - Al terminar con checks en verde, preparar commit limpio, hacer push de la rama y abrir Pull Request hacia `preview` o `v3`.
    - Entregar el reporte estructurado con Resumen, Archivos Modificados, Checks, Riesgos, Checklist QA y Enlace al PR.
-   - El usuario revisa y hace el merge.
+   - **DETENERSE AHÍ. El usuario revisa y hace el merge en GitHub.**
 
 ---
 

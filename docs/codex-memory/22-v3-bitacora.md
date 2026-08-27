@@ -585,6 +585,21 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 ---
 
+### 📅 2026-08-27 — Sesión 60: Multiplicadores de Extras, Precios Promo en Backend & Acordeones Colapsables en Chekeo V3
+- **🔢 Multiplicadores y Cantidades de Extras en Todo el Pipeline (PRs #597, #598, #599)**:
+  - Frontend (`ProductDetailDrawer.tsx`): Preserva `qty` en `extras` y evita duplicidad en `comboBurgers`.
+  - Backend (`functions/api/_routes/orders.ts`): Validación corregida para multiplicar precio por cantidad (`price_cents / 100 * qty`), preservar prefijo `${qty}x` en el nombre y descontar stock proporcional a `qty * item.qty`.
+  - Soporte completo de promociones en backend: `is_promo_active` y `promo_price_cents` respetados al calcular precios base.
+  - Cocina & Tickets (`kitchen.types.ts`, `OrderCard.tsx`, `ticket.utils.ts`, `OrderTicketModal.tsx`): Visibilidad de modificaciones de hamburguesas en combos y formateo estricto `+10 Aros de cebolla`, `+2 Tocino`.
+- **📂 Acordeones Colapsables por Defecto en Pedidos y Pagos (PR #600)**:
+  - En `OrderCard.tsx` y `PaymentCard.tsx`, el desglose de productos inicia colapsado por defecto, mostrando el contador `🛒 Pedido (N)` y resumen en línea.
+  - Botón táctil `[ Ver ⌄ ]` / `[ Ocultar ⌃ ]` para desplegar la comanda completa con modificaciones y notas de cocina.
+- **🛑 Gobernanza & Protocolo de Merge**:
+  - Reforzada la regla permanente: **El agente NUNCA ejecuta `gh pr merge`**. El agente solo valida checks, abre el PR hacia `preview`/`v3` y entrega la URL al usuario, quien revisa y mergea en GitHub.
+- **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.16s), `npm run build:chekeo` ✅ (5.47s).
+
+---
+
 
 
 
