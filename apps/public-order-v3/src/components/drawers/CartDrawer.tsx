@@ -13,6 +13,7 @@ import { useMenuItems } from '../../features';
 import { resolveCatalogAssetUrl } from '@config/assets';
 import { formatCurrency } from '../../utils/format';
 import { ProductFallbackSvg } from '../shared/ProductFallbackSvg';
+import { QuantityStepper } from '@ui/stepper';
 
 export function CartDrawer() {
   const activeDrawer = useUIStore((s) => s.activeDrawer);
@@ -250,29 +251,17 @@ export function CartDrawer() {
 
                         {/* Quantity Stepper & Remove */}
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(item.cartLineId, item.quantity - 1)}
-                            className="w-7 h-7 rounded-lg bg-surface-card border border-line flex items-center justify-center text-text-primary hover:bg-surface-raised cursor-pointer min-h-[36px] min-w-[36px]"
-                            aria-label={`Disminuir cantidad de ${item.name}`}
-                          >
-                            <Minus className="w-3.5 h-3.5" />
-                          </button>
-                          <span className="w-5 text-center text-xs font-bold text-text-primary">
-                            {item.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(item.cartLineId, item.quantity + 1)}
-                            className="w-7 h-7 rounded-lg bg-accent text-white flex items-center justify-center hover:bg-accent-dark cursor-pointer min-h-[36px] min-w-[36px]"
-                            aria-label={`Aumentar cantidad de ${item.name}`}
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                          </button>
+                          <QuantityStepper
+                            size="sm"
+                            value={item.quantity}
+                            onChange={(newQty) => updateQuantity(item.cartLineId, newQty)}
+                            min={1}
+                            ariaLabel={`Cantidad de ${item.name}`}
+                          />
                           <button
                             type="button"
                             onClick={() => removeItem(item.cartLineId)}
-                            className="w-7 h-7 rounded-lg text-text-muted hover:text-red-500 flex items-center justify-center cursor-pointer min-h-[36px] min-w-[36px] ml-1"
+                            className="w-8 h-8 rounded-xl text-text-muted hover:text-red-500 hover:bg-red-500/10 flex items-center justify-center cursor-pointer min-h-[36px] min-w-[36px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                             aria-label={`Eliminar ${item.name}`}
                           >
                             <Trash2 className="w-4 h-4" />
