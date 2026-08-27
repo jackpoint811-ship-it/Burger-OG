@@ -114,6 +114,7 @@ export function AdminAuthGate() {
         {/* Mensaje de Error si aplica */}
         {displayedError && (
           <div
+            id="admin-pin-error"
             role="alert"
             className="w-full mb-5 p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-start gap-3 text-red-600 dark:text-red-400 text-xs sm:text-sm animate-in fade-in duration-200"
           >
@@ -149,14 +150,14 @@ export function AdminAuthGate() {
               disabled={isSubmitting}
               className="pl-11 pr-11 text-center text-2xl tracking-[0.3em] font-mono h-14 rounded-2xl border-line bg-surface-raised font-black text-text-primary focus-visible:ring-2 focus-visible:ring-accent"
               aria-label="PIN de acceso administrativo numérico"
+              aria-describedby={displayedError ? 'admin-pin-error' : undefined}
             />
 
             <button
               type="button"
               onClick={() => setShowPin(!showPin)}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-text-muted hover:text-text-primary transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
               aria-label={showPin ? 'Ocultar PIN' : 'Mostrar PIN'}
-              tabIndex={-1}
             >
               {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>

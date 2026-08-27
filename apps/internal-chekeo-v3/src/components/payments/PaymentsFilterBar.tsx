@@ -65,18 +65,27 @@ export function PaymentsFilterBar({
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  // Cerrar popover al hacer clic fuera
+  // Cerrar popover al hacer clic fuera o presionar Escape
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
         setShowAdvancedFilters(false);
       }
     }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setShowAdvancedFilters(false);
+      }
+    }
+
     if (showAdvancedFilters) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [showAdvancedFilters]);
 
@@ -126,13 +135,13 @@ export function PaymentsFilterBar({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Buscar por folio (#ORD-...), cliente, torre, teléfono o notas…"
-            className="w-full pl-10 pr-10 h-11 rounded-2xl bg-surface-raised border border-line text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
+            className="w-full pl-10 pr-11 h-11 rounded-2xl bg-surface-raised border border-line text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
           />
           {search ? (
             <button
               type="button"
               onClick={() => onSearchChange('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary p-0.5 rounded-full cursor-pointer"
+              className="absolute right-1 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary min-h-11 min-w-11 flex items-center justify-center rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               aria-label="Limpiar búsqueda"
             >
               <X className="w-4 h-4" />
@@ -164,6 +173,8 @@ export function PaymentsFilterBar({
               variant="outline"
               size="md"
               onClick={() => setShowAdvancedFilters((prev) => !prev)}
+              aria-expanded={showAdvancedFilters}
+              aria-haspopup="dialog"
               className={`h-11 px-3.5 rounded-2xl border-line text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
                 activeSecondaryFiltersCount > 0
                   ? 'bg-accent/10 border-accent/40 text-accent'
@@ -182,7 +193,12 @@ export function PaymentsFilterBar({
 
             {/* Panel Popover de Filtros */}
             {showAdvancedFilters && (
-              <div className="absolute right-0 top-12 mt-1 z-40 w-72 p-4 bg-surface-card border border-line rounded-3xl shadow-floating space-y-4 animate-in fade-in zoom-in-95 duration-150">
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Filtros de pagos"
+                className="absolute right-0 top-12 mt-1 z-40 w-72 p-4 bg-surface-card border border-line rounded-3xl shadow-floating space-y-4 animate-in fade-in zoom-in-95 duration-150"
+              >
                 <div className="flex items-center justify-between border-b border-line pb-2">
                   <span className="text-xs font-black uppercase tracking-wider text-text-primary">
                     Filtros

@@ -65,13 +65,13 @@ export function BatchActionBar({
         <Button
           type="button"
           variant="ghost"
-          size="sm"
+          size="md"
           onClick={onClearSelection}
           disabled={busy}
-          className="text-xs font-bold text-text-secondary hover:text-text-primary h-9 px-2.5"
+          className="text-xs font-bold text-text-secondary hover:text-text-primary min-h-11 h-11 px-3 rounded-2xl cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           title="Deseleccionar todos"
         >
-          <X className="w-3.5 h-3.5 mr-1" />
+          <X className="w-4 h-4 mr-1" />
           <span>Limpiar</span>
         </Button>
 
@@ -80,15 +80,15 @@ export function BatchActionBar({
           <Button
             type="button"
             variant="default"
-            size="sm"
+            size="md"
             onClick={onBatchArchive}
             disabled={busy}
-            className="text-xs font-bold h-9 px-3.5 bg-rose-600 hover:bg-rose-700 text-white shadow-xs"
+            className="text-xs font-extrabold min-h-11 h-11 px-4 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
           >
             {busy ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+              <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
             ) : (
-              <Archive className="w-3.5 h-3.5 mr-1.5" />
+              <Archive className="w-4 h-4 mr-1.5" />
             )}
             <span>Archivar ({selectedCount})</span>
           </Button>
@@ -99,15 +99,15 @@ export function BatchActionBar({
           <Button
             type="button"
             variant="default"
-            size="sm"
+            size="md"
             onClick={onBatchRestore}
             disabled={busy}
-            className="text-xs font-bold h-9 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+            className="text-xs font-extrabold min-h-11 h-11 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
             {busy ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+              <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
             ) : (
-              <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+              <RotateCcw className="w-4 h-4 mr-1.5" />
             )}
             <span>Restaurar ({selectedCount})</span>
           </Button>
