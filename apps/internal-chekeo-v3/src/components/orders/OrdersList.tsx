@@ -44,8 +44,7 @@ function OrderCardSkeleton() {
         <Skeleton className="h-7 w-20 rounded-xl" />
       </div>
 
-      <div className="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-surface-raised border border-line">
-        <Skeleton className="h-8 rounded-lg" />
+      <div className="grid grid-cols-2 gap-2 p-2.5 rounded-2xl bg-surface-raised border border-line">
         <Skeleton className="h-8 rounded-lg" />
         <Skeleton className="h-8 rounded-lg" />
       </div>

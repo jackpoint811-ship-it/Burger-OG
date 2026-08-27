@@ -57,7 +57,10 @@ export function PaymentsList({
               <Skeleton className="h-5 w-24 rounded-lg" />
               <Skeleton className="h-6 w-16 rounded-md" />
             </div>
-            <Skeleton className="h-12 w-full rounded-2xl" />
+            <div className="grid grid-cols-2 gap-2 p-2.5 rounded-2xl bg-surface-raised border border-line">
+              <Skeleton className="h-8 rounded-lg" />
+              <Skeleton className="h-8 rounded-lg" />
+            </div>
             <div className="space-y-2">
               <Skeleton className="h-4 w-3/4 rounded" />
               <Skeleton className="h-4 w-1/2 rounded" />

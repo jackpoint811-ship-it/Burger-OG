@@ -119,5 +119,7 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
 - **Pipeline Integral de Multiplicadores de Extras, Precios Promo & Acordeones Colapsables (2026-08-27)**:
   - Preservación estricta de cantidades en extras en Frontend (`ProductDetailDrawer.tsx`), Backend (`orders.ts`), Cocina KDS (`kitchen.types.ts`) y Tickets (`ticket.utils.ts`), mostrando formato exacto `+10 Aros de cebolla`, `+2 Tocino` (PRs #597, #598, #599).
   - Corrección de cálculo de precio en backend: multiplicación del precio de extras por su cantidad (`price_cents / 100 * qty`) y cálculo de promociones activas (`promo_price_cents` / `is_promo_active`), erradicando discrepancias entre Checkout y confirmación de Chekeo (PR #599).
-  - Acordeones colapsables por defecto en las tarjetas de **Pedidos** (`OrderCard.tsx`) y **Pagos** (`PaymentCard.tsx`) con contador de productos `🛒 Pedido (N)` y botón interactivo `[ Ver ⌄ ]` / `[ Ocultar ⌃ ]` (PR #600).
-  - **Gobernanza de Merge**: Prohibición estricta de merge automático; el agente solo abre PRs y el usuario revisa y mergea en GitHub.
+- **Refinamiento & Homogeneización Integral de Tarjetas de Pedidos y Pagos en Chekeo V3 (2026-08-27)**:
+  - Eliminación de la redundancia de precio (conservado exclusivamente en la cabecera superior derecha) y optimización de la caja de Hechos Clave a 2 columnas amplias (`Entrega` a Torre/Depto y `Fecha` operativa CDMX con `getCdmxTodayString()`).
+  - Estandarización de accesibilidad WCAG 2.1 AA con targets táctiles $\ge 44\text{px}$ en botones de copiado de folio y WhatsApp directo, y anillos de foco visibles en acordeones.
+  - Sincronización fiel de los Skeletons de carga en `OrdersList.tsx` y `PaymentsList.tsx` a la nueva cuadrícula de 2 hechos clave.

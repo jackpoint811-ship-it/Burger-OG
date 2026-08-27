@@ -611,12 +611,20 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Reforzada la regla permanente: **El agente NUNCA ejecuta `gh pr merge`**. El agente solo valida checks, abre el PR hacia `preview`/`v3` y entrega la URL al usuario, quien revisa y mergea en GitHub.
 - **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.16s), `npm run build:chekeo` ✅ (5.47s).
 
+### 📅 2026-08-27 — Sesión 61: Refinamiento & Homogeneización Integral de Tarjetas de Pedidos y Pagos en Chekeo V3
+- **💰 Erradicación de Redundancia de Precio**:
+  - Eliminado el precio duplicado de la caja de hechos clave; se mantiene única y limpiamente en la cabecera superior derecha (`formatCurrency(order.total)`) junto a la pastilla de estado de cobro (`Pagado` / `Por confirmar`).
+- **📍 Franja de Hechos Clave Optimizada en 2 Columnas (`grid-cols-2`)**:
+  - Mayor amplitud para `Entrega` (`Torre GGA / Valcob · Depto XXX`) y `Fecha` operativa calculada estrictamente en hora CDMX (`getCdmxTodayString()`).
+- **♿ Accesibilidad WCAG 2.1 AA & Ergonomía Táctil**:
+  - Targets táctiles $\ge 44\text{px}$ (`min-h-11 min-w-11`) en botones de copiado de folio y acceso directo a WhatsApp.
+  - Anillos de foco visibles (`focus-visible:ring-2 focus-visible:ring-accent`) en botones de acordeón.
+  - Iconografía homogénea SVG Lucide (`ShoppingBag`) en la cabecera del acordeón.
+- **💀 Sincronización de Skeletons**:
+  - `OrdersList.tsx` y `PaymentsList.tsx` adaptados con la estructura idéntica de 2 columnas en su estado de carga.
+- **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅ (6.22s), `npm run build:chekeo` ✅ (5.93s).
+
 ---
-
-
-
-
-
 
 ## 📌 Issues Abiertos
 
