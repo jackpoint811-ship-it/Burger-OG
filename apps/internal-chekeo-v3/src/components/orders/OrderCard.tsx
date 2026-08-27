@@ -339,6 +339,44 @@ export function OrderCard({
                   ))}
                 </div>
               )}
+
+              {/* Modificaciones de Hamburguesas en Combos */}
+              {item.comboBurgers && item.comboBurgers.length > 0 && (
+                <div className="pl-5 space-y-1 pt-1">
+                  {item.comboBurgers.map((cb, cbIdx) => {
+                    const hasCbMods = (cb.removedIngredients?.length ?? 0) > 0 || (cb.extras?.length ?? 0) > 0 || Boolean(cb.burgerNote);
+                    if (!hasCbMods) return null;
+                    return (
+                      <div key={`cb-${cbIdx}`} className="flex flex-wrap items-center gap-1">
+                        <span className="text-[10px] font-bold text-text-secondary">
+                          🍔 {cb.name}:
+                        </span>
+                        {cb.removedIngredients?.map((ing, i) => (
+                          <span
+                            key={`cb-rem-${i}`}
+                            className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-black border border-red-500/20"
+                          >
+                            {formatKitchenRemovalLabel(ing)}
+                          </span>
+                        ))}
+                        {cb.extras?.map((extra, i) => (
+                          <span
+                            key={`cb-ext-${i}`}
+                            className="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[10px] font-black border border-emerald-500/20"
+                          >
+                            {formatKitchenExtraLabel(extra)}
+                          </span>
+                        ))}
+                        {cb.burgerNote && (
+                          <span className="text-[10px] italic text-text-muted">
+                            "{cb.burgerNote}"
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ))}
 

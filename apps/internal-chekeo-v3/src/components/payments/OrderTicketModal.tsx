@@ -226,6 +226,29 @@ export function OrderTicketModal({
                     </div>
                   )}
 
+                  {item.comboBurgers && item.comboBurgers.length > 0 && (
+                    <div className="space-y-0.5">
+                      {item.comboBurgers.map((cb, cbIdx) => {
+                        const cbMods: string[] = [];
+                        if (cb.removedIngredients?.length) {
+                          cbMods.push(...cb.removedIngredients.map((r) => formatKitchenRemovalLabel(r)));
+                        }
+                        if (cb.extras?.length) {
+                          cbMods.push(...cb.extras.map((e) => formatKitchenExtraLabel(e)));
+                        }
+                        if (cb.burgerNote) {
+                          cbMods.push(`"${cb.burgerNote}"`);
+                        }
+                        if (cbMods.length === 0) return null;
+                        return (
+                          <div key={`modal-cb-${cbIdx}`} className="font-bold text-zinc-700 dark:text-zinc-300">
+                            • 🍔 {cb.name}: {cbMods.join(', ')}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   {item.burgerNote && (
                     <div className="italic text-zinc-500">
                       • Nota: "{item.burgerNote}"

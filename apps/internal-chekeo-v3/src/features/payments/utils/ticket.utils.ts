@@ -80,6 +80,24 @@ export function generateVerticalTicketText(order: OrderV2): string {
       lines.push(`      • ${item.extras.map((e) => formatKitchenExtraLabel(e)).join(', ')}`);
     }
 
+    if (item.comboBurgers && item.comboBurgers.length > 0) {
+      item.comboBurgers.forEach((cb) => {
+        const cbMods: string[] = [];
+        if (cb.removedIngredients?.length) {
+          cbMods.push(...cb.removedIngredients.map((r) => formatKitchenRemovalLabel(r)));
+        }
+        if (cb.extras?.length) {
+          cbMods.push(...cb.extras.map((e) => formatKitchenExtraLabel(e)));
+        }
+        if (cb.burgerNote) {
+          cbMods.push(`Nota: "${cb.burgerNote}"`);
+        }
+        if (cbMods.length > 0) {
+          lines.push(`      • 🍔 ${cb.name}: ${cbMods.join(', ')}`);
+        }
+      });
+    }
+
     if (item.burgerNote) {
       lines.push(`      • Nota: "${item.burgerNote}"`);
     }
