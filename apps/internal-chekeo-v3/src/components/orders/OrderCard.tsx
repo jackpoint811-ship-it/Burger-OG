@@ -33,6 +33,7 @@ import {
   Sparkles,
   Plus,
   CircleSlash2,
+  ShoppingBag,
   Utensils,
   CupSoda,
   ChevronDown,
@@ -168,14 +169,14 @@ export function OrderCard({
                 <button
                   type="button"
                   onClick={handleCopyFolio}
-                  className="p-1 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors cursor-pointer"
+                  className="p-2 min-h-11 min-w-11 flex items-center justify-center rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   title="Copiar folio"
                   aria-label="Copiar folio"
                 >
                   {copiedFolio ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-accent" />
+                    <CheckCircle2 className="w-4 h-4 text-accent" />
                   ) : (
-                    <Copy className="w-3.5 h-3.5" />
+                    <Copy className="w-4 h-4" />
                   )}
                 </button>
               </div>
@@ -274,11 +275,11 @@ export function OrderCard({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-500/15 transition-colors cursor-pointer"
+              className="p-2 min-h-11 min-w-11 flex items-center justify-center rounded-xl text-emerald-600 hover:bg-emerald-500/15 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               title="Escribir por WhatsApp"
               aria-label="WhatsApp"
             >
-              <MessageCircle className="w-3.5 h-3.5" />
+              <MessageCircle className="w-4 h-4" />
             </a>
           </div>
         </div>
@@ -296,8 +297,9 @@ export function OrderCard({
             className="w-full flex items-center justify-between p-3 hover:bg-surface-raised transition-colors cursor-pointer text-left min-h-[44px]"
           >
             <div className="flex items-center gap-2 min-w-0 pr-2">
-              <span className="inline-flex items-center gap-1 font-bold text-text-primary">
-                <span>🛒 Pedido ({totalItemsCount})</span>
+              <span className="inline-flex items-center gap-1.5 font-bold text-text-primary">
+                <ShoppingBag className="w-3.5 h-3.5 text-accent" />
+                <span>Pedido ({totalItemsCount})</span>
               </span>
               {!isItemsExpanded && (
                 <span className="text-[11px] text-text-secondary truncate hidden sm:inline">

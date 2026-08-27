@@ -180,26 +180,28 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
               role="tab"
               aria-selected={viewMode === 'production'}
               onClick={() => setViewMode('production')}
-              className={`min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer select-none ${
+              className={`min-h-11 px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer select-none flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                 viewMode === 'production'
                   ? 'bg-text-primary text-surface-card shadow-xs'
                   : 'text-text-secondary hover:text-text-primary'
               }`}
             >
-              📊 Producción & Restock
+              <Boxes className="w-3.5 h-3.5" />
+              <span>Producción & Restock</span>
             </button>
             <button
               type="button"
               role="tab"
               aria-selected={viewMode === 'd1Ingredients'}
               onClick={() => setViewMode('d1Ingredients')}
-              className={`min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer select-none ${
+              className={`min-h-11 px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer select-none flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                 viewMode === 'd1Ingredients'
                   ? 'bg-text-primary text-surface-card shadow-xs'
                   : 'text-text-secondary hover:text-text-primary'
               }`}
             >
-              ⚖️ Insumos D1
+              <Scale className="w-3.5 h-3.5" />
+              <span>Insumos D1</span>
             </button>
           </div>
 
@@ -460,57 +462,62 @@ export function KitchenSummaryK({ selectedDate = 'today' }: KitchenSummaryKProps
             <button
               type="button"
               onClick={() => setStationFilter('all')}
-              className={`px-3 py-1.5 rounded-2xl text-xs font-black transition-all cursor-pointer shrink-0 border select-none ${
+              className={`min-h-11 px-3.5 py-2 rounded-2xl text-xs font-black transition-all cursor-pointer shrink-0 border select-none flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                 stationFilter === 'all'
                   ? 'bg-text-primary text-surface-card border-text-primary shadow-xs'
                   : 'bg-surface-card border-line text-text-secondary hover:text-text-primary'
               }`}
             >
-              🌐 Todas ({aggregates.totalBurgers + aggregates.totalGarnishes + aggregates.totalDrinks + aggregates.totalExtras})
+              <Layers className="w-3.5 h-3.5" />
+              <span>Todas ({aggregates.totalBurgers + aggregates.totalGarnishes + aggregates.totalDrinks + aggregates.totalExtras})</span>
             </button>
             <button
               type="button"
               onClick={() => setStationFilter('prep')}
-              className={`px-3 py-1.5 rounded-2xl text-xs font-black transition-all cursor-pointer shrink-0 border select-none ${
+              className={`min-h-11 px-3.5 py-2 rounded-2xl text-xs font-black transition-all cursor-pointer shrink-0 border select-none flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                 stationFilter === 'prep'
                   ? 'bg-text-primary text-surface-card border-text-primary shadow-xs'
                   : 'bg-surface-card border-line text-text-secondary hover:text-text-primary'
               }`}
             >
-              🍔 Plancha ({aggregates.totalBurgers})
+              <Flame className="w-3.5 h-3.5 text-amber-500" />
+              <span>Plancha ({aggregates.totalBurgers})</span>
             </button>
             <button
               type="button"
               onClick={() => setStationFilter('sideQuest')}
-              className={`px-3 py-1.5 rounded-2xl text-xs font-black transition-all cursor-pointer shrink-0 border select-none ${
+              className={`min-h-11 px-3.5 py-2 rounded-2xl text-xs font-black transition-all cursor-pointer shrink-0 border select-none flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
                 stationFilter === 'sideQuest'
                   ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
                   : 'bg-surface-card border-line text-text-secondary hover:text-text-primary'
               }`}
             >
-              🍟 Freidora / Sides ({aggregates.totalGarnishes})
+              <Utensils className="w-3.5 h-3.5" />
+              <span>Freidora / Sides ({aggregates.totalGarnishes})</span>
             </button>
             <button
               type="button"
               onClick={() => setStationFilter('drinks')}
-              className={`px-3 py-1.5 rounded-2xl text-xs font-black transition-all cursor-pointer shrink-0 border select-none ${
+              className={`min-h-11 px-3.5 py-2 rounded-2xl text-xs font-black transition-all cursor-pointer shrink-0 border select-none flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                 stationFilter === 'drinks'
                   ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                   : 'bg-surface-card border-line text-text-secondary hover:text-text-primary'
               }`}
             >
-              🥤 Bebidas ({aggregates.totalDrinks})
+              <Wine className="w-3.5 h-3.5" />
+              <span>Bebidas ({aggregates.totalDrinks})</span>
             </button>
             <button
               type="button"
               onClick={() => setStationFilter('extras')}
-              className={`px-3 py-1.5 rounded-2xl text-xs font-black transition-all cursor-pointer shrink-0 border select-none ${
+              className={`min-h-11 px-3.5 py-2 rounded-2xl text-xs font-black transition-all cursor-pointer shrink-0 border select-none flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                 stationFilter === 'extras'
                   ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                   : 'bg-surface-card border-line text-text-secondary hover:text-text-primary'
               }`}
             >
-              🥫 Extras & Dips ({aggregates.totalExtras})
+              <Tag className="w-3.5 h-3.5" />
+              <span>Extras & Dips ({aggregates.totalExtras})</span>
             </button>
           </div>
 

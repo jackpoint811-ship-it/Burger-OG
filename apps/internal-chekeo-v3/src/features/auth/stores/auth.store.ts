@@ -60,8 +60,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             error: null,
           });
           return isValid;
-        } catch (err: any) {
-          const errorMsg = err?.message || 'Error verificando sesión.';
+        } catch (err: unknown) {
+          const errorMsg = err instanceof Error ? err.message : 'Error verificando sesión.';
           set({
             isAuthenticated: false,
             status: 'unauthenticated',
@@ -86,8 +86,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             lastCheckedAt: Date.now(),
           });
           return true;
-        } catch (err: any) {
-          const message = err?.message || 'PIN inválido o no autorizado.';
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : 'PIN inválido o no autorizado.';
           set({
             isAuthenticated: false,
             status: 'error',
