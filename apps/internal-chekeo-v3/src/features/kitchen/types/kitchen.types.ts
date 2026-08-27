@@ -91,19 +91,48 @@ export function formatKitchenLocation(locationRaw?: string): string {
 }
 
 /**
- * Formatea un extra con prefijo '+' y cantidad explícita si es > 1 (o '+ Nombre' si es 1).
- * Ejemplos: "2x Tocino" -> "+2 Tocino", "1x Tocino" -> "+ Tocino", "Carne Extra" -> "+ Carne Extra"
+ * Formatea un extra con prefijo '+' y cantidad explícita SIEMPRE (ej. "+1 Tocino", "+2 Tocino", "+1 Carne Extra").
+ * Soporta cualquier formato de entrada:
+ * - "2x Tocino" -> "+2 Tocino"
+ * - "1x Tocino" -> "+1 Tocino"
+ * - "Tocino" -> "+1 Tocino"
+ * - "+EXTRA TOCINO" -> "+1 Tocino"
+ * - { name: "Tocino", qty: 2 } -> "+2 Tocino"
+ * - "Tocino (x2)" -> "+2 Tocino"
  */
-export function formatKitchenExtraLabel(extra: { name: string; sku?: string }): string {
+export function formatKitchenExtraLabel(extra: { name: string; sku?: string; qty?: number }): string {
   const raw = (extra.name || '').trim();
-  const match = raw.match(/^(\d+)\s*x\s*(.*)$/i) || raw.match(/^\+?(\d+)\s+(.*)$/i);
-  if (match) {
-    const qty = parseInt(match[1], 10);
-    const cleanName = match[2].trim().replace(/^\+EXTRA\s*/i, '').replace(/^\+?\s*/, '');
-    return qty > 1 ? `+${qty} ${cleanName}` : `+ ${cleanName}`;
+
+  // 1. Si viene la propiedad explícita qty
+  let qty = typeof extra.qty === 'number' && extra.qty > 0 ? extra.qty : 1;
+
+  // 2. Extraer cantidad desde el string si viene con formato "2x Nombre", "2 x Nombre", "(x2)", "+2 Nombre", etc.
+  let cleanName = raw;
+
+  // Regex para "2x Tocino" o "2 x Tocino" o "+2 Tocino" o "+ 2 Tocino"
+  const prefixMatch = raw.match(/^\+?\s*(\d+)\s*(?:x\s*|\s+)?(.*)$/i);
+  if (prefixMatch && prefixMatch[1]) {
+    qty = parseInt(prefixMatch[1], 10) || qty;
+    cleanName = prefixMatch[2]?.trim() || cleanName;
   }
-  const cleanName = raw.replace(/^\+EXTRA\s*/i, '').replace(/^\+?\s*/, '');
-  return `+ ${cleanName}`;
+
+  // Regex para "Tocino x2", "Tocino (x2)", "Tocino (2)"
+  const suffixMatch = cleanName.match(/^(.*?)\s*\(?\s*(?:x\s*|qty\s*)?(\d+)\s*\)?$/i);
+  if (suffixMatch && suffixMatch[2] && parseInt(suffixMatch[2], 10) > 0) {
+    qty = parseInt(suffixMatch[2], 10);
+    cleanName = suffixMatch[1]?.trim() || cleanName;
+  }
+
+  // Limpiar prefijos residuales como "+EXTRA", "EXTRA", "+", etc.
+  cleanName = cleanName
+    .replace(/^\+?EXTRA\s*/i, '')
+    .replace(/^\+\s*/, '')
+    .replace(/^-+\s*/, '')
+    .trim();
+
+  if (!cleanName) cleanName = raw || 'Extra';
+
+  return `+${qty} ${cleanName}`;
 }
 
 /**
