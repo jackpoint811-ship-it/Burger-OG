@@ -33,6 +33,7 @@ import {
   DollarSign,
   CreditCard,
   ChevronDown,
+  ShoppingBag,
 } from 'lucide-react';
 import { Button } from '@ui/button';
 import type { OrderV2 } from '@config/index';
@@ -129,14 +130,14 @@ export function PaymentCard({
                 <button
                   type="button"
                   onClick={handleCopyFolio}
-                  className="p-1 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors cursor-pointer"
+                  className="p-2 min-h-11 min-w-11 flex items-center justify-center rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   title="Copiar folio"
                   aria-label="Copiar folio"
                 >
                   {copiedFolio ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-accent" />
+                    <CheckCircle2 className="w-4 h-4 text-accent" />
                   ) : (
-                    <Copy className="w-3.5 h-3.5" />
+                    <Copy className="w-4 h-4" />
                   )}
                 </button>
               </div>
@@ -198,16 +199,8 @@ export function PaymentCard({
           </div>
         </div>
 
-        {/* ─── Cuadrícula de 3 Hechos Clave (Total, Entrega Torre, Fecha) ───────── */}
-        <div className="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-surface-raised/70 border border-line text-xs">
-          {/* Total */}
-          <div className="flex flex-col justify-center">
-            <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">Total</span>
-            <strong className="text-xs sm:text-sm font-black text-accent truncate">
-              {formatCurrency(order.total)}
-            </strong>
-          </div>
-
+        {/* ─── Franja de 2 Hechos Clave (Entrega Torre y Fecha) ──────────────── */}
+        <div className="grid grid-cols-2 gap-2 p-2.5 rounded-2xl bg-surface-raised/70 border border-line text-xs">
           {/* Entrega a Torre */}
           <div className="flex flex-col justify-center min-w-0">
             <span className="text-[10px] font-black uppercase tracking-wider text-text-muted">Entrega</span>
@@ -215,7 +208,7 @@ export function PaymentCard({
               className="text-[11px] sm:text-xs font-bold text-text-primary truncate flex items-center gap-1"
               title={towerLocation}
             >
-              <MapPin className="w-3 h-3 text-accent shrink-0" />
+              <MapPin className="w-3.5 h-3.5 text-accent shrink-0" />
               <span className="truncate">{towerLocation}</span>
             </strong>
           </div>
@@ -266,11 +259,11 @@ export function PaymentCard({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-500/15 transition-colors cursor-pointer"
+              className="p-2 min-h-11 min-w-11 flex items-center justify-center rounded-xl text-emerald-600 hover:bg-emerald-500/15 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               title="Escribir por WhatsApp"
               aria-label="WhatsApp"
             >
-              <MessageCircle className="w-3.5 h-3.5" />
+              <MessageCircle className="w-4 h-4" />
             </a>
           </div>
         </div>
@@ -285,11 +278,12 @@ export function PaymentCard({
             }}
             aria-expanded={isItemsExpanded}
             aria-controls={`payment-items-${order.id}`}
-            className="w-full flex items-center justify-between p-3 hover:bg-surface-raised transition-colors cursor-pointer text-left min-h-[44px]"
+            className="w-full flex items-center justify-between p-3 hover:bg-surface-raised transition-colors cursor-pointer text-left min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <div className="flex items-center gap-2 min-w-0 pr-2">
-              <span className="inline-flex items-center gap-1 font-bold text-text-primary">
-                <span>🛒 Pedido ({totalItemsCount})</span>
+              <span className="inline-flex items-center gap-1.5 font-bold text-text-primary">
+                <ShoppingBag className="w-3.5 h-3.5 text-accent" />
+                <span>Pedido ({totalItemsCount})</span>
               </span>
               {!isItemsExpanded && (
                 <span className="text-[11px] text-text-secondary truncate hidden sm:inline">

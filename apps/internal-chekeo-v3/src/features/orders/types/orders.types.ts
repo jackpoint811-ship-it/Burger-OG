@@ -16,6 +16,7 @@ import type {
   OrderV2Environment,
   OrderV2DeliveryInfo,
 } from '@config/index';
+import { getCdmxTodayString } from '@config/index';
 
 export interface NormalizedExtra {
   sku?: string;
@@ -416,8 +417,7 @@ export function formatOrderTargetDateInfo(order: OrderV2): {
   isToday: boolean;
   label: string;
 } {
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const todayStr = getCdmxTodayString();
 
   let targetDateStr = todayStr;
   const delivery = order.delivery as Record<string, unknown> | undefined;
