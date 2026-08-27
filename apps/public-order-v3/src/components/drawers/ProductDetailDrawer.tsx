@@ -432,12 +432,12 @@ export function ProductDetailDrawer() {
 
     const customization: CartItemCustomization = {
       itemKind: isCombo ? 'combo' : isBurger ? 'burger' : 'other',
-      removedIngredients: mode === 'customize' ? removedIngredients : [],
+      removedIngredients: !isCombo && mode === 'customize' ? removedIngredients : [],
       extras:
-        mode === 'customize'
-          ? extras.filter((e) => e.qty > 0).map((e) => ({ sku: e.sku, name: `${e.qty}x ${e.name}`, price: e.price * e.qty }))
+        !isCombo && mode === 'customize'
+          ? extras.filter((e) => e.qty > 0).map((e) => ({ sku: e.sku, name: `${e.qty}x ${e.name}`, price: e.price * e.qty, qty: e.qty }))
           : [],
-      burgerNote: specialNote.trim() || undefined,
+      burgerNote: !isCombo ? (specialNote.trim() || undefined) : undefined,
       garnish:
         isCombo && selectedSide
           ? {
@@ -465,6 +465,7 @@ export function ProductDetailDrawer() {
                   sku: e.sku,
                   name: `${e.qty}x ${e.name}`,
                   price: e.price * e.qty,
+                  qty: e.qty,
                 })),
                 burgerNote: draft?.note?.trim() || undefined,
               };
