@@ -156,3 +156,7 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Consolidación de la Pestaña 1 como `Resumen K` (`ResumenKView.tsx`), integrando la barra ejecutiva superior de 4 KPIs del Turno reactivos a la fecha seleccionada (*Cocina Activa*, *Por Cobrar*, *Pedidos Activos*, *Venta del Período*) con navegación cruzada 1-clic.
   - Integración nativa del Riel de Fechas Horizontal (`HorizontalDateCalendarFilter`) con Zona Horaria Oficial CDMX (`getCdmxTodayString()`).
   - Desacoplamiento total de `Resumen K` de `CocinaView.tsx`, simplificando Cocina a 2 estaciones de ejecución KDS en vivo (`🍔 Preparación` y `🍟 Side Quest`) con cero distracciones en hora pico.
+- **Pulido Integral de Resumen K, Erradicación de Slop & Barra Lateral de Submenú con Iconos (2026-08-28)**:
+  - Erradicación total de textos explicativos y párrafos redundantes en `ResumenKView.tsx` y `KitchenSummaryK.tsx`, optimizando la densidad visual para lectura en $<1$ segundo.
+  - Implementación de la Barra Lateral de Submenú con Iconos SVG Lucide (`ResumenKSidebarNav`) con navegación suave por anclas hacia las 8 secciones operativas (*Torres*, *Insumos*, *Plancha*, *Freidora*, *Bebidas*, *Extras*, *Modificaciones*, *Insumos D1*).
+  - Semáforo y 4 KPIs de turno ultracompactos con números tabulares (`tabular-nums`), targets táctiles $\ge 44\text{px}$ y navegación cruzada 1-clic a Cocina, Pagos y Pedidos.
