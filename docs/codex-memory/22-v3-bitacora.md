@@ -690,9 +690,16 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Cumplimiento estricto WCAG 2.1 AAA/AA: Texto primario `#F8FAFC` (15.8:1 AAA), texto secundario `#94A3B8` (8.2:1 AAA) y texto muted `#8492A6` (6.0:1 AA, corrigiendo el déficit anterior de 3.4:1).
   - Alto contraste en chips de ingredientes y modificadores con `dark:text-red-400` en `ProductDetailDrawer.tsx`.
   - Sincronización oficial del skill `.agents/skills/tailwind-v4-tokens/SKILL.md`.
+### 📅 2026-08-28 — Sesión 64: Integración de Taste Skill & Criterio de Diseño Artesanal Anti-Slop (V3)
+- **💎 Incorporación de `.agents/skills/taste-skill/`**:
+  - Creación del skill oficial `taste-skill` con estándares anti-slop de IA (prohibición de gradientes violetas/AI-purple, tarjetas monótonas de 3 columnas y micro-textos ilegibles).
+  - Calibración de Design Dials (1–10) por contexto: `public-order-v3` (Variance 7/10, Motion 6/10, Density 5/10) vs `internal-chekeo-v3` (Variance 3/10, Motion 2/10, Density 9/10).
+  - Micro-interacciones táctiles obligatorias (`active:scale-[0.98]`, transiciones $<200\text{ms}$ y feedback reactivo).
+  - Integración en las reglas de arquitectura del monorepo (`.agents/rules/02-architecture-and-style.md`) y checklist de calidad de diseño.
 - **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
 
 ---
+
 
 
 

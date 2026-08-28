@@ -15,3 +15,7 @@
   - Dark Mode: Slate/Carbón (`#121212` / `#1E1E1E`)
   - Tipografía: Inter
 - **Mobile First**: Viewport móvil como primera prioridad; targets táctiles de mínimo 44px.
+- **Criterio de Diseño y Anti-Slop (`taste-skill`)**:
+  - Prohibidos gradientes artificiales ("AI purple"), sombras duras y layouts de plantilla despersonalizados.
+  - Aplicar calibración de Design Dials (editorial/apetecible en tienda vs. alta densidad/foco operativo en cocina/POS).
+  - Micro-interacciones táctiles obligatorias (`active:scale-[0.98]`, feedback reactivo y transiciones $<200\text{ms}$).
