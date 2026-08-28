@@ -673,7 +673,7 @@ export function ProductDetailDrawer() {
                                   onClick={() => handleToggleRemoveIngredient(ing)}
                                   className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer min-h-[36px] flex items-center gap-1.5 ${
                                     isRemoved
-                                      ? 'bg-red-500/15 text-red-600 border border-red-500/30 font-extrabold'
+                                      ? 'bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 font-extrabold'
                                       : 'bg-surface-card text-text-primary border border-line hover:border-text-muted'
                                   }`}
                                 >
@@ -839,7 +839,7 @@ export function ProductDetailDrawer() {
                                               onClick={() => handleComboBurgerToggleRemove(idx, ing)}
                                               className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer min-h-[32px] flex items-center gap-1 ${
                                                 isRemoved
-                                                  ? 'bg-red-500/15 text-red-600 border border-red-500/30 font-extrabold'
+                                                  ? 'bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 font-extrabold'
                                                   : 'bg-surface-card text-text-primary border border-line hover:border-text-muted'
                                               }`}
                                             >

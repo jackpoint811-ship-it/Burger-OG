@@ -139,3 +139,8 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
 - **Erradicación Definitiva de Reloj de Estrés Prohibido en Chekeo V3 (2026-08-27)**:
   - Eliminación total del componente `LiveTimerBadge` (`packages/ui/src/timer-badge.tsx`) y su consumo en `OperacionView.tsx`.
   - Reafirmación estricta de la regla de oro operativa de la Sesión 18 / PR #549 (Cero relojes de presión o semáforos de urgencia por minutos en cocina/operación).
+- **Optimización Integral de Contraste en Modo Oscuro Deep Slate (2026-08-28)**:
+  - Calibración de la jerarquía visual y elevación en `.theme-dark` para `apps/public-order-v3` y `apps/internal-chekeo-v3` (Fondo `#0C0E12`, Tarjetas `#161922`, Superficie Elevada `#202531`, Bordes nítidos `#2E3545` y Sombras profundas).
+  - Cumplimiento estricto WCAG 2.1 AAA/AA: Texto primario `#F8FAFC` (15.8:1), texto secundario `#94A3B8` (8.2:1) y texto muted `#8492A6` (6.0:1, erradicando fallos previos de 3.4:1).
+  - Chips de remoción y modificación en alto contraste con `dark:text-red-400` en `ProductDetailDrawer`.
+
