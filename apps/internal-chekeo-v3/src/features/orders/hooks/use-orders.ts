@@ -9,12 +9,13 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type {
-  OrderV2,
-  OrderV2Status,
-  OrderV2Environment,
-  FetchOrdersV2AdminOptions,
-  UpdateOrderV2PaymentPayload,
+import {
+  type OrderV2,
+  type OrderV2Status,
+  type OrderV2Environment,
+  type FetchOrdersV2AdminOptions,
+  type UpdateOrderV2PaymentPayload,
+  getCdmxTodayString,
 } from '@config/index';
 import {
   fetchChekeoOrders,
@@ -27,6 +28,7 @@ import {
   type FetchOrdersV2SummaryOptions,
 } from '../api/orders.api';
 import type { OrderCounts } from '../types/orders.types';
+import { extractOrderTargetDate } from '../../../components/shared/HorizontalDateCalendarFilter';
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
 
@@ -80,20 +82,9 @@ export function useChekeoOrdersQuery(options: UseChekeoOrdersQueryOptions = {}) 
   const archivedOrders = archivedQuery.data ?? [];
 
   // Calcular conteos por estado a partir de la lista activa
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const todayStr = getCdmxTodayString();
 
-  const isOrderToday = (order: OrderV2) => {
-    const delivery = order.delivery as Record<string, unknown> | undefined;
-    const sched = delivery?.scheduledDate || delivery?.scheduledDeliveryDate;
-    if (typeof sched === 'string' && sched.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      return sched === todayStr;
-    }
-    if (order.createdAt) {
-      return order.createdAt.startsWith(todayStr);
-    }
-    return true;
-  };
+  const isOrderToday = (order: OrderV2) => extractOrderTargetDate(order, todayStr) === todayStr;
 
   const counts: OrderCounts = {
     all: orders.length,

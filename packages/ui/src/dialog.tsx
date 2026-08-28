@@ -20,6 +20,9 @@ export function Dialog({
   className,
   maxWidth = 'md',
 }: DialogProps) {
+  const titleId = React.useId();
+  const descId = React.useId();
+
   React.useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -52,6 +55,8 @@ export function Dialog({
       <div
         role="dialog"
         aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-describedby={description ? descId : undefined}
         className={cn(
           'relative z-50 w-full rounded-2xl border border-line bg-surface-card p-6 shadow-floating overflow-hidden',
           'animate-in fade-in-0 zoom-in-95 duration-150',
@@ -61,8 +66,8 @@ export function Dialog({
       >
         {(title || description) && (
           <div className="mb-4">
-            {title && <h2 className="text-lg font-bold text-text-primary">{title}</h2>}
-            {description && <p className="mt-1 text-sm text-text-secondary">{description}</p>}
+            {title && <h2 id={titleId} className="text-lg font-bold text-text-primary">{title}</h2>}
+            {description && <p id={descId} className="mt-1 text-sm text-text-secondary">{description}</p>}
           </div>
         )}
         {children}

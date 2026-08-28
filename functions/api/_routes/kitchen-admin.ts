@@ -3,10 +3,12 @@ import type { AppEnv } from '../_types';
 import {
   buildOrderEnvironmentCondition,
   errorResponse,
+  getCdmxUtcRange,
   json,
   parseOrderEnvironmentFromRequest,
   requireInternalOrigin
 } from '../_orders-v2-utils';
+import { getCdmxTodayString } from '../../../packages/config/src';
 
 export const kitchenAdminRouter = new Hono<AppEnv>();
 
@@ -58,12 +60,11 @@ kitchenAdminRouter.get('/summary-k', async (c) => {
   const authError = await requireInternalOrigin(c.req.raw);
   if (authError) return authError;
 
-  const date = c.req.query('date')?.trim() || new Date().toISOString().slice(0, 10);
+  const date = c.req.query('date')?.trim() || getCdmxTodayString();
   const environment = parseOrderEnvironmentFromRequest(c.req.raw);
   if (!environment) return errorResponse(400, 'INVALID_ENVIRONMENT', 'Ambiente de orden inválido.');
   if (!DATE_ONLY_RE.test(date)) return errorResponse(400, 'INVALID_DATE', 'Fecha inválida. Usa YYYY-MM-DD.');
-  const fromUtc = `${date}T00:00:00.000Z`;
-  const toUtc = `${date}T23:59:59.999Z`;
+  const { fromUtc, toUtc } = getCdmxUtcRange(date);
   const environmentCondition = buildOrderEnvironmentCondition(environment, 'o');
 
   try {

@@ -55,6 +55,7 @@ Burgers.exe tiene una app pública de pedidos (`apps/public-order-v3`) y una app
 | V3-ChekeoAudit | Auditoría Integral 360° Chekeo V3 + Hardening A11y & Timezone | ✅ Mergeado (#602) |
 | V3-AdminMobile | Rediseño Mobile-First Admin + Sincronización Sub-Herramientas | ✅ Mergeado (#609) |
 | V3-ResumenKHome | Resumen K como Home & KDS Especializado en 2 Estaciones | ✅ Mergeado (#615) |
+| V3-ProdAudit | Auditoría Forense 360° Pre-Producción & Certificación Cutover | ✅ Completado (GO 🟢) |
 
 ## Infraestructura y URLs Activas (Cloudflare Pages)
 
@@ -160,3 +161,8 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Erradicación total de textos explicativos y párrafos redundantes en `ResumenKView.tsx` y `KitchenSummaryK.tsx`, optimizando la densidad visual para lectura en $<1$ segundo.
   - Implementación de la Barra Lateral de Submenú con Iconos SVG Lucide (`ResumenKSidebarNav`) con navegación suave por anclas hacia las 8 secciones operativas (*Torres*, *Insumos*, *Plancha*, *Freidora*, *Bebidas*, *Extras*, *Modificaciones*, *Insumos D1*).
   - Semáforo y 4 KPIs de turno ultracompactos con números tabulares (`tabular-nums`), targets táctiles $\ge 44\text{px}$ y navegación cruzada 1-clic a Cocina, Pagos y Pedidos.
+- **Auditoría Forense 360° Pre-Producción & Certificación Cutover (2026-08-28)**:
+  - Auditoría integral multi-agente con Teamwork sobre la rama `preview` con veredicto **GO 🟢 (VICTORY CONFIRMED)**.
+  - Desacoplamiento de `mock-data.ts` en `functions/api/_routes/menu.ts` y cálculo matemático exacto de límites UTC en CDMX (`getCdmxUtcRangeFromTo`).
+  - Accesibilidad WCAG 2.1 AA reforzada en primitivas `@ui/dialog` y `@ui/drawer` con targets $\ge 44\text{px}$.
+  - Sincronización de upcharges de guarnición en combos contra D1 y validación de 10,000 órdenes Monte Carlo sin divergencias.

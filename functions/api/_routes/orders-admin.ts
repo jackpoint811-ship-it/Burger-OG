@@ -17,6 +17,7 @@ import {
   errorResponse,
   fetchOrderBundle,
   generateId,
+  getCdmxUtcRangeFromTo,
   getOrderSourceForEnvironment,
   json,
   mapD1OrderEventToOrderV2Event,
@@ -212,13 +213,14 @@ ordersAdminRouter.get('/', async (c) => {
     bindings.push(term, term, term, term, term);
   }
 
-  if (from) {
+  const { fromUtc, toUtc } = getCdmxUtcRangeFromTo(from, to);
+  if (fromUtc) {
     conditions.push('created_at >= ?');
-    bindings.push(`${from}T00:00:00.000Z`);
+    bindings.push(fromUtc);
   }
-  if (to) {
+  if (toUtc) {
     conditions.push('created_at <= ?');
-    bindings.push(`${to}T23:59:59.999Z`);
+    bindings.push(toUtc);
   }
   bindings.push(limit);
 
@@ -292,8 +294,7 @@ ordersAdminRouter.get('/summary', async (c) => {
   const limit = parseBoundedInt(params.get('limit'), 1000, 5000);
   const topLimit = parseBoundedInt(params.get('topLimit'), 10, 50);
 
-  const fromUtc = from ? `${from}T00:00:00.000Z` : '';
-  const toUtc = to ? `${to}T23:59:59.999Z` : '';
+  const { fromUtc, toUtc } = getCdmxUtcRangeFromTo(from, to);
 
   const conditions: string[] = ['o.archived_at IS NULL'];
   const bindings: Array<string | number> = [];
@@ -506,13 +507,14 @@ ordersAdminRouter.get('/export.csv', async (c) => {
   } else if (!includeTerminal) {
     conditions.push("status NOT IN ('delivered', 'cancelled')");
   }
-  if (from) {
+  const { fromUtc, toUtc } = getCdmxUtcRangeFromTo(from, to);
+  if (fromUtc) {
     conditions.push('created_at >= ?');
-    bindings.push(`${from}T00:00:00.000Z`);
+    bindings.push(fromUtc);
   }
-  if (to) {
+  if (toUtc) {
     conditions.push('created_at <= ?');
-    bindings.push(`${to}T23:59:59.999Z`);
+    bindings.push(toUtc);
   }
   bindings.push(limit);
 
@@ -685,13 +687,14 @@ ordersAdminRouter.post('/cash-cut', async (c) => {
   const envCondition = buildOrderEnvironmentCondition(environment);
   conditions.push(envCondition.condition);
   bindings.push(envCondition.binding);
-  if (from) {
+  const { fromUtc, toUtc } = getCdmxUtcRangeFromTo(from, to);
+  if (fromUtc) {
     conditions.push('created_at >= ?');
-    bindings.push(`${from}T00:00:00.000Z`);
+    bindings.push(fromUtc);
   }
-  if (to) {
+  if (toUtc) {
     conditions.push('created_at <= ?');
-    bindings.push(`${to}T23:59:59.999Z`);
+    bindings.push(toUtc);
   }
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 

@@ -5,10 +5,11 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type {
-  CreateOrderV2Payload,
-  CreateOrderV2Response,
-  OrderV2Environment,
+import {
+  type CreateOrderV2Payload,
+  type CreateOrderV2Response,
+  type OrderV2Environment,
+  getPublicOrderEnvironment,
 } from '@config/index';
 import { createOrder } from '../api/orders.api';
 import { menuKeys } from '../../menu/hooks/use-menu';
@@ -32,12 +33,7 @@ export function cartAndFormToCreateOrderPayload(
   form: CheckoutFormData,
   environment?: OrderV2Environment
 ): CreateOrderV2Payload {
-  const env: OrderV2Environment =
-    environment ??
-    (typeof window !== 'undefined' &&
-    (window.location.hostname.includes('preview') || window.location.hostname.includes('localhost'))
-      ? 'preview'
-      : 'production');
+  const env: OrderV2Environment = environment ?? getPublicOrderEnvironment();
 
   return {
     customer: {
