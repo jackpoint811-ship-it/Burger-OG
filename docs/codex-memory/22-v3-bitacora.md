@@ -704,7 +704,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Aseguramiento de target táctil mínimo de $44\text{px} \times 44\text{px}$ en botones de `FeaturedRail`, `CartBar` y tamaño `icon` de `packages/ui/src/button.tsx`.
 - **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
 
-### 📅 2026-08-28 — Sesión: Resumen K como Home & KDS Especializado
+### 📅 2026-08-28 — Sesión: Resumen K como Home & KDS Especializado — PR #615 (Mergeado)
 - **🏠 Consolidación de Resumen K como Pantalla de Inicio (Pestaña 1)**:
   - Creación de `ResumenKView.tsx` como componente principal de inicio en Chekeo V3 en reemplazo de `OperacionView.tsx`.
   - Integración de la barra superior de 4 KPIs ejecutivos (*Cocina Activa*, *Por Cobrar*, *Pedidos Activos*, *Venta del Período*) reactivos en tiempo real a la fecha seleccionada con navegación cruzada 1-clic.
