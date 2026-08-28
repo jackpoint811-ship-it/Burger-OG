@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { RotateCcw, ArrowRight, Sparkles } from 'lucide-react';
 import { useUIStore, useCartStore, type CartItem } from '../../stores';
+import { useMenuItems } from '../../features';
 import { formatCurrency } from '../../utils/format';
 
 export function ReorderModule() {
   const [lastOrderItems, setLastOrderItems] = useState<CartItem[]>([]);
+  const { items: allMenuItems } = useMenuItems();
   const addItem = useCartStore((s) => s.addItem);
   const openDrawer = useUIStore((s) => s.openDrawer);
   const pushToast = useUIStore((s) => s.pushToast);
@@ -36,7 +38,21 @@ export function ReorderModule() {
   );
 
   const handleReorder = () => {
-    lastOrderItems.forEach((item) => {
+    const availableItems = lastOrderItems.filter((item) => {
+      const menuItem = allMenuItems.find((p) => p.sku.toUpperCase() === item.sku.toUpperCase());
+      return menuItem ? menuItem.isAvailable !== false : true;
+    });
+
+    if (availableItems.length === 0) {
+      pushToast('Los productos de tu último pedido están agotados actualmente', 'error', 3000);
+      return;
+    }
+
+    if (availableItems.length < lastOrderItems.length) {
+      pushToast('Algunos productos agotados se omitieron de tu pedido', 'info', 3000);
+    }
+
+    availableItems.forEach((item) => {
       addItem(item);
     });
 

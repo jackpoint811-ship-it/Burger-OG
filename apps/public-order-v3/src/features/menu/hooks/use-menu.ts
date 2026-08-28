@@ -41,7 +41,9 @@ export function useMenuQuery(options?: { enabled?: boolean }) {
 export function useCategories() {
   const query = useMenuQuery();
   const categories: MenuCategory[] = query.data?.categories
-    ? [...query.data.categories].sort((a, b) => a.sortOrder - b.sortOrder)
+    ? [...query.data.categories]
+        .filter((cat) => cat.key.toLowerCase() !== 'extras')
+        .sort((a, b) => a.sortOrder - b.sortOrder)
     : [];
 
   return {

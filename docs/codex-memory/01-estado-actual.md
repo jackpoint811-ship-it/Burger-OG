@@ -171,3 +171,6 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Desacoplamiento de `mock-data.ts` en `functions/api/_routes/menu.ts` y cálculo matemático exacto de límites UTC en CDMX (`getCdmxUtcRangeFromTo`).
   - Accesibilidad WCAG 2.1 AA reforzada en primitivas `@ui/dialog` y `@ui/drawer` con targets $\ge 44\text{px}$.
   - Sincronización de upcharges de guarnición en combos contra D1 y validación de 10,000 órdenes Monte Carlo sin divergencias.
+- **Exclusividad de Extras en Personalización & Arquitectura Universal de Agotados (2026-08-28)**:
+  - Ocultamiento estricto de la categoría `extras` del catálogo público y barra de navegación (`useCategories()`), manteniéndolos 100% disponibles dentro del modal de personalización (`ProductDetailDrawer.tsx`).
+  - Arquitectura universal de agotados (Out of Stock) para todos los ítems: extras, guarniciones y bebidas en combos con deshabilitación de inputs, badges `Agotado` en rojo, selección por defecto inteligente en ítems disponibles y protección en 1-Click Reorder.

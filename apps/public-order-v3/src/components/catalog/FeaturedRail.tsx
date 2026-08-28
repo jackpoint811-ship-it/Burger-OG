@@ -16,11 +16,13 @@ export function FeaturedRail() {
   const addItem = useCartStore((s) => s.addItem);
   const cartItems = useCartStore((s) => s.items);
 
-  // Si no hay productos marcados como featured, tomar los primeros 4 del menú
+  // Si no hay productos marcados como featured, tomar los primeros 4 del menú (excluyendo extras y no disponibles)
   const displayItems: MenuItem[] =
     featuredItems.length > 0
       ? featuredItems
-      : (allMenuItems ?? []).filter((i: MenuItem) => i.isAvailable !== false).slice(0, 4);
+      : (allMenuItems ?? [])
+          .filter((i: MenuItem) => i.isAvailable !== false && i.category.toLowerCase() !== 'extras')
+          .slice(0, 4);
 
   if (displayItems.length === 0) return null;
 
