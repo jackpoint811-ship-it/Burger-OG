@@ -143,4 +143,7 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Calibración de la jerarquía visual y elevación en `.theme-dark` para `apps/public-order-v3` y `apps/internal-chekeo-v3` (Fondo `#0C0E12`, Tarjetas `#161922`, Superficie Elevada `#202531`, Bordes nítidos `#2E3545` y Sombras profundas).
   - Cumplimiento estricto WCAG 2.1 AAA/AA: Texto primario `#F8FAFC` (15.8:1), texto secundario `#94A3B8` (8.2:1) y texto muted `#8492A6` (6.0:1, erradicando fallos previos de 3.4:1).
   - Chips de remoción y modificación en alto contraste con `dark:text-red-400` en `ProductDetailDrawer`.
-
+- **Integración de Taste Skill & Criterio de Diseño Artesanal Anti-Slop (2026-08-28)**:
+  - Creación del skill `.agents/skills/taste-skill/` con directivas deterministas anti-slop de IA (prohibición de gradientes violetas artificiales, tarjetas clónicas y micro-textos ilegibles).
+  - Calibración de Design Dials adaptada al ecosistema Burgers.exe (tienda pública editorial y apetecible vs. Chekeo POS/KDS con alta densidad y cero distracción).
+  - Integración en las reglas del monorepo (`.agents/rules/02-architecture-and-style.md`) y checklist de calidad de diseño para PRs.
