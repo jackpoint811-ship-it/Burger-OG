@@ -46,9 +46,11 @@ function main() {
     const cmd = args.CommandLine.trim();
 
     // 1. Prohibit push or direct merge to main (only when git is the invoked executable)
+    //    Use negative lookahead/lookbehind so 'main' is matched only as an exact branch name,
+    //    not as a suffix in names like 'sync/preview-from-main'.
     if (
-      /(?:^|[;&|]\s*)git\s+push\b.*?\bmain(?:\s+|$|[;&|])/i.test(cmd) ||
-      /(?:^|[;&|]\s*)git\s+merge\b.*?\bmain(?:\s+|$|[;&|])/i.test(cmd)
+      /(?:^|[;&|\s])git\s+push\b[^;\n&|]*\s(?:origin\s+)?main(?=\s|$|[;&|])/i.test(cmd) ||
+      /(?:^|[;&|\s])git\s+merge\b[^;\n&|]*\smain(?=\s|$|[;&|])/i.test(cmd)
     ) {
       console.log(
         JSON.stringify({
