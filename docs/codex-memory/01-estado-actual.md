@@ -147,3 +147,7 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Creación del skill `.agents/skills/taste-skill/` con directivas deterministas anti-slop de IA (prohibición de gradientes violetas artificiales, tarjetas clónicas y micro-textos ilegibles).
   - Calibración de Design Dials adaptada al ecosistema Burgers.exe (tienda pública editorial y apetecible vs. Chekeo POS/KDS con alta densidad y cero distracción).
   - Integración en las reglas del monorepo (`.agents/rules/02-architecture-and-style.md`) y checklist de calidad de diseño para PRs.
+- **Auditoría & Aplicación Integral de Taste Skill (2026-08-28)**:
+  - Unificación de tokens de diseño en modo claro de Chekeo (`globals.css`) con la paleta cálida oficial Premium Casual (`#EAE6E1`, `#0F172A`, `#475569`, `#64748B`, `#E2DCD5`).
+  - Tipografía & números tabulares (`tabular-nums`) en precios, subtotales y KPIs en `ProductCard`, `FeaturedRail`, `ProductDetailDrawer`, `CartBar`, `CartDrawer` y `OperacionView`.
+  - Micro-interacciones táctiles responsivas (`active:scale-[0.98]`, `active:scale-[0.96]`, `active:scale-[0.92]`) y áreas táctiles $\ge 44\text{px}$ en botones de catálogo, barras flotantes e icono de botón base.

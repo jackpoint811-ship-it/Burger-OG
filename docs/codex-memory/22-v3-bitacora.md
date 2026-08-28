@@ -696,9 +696,16 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Calibración de Design Dials (1–10) por contexto: `public-order-v3` (Variance 7/10, Motion 6/10, Density 5/10) vs `internal-chekeo-v3` (Variance 3/10, Motion 2/10, Density 9/10).
   - Micro-interacciones táctiles obligatorias (`active:scale-[0.98]`, transiciones $<200\text{ms}$ y feedback reactivo).
   - Integración en las reglas de arquitectura del monorepo (`.agents/rules/02-architecture-and-style.md`) y checklist de calidad de diseño.
+### 📅 2026-08-28 — Sesión 65: Auditoría & Aplicación Integral de Taste Skill (V3)
+- **🎨 Unificación de Tokens, Tabular Numerals & Tactilidad**:
+  - Homogeneización de variables en modo claro de Chekeo (`apps/internal-chekeo-v3/src/styles/globals.css`) con la paleta cálida Premium Casual (`--color-surface-raised: #EAE6E1`, `--color-text-primary: #0F172A`, `--color-text-secondary: #475569`, `--color-text-muted: #64748B`, `--color-line: #E2DCD5`).
+  - Aplicación de `tabular-nums` en precios, subtotales y métricas de `ProductCard`, `FeaturedRail`, `ProductDetailDrawer`, `CartBar`, `CartDrawer` y `OperacionView`.
+  - Micro-interacciones táctiles `active:scale-[0.98]` / `active:scale-[0.96]` / `active:scale-[0.92]` en botones de catálogo, drawers y KPIs de semáforo de operación.
+  - Aseguramiento de target táctil mínimo de $44\text{px} \times 44\text{px}$ en botones de `FeaturedRail`, `CartBar` y tamaño `icon` de `packages/ui/src/button.tsx`.
 - **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
 
 ---
+
 
 
 

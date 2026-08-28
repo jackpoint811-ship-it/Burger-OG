@@ -1039,10 +1039,10 @@ export function ProductDetailDrawer() {
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className="flex-1 py-3.5 px-4 rounded-2xl bg-accent text-white font-extrabold text-xs sm:text-base hover:bg-accent-dark transition-colors shadow-cta cursor-pointer min-h-[48px] flex items-center justify-between gap-2"
+                  className="flex-1 py-3.5 px-4 rounded-2xl bg-accent text-white font-extrabold text-xs sm:text-base hover:bg-accent-dark active:scale-[0.98] transition-transform shadow-cta cursor-pointer min-h-[48px] flex items-center justify-between gap-2"
                 >
                   <span className="truncate">{ctaButtonLabel}</span>
-                  <span className="shrink-0">{formatCurrency(lineTotal)}</span>
+                  <span className="shrink-0 tabular-nums font-black">{formatCurrency(lineTotal)}</span>
                 </button>
               </div>
 
