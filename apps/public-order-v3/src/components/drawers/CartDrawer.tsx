@@ -20,6 +20,7 @@ export function CartDrawer() {
   const closeDrawer = useUIStore((s) => s.closeDrawer);
   const openDrawer = useUIStore((s) => s.openDrawer);
   const openProductDrawer = useUIStore((s) => s.openProductDrawer);
+  const pushToast = useUIStore((s) => s.pushToast);
 
   const items = useCartStore(selectCartItems);
   const totalAmount = useCartStore(selectCartTotal);
@@ -64,7 +65,22 @@ export function CartDrawer() {
 
   const handleReorder = () => {
     if (lastOrder && lastOrder.length > 0) {
-      loadSnapshot(lastOrder);
+      const availableItems = lastOrder.filter((item) => {
+        const menuItem = allMenuItems.find((p) => p.sku.toUpperCase() === item.sku.toUpperCase());
+        return menuItem ? menuItem.isAvailable !== false : true;
+      });
+
+      if (availableItems.length === 0) {
+        pushToast('Los productos de tu último pedido están agotados actualmente', 'error', 3000);
+        return;
+      }
+
+      if (availableItems.length < lastOrder.length) {
+        pushToast('Algunos productos agotados se omitieron de tu pedido', 'info', 3000);
+      }
+
+      loadSnapshot(availableItems);
+      pushToast('¡Último pedido cargado al carrito!', 'success', 2500);
     }
   };
 

@@ -50,14 +50,15 @@ export function ProductDetailDrawer() {
   const [comboBurgerDrafts, setComboBurgerDrafts] = useState<Record<number, ComboBurgerDraft>>({});
   const [expandedComboBurger, setExpandedComboBurger] = useState<number | null>(null);
 
-  // Available extras products from menu (D1)
+  // Available extras products from menu (D1) con estado isAvailable real
   const availableExtras = useMemo(() => {
     return allMenuItems
-      .filter((item) => item.category.toLowerCase() === 'extras' && item.isAvailable !== false)
+      .filter((item) => item.category.toLowerCase() === 'extras')
       .map((item) => ({
         sku: item.sku,
         name: item.name,
         price: item.isPromoActive && item.promoPrice != null ? item.promoPrice : item.price,
+        isAvailable: item.isAvailable !== false,
       }));
   }, [allMenuItems]);
 
@@ -72,24 +73,26 @@ export function ProductDetailDrawer() {
     (g) => g.name.toLowerCase().includes('bebida') || g.name.toLowerCase().includes('drink')
   );
 
-  // Available side options (calculado estrictamente de upchargeCents de D1 o diferencia de precio)
+  // Available side options (calculado de upchargeCents de D1 y validando isAvailable)
   const sideOptions = useMemo(() => {
     if (!isCombo) return [];
     if (sideGroup && sideGroup.options.length > 0) {
       return sideGroup.options.map((opt) => {
         const item = allMenuItems.find((p) => p.sku.toUpperCase() === opt.sku.toUpperCase());
+        const isAvailable = item ? item.isAvailable !== false : true;
         const upcharge = (opt.upchargeCents || 0) / 100;
         return {
           sku: opt.sku,
           name: item?.name ?? opt.sku,
           upcharge,
           isDefault: opt.isDefault,
+          isAvailable,
         };
       });
     }
     // Fallback to all items in guarniciones category
     const sides = allMenuItems.filter(
-      (p) => p.category.toLowerCase() === 'guarniciones' && p.isAvailable !== false
+      (p) => p.category.toLowerCase() === 'guarniciones'
     );
     const basePrice = sides[0]?.price ?? 25;
     return sides.map((p, idx) => {
@@ -99,21 +102,24 @@ export function ProductDetailDrawer() {
         name: p.name,
         upcharge: diff,
         isDefault: idx === 0,
+        isAvailable: p.isAvailable !== false,
       };
     });
   }, [isCombo, sideGroup, allMenuItems]);
 
-  // Available drink options
+  // Available drink options (validando isAvailable)
   const drinkOptions = useMemo(() => {
     if (!isCombo) return [];
     if (drinkGroup && drinkGroup.options.length > 0) {
       return drinkGroup.options.map((opt) => {
         const item = allMenuItems.find((p) => p.sku.toUpperCase() === opt.sku.toUpperCase());
+        const isAvailable = item ? item.isAvailable !== false : true;
         return {
           sku: opt.sku,
           name: item?.name ?? opt.sku,
           upcharge: (opt.upchargeCents || 0) / 100,
           isDefault: opt.isDefault,
+          isAvailable,
         };
       });
     }
@@ -121,14 +127,14 @@ export function ProductDetailDrawer() {
     return allMenuItems
       .filter(
         (p) =>
-          (p.category.toLowerCase() === 'drinks' || p.category.toLowerCase() === 'bebidas') &&
-          p.isAvailable !== false
+          p.category.toLowerCase() === 'drinks' || p.category.toLowerCase() === 'bebidas'
       )
       .map((p, idx) => ({
         sku: p.sku,
         name: p.name,
         upcharge: 0,
         isDefault: idx === 0,
+        isAvailable: p.isAvailable !== false,
       }));
   }, [isCombo, drinkGroup, allMenuItems]);
 
@@ -232,10 +238,16 @@ export function ProductDetailDrawer() {
         setExtras([]);
         setSpecialNote('');
 
-        const defaultSide = sideOptions.find((s) => s.isDefault) || sideOptions[0];
+        const defaultSide =
+          sideOptions.find((s) => s.isDefault && s.isAvailable) ||
+          sideOptions.find((s) => s.isAvailable) ||
+          sideOptions[0];
         setSelectedSideSku(defaultSide?.sku ?? '');
 
-        const defaultDrink = drinkOptions.find((d) => d.isDefault) || drinkOptions[0];
+        const defaultDrink =
+          drinkOptions.find((d) => d.isDefault && d.isAvailable) ||
+          drinkOptions.find((d) => d.isAvailable) ||
+          drinkOptions[0];
         setSelectedDrinkSku(defaultDrink?.sku ?? '');
 
         const initialDrafts: Record<number, ComboBurgerDraft> = {};
@@ -270,12 +282,18 @@ export function ProductDetailDrawer() {
   );
   const basePrice = product ? (isPromo && product.promoPrice != null ? product.promoPrice : product.price) : 0;
 
-  // Selected side upcharge
-  const selectedSide = sideOptions.find((s) => s.sku === selectedSideSku);
+  // Selected side upcharge (priorizando opción disponible)
+  const selectedSide =
+    sideOptions.find((s) => s.sku === selectedSideSku && s.isAvailable !== false) ||
+    sideOptions.find((s) => s.isAvailable !== false) ||
+    sideOptions.find((s) => s.sku === selectedSideSku);
   const sideUpcharge = selectedSide?.upcharge ?? 0;
 
-  // Selected drink upcharge
-  const selectedDrink = drinkOptions.find((d) => d.sku === selectedDrinkSku);
+  // Selected drink upcharge (priorizando opción disponible)
+  const selectedDrink =
+    drinkOptions.find((d) => d.sku === selectedDrinkSku && d.isAvailable !== false) ||
+    drinkOptions.find((d) => d.isAvailable !== false) ||
+    drinkOptions.find((d) => d.sku === selectedDrinkSku);
   const drinkUpcharge = selectedDrink?.upcharge ?? 0;
 
   // Extras total
@@ -351,7 +369,11 @@ export function ProductDetailDrawer() {
     );
   };
 
-  const handleExtraQuantityChange = (extraItem: { sku: string; name: string; price: number }, delta: number) => {
+  const handleExtraQuantityChange = (
+    extraItem: { sku: string; name: string; price: number; isAvailable?: boolean },
+    delta: number
+  ) => {
+    if (delta > 0 && extraItem.isAvailable === false) return;
     setExtras((prev) => {
       const existing = prev.find((e) => e.sku === extraItem.sku);
       if (existing) {
@@ -385,9 +407,10 @@ export function ProductDetailDrawer() {
 
   const handleComboBurgerExtraChange = (
     index: number,
-    extraItem: { sku: string; name: string; price: number },
+    extraItem: { sku: string; name: string; price: number; isAvailable?: boolean },
     delta: number
   ) => {
+    if (delta > 0 && extraItem.isAvailable === false) return;
     setComboBurgerDrafts((prev) => {
       const current = prev[index] ?? {
         name: comboBurgerProducts[index]?.name ?? 'Burger',
@@ -434,7 +457,13 @@ export function ProductDetailDrawer() {
       removedIngredients: !isCombo && mode === 'customize' ? removedIngredients : [],
       extras:
         !isCombo && mode === 'customize'
-          ? extras.filter((e) => e.qty > 0).map((e) => ({ sku: e.sku, name: `${e.qty}x ${e.name}`, price: e.price * e.qty, qty: e.qty }))
+          ? extras
+              .filter(
+                (e) =>
+                  e.qty > 0 &&
+                  availableExtras.find((ae) => ae.sku === e.sku)?.isAvailable !== false
+              )
+              .map((e) => ({ sku: e.sku, name: `${e.qty}x ${e.name}`, price: e.price * e.qty, qty: e.qty }))
           : [],
       burgerNote: !isCombo ? (specialNote.trim() || undefined) : undefined,
       garnish:
@@ -460,12 +489,18 @@ export function ProductDetailDrawer() {
                 sku: burger.sku,
                 name: burger.name,
                 removedIngredients: draft?.removedIngredients ?? [],
-                extras: (draft?.extras ?? []).filter((e) => e.qty > 0).map((e) => ({
-                  sku: e.sku,
-                  name: `${e.qty}x ${e.name}`,
-                  price: e.price * e.qty,
-                  qty: e.qty,
-                })),
+                extras: (draft?.extras ?? [])
+                  .filter(
+                    (e) =>
+                      e.qty > 0 &&
+                      availableExtras.find((ae) => ae.sku === e.sku)?.isAvailable !== false
+                  )
+                  .map((e) => ({
+                    sku: e.sku,
+                    name: `${e.qty}x ${e.name}`,
+                    price: e.price * e.qty,
+                    qty: e.qty,
+                  })),
                 burgerNote: draft?.note?.trim() || undefined,
               };
             })
@@ -702,15 +737,34 @@ export function ProductDetailDrawer() {
                           <div className="space-y-2">
                             {availableExtras.map((extra) => {
                               const currentQty = extras.find((e) => e.sku === extra.sku)?.qty ?? 0;
+                              const isAvailable = extra.isAvailable !== false;
+
                               return (
                                 <div
                                   key={extra.sku}
-                                  className="flex items-center justify-between p-2.5 rounded-xl bg-surface-card border border-line"
+                                  className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                                    !isAvailable
+                                      ? 'bg-surface/50 border-line/60 opacity-60 select-none'
+                                      : 'bg-surface-card border-line'
+                                  }`}
                                 >
                                   <div>
-                                    <span className="text-xs font-bold text-text-primary block">
-                                      {extra.name}
-                                    </span>
+                                    <div className="flex items-center gap-1.5">
+                                      <span
+                                        className={`text-xs font-bold ${
+                                          !isAvailable
+                                            ? 'text-text-muted line-through'
+                                            : 'text-text-primary'
+                                        }`}
+                                      >
+                                        {extra.name}
+                                      </span>
+                                      {!isAvailable && (
+                                        <span className="text-[10px] font-extrabold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20">
+                                          Agotado
+                                        </span>
+                                      )}
+                                    </div>
                                     <span className="text-[11px] font-bold text-accent">
                                       +{formatCurrency(extra.price)}
                                     </span>
@@ -730,8 +784,9 @@ export function ProductDetailDrawer() {
                                     </span>
                                     <button
                                       type="button"
-                                      onClick={() => handleExtraQuantityChange(extra, 1)}
-                                      className="w-8 h-8 rounded-lg bg-accent text-white flex items-center justify-center hover:bg-accent-dark cursor-pointer min-h-[36px] min-w-[36px]"
+                                      onClick={() => isAvailable && handleExtraQuantityChange(extra, 1)}
+                                      disabled={!isAvailable}
+                                      className="w-8 h-8 rounded-lg bg-accent text-white flex items-center justify-center hover:bg-accent-dark disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer min-h-[36px] min-w-[36px]"
                                       aria-label={`Agregar 1 ${extra.name}`}
                                     >
                                       <Plus className="w-4 h-4" />
@@ -859,14 +914,37 @@ export function ProductDetailDrawer() {
                                         {availableExtras.map((extra) => {
                                           const currentQty =
                                             draft?.extras.find((e) => e.sku === extra.sku)?.qty ?? 0;
+                                          const isAvailable = extra.isAvailable !== false;
+
                                           return (
                                             <div
                                               key={extra.sku}
-                                              className="flex items-center justify-between p-2 rounded-lg bg-surface-card border border-line text-xs"
+                                              className={`flex items-center justify-between p-2 rounded-lg border text-xs transition-all ${
+                                                !isAvailable
+                                                  ? 'bg-surface/50 border-line/60 opacity-60 select-none'
+                                                  : 'bg-surface-card border-line'
+                                              }`}
                                             >
                                               <div>
-                                                <span className="font-bold text-text-primary block">{extra.name}</span>
-                                                <span className="text-[10px] text-accent font-bold">+{formatCurrency(extra.price)}</span>
+                                                <div className="flex items-center gap-1.5">
+                                                  <span
+                                                    className={`font-bold ${
+                                                      !isAvailable
+                                                        ? 'text-text-muted line-through'
+                                                        : 'text-text-primary'
+                                                    }`}
+                                                  >
+                                                    {extra.name}
+                                                  </span>
+                                                  {!isAvailable && (
+                                                    <span className="text-[9px] font-extrabold text-red-500 bg-red-500/10 px-1 py-0.5 rounded border border-red-500/20">
+                                                      Agotado
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                <span className="text-[10px] text-accent font-bold">
+                                                  +{formatCurrency(extra.price)}
+                                                </span>
                                               </div>
                                               <div className="flex items-center gap-1.5">
                                                 <button
@@ -877,11 +955,14 @@ export function ProductDetailDrawer() {
                                                 >
                                                   <Minus className="w-3 h-3" />
                                                 </button>
-                                                <span className="w-4 text-center font-bold text-xs">{currentQty}</span>
+                                                <span className="w-4 text-center font-bold text-xs">
+                                                  {currentQty}
+                                                </span>
                                                 <button
                                                   type="button"
-                                                  onClick={() => handleComboBurgerExtraChange(idx, extra, 1)}
-                                                  className="w-6 h-6 rounded bg-accent text-white flex items-center justify-center cursor-pointer min-h-[32px] min-w-[32px]"
+                                                  onClick={() => isAvailable && handleComboBurgerExtraChange(idx, extra, 1)}
+                                                  disabled={!isAvailable}
+                                                  className="w-6 h-6 rounded bg-accent text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer min-h-[32px] min-w-[32px]"
                                                 >
                                                   <Plus className="w-3 h-3" />
                                                 </button>
@@ -924,30 +1005,45 @@ export function ProductDetailDrawer() {
                       <div className="space-y-2">
                         {sideOptions.map((side) => {
                           const isSelected = selectedSideSku === side.sku;
+                          const isAvailable = side.isAvailable !== false;
+
                           return (
                             <label
                               key={side.sku}
-                              className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer min-h-[44px] ${
-                                isSelected
-                                  ? 'border-accent bg-accent/5 ring-1 ring-accent'
-                                  : 'border-line bg-surface-card hover:border-text-muted/30'
+                              className={`flex items-center justify-between p-3 rounded-xl border transition-all min-h-[44px] ${
+                                !isAvailable
+                                  ? 'border-line/60 bg-surface/50 opacity-50 cursor-not-allowed select-none'
+                                  : isSelected
+                                  ? 'border-accent bg-accent/5 ring-1 ring-accent cursor-pointer'
+                                  : 'border-line bg-surface-card hover:border-text-muted/30 cursor-pointer'
                               }`}
                             >
                               <div className="flex items-center gap-2.5">
                                 <input
                                   type="radio"
                                   name="combo-side"
-                                  checked={isSelected}
-                                  onChange={() => setSelectedSideSku(side.sku)}
-                                  className="w-4 h-4 text-accent accent-accent"
+                                  disabled={!isAvailable}
+                                  checked={isSelected && isAvailable}
+                                  onChange={() => isAvailable && setSelectedSideSku(side.sku)}
+                                  className="w-4 h-4 text-accent accent-accent disabled:opacity-40"
                                 />
-                                <span className="text-xs font-bold text-text-primary">
+                                <span
+                                  className={`text-xs font-bold ${
+                                    !isAvailable ? 'text-text-muted line-through' : 'text-text-primary'
+                                  }`}
+                                >
                                   {side.name}
                                 </span>
                               </div>
-                              <span className="text-xs font-extrabold text-accent">
-                                {side.upcharge > 0 ? `+${formatCurrency(side.upcharge)}` : 'Incluida'}
-                              </span>
+                              {!isAvailable ? (
+                                <span className="text-[11px] font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">
+                                  Agotado
+                                </span>
+                              ) : (
+                                <span className="text-xs font-extrabold text-accent">
+                                  {side.upcharge > 0 ? `+${formatCurrency(side.upcharge)}` : 'Incluida'}
+                                </span>
+                              )}
                             </label>
                           );
                         })}
@@ -964,30 +1060,45 @@ export function ProductDetailDrawer() {
                       <div className="space-y-2">
                         {drinkOptions.map((drink) => {
                           const isSelected = selectedDrinkSku === drink.sku;
+                          const isAvailable = drink.isAvailable !== false;
+
                           return (
                             <label
                               key={drink.sku}
-                              className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer min-h-[44px] ${
-                                isSelected
-                                  ? 'border-accent bg-accent/5 ring-1 ring-accent'
-                                  : 'border-line bg-surface-card hover:border-text-muted/30'
+                              className={`flex items-center justify-between p-3 rounded-xl border transition-all min-h-[44px] ${
+                                !isAvailable
+                                  ? 'border-line/60 bg-surface/50 opacity-50 cursor-not-allowed select-none'
+                                  : isSelected
+                                  ? 'border-accent bg-accent/5 ring-1 ring-accent cursor-pointer'
+                                  : 'border-line bg-surface-card hover:border-text-muted/30 cursor-pointer'
                               }`}
                             >
                               <div className="flex items-center gap-2.5">
                                 <input
                                   type="radio"
                                   name="combo-drink"
-                                  checked={isSelected}
-                                  onChange={() => setSelectedDrinkSku(drink.sku)}
-                                  className="w-4 h-4 text-accent accent-accent"
+                                  disabled={!isAvailable}
+                                  checked={isSelected && isAvailable}
+                                  onChange={() => isAvailable && setSelectedDrinkSku(drink.sku)}
+                                  className="w-4 h-4 text-accent accent-accent disabled:opacity-40"
                                 />
-                                <span className="text-xs font-bold text-text-primary">
+                                <span
+                                  className={`text-xs font-bold ${
+                                    !isAvailable ? 'text-text-muted line-through' : 'text-text-primary'
+                                  }`}
+                                >
                                   {drink.name}
                                 </span>
                               </div>
-                              <span className="text-xs font-extrabold text-accent">
-                                {drink.upcharge > 0 ? `+${formatCurrency(drink.upcharge)}` : 'Incluida'}
-                              </span>
+                              {!isAvailable ? (
+                                <span className="text-[11px] font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">
+                                  Agotado
+                                </span>
+                              ) : (
+                                <span className="text-xs font-extrabold text-accent">
+                                  {drink.upcharge > 0 ? `+${formatCurrency(drink.upcharge)}` : 'Incluida'}
+                                </span>
+                              )}
                             </label>
                           );
                         })}

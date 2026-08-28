@@ -752,6 +752,29 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 ---
 
+### 📅 2026-08-28 — Sesión 39: Exclusividad de Extras en Personalización & Arquitectura Universal de Agotados (Out of Stock)
+
+- **🎯 Objetivos**:
+  1. Aislar la categoría `extras` para que sea exclusiva del modal de personalización y no aparezca como pestaña en `CategoryNav` ni como sección o tarjetas de producto independientes en el catálogo público (`ProductGrid`).
+  2. Implementar la arquitectura universal de agotados (Out of Stock) en todos los componentes del flujo público: extras, guarniciones y bebidas en combos, productos individuales y reordenamiento 1-click.
+- **🛠️ Implementación**:
+  - `apps/public-order-v3/src/features/menu/hooks/use-menu.ts`: `useCategories()` filtra `cat.key !== 'extras'`, omitiéndola de la navegación y catálogo público.
+  - `apps/public-order-v3/src/components/catalog/FeaturedRail.tsx`: Excluye ítems de categoría `extras` y no disponibles del fallback de destacados.
+  - `apps/public-order-v3/src/components/drawers/ProductDetailDrawer.tsx`:
+    - `availableExtras`, `sideOptions` y `drinkOptions` mapean reactivamente el estado `isAvailable` desde D1 (`allMenuItems`).
+    - En la UI de personalización (burgers y combos), los extras agotados muestran badge `Agotado` en rojo y botón `+` deshabilitado.
+    - En guarniciones y bebidas de combos, las opciones agotadas (ej. `PAPAS_LEMON_PEPPER`) se renderizan con radio button deshabilitado (`disabled`), badge `Agotado` y texto tachado.
+    - La selección por defecto recae automáticamente sobre la primera opción verdaderamente disponible.
+    - `handleAddToCart` y resolución de precios garantizan que solo se persistan ítems y modificadores en stock.
+  - `apps/public-order-v3/src/components/catalog/ReorderModule.tsx` & `CartDrawer.tsx`: Validación de disponibilidad en 1-Click Reorder omitiendo ítems agotados con notificaciones toast claras.
+- **🧪 Verificación Técnica**:
+  - `git diff --check` ✅ (0 errores)
+  - `npm run typecheck` ✅ (0 errores en monorepo)
+  - `npm run build:public` ✅ (554 kB)
+  - `npm run build:chekeo` ✅ (832 kB)
+
+---
+
 
 
 
