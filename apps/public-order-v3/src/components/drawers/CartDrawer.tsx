@@ -373,7 +373,7 @@ export function CartDrawer() {
                 <div className="space-y-1.5 text-xs">
                   <div className="flex items-center justify-between text-text-secondary">
                     <span>Subtotal</span>
-                    <span>{formatCurrency(totalAmount)}</span>
+                    <span className="tabular-nums font-semibold">{formatCurrency(totalAmount)}</span>
                   </div>
                   <div className="flex items-center justify-between text-text-secondary">
                     <span>Entrega</span>
@@ -381,14 +381,14 @@ export function CartDrawer() {
                   </div>
                   <div className="flex items-center justify-between text-base font-extrabold text-text-primary pt-1 border-t border-line">
                     <span>Total</span>
-                    <span className="text-xl text-accent">{formatCurrency(totalAmount)}</span>
+                    <span className="text-xl text-accent tabular-nums">{formatCurrency(totalAmount)}</span>
                   </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleCheckout}
-                  className="w-full py-3.5 px-4 rounded-2xl bg-accent text-white font-extrabold text-base hover:bg-accent-dark transition-colors shadow-cta cursor-pointer min-h-[48px] flex items-center justify-between"
+                  className="w-full py-3.5 px-4 rounded-2xl bg-accent text-white font-extrabold text-base hover:bg-accent-dark active:scale-[0.98] transition-transform shadow-cta cursor-pointer min-h-[48px] flex items-center justify-between"
                 >
                   <span>Continuar al Checkout</span>
                   <ArrowRight className="w-5 h-5" />

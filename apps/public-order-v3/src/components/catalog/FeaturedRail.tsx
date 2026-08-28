@@ -111,13 +111,13 @@ export function FeaturedRail() {
                 </div>
 
                 <div className="flex items-center justify-between pt-2 mt-1 border-t border-line/40">
-                  <span className="text-xs font-extrabold text-accent">
+                  <span className="text-xs font-extrabold text-accent tabular-nums">
                     {formatCurrency(effectivePrice)}
                   </span>
                   <button
                     type="button"
                     onClick={(e) => handleQuickAdd(item, e)}
-                    className="w-9 h-9 rounded-xl bg-accent text-white flex items-center justify-center hover:bg-accent-dark focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none transition-colors cursor-pointer min-h-[38px] min-w-[38px]"
+                    className="w-11 h-11 rounded-xl bg-accent text-white flex items-center justify-center hover:bg-accent-dark active:scale-[0.92] focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none transition-all cursor-pointer min-h-[44px] min-w-[44px]"
                     aria-label={`Pedir ${item.name}`}
                   >
                     <Plus className="w-4 h-4" />

@@ -147,7 +147,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
           <button
             type="button"
             onClick={() => onTabChange('cocina')}
-            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-accent/50 hover:bg-accent-soft/30 transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-accent/50 hover:bg-accent-soft/30 active:scale-[0.98] transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <div className="flex items-center justify-between w-full">
               <span className="text-xs font-bold text-text-secondary group-hover:text-accent transition-colors flex items-center gap-1.5">
@@ -156,10 +156,10 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
               </span>
               <ArrowRight className="w-3.5 h-3.5 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-text-primary my-1.5">
+            <p className="text-2xl sm:text-3xl font-black text-text-primary my-1.5 tabular-nums">
               {metrics.prepCount}
             </p>
-            <p className="text-[11px] text-text-muted">
+            <p className="text-[11px] text-text-muted tabular-nums">
               {aggregates.totalBurgers} burgers por preparar
             </p>
           </button>
@@ -169,7 +169,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
           <button
             type="button"
             onClick={() => onTabChange('pagos')}
-            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-amber-500/50 hover:bg-amber-500/5 transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-amber-500/50 hover:bg-amber-500/5 active:scale-[0.98] transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <div className="flex items-center justify-between w-full">
               <span className="text-xs font-bold text-text-secondary group-hover:text-amber-500 transition-colors flex items-center gap-1.5">
@@ -178,10 +178,10 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
               </span>
               <ArrowRight className="w-3.5 h-3.5 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-text-primary my-1.5">
+            <p className="text-2xl sm:text-3xl font-black text-text-primary my-1.5 tabular-nums">
               {metrics.pendingPaymentsCount}
             </p>
-            <p className="text-[11px] text-text-muted">
+            <p className="text-[11px] text-text-muted tabular-nums">
               {metrics.pendingPaymentsCount === 1 ? '1 cobro pendiente' : `${metrics.pendingPaymentsCount} cobros pendientes`}
             </p>
           </button>
@@ -190,7 +190,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
           <button
             type="button"
             onClick={() => onTabChange('pedidos')}
-            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-accent/50 hover:bg-accent-soft/30 transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-accent/50 hover:bg-accent-soft/30 active:scale-[0.98] transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <div className="flex items-center justify-between w-full">
               <span className="text-xs font-bold text-text-secondary group-hover:text-accent transition-colors flex items-center gap-1.5">
@@ -199,7 +199,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
               </span>
               <ArrowRight className="w-3.5 h-3.5 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-text-primary my-1.5">
+            <p className="text-2xl sm:text-3xl font-black text-text-primary my-1.5 tabular-nums">
               {metrics.activeCount}
             </p>
             <p className="text-[11px] text-text-muted">
@@ -211,7 +211,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
           <button
             type="button"
             onClick={() => onTabChange('pedidos')}
-            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="group flex flex-col justify-between p-4 rounded-2xl bg-surface-raised border border-line hover:border-emerald-500/50 hover:bg-emerald-500/5 active:scale-[0.98] transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <div className="flex items-center justify-between w-full">
               <span className="text-xs font-bold text-text-secondary group-hover:text-emerald-500 transition-colors flex items-center gap-1.5">
@@ -220,10 +220,10 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
               </span>
               <ArrowRight className="w-3.5 h-3.5 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 my-1.5">
+            <p className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 my-1.5 tabular-nums">
               ${metrics.totalSalesPesos.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
             </p>
-            <p className="text-[11px] text-text-muted">
+            <p className="text-[11px] text-text-muted tabular-nums">
               {metrics.todayOrdersCount} órdenes registradas
             </p>
           </button>
@@ -265,7 +265,7 @@ export function OperacionView({ onTabChange }: OperacionViewProps) {
                 key={order.id}
                 type="button"
                 onClick={() => onTabChange(order.paymentStatus === 'pending' ? 'pagos' : 'pedidos')}
-                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-surface-raised border border-line hover:border-accent/40 hover:bg-surface transition-all text-left cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-surface-raised border border-line hover:border-accent/40 hover:bg-surface active:scale-[0.99] transition-all text-left cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <div className="min-w-0 pr-3">
                   <div className="flex items-center gap-2 mb-0.5">

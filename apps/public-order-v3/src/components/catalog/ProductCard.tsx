@@ -83,7 +83,7 @@ export function ProductCard({ item }: ProductCardProps) {
       }`}
     >
       {/* Top Media & Badges */}
-      <div className="relative aspect-4/3 w-full rounded-2xl overflow-hidden bg-surface mb-3 border border-line/60">
+      <div className="relative aspect-4/3 w-full rounded-2xl overflow-hidden bg-surface-raised mb-3 border border-line/60">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -118,7 +118,7 @@ export function ProductCard({ item }: ProductCardProps) {
 
         {/* In-cart count bubble */}
         {inCartQty > 0 && (
-          <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-accent text-white text-xs font-extrabold shadow-md">
+          <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-accent text-white text-xs font-extrabold shadow-md tabular-nums">
             {inCartQty} en carrito
           </div>
         )}
@@ -153,11 +153,11 @@ export function ProductCard({ item }: ProductCardProps) {
         <div className="flex items-center justify-between gap-2 pt-2 border-t border-line/50">
           <div className="flex flex-col">
             {isPromo && (
-              <span className="text-[11px] text-text-muted line-through">
+              <span className="text-[11px] text-text-muted line-through tabular-nums">
                 {formatCurrency(item.price)}
               </span>
             )}
-            <span className={`text-base font-extrabold ${isPromo ? 'text-accent' : 'text-text-primary'}`}>
+            <span className={`text-base font-extrabold tabular-nums ${isPromo ? 'text-accent' : 'text-text-primary'}`}>
               {formatCurrency(effectivePrice)}
             </span>
           </div>
@@ -167,11 +167,11 @@ export function ProductCard({ item }: ProductCardProps) {
             <button
               type="button"
               onClick={handleQuickAdd}
-              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer min-h-[44px] min-w-[44px] active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
                 justAdded
                   ? 'bg-accent text-white'
                   : requiresCustomization
-                  ? 'bg-surface hover:bg-surface-raised text-text-primary border border-line'
+                  ? 'bg-surface-raised hover:bg-surface text-text-primary border border-line'
                   : 'bg-accent text-white hover:bg-accent-dark shadow-sm'
               }`}
               aria-label={

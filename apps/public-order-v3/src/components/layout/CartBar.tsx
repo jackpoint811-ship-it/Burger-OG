@@ -45,7 +45,7 @@ export function CartBar() {
                 <span className="text-[10px] font-extrabold tracking-wider uppercase opacity-90 leading-tight">
                   Mi Pedido
                 </span>
-                <span className="text-base font-extrabold tracking-tight leading-tight">
+                <span className="text-base font-extrabold tracking-tight leading-tight tabular-nums">
                   {formatCurrency(totalAmount)}
                 </span>
               </div>
@@ -58,7 +58,7 @@ export function CartBar() {
                 e.stopPropagation();
                 openDrawer('cart');
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white text-accent font-extrabold text-xs sm:text-sm hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none transition-colors shadow-xs cursor-pointer min-h-[40px]"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white text-accent font-extrabold text-xs sm:text-sm hover:bg-gray-100 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none transition-all shadow-xs cursor-pointer min-h-[44px]"
             >
               <span>Ver Pedido</span>
               <ArrowRight className="w-4 h-4" />
