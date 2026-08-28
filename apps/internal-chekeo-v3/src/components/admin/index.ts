@@ -14,8 +14,6 @@ export * from './IngredientsAdminPanel';
 export * from './AdminWorkspace';
 export * from './AdminBreadcrumbs';
 export * from './AdminQuickFavorites';
-export * from './AdminDashboardGrid';
-export * from './AdminCategorySubmenu';
 export * from './AdminSearchBar';
 export * from './AdminAuthGate';
 export * from './AdminHubGrid';
