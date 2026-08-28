@@ -22,11 +22,7 @@ export const isPreviewRuntimeHostname = (hostname: string) => {
     normalized.includes("internal-v2-preview") ||
     normalized.includes("public-v2-preview") ||
     normalized.includes("preview") ||
-    normalized.includes("-v3.pages.dev") ||
-    normalized.includes("-v3") ||
-    (normalized.endsWith(".pages.dev") &&
-      !normalized.startsWith("burgers-exe.pages.dev") &&
-      !normalized.startsWith("burgers-exe-internal-v2.pages.dev"))
+    normalized.includes("staging")
   );
 };
 
