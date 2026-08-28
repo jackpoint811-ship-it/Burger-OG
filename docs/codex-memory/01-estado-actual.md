@@ -56,8 +56,13 @@ Burgers.exe tiene una app pública de pedidos (`apps/public-order-v3`) y una app
 | V3-AdminMobile | Rediseño Mobile-First Admin + Sincronización Sub-Herramientas | ✅ Mergeado (#609) |
 | V3-ResumenKHome | Resumen K como Home & KDS Especializado en 2 Estaciones | ✅ Mergeado (#615) |
 | V3-ProdAudit | Auditoría Forense 360° Pre-Producción & Certificación Cutover | ✅ Completado (GO 🟢) |
+| V3-Cutover | Cutover Definitivo V3 a Producción (main) | ✅ Mergeado (#618, #619) |
 
 ## Infraestructura y URLs Activas (Cloudflare Pages)
+
+### Entorno Oficial de Producción (GitHub Branch: `main`)
+- **Tienda Pública Producción**: `https://burgers-exe.pages.dev/` (V3 100% activo con D1 y R2).
+- **Internal Chekeo Producción**: `https://chekeo2-0.pages.dev/` / `https://chekeo-v3.pages.dev/` (POS, Resumen K, KDS Plancha/Sides, Pagos y Admin).
 
 ### Entorno Oficial de Preview (GitHub Branch: `preview`)
 - **Internal Chekeo Preview**: `https://burgers-exe-internal-v2-preview.pages.dev/` (Conectado a branch `preview`, D1 `burgers-exe-menu-v2-preview` y R2 `burgers-exe-assets-v2-preview`).
@@ -166,3 +171,6 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Desacoplamiento de `mock-data.ts` en `functions/api/_routes/menu.ts` y cálculo matemático exacto de límites UTC en CDMX (`getCdmxUtcRangeFromTo`).
   - Accesibilidad WCAG 2.1 AA reforzada en primitivas `@ui/dialog` y `@ui/drawer` con targets $\ge 44\text{px}$.
   - Sincronización de upcharges de guarnición en combos contra D1 y validación de 10,000 órdenes Monte Carlo sin divergencias.
+- **Exclusividad de Extras en Personalización & Arquitectura Universal de Agotados (2026-08-28)**:
+  - Ocultamiento estricto de la categoría `extras` del catálogo público y barra de navegación (`useCategories()`), manteniéndolos 100% disponibles dentro del modal de personalización (`ProductDetailDrawer.tsx`).
+  - Arquitectura universal de agotados (Out of Stock) para todos los ítems: extras, guarniciones y bebidas en combos con deshabilitación de inputs, badges `Agotado` en rojo, selección por defecto inteligente en ítems disponibles y protección en 1-Click Reorder.
