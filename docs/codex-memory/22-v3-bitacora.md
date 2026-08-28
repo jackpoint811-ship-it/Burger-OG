@@ -717,7 +717,7 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `NavTabs.tsx` y `ChekeoApp.tsx` actualizados con `ChekeoTab = 'resumenK' | 'pedidos' | 'cocina' | 'pagos' | 'admin'` y subtítulo especializado `'KDS Plancha & Sides'` en Cocina.
 - **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:chekeo` ✅, `npm run build:public` ✅.
 
-### 📅 2026-08-28 — Sesión: Pulido Integral de Resumen K, Anti-Slop & Barra Lateral de Submenú
+### 📅 2026-08-28 — Sesión: Pulido Integral de Resumen K, Anti-Slop & Barra Lateral de Submenú — PR #616 (Mergeado)
 - **🧹 Erradicación Total de Texto Slop & Relleno de IA**:
   - Limpieza de títulos duplicados, badges superfluos y párrafos explicativos en `ResumenKView.tsx` y `KitchenSummaryK.tsx`.
   - Transformación a interfaz POS/KDS utilitaria de alta densidad (9/10), legible y accionable en $<1$ segundo.
