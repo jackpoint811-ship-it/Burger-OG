@@ -72,14 +72,13 @@ export function ProductDetailDrawer() {
     (g) => g.name.toLowerCase().includes('bebida') || g.name.toLowerCase().includes('drink')
   );
 
-  // Available side options (Aros de Cebolla con +$10 de upcharge acordado)
+  // Available side options (calculado estrictamente de upchargeCents de D1 o diferencia de precio)
   const sideOptions = useMemo(() => {
     if (!isCombo) return [];
     if (sideGroup && sideGroup.options.length > 0) {
       return sideGroup.options.map((opt) => {
         const item = allMenuItems.find((p) => p.sku.toUpperCase() === opt.sku.toUpperCase());
-        const isAros = opt.sku.toUpperCase().includes('AROS') || item?.name.toLowerCase().includes('aros');
-        const upcharge = isAros ? 10 : (opt.upchargeCents || 0) / 100;
+        const upcharge = (opt.upchargeCents || 0) / 100;
         return {
           sku: opt.sku,
           name: item?.name ?? opt.sku,
@@ -88,14 +87,13 @@ export function ProductDetailDrawer() {
         };
       });
     }
-    // Fallback to all items in guarniciones category con +$10 para Aros de Cebolla
+    // Fallback to all items in guarniciones category
     const sides = allMenuItems.filter(
       (p) => p.category.toLowerCase() === 'guarniciones' && p.isAvailable !== false
     );
     const basePrice = sides[0]?.price ?? 25;
     return sides.map((p, idx) => {
-      const isAros = p.sku.toUpperCase().includes('AROS') || p.name.toLowerCase().includes('aros');
-      const diff = isAros ? 10 : Math.max(0, p.price - basePrice);
+      const diff = Math.max(0, p.price - basePrice);
       return {
         sku: p.sku,
         name: p.name,

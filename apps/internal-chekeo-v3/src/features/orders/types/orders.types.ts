@@ -16,7 +16,7 @@ import type {
   OrderV2Environment,
   OrderV2DeliveryInfo,
 } from '@config/index';
-import { getCdmxTodayString } from '@config/index';
+import { getCdmxTodayString, formatCdmxDateString } from '@config/index';
 
 export interface NormalizedExtra {
   sku?: string;
@@ -426,16 +426,11 @@ export function formatOrderTargetDateInfo(order: OrderV2): {
       targetDateStr = delivery.scheduledDate;
     } else if (typeof delivery.scheduledDeliveryDate === 'string' && delivery.scheduledDeliveryDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
       targetDateStr = delivery.scheduledDeliveryDate;
+    } else if (order.createdAt) {
+      targetDateStr = formatCdmxDateString(order.createdAt);
     }
   } else if (order.createdAt) {
-    try {
-      const d = new Date(order.createdAt);
-      if (!isNaN(d.getTime())) {
-        targetDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      }
-    } catch {
-      // ignore
-    }
+    targetDateStr = formatCdmxDateString(order.createdAt);
   }
 
   if (targetDateStr === todayStr) {

@@ -99,7 +99,7 @@ export function Drawer({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-xl p-2 text-text-secondary hover:bg-surface-raised hover:text-text-primary transition-colors cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="rounded-xl p-2 text-text-secondary hover:bg-surface-raised hover:text-text-primary transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   aria-label="Cerrar ventana"
                 >
                   <X className="w-5 h-5" />

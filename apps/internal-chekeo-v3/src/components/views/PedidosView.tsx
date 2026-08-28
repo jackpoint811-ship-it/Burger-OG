@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import type { OrderV2 } from '@config/index';
+import { type OrderV2, getCdmxTodayString } from '@config/index';
 import {
   useChekeoOrdersQuery,
   useArchiveOrderMutation,
@@ -89,8 +89,7 @@ export function PedidosView() {
 
   // Filtrado de pedidos según los criterios activos
   const filteredOrders = useMemo(() => {
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const todayStr = getCdmxTodayString();
 
     return baseOrderPool.filter((order) => {
       // 1. Filtro por Fecha de Entrega (Riel Horizontal)

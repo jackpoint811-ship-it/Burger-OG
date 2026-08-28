@@ -16,7 +16,6 @@ import {
   parseJsonArray
 } from '../_menu-v2-utils';
 import { DEFAULT_PUBLIC_CONFIG, DEFAULT_SITE_CONFIG } from '../../../packages/config/src';
-import { menuCategories, menuItems, promoCards, publicConfig, siteConfig } from '../../../packages/config/src/mock-data';
 
 export const menuRouter = new Hono<AppEnv>();
 
@@ -28,14 +27,14 @@ const CATEGORY_LABELS: Record<MenuCategory['key'], string> = {
   combos: 'Combos'
 };
 
-const fallbackPayload = (source: MenuV2Response['source']): MenuV2Response => ({
-  categories: [...menuCategories].sort((a, b) => a.sortOrder - b.sortOrder),
-  items: [...menuItems].sort((a, b) => a.sortOrder - b.sortOrder),
-  promos: [...promoCards].sort((a, b) => a.sortOrder - b.sortOrder),
+const emptyMenuPayload = (source: MenuV2Response['source']): MenuV2Response => ({
+  categories: [],
+  items: [],
+  promos: [],
   categoryBanners: [],
   catalogBanners: [],
-  siteConfig: siteConfig,
-  publicConfig: publicConfig,
+  siteConfig: DEFAULT_SITE_CONFIG,
+  publicConfig: DEFAULT_PUBLIC_CONFIG,
   recipes: {},
   updatedAt: new Date().toISOString(),
   source
@@ -121,7 +120,7 @@ const resolvePublicConfigFromRow = (row: any | null): PublicConfig => {
 // GET /api/menu-v2
 menuRouter.get('/', async (c) => {
   if (!c.env.BOG_MENU_DB) {
-    return json(fallbackPayload('fallback'), 'no-store');
+    return json(emptyMenuPayload('fallback'), 'no-store');
   }
   try {
     let itemsResult = await optionalAll<any>(
@@ -202,7 +201,7 @@ menuRouter.get('/', async (c) => {
       .sort((a, b) => a.sortOrder - b.sortOrder);
 
     if (!items.length) {
-      return json(fallbackPayload('fallback'), 'no-store');
+      return json(emptyMenuPayload('fallback'), 'no-store');
     }
 
     let [categoryRows, promoRows, bannerRows, catalogBannerRows, configRow, recipeRows] = await Promise.all([
@@ -291,7 +290,7 @@ menuRouter.get('/', async (c) => {
       source: 'd1'
     });
   } catch (error) {
-    console.error('[menu-v2] Unexpected error, returning fallback menu:', error);
-    return json(fallbackPayload('fallback'), 'no-store');
+    console.error('[menu-v2] Unexpected error, returning empty menu:', error);
+    return json(emptyMenuPayload('fallback'), 'no-store');
   }
 });
