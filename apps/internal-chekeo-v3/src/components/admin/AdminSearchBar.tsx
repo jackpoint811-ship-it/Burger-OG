@@ -2,15 +2,15 @@
  * AdminSearchBar.tsx — Chekeo V3
  *
  * Buscador Universal / Command Palette para el Panel de Control de Admin:
- * - Atajo de teclado global: ⌘K / Ctrl+K / /
- * - Búsqueda en tiempo real sobre todas las categorías, subcategorías y herramientas
- * - Navegación con teclado (Flechas ↑/↓, Enter, Escape)
- * - Diseño limpio, desaturado y accesible
+ * - Estado colapsado: Botón compacto con icono de lupa (Search).
+ * - Estado expandido: Overlay de pantalla completa con Command Palette centrado.
+ * - Atajos de teclado: ⌘K / Ctrl+K para abrir, Escape para cerrar, Flechas ↑/↓ + Enter para navegar.
+ * - Filtrado en tiempo real sobre ADMIN_SEARCH_INDEX por título, descripción y palabras clave.
  */
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Search, X, ArrowRight, CornerDownLeft } from 'lucide-react';
-import type { AdminMasterCategory } from '../../features/admin/types/admin.types';
+import { Search, X, ArrowLeft } from 'lucide-react';
+import type { AdminMasterCategory, AdminSearchItem } from '../../features/admin/types/admin.types';
 import { ADMIN_SEARCH_INDEX } from '../../features/admin/constants/admin-navigation.constants';
 import { getAdminIcon } from '../../features/admin/utils/admin-icons.utils';
 
@@ -20,35 +20,56 @@ export interface AdminSearchBarProps {
 }
 
 export function AdminSearchBar({ onSelect, className = '' }: AdminSearchBarProps) {
-  const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Atajo de teclado global (⌘K / Ctrl+K)
+  const inputRef = useRef<HTMLInputElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Atajo global ⌘K / Ctrl+K para abrir/cerrar
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        inputRef.current?.focus();
-        setIsOpen(true);
+        setIsOpen((prev) => !prev);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, []);
 
-  // Cierre al hacer clic fuera
+  // Escape para cerrar
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+    if (!isOpen) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
         setIsOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isOpen]);
+
+  // Enfocar input al abrir y resetear query al cerrar
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = '';
+      };
+    } else {
+      setQuery('');
+      setSelectedIndex(0);
+      document.body.style.overflow = '';
+    }
+  }, [isOpen]);
 
   // Filtrado de resultados
   const filteredResults = useMemo(() => {
@@ -57,143 +78,177 @@ export function AdminSearchBar({ onSelect, className = '' }: AdminSearchBarProps
 
     return ADMIN_SEARCH_INDEX.filter((item) => {
       const matchTitle = item.title.toLowerCase().includes(q);
-      const matchDesc = item.description.toLowerCase().includes(q);
-      const matchCat = item.categoryLabel.toLowerCase().includes(q);
-      const matchKw = item.keywords.some((k) => k.toLowerCase().includes(q));
+      const matchDesc = item.description?.toLowerCase().includes(q);
+      const matchCat = item.categoryLabel?.toLowerCase().includes(q);
+      const matchKw = item.keywords?.some((k) => k.toLowerCase().includes(q));
       return matchTitle || matchDesc || matchCat || matchKw;
-    }).slice(0, 6);
+    });
   }, [query]);
 
-  // Manejo de navegación por teclado en la lista
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Escape') {
-      setIsOpen(false);
-      inputRef.current?.blur();
-      return;
-    }
-
-    if (!isOpen || filteredResults.length === 0) return;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev + 1) % filteredResults.length);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev - 1 + filteredResults.length) % filteredResults.length);
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      const selected = filteredResults[selectedIndex];
-      if (selected) {
-        onSelect(selected.category, selected.toolId);
-        setIsOpen(false);
-        setQuery('');
-      }
-    }
-  };
-
-  const handleSelectResult = (item: (typeof ADMIN_SEARCH_INDEX)[0]) => {
+  const handleSelect = (item: AdminSearchItem) => {
     onSelect(item.category, item.toolId);
     setIsOpen(false);
     setQuery('');
   };
 
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (filteredResults.length > 0) {
+        setSelectedIndex((prev) => (prev + 1) % filteredResults.length);
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (filteredResults.length > 0) {
+        setSelectedIndex((prev) => (prev - 1 + filteredResults.length) % filteredResults.length);
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const selected = filteredResults[selectedIndex];
+      if (selected) {
+        handleSelect(selected);
+      }
+    }
+  };
+
   return (
-    <div ref={containerRef} className={`relative w-full ${className}`}>
-      {/* Campo de búsqueda */}
-      <div className="relative flex items-center">
-        <Search className="w-4 h-4 text-text-muted absolute left-3.5 pointer-events-none" />
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setIsOpen(true);
-            setSelectedIndex(0);
-          }}
-          onFocus={() => setIsOpen(true)}
-          onKeyDown={handleKeyDown}
-          placeholder="Buscar herramientas, platillos, torres, banners, arqueo..."
-          className="w-full h-10 pl-10 pr-20 bg-surface-card border border-line rounded-2xl text-xs font-semibold text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition-all shadow-xs"
-          aria-label="Buscar en el panel de administración"
-        />
+    <>
+      {/* Botón Colapsado */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className={`w-9 h-9 flex items-center justify-center rounded-xl bg-surface-raised border border-line hover:border-accent/40 text-text-secondary hover:text-text-primary transition-all duration-150 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer ${className}`}
+        aria-label="Abrir buscador"
+        title="Buscar (⌘K)"
+      >
+        <Search className="w-4 h-4" />
+      </button>
 
-        <div className="absolute right-3 flex items-center gap-1.5 pointer-events-none">
-          {query ? (
-            <button
-              type="button"
-              onClick={() => {
-                setQuery('');
-                setIsOpen(false);
-              }}
-              className="pointer-events-auto p-1 rounded-md text-text-muted hover:text-text-primary"
-              aria-label="Limpiar búsqueda"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          ) : (
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-surface-raised border border-line text-[10px] font-mono font-bold text-text-muted">
-              ⌘K
-            </kbd>
-          )}
-        </div>
-      </div>
+      {/* Overlay Expandido */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm px-4 animate-in fade-in duration-150 overflow-y-auto"
+          onClick={() => setIsOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Buscador del panel de administración"
+        >
+          <div
+            ref={cardRef}
+            onClick={(e) => e.stopPropagation()}
+            className="mx-auto mt-3 max-w-lg w-full bg-surface-card rounded-2xl border border-line shadow-floating overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150"
+          >
+            {/* Barra de entrada de búsqueda */}
+            <div className="flex items-center gap-2 p-3 border-b border-line">
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-raised transition-colors active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent shrink-0 cursor-pointer"
+                aria-label="Cerrar búsqueda"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
 
-      {/* Menú de Resultados Flotante */}
-      {isOpen && query.trim().length > 0 && (
-        <div className="absolute left-0 right-0 top-full mt-2 bg-surface-card border border-line rounded-2xl shadow-floating z-50 overflow-hidden animate-in fade-in-50 slide-in-from-top-1 duration-150">
-          {filteredResults.length > 0 ? (
-            <div className="p-2 space-y-1">
-              <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-text-muted">
-                Resultados coincidentes
-              </div>
-              {filteredResults.map((item, index) => {
-                const Icon = getAdminIcon(item.iconName);
-                const isSelected = index === selectedIndex;
-
-                return (
+              <div className="relative flex-1 flex items-center">
+                <Search className="w-4 h-4 text-text-muted absolute left-2 pointer-events-none" />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setSelectedIndex(0);
+                  }}
+                  onKeyDown={handleInputKeyDown}
+                  placeholder="Buscar herramientas, platillos, torres, banners..."
+                  className="w-full h-10 pl-8 pr-8 bg-transparent text-sm font-medium text-text-primary placeholder:text-text-muted focus:outline-none"
+                  aria-label="Buscar en el panel de administración"
+                />
+                {query && (
                   <button
-                    key={item.id}
                     type="button"
-                    onClick={() => handleSelectResult(item)}
-                    onMouseEnter={() => setSelectedIndex(index)}
-                    className={`w-full flex items-center justify-between gap-3 p-2.5 rounded-xl text-left transition-all cursor-pointer select-none ${
-                      isSelected
-                        ? 'bg-surface-raised text-accent ring-1 ring-accent/30'
-                        : 'text-text-primary hover:bg-surface-raised/60'
-                    }`}
+                    onClick={() => {
+                      setQuery('');
+                      inputRef.current?.focus();
+                    }}
+                    className="absolute right-1 p-1 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+                    aria-label="Limpiar búsqueda"
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-surface-raised flex items-center justify-center text-text-secondary shrink-0 border border-line/60">
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-text-primary truncate">
-                          {item.title}
-                        </p>
-                        <p className="text-[11px] text-text-secondary truncate">
-                          {item.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-surface-raised text-text-muted border border-line/60">
-                        {item.categoryLabel}
-                      </span>
-                      <CornerDownLeft className="w-3.5 h-3.5 text-text-muted" />
-                    </div>
+                    <X className="w-4 h-4" />
                   </button>
-                );
-              })}
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="p-6 text-center text-xs text-text-muted">
-              No se encontraron herramientas o platillos para &ldquo;{query}&rdquo;
+
+            {/* Lista de resultados */}
+            <div className="max-h-[60vh] overflow-y-auto p-2 space-y-1">
+              {query.trim().length === 0 ? (
+                <div className="p-6 text-center text-xs text-text-muted">
+                  Escribe para buscar herramientas, platillos, torres, sorteos, insumos o corte Z...
+                </div>
+              ) : filteredResults.length > 0 ? (
+                filteredResults.map((item, index) => {
+                  const Icon = getAdminIcon(item.iconName);
+                  const isSelected = index === selectedIndex;
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleSelect(item)}
+                      onMouseEnter={() => setSelectedIndex(index)}
+                      className={`w-full flex items-center justify-between gap-3 p-2.5 rounded-xl text-left transition-all cursor-pointer select-none active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                        isSelected
+                          ? 'bg-surface-raised text-accent ring-1 ring-accent/30'
+                          : 'text-text-primary hover:bg-surface-raised/60'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-surface-raised flex items-center justify-center text-text-secondary shrink-0 border border-line/60">
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-text-primary truncate">
+                            {item.title}
+                          </p>
+                          {item.description && (
+                            <p className="text-xs text-text-secondary truncate">
+                              {item.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[11px] text-text-muted font-medium px-2 py-0.5 rounded-md bg-surface-raised border border-line/60">
+                          {item.categoryLabel}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="p-6 text-center text-xs text-text-muted">
+                  No se encontraron herramientas o platillos para &ldquo;{query}&rdquo;
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Pie con atajos de teclado */}
+            <div className="px-4 py-2 bg-surface-raised/40 border-t border-line flex items-center justify-between text-[11px] text-text-muted">
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 rounded bg-surface-card border border-line text-[10px] font-mono font-bold">↑↓</kbd> Navegar
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 rounded bg-surface-card border border-line text-[10px] font-mono font-bold">↵</kbd> Seleccionar
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 rounded bg-surface-card border border-line text-[10px] font-mono font-bold">ESC</kbd> Cerrar
+              </span>
+            </div>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

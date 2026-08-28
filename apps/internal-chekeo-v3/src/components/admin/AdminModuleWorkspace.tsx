@@ -16,6 +16,7 @@ import type { AdminMasterCategory } from '../../features/admin/types/admin.types
 import { ADMIN_CATEGORIES_CONFIG } from '../../features/admin/constants/admin-navigation.constants';
 import { useAdminPinnedFavorites } from '../../features/admin/hooks/use-admin-pinned-favorites';
 import { getAdminIcon } from '../../features/admin/utils/admin-icons.utils';
+import { AdminSearchBar } from './AdminSearchBar';
 import { MenuStockPanel } from './MenuStockPanel';
 import { TowersAdminPanel } from './TowersAdminPanel';
 import { BannersAdminPanel } from './BannersAdminPanel';
@@ -171,6 +172,9 @@ export function AdminModuleWorkspace({
 
           {/* Acciones de Cabecera */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* 🔍 Buscador Lupita Accesible */}
+            <AdminSearchBar onSelect={(cat, tool) => onNavigateModule(cat, tool)} />
+
             <Button
               type="button"
               variant="outline"

@@ -775,6 +775,29 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 ---
 
+### 📅 2026-08-28 — Sesión 40: Rediseño Integral UX/UI de la Pestaña Admin en Chekeo V3 (Progressive Disclosure Hub & Search Overlay)
+
+- **🎯 Objetivos**:
+  1. Rediseñar la experiencia completa de la pestaña Admin implementando la arquitectura *Progressive Disclosure Hub* para eliminar la sobrecarga cognitiva y acelerar la navegación.
+  2. Implementar el buscador colapsado tipo lupita 🔍 (`AdminSearchBar`) que se expande a overlay modal con atajo `⌘K`/`Ctrl+K`, escape y navegación por teclado.
+  3. Integrar la franja de Acceso Rápido (`QuickActionChip`) con soporte de pin/unpin dinámico y favoritos del operador.
+  4. Organizar los 6 módulos maestros en cuadrícula de 2 columnas compactas (`ModuleCard`) con iconografía Lucide y colores temáticos.
+  5. Incorporar el buscador en la cabecera del Workspace (`AdminModuleWorkspace`) para búsqueda instantánea desde cualquier herramienta.
+  6. Eliminar componentes obsoletos (`AdminDashboardGrid.tsx`, `AdminCategorySubmenu.tsx`) y limpiar barrel exports.
+- **🛠️ Implementación**:
+  - `apps/internal-chekeo-v3/src/components/admin/AdminHubGrid.tsx`: Reescribo completo sin data-fetching pesado, con cabecera compacta, Acceso Rápido y grid 2-col de módulos.
+  - `apps/internal-chekeo-v3/src/components/admin/AdminSearchBar.tsx`: Transformado a botón colapsado con modal overlay, filtrado en vivo sobre `ADMIN_SEARCH_INDEX` y auto-focus.
+  - `apps/internal-chekeo-v3/src/components/admin/AdminModuleWorkspace.tsx`: Header integrado con `AdminSearchBar` para búsqueda fluida sin retornar al hub.
+  - `apps/internal-chekeo-v3/src/components/admin/index.ts`: Removidos exports de archivos eliminados.
+  - Eliminados `AdminDashboardGrid.tsx` y `AdminCategorySubmenu.tsx`.
+- **🧪 Verificación Técnica**:
+  - `git diff --check` ✅ (0 errores)
+  - `npm run typecheck` ✅ (0 errores en TypeScript)
+  - `npm run build:chekeo` ✅ (836 kB en 5.71s)
+  - `npm run build:public` ✅ (554 kB en 5.17s)
+
+---
+
 
 
 

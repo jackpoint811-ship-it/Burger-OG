@@ -174,3 +174,10 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
 - **Exclusividad de Extras en Personalización & Arquitectura Universal de Agotados (2026-08-28)**:
   - Ocultamiento estricto de la categoría `extras` del catálogo público y barra de navegación (`useCategories()`), manteniéndolos 100% disponibles dentro del modal de personalización (`ProductDetailDrawer.tsx`).
   - Arquitectura universal de agotados (Out of Stock) para todos los ítems: extras, guarniciones y bebidas en combos con deshabilitación de inputs, badges `Agotado` en rojo, selección por defecto inteligente en ítems disponibles y protección en 1-Click Reorder.
+- **Rediseño Integral UX/UI de la Pestaña de Administración en Chekeo V3 (2026-08-28)**:
+  - Adopción de arquitectura *Progressive Disclosure Hub* eliminando sobrecarga cognitiva y optimizando la velocidad operativa a 1-toque.
+  - Cabecera ultracompacta con botón colapsado de Lupita 🔍 (`AdminSearchBar`) que expande a pantalla completa mediante modal/overlay con auto-focus, atajo `⌘K`/`Ctrl+K`, navegación con flechas y escape.
+  - Franja de Acceso Rápido con favoritos interactivos (`QuickActionChip`) y persistencia `useAdminPinnedFavorites` (clic derecho para desfijar).
+  - Cuadrícula de 6 Módulos Maestros en 2 columnas limpias (`ModuleCard`) con colores temáticos e iconografía Lucide.
+  - Integración del buscador `AdminSearchBar` en la cabecera del Workspace (`AdminModuleWorkspace`) para búsqueda instantánea desde cualquier submódulo.
+  - Limpieza total de componentes obsoletos (`AdminDashboardGrid.tsx`, `AdminCategorySubmenu.tsx`).
