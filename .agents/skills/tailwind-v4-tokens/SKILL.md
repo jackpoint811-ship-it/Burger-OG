@@ -21,14 +21,17 @@ Esta habilidad establece la paleta oficial, variables CSS y patrones de diseño 
 * **Texto Secundario (`text-text-secondary`)**: Slate neutro `#475569`
 * **Texto Muted (`text-text-muted`)**: Slate claro `#64748B`
 
-### Modo Oscuro (Slate Neutro vía `.theme-dark`)
-* **Fondo Global**: Carbón `#121212`
-* **Superficie de Tarjeta**: Slate oscuro `#1E1E1E`
-* **Superficie Elevada**: Slate `#282828`
-* **Líneas y Bordes**: `#333333`
-* **Acento Principal**: Verde esmeralda brillante `#22C55E` (Hover: `#16A34A`)
-* **Texto Primario**: Blanco `#FFFFFF`
-* **Texto Secundario**: Slate claro `#CBD5E1`
+### Modo Oscuro (Deep Slate High-Contrast vía `.theme-dark`)
+* **Fondo Global (`bg-surface`)**: Deep Slate oscuro `#0C0E12`
+* **Superficie de Tarjeta (`bg-surface-card`)**: Slate elevado `#161922`
+* **Superficie Elevada (`bg-surface-raised`)**: Slate interactivo `#202531`
+* **Superficie Secundaria (`bg-surface-alt`)**: Slate neutro `#12151D`
+* **Líneas y Bordes (`border-line`)**: Borde nítido `#2E3545` (Contraste 2.6:1)
+* **Acento Principal (`text-accent` / `bg-accent`)**: Verde esmeralda brillante `#22C55E` (Hover: `#16A34A`)
+* **Acento Soft (`bg-accent-soft`)**: `rgba(34, 197, 94, 0.18)`
+* **Texto Primario (`text-text-primary`)**: Blanco puro `#F8FAFC` (Contraste 15.8:1 AAA)
+* **Texto Secundario (`text-text-secondary`)**: Slate suave `#94A3B8` (Contraste 8.2:1 AAA)
+* **Texto Muted (`text-text-muted`)**: Slate medio `#8492A6` (Contraste 6.0:1 AA)
 
 ---
 

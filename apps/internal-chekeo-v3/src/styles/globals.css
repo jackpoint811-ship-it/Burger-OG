@@ -44,17 +44,26 @@
 }
 
 .theme-dark {
-  --color-surface: #121212;
-  --color-surface-card: #1E1E1E;
-  --color-surface-raised: #282828;
-  --color-surface-alt: #181818;
+  --color-surface: #0C0E12;
+  --color-surface-card: #161922;
+  --color-surface-raised: #202531;
+  --color-surface-alt: #12151D;
   --color-accent: #22C55E;
-  --color-accent-soft: rgba(34, 197, 94, 0.15);
-  --color-text-primary: #F9FAFB;
-  --color-text-secondary: #9CA3AF;
-  --color-text-muted: #6B7280;
+  --color-accent-dark: #16A34A;
+  --color-accent-soft: rgba(34, 197, 94, 0.18);
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #8492A6;
   --color-text-on-accent: #FFFFFF;
-  --color-line: #2E2E2E;
+  --color-line: #2E3545;
+  --color-danger: #EF4444;
+  --color-danger-soft: rgba(239, 68, 68, 0.18);
+  --color-warning: #F59E0B;
+  --color-warning-soft: rgba(245, 158, 11, 0.18);
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-panel: 0 4px 20px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-floating: 0 12px 36px rgba(0, 0, 0, 0.65), 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 /* Utilería para ocultar barra de scroll en navegación horizontal */

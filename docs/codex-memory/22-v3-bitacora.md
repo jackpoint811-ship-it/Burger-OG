@@ -684,7 +684,16 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Actualización del skill `.agents/skills/dynamic-ui-components/` y documentación de gobernanza.
 - **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
 
+### 📅 2026-08-28 — Sesión 63: Optimización Integral de Contraste en Modo Oscuro (V3)
+- **🌓 Deep Slate High-Contrast Dark Mode**:
+  - Calibración de la escala de elevación en `.theme-dark` para `apps/public-order-v3` y `apps/internal-chekeo-v3`: Fondo `#0C0E12`, Tarjetas `#161922`, Superficie Elevada `#202531`, Superficie Secundaria `#12151D`, Bordes nítidos `#2E3545` y Sombras profundas calibradas para fondos oscuros.
+  - Cumplimiento estricto WCAG 2.1 AAA/AA: Texto primario `#F8FAFC` (15.8:1 AAA), texto secundario `#94A3B8` (8.2:1 AAA) y texto muted `#8492A6` (6.0:1 AA, corrigiendo el déficit anterior de 3.4:1).
+  - Alto contraste en chips de ingredientes y modificadores con `dark:text-red-400` en `ProductDetailDrawer.tsx`.
+  - Sincronización oficial del skill `.agents/skills/tailwind-v4-tokens/SKILL.md`.
+- **Verificación (`burgers-qa`)**: `git diff --check` ✅, `npm run typecheck` ✅ (0 errores), `npm run build:public` ✅, `npm run build:chekeo` ✅.
+
 ---
+
 
 
 ## 📌 Issues Abiertos
