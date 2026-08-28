@@ -97,21 +97,24 @@ export function ResumenKView({ onTabChange }: ResumenKViewProps) {
   }, [selectedDate, todayStr]);
 
   return (
-    <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
-      {/* ─── Hero Header: Resumen de Turno & KPIs ───────────────────────────── */}
-      <div className="bg-surface-card p-4 sm:p-6 rounded-3xl border border-line shadow-card space-y-4 sm:space-y-5">
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200">
+      {/* ─── Hero Header: Resumen de Turno Slop-Free ─────────────────────────── */}
+      <div className="bg-surface-card p-4 sm:p-5 rounded-3xl border border-line shadow-card space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <span className="px-3 py-1 text-xs font-black uppercase tracking-wider rounded-full bg-accent-soft text-accent border border-accent/25 inline-flex items-center gap-1.5">
-              <ClipboardList className="w-3.5 h-3.5" />
-              <span>Centro de Control & Turno</span>
-            </span>
-            <h1 className="text-xl sm:text-2xl font-black text-text-primary mt-1.5 tracking-tight">
-              Resumen K — Turno & Insumos
-            </h1>
-            <p className="text-xs font-bold text-text-secondary mt-0.5">
-              {dateLabel} · Lectura en vivo de cocina, mise en place, cobranza y logística por torre.
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-accent/15 text-accent flex items-center justify-center font-black shrink-0 shadow-xs">
+              <ClipboardList className="w-5 h-5 text-accent" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-black text-text-primary tracking-tight">
+                  Resumen K
+                </h1>
+                <span className="px-2.5 py-0.5 rounded-lg bg-surface-raised border border-line text-xs font-bold text-text-secondary">
+                  {dateLabel}
+                </span>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -123,26 +126,26 @@ export function ResumenKView({ onTabChange }: ResumenKViewProps) {
         </div>
 
         {/* ─── Cuadrícula de Semáforo (4 Métricas Clave Reactivas) ───────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           {/* 1. Cocina Activa */}
           <button
             type="button"
             onClick={() => onTabChange('cocina')}
-            className="group flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-surface-raised border border-line hover:border-accent/50 hover:bg-accent-soft/30 active:scale-[0.98] transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            aria-label={`Cocina activa: ${metrics.prepCount} pedidos en preparación, ${metrics.totalBurgersToPrep} burgers. Clic para abrir Cocina.`}
+            className="group flex flex-col justify-between p-3.5 rounded-2xl bg-surface-raised border border-line hover:border-accent/50 hover:bg-accent-soft/30 active:scale-[0.98] transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent min-h-[96px]"
+            aria-label={`Cocina activa: ${metrics.prepCount} pedidos, ${metrics.totalBurgersToPrep} burgers. Abrir Cocina.`}
           >
             <div className="flex items-center justify-between w-full">
-              <span className="text-xs font-bold text-text-secondary group-hover:text-accent transition-colors flex items-center gap-1.5">
+              <span className="text-xs font-black text-text-secondary group-hover:text-accent transition-colors flex items-center gap-1.5">
                 <Flame className="w-4 h-4 text-amber-500 shrink-0" />
                 <span>Cocina Activa</span>
               </span>
               <ArrowRight className="w-3.5 h-3.5 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-text-primary my-1.5 tabular-nums">
+            <p className="text-2xl sm:text-3xl font-black text-text-primary my-1 tabular-nums">
               {metrics.prepCount}
             </p>
-            <p className="text-[11px] text-text-muted tabular-nums">
-              {metrics.totalBurgersToPrep} burgers por preparar
+            <p className="text-[11px] font-bold text-text-muted tabular-nums">
+              {metrics.totalBurgersToPrep} burgers
             </p>
           </button>
 
@@ -150,23 +153,21 @@ export function ResumenKView({ onTabChange }: ResumenKViewProps) {
           <button
             type="button"
             onClick={() => onTabChange('pagos')}
-            className="group flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-surface-raised border border-line hover:border-amber-500/50 hover:bg-amber-500/5 active:scale-[0.98] transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            aria-label={`Por cobrar: ${metrics.pendingPaymentsCount} cobros pendientes. Clic para abrir Pagos.`}
+            className="group flex flex-col justify-between p-3.5 rounded-2xl bg-surface-raised border border-line hover:border-amber-500/50 hover:bg-amber-500/5 active:scale-[0.98] transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent min-h-[96px]"
+            aria-label={`Por cobrar: ${metrics.pendingPaymentsCount} cobros pendientes. Abrir Pagos.`}
           >
             <div className="flex items-center justify-between w-full">
-              <span className="text-xs font-bold text-text-secondary group-hover:text-amber-500 transition-colors flex items-center gap-1.5">
+              <span className="text-xs font-black text-text-secondary group-hover:text-amber-500 transition-colors flex items-center gap-1.5">
                 <CreditCard className="w-4 h-4 text-amber-500 shrink-0" />
                 <span>Por Cobrar</span>
               </span>
               <ArrowRight className="w-3.5 h-3.5 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-text-primary my-1.5 tabular-nums">
+            <p className="text-2xl sm:text-3xl font-black text-text-primary my-1 tabular-nums">
               {metrics.pendingPaymentsCount}
             </p>
-            <p className="text-[11px] text-text-muted tabular-nums">
-              {metrics.pendingPaymentsCount === 1
-                ? '1 cobro pendiente'
-                : `${metrics.pendingPaymentsCount} cobros pendientes`}
+            <p className="text-[11px] font-bold text-text-muted tabular-nums">
+              {metrics.pendingPaymentsCount === 1 ? '1 pendiente' : `${metrics.pendingPaymentsCount} pendientes`}
             </p>
           </button>
 
@@ -174,43 +175,43 @@ export function ResumenKView({ onTabChange }: ResumenKViewProps) {
           <button
             type="button"
             onClick={() => onTabChange('pedidos')}
-            className="group flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-surface-raised border border-line hover:border-accent/50 hover:bg-accent-soft/30 active:scale-[0.98] transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            aria-label={`Pedidos activos: ${metrics.activeCount} en proceso. Clic para abrir Pedidos.`}
+            className="group flex flex-col justify-between p-3.5 rounded-2xl bg-surface-raised border border-line hover:border-accent/50 hover:bg-accent-soft/30 active:scale-[0.98] transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent min-h-[96px]"
+            aria-label={`Pedidos activos: ${metrics.activeCount} en proceso. Abrir Pedidos.`}
           >
             <div className="flex items-center justify-between w-full">
-              <span className="text-xs font-bold text-text-secondary group-hover:text-accent transition-colors flex items-center gap-1.5">
+              <span className="text-xs font-black text-text-secondary group-hover:text-accent transition-colors flex items-center gap-1.5">
                 <ShoppingBag className="w-4 h-4 text-accent shrink-0" />
                 <span>Pedidos Activos</span>
               </span>
               <ArrowRight className="w-3.5 h-3.5 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-text-primary my-1.5 tabular-nums">
+            <p className="text-2xl sm:text-3xl font-black text-text-primary my-1 tabular-nums">
               {metrics.activeCount}
             </p>
-            <p className="text-[11px] text-text-muted">
-              En proceso de turno
+            <p className="text-[11px] font-bold text-text-muted">
+              En turno
             </p>
           </button>
 
           {/* 4. Venta del Período */}
           <button
             type="button"
-            onClick={() => onTabChange('pedidos')}
-            className="group flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-surface-raised border border-line hover:border-emerald-500/50 hover:bg-emerald-500/5 active:scale-[0.98] transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            aria-label={`Venta del período: $${metrics.totalSalesPesos.toFixed(2)} pesos, ${metrics.periodOrdersCount} órdenes. Clic para abrir Pedidos.`}
+            onClick={() => onTabChange('pagos')}
+            className="group flex flex-col justify-between p-3.5 rounded-2xl bg-surface-raised border border-line hover:border-emerald-500/50 hover:bg-emerald-500/5 active:scale-[0.98] transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent min-h-[96px]"
+            aria-label={`Venta del período: $${metrics.totalSalesPesos.toFixed(2)} pesos, ${metrics.periodOrdersCount} órdenes. Abrir Pagos.`}
           >
             <div className="flex items-center justify-between w-full">
-              <span className="text-xs font-bold text-text-secondary group-hover:text-emerald-500 transition-colors flex items-center gap-1.5">
+              <span className="text-xs font-black text-text-secondary group-hover:text-emerald-500 transition-colors flex items-center gap-1.5">
                 <DollarSign className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>Venta del Período</span>
+                <span>Venta</span>
               </span>
               <ArrowRight className="w-3.5 h-3.5 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 my-1.5 tabular-nums">
+            <p className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 my-1 tabular-nums">
               ${metrics.totalSalesPesos.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
             </p>
-            <p className="text-[11px] text-text-muted tabular-nums">
-              {metrics.periodOrdersCount} órdenes registradas
+            <p className="text-[11px] font-bold text-text-muted tabular-nums">
+              {metrics.periodOrdersCount} órdenes
             </p>
           </button>
         </div>
