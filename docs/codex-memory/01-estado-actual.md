@@ -151,3 +151,7 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Unificación de tokens de diseño en modo claro de Chekeo (`globals.css`) con la paleta cálida oficial Premium Casual (`#EAE6E1`, `#0F172A`, `#475569`, `#64748B`, `#E2DCD5`).
   - Tipografía & números tabulares (`tabular-nums`) en precios, subtotales y KPIs en `ProductCard`, `FeaturedRail`, `ProductDetailDrawer`, `CartBar`, `CartDrawer` y `OperacionView`.
   - Micro-interacciones táctiles responsivas (`active:scale-[0.98]`, `active:scale-[0.96]`, `active:scale-[0.92]`) y áreas táctiles $\ge 44\text{px}$ en botones de catálogo, barras flotantes e icono de botón base.
+- **Resumen K como Pantalla de Inicio (Home) & Especialización de Cocina KDS (2026-08-28)**:
+  - Consolidación de la Pestaña 1 como `Resumen K` (`ResumenKView.tsx`), integrando la barra ejecutiva superior de 4 KPIs del Turno reactivos a la fecha seleccionada (*Cocina Activa*, *Por Cobrar*, *Pedidos Activos*, *Venta del Período*) con navegación cruzada 1-clic.
+  - Integración nativa del Riel de Fechas Horizontal (`HorizontalDateCalendarFilter`) con Zona Horaria Oficial CDMX (`getCdmxTodayString()`).
+  - Desacoplamiento total de `Resumen K` de `CocinaView.tsx`, simplificando Cocina a 2 estaciones de ejecución KDS en vivo (`🍔 Preparación` y `🍟 Side Quest`) con cero distracciones en hora pico.

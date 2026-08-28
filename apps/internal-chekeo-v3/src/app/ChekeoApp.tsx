@@ -11,10 +11,10 @@ import React, { useState, useEffect } from 'react';
 import { TabsContent } from '@ui/tabs';
 import { useAuthStore } from '../features/auth';
 import { AppShell, ChekeoTab } from '../components/shell';
-import { OperacionView, PedidosView, CocinaView, PagosView, AdminView } from '../components/views';
+import { ResumenKView, PedidosView, CocinaView, PagosView, AdminView } from '../components/views';
 
 export function ChekeoApp() {
-  const [activeTab, setActiveTab] = useState<ChekeoTab>('operacion');
+  const [activeTab, setActiveTab] = useState<ChekeoTab>('resumenK');
   const { checkSession } = useAuthStore();
 
   // Comprobar estado de sesión con el backend al inicializar (silencioso para Admin)
@@ -27,8 +27,8 @@ export function ChekeoApp() {
   // Si está autenticado, renderizar AppShell con pestañas
   return (
     <AppShell activeTab={activeTab} onTabChange={setActiveTab}>
-      <TabsContent value="operacion" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-3xl m-0">
-        <OperacionView onTabChange={setActiveTab} />
+      <TabsContent value="resumenK" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-3xl m-0">
+        <ResumenKView onTabChange={setActiveTab} />
       </TabsContent>
 
       <TabsContent value="pedidos" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-3xl m-0">
