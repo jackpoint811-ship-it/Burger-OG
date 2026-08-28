@@ -79,7 +79,7 @@ La autorizacion previa fue consumida. Todo nuevo despliegue requiere una nueva a
 ## Lanzamiento Exitoso a Producción - 2026-08-13 (Release PR #524)
 - **Autorización Usuario**: Recibida explícitamente ("Approved migration_preview_to_production_plan.md").
 - **Promoción de Código**:
-  - PR a `main`: [PR #524](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/524) (`release(production): Promoción de Chekeo V2 y Public Order V2 a Producción`).
+  - PR a `main`: [PR #524](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/524) (`release(production): Promoción de Chekeo V2 y Public Order V2 a Producción`) — **MERGEADO EXITOSAMENTE**.
   - Cambios clave: Renovación integral de branding Premium Casual en Chekeo V2, filtro de calendario horizontal estricto ("Ver Todos" vs "Anteriores"), sticky header fix en Public Order V2, erradicación de temas neón/dark legacy.
 - **Compilación de Bundles**:
   - `npm run typecheck`: 0 errores de TypeScript.

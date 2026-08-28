@@ -1,21 +1,51 @@
-import React from 'react';
+/**
+ * ChekeoApp.tsx — PR-V3-08
+ *
+ * Componente raíz de la aplicación Chekeo V3:
+ * - AuthGate con validación de sesión automática y persistencia
+ * - AppShell con TopHeader, reloj operativo y barra de navegación accesible
+ * - Vistas modulares por pestañas (Pedidos, Cocina, Pagos y Admin)
+ */
+
+import React, { useState, useEffect } from 'react';
+import { TabsContent } from '@ui/tabs';
+import { useAuthStore } from '../features/auth';
+import { AppShell, ChekeoTab } from '../components/shell';
+import { ResumenKView, PedidosView, CocinaView, PagosView, AdminView } from '../components/views';
 
 export function ChekeoApp() {
+  const [activeTab, setActiveTab] = useState<ChekeoTab>('resumenK');
+  const { checkSession } = useAuthStore();
+
+  // Comprobar estado de sesión con el backend al inicializar (silencioso para Admin)
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
+
+  // Renderizar directamente el AppShell con todas las vistas operativas accesibles libremente
+
+  // Si está autenticado, renderizar AppShell con pestañas
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
-      <div className="max-w-md w-full bg-surface-card rounded-2xl p-6 shadow-panel border border-line">
-        <span className="inline-block text-3xl mb-3">👨‍🍳</span>
-        <h1 className="text-xl font-bold text-text-primary mb-2">
-          Chekeo V3 — Operaciones & Cocina
-        </h1>
-        <p className="text-sm text-text-secondary mb-4">
-          Panel operativo interno modular (Pedidos, Cocina, Pagos y Administración).
-        </p>
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-semibold">
-          <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
-          Scaffold Chekeo V3 Activo
-        </div>
-      </div>
-    </div>
+    <AppShell activeTab={activeTab} onTabChange={setActiveTab}>
+      <TabsContent value="resumenK" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-3xl m-0">
+        <ResumenKView onTabChange={setActiveTab} />
+      </TabsContent>
+
+      <TabsContent value="pedidos" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-3xl m-0">
+        <PedidosView />
+      </TabsContent>
+
+      <TabsContent value="cocina" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-3xl m-0">
+        <CocinaView />
+      </TabsContent>
+
+      <TabsContent value="pagos" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-3xl m-0">
+        <PagosView />
+      </TabsContent>
+
+      <TabsContent value="admin" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-3xl m-0">
+        <AdminView />
+      </TabsContent>
+    </AppShell>
   );
 }

@@ -7,13 +7,14 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const targetMap: Record<string, string> = {
-  'public': 'public-order-v2',
-  'internal': 'internal-chekeo-v2',
+  'public': 'public-order-v3',
+  'chekeo': 'internal-chekeo-v3',
+  'internal': 'internal-chekeo-v3',
   'public-v3': 'public-order-v3',
   'chekeo-v3': 'internal-chekeo-v3',
 };
 
-const rawTarget = process.env.APP_TARGET ?? 'public-v3';
+const rawTarget = process.env.APP_TARGET ?? 'public';
 const target = targetMap[rawTarget] ?? rawTarget;
 
 const isInternal = target.includes('internal') || target.includes('chekeo');

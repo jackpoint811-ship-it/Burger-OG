@@ -14,10 +14,10 @@ export type AdminEnv = { BOG_MENU_DB?: D1Database; BOG_INTERNAL_PIN?: string };
 
 export { TERMINAL_STATUSES };
 const STATUS_TRANSITIONS: Record<OrderV2Status, OrderV2Status[]> = {
-  new: ['preparing', 'cancelled'],
-  preparing: ['ready', 'cancelled'],
+  new: ['preparing', 'ready', 'delivered', 'cancelled'],
+  preparing: ['new', 'ready', 'delivered', 'cancelled'],
   ready: ['preparing', 'delivered', 'cancelled'],
-  delivered: [],
+  delivered: ['ready'],
   cancelled: []
 };
 
@@ -54,23 +54,38 @@ export const parseOrderEnvironmentFromRequest = (request: Request, fallback: Ord
 
 export const getOrderSourceForEnvironment = (environment: OrderV2Environment) => ORDER_SOURCE_BY_ENVIRONMENT[environment];
 
-export const getOrderEnvironmentFromSource = (source: unknown): OrderV2Environment =>
-  String(source) === PREVIEW_ORDER_SOURCE ? 'preview' : 'production';
+export const getOrderEnvironmentFromSource = (source: unknown): OrderV2Environment => {
+  const src = String(source ?? '').trim().toLowerCase();
+  return (src === PREVIEW_ORDER_SOURCE || src === 'preview' || src === 'seed' || src === 'test') ? 'preview' : 'production';
+};
 
 export const buildOrderEnvironmentCondition = (
   environment: OrderV2Environment,
   alias = ''
-): { condition: string; binding: string } => ({
-  condition: `${alias ? `${alias}.` : ''}source = ?`,
-  binding: getOrderSourceForEnvironment(environment)
-});
+): { condition: string; binding: string } => {
+  const col = `${alias ? `${alias}.` : ''}source`;
+  if (environment === 'preview') {
+    return {
+      condition: `(${col} = ? OR ${col} = 'preview' OR ${col} = 'seed' OR ${col} = 'test')`,
+      binding: PREVIEW_ORDER_SOURCE
+    };
+  }
+  return {
+    condition: `${col} = ?`,
+    binding: PUBLIC_ORDER_SOURCE
+  };
+};
 
 export const assertOrderMatchesEnvironment = (
   row: { source?: unknown },
   environment: OrderV2Environment
 ): Response | null => {
   const expectedSource = getOrderSourceForEnvironment(environment);
-  if (String(row.source) === expectedSource) return null;
+  const src = String(row.source ?? '').trim().toLowerCase();
+  if (src === expectedSource) return null;
+  if (environment === 'preview' && (src === 'preview' || src === 'seed' || src === 'test' || src === 'public-v2-preview')) {
+    return null;
+  }
   return errorResponse(409, 'ENVIRONMENT_MISMATCH', 'La orden pertenece a otro ambiente operativo.');
 };
 
@@ -473,3 +488,47 @@ export const fetchOrderBundle = async (db: D1Database, orderId: string): Promise
     (eventsResult.results ?? []).map(mapD1OrderEventToOrderV2Event)
   );
 };
+
+/**
+ * Suma N días a una fecha YYYY-MM-DD retornando la nueva fecha en formato YYYY-MM-DD.
+ */
+export function addDaysToDateStr(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d + days, 12, 0, 0));
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Convierte una fecha de día operativo CDMX (YYYY-MM-DD) en su rango exacto UTC [fromUtc, toUtc].
+ * CDMX (America/Mexico_City) es UTC-6.
+ * - Inicio: YYYY-MM-DDT06:00:00.000Z
+ * - Fin: (YYYY-MM-DD + 1)T05:59:59.999Z
+ */
+export function getCdmxUtcRange(dateStr: string): { fromUtc: string; toUtc: string } {
+  const cleanDate = dateStr.trim().slice(0, 10);
+  const nextDate = addDaysToDateStr(cleanDate, 1);
+  return {
+    fromUtc: `${cleanDate}T06:00:00.000Z`,
+    toUtc: `${nextDate}T05:59:59.999Z`
+  };
+}
+
+/**
+ * Convierte un rango de fechas CDMX opcionales (from, to) en límites UTC [fromUtc?, toUtc?].
+ */
+export function getCdmxUtcRangeFromTo(from?: string, to?: string): { fromUtc?: string; toUtc?: string } {
+  const res: { fromUtc?: string; toUtc?: string } = {};
+  if (from && from.trim()) {
+    const cleanFrom = from.trim().slice(0, 10);
+    res.fromUtc = `${cleanFrom}T06:00:00.000Z`;
+  }
+  if (to && to.trim()) {
+    const cleanTo = to.trim().slice(0, 10);
+    const nextTo = addDaysToDateStr(cleanTo, 1);
+    res.toUtc = `${nextTo}T05:59:59.999Z`;
+  }
+  return res;
+}

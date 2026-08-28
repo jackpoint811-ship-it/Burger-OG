@@ -111,7 +111,7 @@ Garantizar que la aplicación pública jamás vuelva a sufrir un congelamiento d
 - Cero posibilidad de que errores de BD forcen la app pública al flujo legacy.
 - Cero excepciones no capturadas por violaciones a Rules of Hooks en React.
 - Cero inconsistencias de tipos MIME por HTMLs cacheados en CDN.
-3. **Manejo de errores no bloqueante**: La app pública debe ofrecer reintentos limpios y fallbacks seguros antes de mostrar pantallas de error totales al usuario final.
+- Manejo de errores no bloqueante: La app pública debe ofrecer reintentos limpios y fallbacks seguros antes de mostrar pantallas de error totales al usuario final.
 
 ### Fecha
 
@@ -164,3 +164,152 @@ V2 acumuló deuda técnica masiva: `InternalChekeoApp.tsx` con 6,336 líneas, `s
 - Estado del carrito centralizado en Zustand, server state cacheado con TanStack Query.
 - Backend organizado con Hono.js + Zod validation.
 - Producción protegida hasta cutover final aprobado.
+
+### Fecha
+
+2026-08-19
+
+### Decisión
+
+**Arquitectura de KDS (Kitchen Display System) y Resumen K (Mise en Place) en Chekeo V3 (PR-V3-10)**:
+
+1. **KDS Kanban**: Interfaz de 3 columnas (Nuevos / En Plancha / Listos para Empacar) con folio en tipografía grande y botón de 1-clic para avanzar el estado del pedido.
+2. **Resaltado Crítico de Modificadores**: Remociones (`🔴 SIN CEBOLLA`, etc.) y extras (`🟢 +EXTRA TOCINO`, etc.) en chips de alto contraste y legibilidad a distancia para pantallas táctiles de cocina y tablets.
+3. **Agregador de Insumos (Resumen K)**: Cómputo consolidado en tiempo real de hamburguesas a producir por receta, guarniciones (Papas Francesas, Aros) y extras totales para mise en place, con integración opcional a base de datos Cloudflare D1 (`/api/kitchen-v2-admin/summary-k`).
+4. **Alertas Sonoras Nativas (Web Audio API)**: Síntesis de chimes sin depender de archivos de audio externos, con persistencia del switch de volumen en `localStorage`.
+
+### Motivo
+
+Permitir a los operadores de plancha y freidora preparar pedidos con máxima velocidad y cero errores de ingredientes, además de dimensionar los insumos necesarios para la jornada.
+
+### Impacto
+
+- Cero errores en burgers con modificaciones especiales.
+- Visibilidad inmediata del flujo de pedidos.
+- Sin dependencias externas de audio ni assets pesados.
+
+### Fecha
+
+2026-08-20
+
+### Decisión
+
+**Despliegue Independiente V3 en Cloudflare Pages y Pipelines CI/CD Automatizados (PRs #546 y #547)**:
+
+1. **Proyectos Dedicados en Cloudflare Pages**:
+   - `burgers-exe-public-v3`: Public Order V3 mobile-first con soporte directo para catálogo D1 y assets R2.
+   - `burgers-exe-internal-v3`: Internal Chekeo V3 protegido con autenticación de PIN segura por variable de entorno `BOG_INTERNAL_PIN`.
+2. **Pipelines de CI/CD vía GitHub Actions**:
+   - `.github/workflows/deploy-public-v3.yml` y `.github/workflows/deploy-chekeo-v3.yml` compilan con Vite y despliegan a Cloudflare Pages automáticamente en cada push o PR a `v3`.
+3. **Extracción Canónica de Claves R2 en Router Hono**:
+   - En `functions/api/_routes/assets.ts`, la extracción de clave de asset utiliza `c.req.path.replace(/^(?:\/api)?\/assets-v2\/?/, '')` para aislar correctamente la clave del objeto R2 (`menu/...`, `category-banners/...`) sin contaminar con el prefijo global `/api` de la aplicación.
+
+### Motivo
+
+Garantizar un ciclo de despliegue continuo, desacoplado, sin fricción manual y completamente compatible con el routing de Cloudflare Pages y la jerarquía de Hono.js.
+
+### Impacto
+
+- Ambas aplicaciones se despliegan en menos de 45 segundos ante cualquier push a `v3`.
+- Catálogo e imágenes de R2 cargan con HTTP 200 sin 404s ni fallbacks degradados.
+- Chekeo V3 mantiene autenticación robusta y segura contra el backend.
+
+### Fecha
+
+2026-08-20
+
+### Decisión
+
+**Alineación Operativa Definitiva en Chekeo V3 (Rescate de Patrones de Producción Real V2 — PR #549)**:
+
+1. **Eliminación Total de Relojes de Presión en Cocina**: Se eliminan cronómetros de minutos transcurridos y semáforos de estrés (`<10m`, `10-20m`, `>20m` parpadeantes) porque chocan con el modelo de producción por lotes (batch cooking) y entregas programadas a torres de Burgers.exe.
+2. **División por Estaciones Operativas Reales**:
+   - `🍔 Preparación (Plancha)`: Enfocada exclusivamente en carnes smash, panes y modificaciones críticas.
+   - `🍟 Side Quest (Freidora & Empaque)`: Enfocada en papas, aros de cebolla, bebidas y ensamble de paquetes.
+   - `📋 Resumen K (Mise en Place)`: Conteo consolidado de insumos activos.
+3. **Restitución de `HorizontalDateCalendarFilter`**: Riel horizontal de 14 días consecutivos con detección en zona horaria CDMX, botón especial de `⏱️ Anteriores / Histórico`, tarjeta `🟢 HOY` y conteo reactivo de comandas pendientes tanto en **Pedidos** como en **Cocina**.
+
+### Motivo
+
+Adaptar la interfaz a la realidad operativa del restaurante sin comprometer la nueva arquitectura modular de V3 (React 19 + TanStack Query + Tailwind v4).
+
+### Impacto
+
+- Cero estrés y cero alertas falsas en pedidos programados.
+- Cocineros y empacadores trabajan con interfaces especializadas por estación física.
+- Visibilidad completa de entregas futuras y pendientes históricos.
+
+### Fecha
+
+2026-08-21
+
+### Decisión
+
+**Afinaciones de UX/UI, Personalización y Ergonomía en Public Order V3**:
+
+1. **Resolución Canónica de Recetas e Ingredientes Removibles**: Se implementa `useMenuRecipes()` y `lookupRecipeBySku()` garantizando la disponibilidad de modificadores (`removedIngredients`) tanto en burgers individuales como para cada hamburguesa dentro de un combo (`comboBurgerProducts[index]`), mapeando directamente desde Cloudflare D1 con fallbacks tolerantes a prefijos de SKU.
+2. **Switch de Modo Oscuro en App Pública**: Se habilita el selector de tema (`Sun` / `Moon`) en `BrandHeader.tsx` con persistencia en `localStorage` (`public_theme`) y soporte completo de Tailwind v4.
+3. **Emoji de Regalo `🎁` en Sorteos**: Se reemplaza el ícono de ticket genérico por el emoji `🎁` para identificar campañas activas de sorteo en cabecera, checkout y pantalla de éxito.
+4. **Layout Canónico de 2 Columnas Móvil**: Adaptación mobile-first a grilla de 2 columnas (`grid-cols-2 sm:grid-cols-2 md:grid-cols-3`) y carrusel de banners previo a la navegación de categorías sticky.
+5. **Checkout Limpio**: Campo de código de referido oculto si no hay sorteo activo y opt-in a WhatsApp desplegado condicionalmente tras ingresar 10 dígitos del teléfono.
+
+### Motivo
+
+Recuperar la experiencia fluida de personalización y compra probada en producción sin perder las ventajas de la arquitectura modular moderna de V3.
+
+### Impacto
+
+- Cero pedidos de burgers o combos bloqueados sin posibilidad de personalización.
+- Soporte visual nativo para modo oscuro en la app de clientes.
+- Reducción de ruido visual en el checkout para usuarios sin código o que aún no ingresan su teléfono.
+
+### Fecha
+
+2026-08-21
+
+### Decisión
+
+**Consolidación de Banners y Catálogo Interactivo en Chekeo Admin y Public Order V3**:
+
+1. **Chekeo Admin Banners**: Se integra un Live Preview (WYSIWYG) en tiempo real en el modal de edición de banners y selectores desplegables dinámicos para categorías y productos (`useAdminMenu()`), eliminando el tipeo manual propenso a errores en `ctaTarget`.
+2. **Public Carrusel Comercial y Gestos**: `BannerCarousel.tsx` soporta los 6 gradientes temáticos (`bgPreset`), acciones directas a productos (`openProductDrawer`), scroll a categorías, copiado de cupones y swipe táctil inercial con `framer-motion`.
+3. **Módulo Top Vendidos (Featured Rail)**: Riel horizontal (`FeaturedRail.tsx`) arriba del catálogo con acceso en 1 tap a productos destacados.
+4. **Módulo 1-Click Reorder**: `ReorderModule.tsx` lee el último pedido en `localStorage` (`pov3-last-order`) permitiendo repetir la comanda exacta al instante.
+5. **Scrollspy Bidireccional**: `CategoryNav.tsx` implementa `IntersectionObserver` para auto-centrar y actualizar la categoría activa conforme se desplaza la vista por el catálogo.
+
+### Motivo
+
+Maximizar la conversión comercial y la velocidad de pedido en la app pública, brindando a la vez herramientas de gestión visual precisas en Chekeo Admin.
+
+### Impacto
+
+- Clientes recurrentes pueden reordenar en 1 clic.
+- Banners promocionales abren el producto directamente sin fricción.
+- Navegación de categorías siempre sincronizada con la posición en pantalla.
+
+### Fecha
+
+2026-08-21
+
+### Fecha
+
+2026-08-26
+
+### Decisión
+
+**Regla Inquebrantable de Veracidad de Datos (Prohibición Estricta de Inventar Datos o Fallbacks Ficticios)**:
+
+1. **Single Source of Truth Obligatorio**: Todo el sistema (Frontend público, Chekeo POS, Cocina KDS, conciliación y seeds) debe operar única y exclusivamente con datos 100% reales provenientes de Cloudflare D1 (`menu_items`, `ingredients_v2`, `product_ingredient_recipes_v2`, `orders_v2`), Cloudflare R2 y endpoints Hono.
+2. **Prohibición de Mocks y Fallbacks Simulados**: Queda terminantemente prohibido inventar o simular SKUs, productos, precios, ingredientes, recetas, combos o estados de pedidos ficticios en el código o en scripts de prueba.
+3. **Manejo Honesto de Datos**: Si un dato, ingrediente o configuración no existe en la base de datos, el sistema no debe enmascararlo ni generar valores artificiales por omisión; debe reflejar el estado real o solicitar su configuración en Chekeo.
+4. **Semillas y Testing Verificados**: Cualquier script de prueba o siembra debe consultar previamente el catálogo real de D1 y apegarse estrictamente a los esquemas oficiales Zod / TypeScript de V3.
+
+### Motivo
+
+Prevenir desalineaciones entre la base de datos real y la interfaz de usuario, evitar bugs fantasma de renderizado y asegurar que la cocina y el restaurante operen siempre con productos, costos e ingredientes reales.
+
+### Impacto
+
+- Cero productos o precios ficticios en la aplicación.
+- Comandas y desgloses de cocina 100% consistentes con el catálogo de D1.
+- Inclusión de la regla en `AGENTS.md`, `GEMINI.md` y `.agents/rules/00-hard-constraints.md` como prohibición permanente.
