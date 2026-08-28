@@ -8,8 +8,8 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Flame, UtensilsCrossed, ClipboardList } from 'lucide-react';
-import { KitchenDisplay, KitchenSummaryK } from '../kitchen';
+import { Flame, UtensilsCrossed } from 'lucide-react';
+import { KitchenDisplay } from '../kitchen';
 import {
   HorizontalDateCalendarFilter,
   extractOrderTargetDate,
@@ -23,7 +23,7 @@ import {
 
 import { getCdmxTodayString } from '@config/index';
 
-export type KitchenLaneTab = 'prep' | 'sideQuest' | 'summaryK';
+export type KitchenLaneTab = 'prep' | 'sideQuest';
 
 export function CocinaView() {
   const [activeTab, setActiveTab] = useState<KitchenLaneTab>('prep');
@@ -84,13 +84,6 @@ export function CocinaView() {
       icon: UtensilsCrossed,
       badge: sideQuestPendingCount,
       ariaControls: 'kitchen-sidequest-panel',
-    },
-    {
-      id: 'summaryK' as KitchenLaneTab,
-      label: 'Resumen K',
-      icon: ClipboardList,
-      badge: null,
-      ariaControls: 'kitchen-summaryk-panel',
     },
   ];
 
@@ -166,9 +159,6 @@ export function CocinaView() {
         )}
         {activeTab === 'sideQuest' && (
           <KitchenDisplay laneMode="sideQuest" selectedDate={selectedDate} />
-        )}
-        {activeTab === 'summaryK' && (
-          <KitchenSummaryK selectedDate={selectedDate} />
         )}
       </div>
     </div>

@@ -1,4 +1,4 @@
-export * from './OperacionView';
+export * from './ResumenKView';
 export * from './PedidosView';
 export * from './CocinaView';
 export * from './PagosView';

@@ -12,11 +12,11 @@
  */
 
 import React from 'react';
-import { LayoutDashboard, ShoppingBag, ChefHat, CreditCard, Settings, Lock } from 'lucide-react';
+import { ClipboardList, ShoppingBag, ChefHat, CreditCard, Settings, Lock } from 'lucide-react';
 import { TabsList, TabsTrigger } from '@ui/tabs';
 import { useAuthStore } from '../../features/auth';
 
-export type ChekeoTab = 'operacion' | 'pedidos' | 'cocina' | 'pagos' | 'admin';
+export type ChekeoTab = 'resumenK' | 'pedidos' | 'cocina' | 'pagos' | 'admin';
 
 export interface TabItem {
   id: ChekeoTab;
@@ -29,11 +29,11 @@ export interface TabItem {
 
 export const CHEKEO_TABS: TabItem[] = [
   {
-    id: 'operacion',
-    label: 'Operación',
-    shortLabel: 'Turno',
-    subtitle: 'Semáforo en Vivo',
-    icon: LayoutDashboard,
+    id: 'resumenK',
+    label: 'Resumen K',
+    shortLabel: 'Resumen K',
+    subtitle: 'Mise en Place & Insumos',
+    icon: ClipboardList,
   },
   {
     id: 'pedidos',
@@ -46,7 +46,7 @@ export const CHEKEO_TABS: TabItem[] = [
     id: 'cocina',
     label: 'Cocina',
     shortLabel: 'Cocina',
-    subtitle: 'KDS & Insumos',
+    subtitle: 'KDS Plancha & Sides',
     icon: ChefHat,
   },
   {
