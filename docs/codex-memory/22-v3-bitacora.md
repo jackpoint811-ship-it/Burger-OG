@@ -742,6 +742,14 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - 10,000 órdenes Monte Carlo simuladas con 0 divergencias de cálculo.
   - Doble confirmación por 5 revisores/challengers independientes y Victory Auditor.
 
+### 📅 2026-08-28 — Sesión: Cutover Definitivo V3 a Producción — PR #618 & PR #619 (Mergeados)
+- **🎉 Lanzamiento Oficial de Producción**:
+  - Merge exitoso de PR #618 (Cutover Definitivo de Burgers.exe V3 a `main`) y PR #619 (Fix de detección de hostnames productivos).
+  - Toda la plataforma V3 desplegada y activa en los proyectos de Cloudflare Pages:
+    - **Tienda Pública**: `https://burgers-exe.pages.dev/`
+    - **Chekeo POS / KDS**: `https://chekeo2-0.pages.dev/` / `https://chekeo-v3.pages.dev/`
+  - Verificación en vivo completada: Carga de menú real D1, recepción de órdenes en tiempo real en Chekeo, Resumen K, KDS en 2 estaciones y gestión de pagos.
+
 ---
 
 
