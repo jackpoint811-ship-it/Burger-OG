@@ -1,10 +1,9 @@
 /**
- * AppShell.tsx — PR-V3-08
+ * AppShell.tsx — Chekeo V3
  *
  * Contenedor principal de la aplicación Chekeo V3:
- * - TopHeader con métricas operativas
+ * - TopHeader con botón para volver al SaaS Hub
  * - Navegación accesible por pestañas
- * - Contenedor responsivo optimizado para tabletas de cocina, monitores POS y móviles
  */
 
 import React from 'react';
@@ -15,14 +14,15 @@ import { NavTabs, ChekeoTab } from './NavTabs';
 interface AppShellProps {
   activeTab: ChekeoTab;
   onTabChange: (tab: ChekeoTab) => void;
+  onReturnToSaaSHub?: () => void;
   children: React.ReactNode;
 }
 
-export function AppShell({ activeTab, onTabChange, children }: AppShellProps) {
+export function AppShell({ activeTab, onTabChange, onReturnToSaaSHub, children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-surface flex flex-col transition-colors duration-200 text-text-primary">
       {/* Header Operativo */}
-      <TopHeader />
+      <TopHeader onReturnToSaaSHub={onReturnToSaaSHub} />
 
       {/* Tabs Container */}
       <Tabs

@@ -1,9 +1,9 @@
 /**
- * TopHeader.tsx — Chekeo V3 + SaaS Brand Switcher
+ * TopHeader.tsx — Chekeo V3 + SaaS Hub Navigation
  *
  * Barra superior operativa de Chekeo V3:
- * - Selector de Marca / Inquilino Multi-Tenant (Tenant Switcher)
- * - Indicador de entorno (Producción / Preview / Dev)
+ * - Botón para volver al Hub Central del SaaS
+ * - Selector de Marca / Inquilino Multi-Tenant
  * - Reloj operativo CDMX en tiempo real
  * - Estado de sincronización en red (Online / Offline)
  * - Switch de tema (Light / Dark mode)
@@ -11,12 +11,17 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Clock, Wifi, WifiOff, Lock, Sun, Moon, ChevronDown, Store, Plus, Check } from 'lucide-react';
+import { Clock, Wifi, WifiOff, Lock, Sun, Moon, ChevronDown, Plus, Check, LayoutGrid } from 'lucide-react';
 import { useAuthStore } from '../../features/auth';
 import { getActiveTenant, TENANTS_REGISTRY } from '@config';
 import { TenantOnboardingModal } from '../admin/TenantOnboardingModal';
+import { Button } from '@ui/button';
 
-export function TopHeader() {
+export interface TopHeaderProps {
+  onReturnToSaaSHub?: () => void;
+}
+
+export function TopHeader({ onReturnToSaaSHub }: TopHeaderProps) {
   const { isAuthenticated, logout } = useAuthStore();
   const [timeStr, setTimeStr] = useState('');
   const [dateStr, setDateStr] = useState('');
@@ -58,7 +63,6 @@ export function TopHeader() {
     }
   };
 
-  // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -115,7 +119,19 @@ export function TopHeader() {
     setIsBrandMenuOpen(false);
     const url = new URL(window.location.href);
     url.searchParams.set('tenant', tenantKey);
+    url.searchParams.delete('view');
     window.location.href = url.toString();
+  };
+
+  const handleGoToHub = () => {
+    if (onReturnToSaaSHub) {
+      onReturnToSaaSHub();
+    } else {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('tenant');
+      url.searchParams.set('view', 'saas');
+      window.location.href = url.toString();
+    }
   };
 
   const registeredTenants = Object.entries(TENANTS_REGISTRY).filter(
@@ -125,80 +141,92 @@ export function TopHeader() {
   return (
     <header className="sticky top-0 z-40 w-full bg-surface-card/90 backdrop-blur-md border-b border-line transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
-        {/* Izquierda: Selector de Marca / Tenant Switcher */}
-        <div className="relative flex items-center gap-2" ref={dropdownRef}>
-          <button
+        {/* Izquierda: Botón SaaS Hub + Selector de Marca */}
+        <div className="flex items-center gap-2">
+          {/* Botón Volver a SaaS Hub */}
+          <Button
             type="button"
-            onClick={() => setIsBrandMenuOpen(!isBrandMenuOpen)}
-            className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-2 rounded-2xl border border-line bg-surface hover:bg-surface-raised transition-all cursor-pointer select-none active:scale-98 focus-visible:ring-2 focus-visible:ring-accent"
-            title="Cambiar de Restaurante / Marca"
+            variant="outline"
+            size="sm"
+            onClick={handleGoToHub}
+            className="h-10 px-3 rounded-2xl text-xs font-black gap-1.5 border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 cursor-pointer active:scale-98 shadow-xs"
+            title="Volver al Centro de Mando del SaaS"
           >
-            <span className="text-xl shrink-0">{tenant.logoEmoji}</span>
-            <div className="text-left min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="font-black text-sm sm:text-base text-text-primary truncate">
-                  {tenant.brandName}
+            <LayoutGrid className="w-4 h-4" />
+            <span className="hidden sm:inline">SaaS Hub</span>
+          </Button>
+
+          {/* Selector de Marca Dropdown */}
+          <div className="relative flex items-center gap-2" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsBrandMenuOpen(!isBrandMenuOpen)}
+              className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-2 rounded-2xl border border-line bg-surface hover:bg-surface-raised transition-all cursor-pointer select-none active:scale-98 focus-visible:ring-2 focus-visible:ring-accent"
+              title="Cambiar de Restaurante"
+            >
+              <span className="text-xl shrink-0">{tenant.logoEmoji}</span>
+              <div className="text-left min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-black text-sm sm:text-base text-text-primary truncate">
+                    {tenant.brandName}
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                </div>
+                <span className="hidden sm:block text-[10px] font-bold text-accent uppercase tracking-wider">
+                  Restaurante Activo
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-text-muted shrink-0" />
               </div>
-              <span className="hidden sm:block text-[10px] font-bold text-accent uppercase tracking-wider">
-                Restaurante Activo
-              </span>
-            </div>
-          </button>
+            </button>
 
-          <span className="hidden md:inline-flex px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-black uppercase tracking-wider">
-            SaaS Multi-Tenant
-          </span>
+            {/* Menú Desplegable de Marcas */}
+            {isBrandMenuOpen && (
+              <div className="absolute top-full left-0 mt-2 w-64 p-2 bg-surface-card rounded-2xl border border-line shadow-xl z-50 animate-in fade-in-0 zoom-in-95 space-y-1">
+                <div className="px-2 py-1 flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-text-muted">
+                  <span>Cambiar de Marca</span>
+                  <span>{registeredTenants.length} registradas</span>
+                </div>
 
-          {/* Menú Desplegable de Marcas */}
-          {isBrandMenuOpen && (
-            <div className="absolute top-full left-0 mt-2 w-64 p-2 bg-surface-card rounded-2xl border border-line shadow-xl z-50 animate-in fade-in-0 zoom-in-95 space-y-1">
-              <div className="px-2 py-1 flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-text-muted">
-                <span>Cambiar de Marca</span>
-                <span>{registeredTenants.length} registradas</span>
-              </div>
-
-              {registeredTenants.map(([key, t]) => {
-                const isCurrent = t.id === tenant.id;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => handleSelectTenant(t.id)}
-                    className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all cursor-pointer ${
-                      isCurrent
-                        ? 'bg-accent/10 text-accent font-black border border-accent/20'
-                        : 'hover:bg-surface-raised text-text-primary'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-base shrink-0">{t.logoEmoji}</span>
-                      <div className="min-w-0">
-                        <p className="text-xs truncate font-bold">{t.brandName}</p>
-                        <p className="text-[10px] text-text-muted truncate">{t.shortName}</p>
+                {registeredTenants.map(([key, t]) => {
+                  const isCurrent = t.id === tenant.id;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handleSelectTenant(t.id)}
+                      className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all cursor-pointer ${
+                        isCurrent
+                          ? 'bg-accent/10 text-accent font-black border border-accent/20'
+                          : 'hover:bg-surface-raised text-text-primary'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-base shrink-0">{t.logoEmoji}</span>
+                        <div className="min-w-0">
+                          <p className="text-xs truncate font-bold">{t.brandName}</p>
+                          <p className="text-[10px] text-text-muted truncate">{t.shortName}</p>
+                        </div>
                       </div>
-                    </div>
-                    {isCurrent && <Check className="w-4 h-4 text-accent shrink-0" />}
-                  </button>
-                );
-              })}
+                      {isCurrent && <Check className="w-4 h-4 text-accent shrink-0" />}
+                    </button>
+                  );
+                })}
 
-              <div className="pt-1 mt-1 border-t border-line/60">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsBrandMenuOpen(false);
-                    setIsOnboardingOpen(true);
-                  }}
-                  className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-black text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 transition-colors cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>+ Lanzar Nuevo Restaurante</span>
-                </button>
+                <div className="pt-1 mt-1 border-t border-line/60">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsBrandMenuOpen(false);
+                      setIsOnboardingOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs font-black text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>+ Lanzar Nuevo Restaurante</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Centro: Reloj Operativo en Tiempo Real */}
