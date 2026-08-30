@@ -52,5 +52,46 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, `dist/${target}`),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (
+              id.includes('/react/') ||
+              id.includes('/react-dom/') ||
+              id.includes('/scheduler/')
+            ) {
+              return 'vendor-react';
+            }
+            if (
+              id.includes('@tanstack/react-query') ||
+              id.includes('@tanstack/query-core')
+            ) {
+              return 'vendor-query';
+            }
+            if (id.includes('framer-motion')) {
+              return 'vendor-framer';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+            if (
+              id.includes('@radix-ui') ||
+              id.includes('tailwind-merge') ||
+              id.includes('clsx')
+            ) {
+              return 'vendor-ui';
+            }
+            if (
+              id.includes('/zod/') ||
+              id.includes('/react-hook-form/') ||
+              id.includes('@hookform')
+            ) {
+              return 'vendor-forms';
+            }
+          }
+        },
+      },
+    },
   },
 });

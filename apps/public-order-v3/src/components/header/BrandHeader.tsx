@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Sun, Moon, AlertCircle } from 'lucide-react';
 import {
   useActiveTowers,
@@ -8,7 +8,10 @@ import {
   getMexicoCityDateTime,
 } from '../../features';
 import { getActiveTenant, isFeatureEnabled } from '@config';
-import { TowerScheduleModal } from './TowerScheduleModal';
+
+const TowerScheduleModal = lazy(() =>
+  import('./TowerScheduleModal').then((m) => ({ default: m.TowerScheduleModal }))
+);
 
 export function BrandHeader() {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -203,14 +206,18 @@ export function BrandHeader() {
         )}
       </div>
 
-      <TowerScheduleModal
-        isOpen={isScheduleOpen}
-        selectedTowerKey={selectedTowerForModal}
-        onClose={() => {
-          setIsScheduleOpen(false);
-          setSelectedTowerForModal(null);
-        }}
-      />
+      {isScheduleOpen && (
+        <Suspense fallback={null}>
+          <TowerScheduleModal
+            isOpen={isScheduleOpen}
+            selectedTowerKey={selectedTowerForModal}
+            onClose={() => {
+              setIsScheduleOpen(false);
+              setSelectedTowerForModal(null);
+            }}
+          />
+        </Suspense>
+      )}
     </header>
   );
 }

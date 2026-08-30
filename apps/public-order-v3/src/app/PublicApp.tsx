@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import {
   BrandHeader,
   BannerCarousel,
@@ -8,10 +8,13 @@ import {
   ProductDetailDrawer,
   CartDrawer,
   CheckoutDrawer,
-  OrderSuccessModal,
   ToastContainer,
 } from '../components';
 import type { CreateOrderV2Response } from '@config/contracts';
+
+const OrderSuccessModal = lazy(() =>
+  import('../components/orders/OrderSuccessModal').then((m) => ({ default: m.OrderSuccessModal }))
+);
 
 export function PublicApp() {
   const [successModalOpen, setSuccessModalOpen] = useState(false);
@@ -78,12 +81,16 @@ export function PublicApp() {
       <CheckoutDrawer onOrderSuccess={handleOrderSuccess} />
 
       {/* Order Confirmation Modal */}
-      <OrderSuccessModal
-        isOpen={successModalOpen}
-        onClose={() => setSuccessModalOpen(false)}
-        orderResponse={lastOrderResponse}
-        orderDetails={lastOrderDetails}
-      />
+      {successModalOpen && (
+        <Suspense fallback={null}>
+          <OrderSuccessModal
+            isOpen={successModalOpen}
+            onClose={() => setSuccessModalOpen(false)}
+            orderResponse={lastOrderResponse}
+            orderDetails={lastOrderDetails}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
