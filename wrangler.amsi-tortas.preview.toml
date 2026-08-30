@@ -5,7 +5,7 @@ main = "functions/api/[[route]].ts"
 [[d1_databases]]
 binding = "BOG_MENU_DB"
 database_name = "amsi-tortas-menu-preview"
-database_id = "amsi-tortas-preview-d1-placeholder-id"
+database_id = "0515d9b8-aa05-4057-bfe4-999be2e56e5f"
 
 [[r2_buckets]]
 binding = "BOG_MENU_ASSETS"
