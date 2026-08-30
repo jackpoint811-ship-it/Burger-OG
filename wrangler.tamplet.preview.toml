@@ -1,0 +1,17 @@
+name = "tamplet-public-preview"
+compatibility_date = "2026-05-27"
+main = "functions/api/[[route]].ts"
+
+[[d1_databases]]
+binding = "BOG_MENU_DB"
+database_name = "tamplet-menu-preview"
+database_id = "a9ac31a4-3f4f-49de-ae3b-39528e82272d"
+
+[[r2_buckets]]
+binding = "BOG_MENU_ASSETS"
+bucket_name = "tamplet-assets-preview"
+
+[vars]
+ENVIRONMENT = "preview"
+ORDERS_V2_WRITE_ENABLED = "true"
+APP_TENANT = "tamplet"

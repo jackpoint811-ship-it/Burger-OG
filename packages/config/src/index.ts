@@ -2,3 +2,8 @@ export * from './assets';
 export * from './contracts';
 export * from './schemas';
 export * from './runtime-environment';
+export * from './tenant.types';
+export * from './active-tenant';
+export * from './tenants/burgers-exe.tenant';
+export * from './tenants/tamplet.tenant';
+export * from './tenants/amsi-tortas.tenant';

@@ -13,6 +13,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import type { CreateOrderV2Response } from '@config/contracts';
+import { getActiveTenant } from '@config';
 import { formatCurrency } from '../../utils/format';
 
 export interface OrderSuccessModalProps {
@@ -93,16 +94,18 @@ export function OrderSuccessModal({
       ? '📱 Transferencia'
       : '💬 Confirmar por WhatsApp';
 
+  const tenant = getActiveTenant();
+
   // Construct WhatsApp direct confirmation message
   const waText = encodeURIComponent(
-    `¡Hola Burgers.exe! 👋\n` +
+    `¡Hola ${tenant.brandName}! 👋\n` +
       `Acabo de realizar mi pedido *#${folio}* a nombre de *${customerName}*.\n` +
       `📍 Entrega: *${locationName}* (${isScheduled ? `Programado: ${scheduledDate}` : 'Hoy'} a las ${deliveryLabel})\n` +
       `💰 Total: *${formatCurrency(total)}*\n` +
       `💳 Método de pago: *${paymentLabel}*\n\n` +
       (paymentMethod === 'transfer'
         ? `Adjunto mi comprobante de transferencia bancaria para validación. ✨`
-        : `¡Quedo atento a la entrega! 🍔`)
+        : `¡Quedo atento a la entrega! ${tenant.logoEmoji}`)
   );
 
   const waSendReceiptUrl = `https://wa.me/${supportPhone || DEFAULT_SUPPORT_PHONE}?text=${waText}`;

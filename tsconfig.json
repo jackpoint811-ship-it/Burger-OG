@@ -17,8 +17,14 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
+      "@ui": [
+        "packages/ui/src/index.ts"
+      ],
       "@ui/*": [
         "packages/ui/src/*"
+      ],
+      "@config": [
+        "packages/config/src/index.ts"
       ],
       "@config/*": [
         "packages/config/src/*"

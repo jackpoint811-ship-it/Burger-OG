@@ -805,6 +805,21 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 
 
+### 📅 Sesión — 2026-08-30 (Motor White-Label Multi-Tenant, Template en Blanco 'tamplet' & 'Amsi Tortas')
+- **Contexto**: Parametrización del core V3 en un motor agnóstico reutilizable para generar templates en blanco (`tamplet`) y nuevas instancias de restaurantes (`amsi-tortas`).
+- **Cambios realizados**:
+  1. `packages/config/src/tenant.types.ts`: Contratos para `TenantConfig`, `TenantFeatureFlags` (15 feature flags) y `TenantTheme`.
+  2. `packages/config/src/tenants/`: Configuraciones independientes para `burgers-exe.tenant.ts`, `tamplet.tenant.ts` y `amsi-tortas.tenant.ts`.
+  3. `packages/config/src/active-tenant.ts`: Resolvedor de tenant activo con soporte para compilación, hostname y URL params.
+  4. `packages/ui/`: Primitivas de UI accesibles para funciones en preparación: `ComingSoonBadge`, `ComingSoonGate`, `ComingSoonModal`.
+  5. `apps/public-order-v3`: Adaptación de `BrandHeader`, `CheckoutDrawer`, `OrderSuccessModal` y `ProductFallbackSvg` (vectores de tortas, chilaquiles, café de olla y jugos).
+  6. `apps/internal-chekeo-v3`: Adaptación de `TopHeader`, `AdminHubGrid` y `AdminModuleWorkspace` con `ComingSoonGate` y `ComingSoonBadge`.
+  7. `migrations/template/`: Schema limpio consolidado `0001_v3_clean_schema.sql` y seed en blanco `0002_v3_blank_seed.sql`.
+  8. `migrations/amsi_tortas/`: Schema `0001_v3_clean_schema.sql` y seed auténtico de tortas de chilaquiles `0002_amsi_tortas_seed.sql`.
+  9. `wrangler.*.toml`: Configuraciones dedicadas de Cloudflare para `tamplet` y `amsi-tortas`.
+  10. `scripts/provision-cloudflare.sh`: Script automatizado para aprovisionar D1, R2 y Pages por tenant.
+- **Resultado de Checks**: `npm run typecheck` (0 errores), `npm run build:public` (OK en 7.3s), `npm run build:chekeo` (OK en 6.8s), `APP_TENANT=amsi-tortas` (OK en 5.9s).
+
 ## 📌 Issues Abiertos
 
 | # | Descripción | Severidad | Estado |

@@ -1,0 +1,17 @@
+name = "amsi-tortas-public"
+compatibility_date = "2026-05-27"
+main = "functions/api/[[route]].ts"
+
+[[d1_databases]]
+binding = "BOG_MENU_DB"
+database_name = "amsi-tortas-menu-production"
+database_id = "98a81c18-aa4c-404b-b31a-91b916e62a8e"
+
+[[r2_buckets]]
+binding = "BOG_MENU_ASSETS"
+bucket_name = "amsi-tortas-assets"
+
+[vars]
+ENVIRONMENT = "production"
+ORDERS_V2_WRITE_ENABLED = "true"
+APP_TENANT = "amsi-tortas"

@@ -44,6 +44,7 @@ import {
   useCreateOrderMutation,
   cartAndFormToCreateOrderPayload,
 } from '../../features';
+import { getActiveTenant, isFeatureEnabled } from '@config';
 import { formatCurrency } from '../../utils/format';
 import type { CreateOrderV2Response } from '@config/contracts';
 
@@ -188,7 +189,8 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
     return getNextAvailableDeliveryDate(selectedTower?.towerKey, allTowers);
   }, [selectedTower, allTowers]);
 
-  const hasActiveRaffle = Boolean(raffleCampaign?.id);
+  const tenant = getActiveTenant();
+  const hasActiveRaffle = Boolean(raffleCampaign?.id) && isFeatureEnabled('rafflesAndReferrals', tenant);
   const isPhoneComplete = Boolean(
     currentCustomerPhone && currentCustomerPhone.replace(/\D/g, '').length === 10
   );
@@ -247,9 +249,9 @@ export function CheckoutDrawer({ onOrderSuccess }: CheckoutDrawerProps) {
 
   // Bank config values with safe fallbacks
   const bankInfo = {
-    bankName: siteConfig?.bankPaymentConfig?.bankName || 'BBVA México',
-    accountHolder: siteConfig?.bankPaymentConfig?.accountHolder || 'Burgers.exe Oficial',
-    clabe: siteConfig?.bankPaymentConfig?.clabe || '012 180 0156 7890 1234',
+    bankName: siteConfig?.bankPaymentConfig?.bankName || tenant.bankPayment.bankName || 'BBVA México',
+    accountHolder: siteConfig?.bankPaymentConfig?.accountHolder || tenant.bankPayment.accountHolder,
+    clabe: siteConfig?.bankPaymentConfig?.clabe || tenant.bankPayment.clabe,
   };
 
   const handleCopyClabe = () => {

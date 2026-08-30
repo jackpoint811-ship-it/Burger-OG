@@ -1,6 +1,8 @@
 import React from 'react';
 import { ShieldCheck, Lock, Zap } from 'lucide-react';
 import { Button } from '@ui/button';
+import { ComingSoonBadge } from '@ui/coming-soon-badge';
+import { getActiveTenant } from '@config';
 
 import type { AdminMasterCategory, AdminPinnedFavorite } from '../../features/admin/types/admin.types';
 import { ADMIN_CATEGORIES_CONFIG, type AdminCategoryDefinition } from '../../features/admin/constants/admin-navigation.constants';
@@ -20,6 +22,7 @@ export function AdminHubGrid({
   className = '',
 }: AdminHubGridProps) {
   const { favorites, unpin } = useAdminPinnedFavorites();
+  const tenant = getActiveTenant();
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -76,13 +79,20 @@ export function AdminHubGrid({
           Módulos
         </h2>
         <div className="grid grid-cols-2 gap-2.5">
-          {ADMIN_CATEGORIES_CONFIG.map((cat) => (
-            <ModuleCard
-              key={cat.id}
-              category={cat}
-              onOpen={() => onOpenModule(cat.id)}
-            />
-          ))}
+          {ADMIN_CATEGORIES_CONFIG.map((cat) => {
+            const isComingSoon =
+              (cat.id === 'raffles' && tenant.features.rafflesAndReferrals === 'coming-soon') ||
+              (cat.id === 'cashcut' && tenant.features.cashCutZReports === 'coming-soon');
+
+            return (
+              <ModuleCard
+                key={cat.id}
+                category={cat}
+                isComingSoon={isComingSoon}
+                onOpen={() => onOpenModule(cat.id)}
+              />
+            );
+          })}
         </div>
       </section>
     </div>
@@ -121,9 +131,11 @@ function QuickActionChip({
 
 function ModuleCard({
   category,
+  isComingSoon = false,
   onOpen,
 }: {
   category: AdminCategoryDefinition;
+  isComingSoon?: boolean;
   onOpen: () => void;
 }) {
   const Icon = getAdminIcon(category.iconName);
@@ -132,10 +144,13 @@ function ModuleCard({
     <button
       type="button"
       onClick={onOpen}
-      className="bg-surface-card rounded-2xl p-3.5 border border-line shadow-xs hover:border-accent/40 active:scale-[0.98] transition-all cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-accent group min-w-0"
+      className="bg-surface-card rounded-2xl p-3.5 border border-line shadow-xs hover:border-accent/40 active:scale-[0.98] transition-all cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-accent group min-w-0 relative"
     >
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2.5 border ${category.colorClass}`}>
-        <Icon className="w-5 h-5" />
+      <div className="flex items-center justify-between gap-2 mb-2.5">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${category.colorClass}`}>
+          <Icon className="w-5 h-5" />
+        </div>
+        {isComingSoon && <ComingSoonBadge size="sm" />}
       </div>
       <div className="min-w-0">
         <h3 className="text-sm font-black text-text-primary group-hover:text-accent transition-colors truncate">
