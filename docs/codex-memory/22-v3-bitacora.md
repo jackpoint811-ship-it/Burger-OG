@@ -78,9 +78,9 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | Milestone | Nombre | Alcance | Estado | Dependencias |
 |---|---|---|:---:|---|
 | **M1** | Tooling & Test Configurations Alignment | Actualizar configs de Playwright (`playwright.e2e.config.ts`, `playwright.internal-kitchen.config.ts`), `.gitignore` y limpiar artefactos raíz | ✅ Completado | Ninguna |
-| **M2** | Documentation & Codex Memory Synchronization | Alinear `README.md`, `AGENTS.md` y sincronizar notas de `docs/codex-memory/` (00, 02, 09, 22-v3) | 🔄 En Progreso | M1 |
-| **M3** | Code Consistency & Workspace Hardening | Verificar reachability 100% de apps/packages/functions, auditar `auth.api.ts` y tipos | ⏳ Planificado | M1 |
-| **M4** | Final E2E Test Pass & Audit Verification | Ejecución integral de typechecks, builds, tests Playwright y auditorías forenses/adversariales | ⏳ Planificado | M1, M2, M3 |
+| **M2** | Documentation & Codex Memory Synchronization | Alinear `README.md`, `AGENTS.md` y sincronizar notas de `docs/codex-memory/` (00, 02, 09, 22-v3) | ✅ Completado | M1 |
+| **M3** | Code Consistency & Workspace Hardening | Verificar reachability 100% de apps/packages/functions, auditar `auth.api.ts` y tipos | ✅ Completado | M1 |
+| **M4** | Final E2E Test Pass & Audit Verification | Ejecución integral de typechecks, builds, tests Playwright y auditorías forenses/adversariales | ✅ Completado | M1, M2, M3 |
 
 **Leyenda**: ⏳ Pendiente · 🔄 En progreso · ✅ Completado / Mergeado · ❌ Bloqueado · ⏸️ Pausado
 
@@ -839,8 +839,20 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Resultado de Checks y Métricas**:
   - `npm run typecheck` ✅ (0 errores).
   - `npm run build:public` ✅: Chunk principal reducido de 584 kB a 140 kB (-76%).
-  - `npm run build:chekeo` ✅: Chunk principal reducido de 848 kB a 104 kB (-88%).
-  - 0 advertencias de chunk size de Vite.
+### 📅 Sesión — 2026-08-30 (Auditoría M3/M4, Workspace Hardening & Tests Playwright E2E V3)
+- **Contexto**: Cierre formal de los Milestones M3 (Workspace Hardening & Code Consistency) y M4 (Suite E2E Playwright Pass) de la migración V3.
+- **Cambios realizados**:
+  1. `packages/config/`: Auditoría de tipos, contratos y schemas Zod sin dependencias circulares.
+  2. `tests/e2e-catalog-kitchen.spec.ts`: Modernización integral de la suite de pruebas E2E con selectores semánticos shadcn/ui, roles accesibles ARIA, multi-step checkout (ubicación/pago -> datos cliente -> confirmación) y estaciones KDS de cocina V3.
+  3. Cobertura de 4 Tiers de prueba:
+     - Tier 1: Kitchen classification, Catalog banners y Phone normalization (+52, 52, espacios).
+     - Tier 2: Boundary cases (banners vacíos, números inválidos).
+     - Tier 3 & 4: Customer journey completo de punta a punta (Catálogo -> Carrito -> Checkout -> Folio `#ORD-...`).
+- **Resultado de Checks**:
+  - `npm run typecheck` ✅ (0 errores).
+  - `npm run build:public` ✅ (5.88s, 0 warnings).
+  - `npm run build:chekeo` ✅ (6.58s, 0 warnings).
+  - `git diff --check` ✅.
 
 ## 📌 Issues Abiertos
 

@@ -56,8 +56,8 @@ Burgers.exe tiene una app pública de pedidos (`apps/public-order-v3`) y una app
 | V3-AdminMobile | Rediseño Mobile-First Admin + Sincronización Sub-Herramientas | ✅ Mergeado (#609) |
 | V3-ResumenKHome | Resumen K como Home & KDS Especializado en 2 Estaciones | ✅ Mergeado (#615) |
 | V3-ProdAudit | Auditoría Forense 360° Pre-Producción & Certificación Cutover | ✅ Completado (GO 🟢) |
-| V3-Cutover | Cutover Definitivo V3 a Producción (main) | ✅ Mergeado (#618, #619) |
-| V3-Performance | Optimizaciones Técnicas, Code Splitting & Manual Chunks | 🟢 Listo para PR |
+| V3-Performance | Optimizaciones Técnicas, Code Splitting & Manual Chunks | ✅ Mergeado (#629) |
+| V3-E2ETesting | Auditoría M3/M4, Workspace Hardening & Tests Playwright E2E | 🟢 Listo para PR |
 
 ## Infraestructura y URLs Activas (Cloudflare Pages)
 
@@ -191,4 +191,8 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
 - **Optimizaciones Técnicas, Code Splitting & Manual Chunks V3 (2026-08-30)**:
   - Configuración de `rollupOptions.output.manualChunks` en `vite.config.ts` segregando `vendor-react`, `vendor-query`, `vendor-framer`, `vendor-icons`, `vendor-ui` y `vendor-forms`.
   - Carga diferida con `React.lazy()` y `<Suspense>` con fallback de Skeleton en `ChekeoApp.tsx` (`PedidosView`, `CocinaView`, `PagosView`, `AdminView`), paneles administrativos en `AdminModuleWorkspace.tsx` y modales en `PublicApp.tsx` / `BrandHeader.tsx`.
-  - Reducción del chunk principal de Chekeo de 848 kB a 104 kB (-88%) y de Public Order de 584 kB a 140 kB (-76%), erradicando todas las alertas de tamaño de Vite (>500 kB).
+  - Reducción del chunk principal de Chekeo de 848 kB a 104 kB (-88%) y de Public Order de 584 kB a 140 kB (-76%), erradicando todas las alertas de tamaño de Vite (>500 kB) (PR #629).
+- **Auditoría M3/M4, Workspace Hardening & Tests Playwright E2E V3 (2026-08-30)**:
+  - Hardening integral de `@config` con tipado estricto y schemas Zod sin dependencias circulares.
+  - Modernización completa de `tests/e2e-catalog-kitchen.spec.ts` alineado con componentes shadcn/ui, roles accesibles ARIA, multi-step checkout y estaciones KDS de Cocina V3.
+  - Cobertura integral de los 4 Tiers: Tier 1 (Feature Coverage), Tier 2 (Boundaries & Edge Cases), Tier 3 (Cross-Feature Combinations) y Tier 4 (Customer Journey End-to-End).
