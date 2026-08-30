@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ChevronRight, Home, Star, Lock, Zap } from 'lucide-react';
 import { Button } from '@ui/button';
 import { Badge } from '@ui/badge';
@@ -39,6 +40,12 @@ const CashCutPanel = lazy(() =>
 );
 const IngredientsAdminPanel = lazy(() =>
   import('./IngredientsAdminPanel').then((m) => ({ default: m.IngredientsAdminPanel }))
+);
+const SubscriptionBillingPanel = lazy(() =>
+  import('./SubscriptionBillingPanel').then((m) => ({ default: m.SubscriptionBillingPanel }))
+);
+const SuperAdminControlPanel = lazy(() =>
+  import('./SuperAdminControlPanel').then((m) => ({ default: m.SuperAdminControlPanel }))
 );
 
 function AdminPanelLoadingFallback() {
@@ -250,7 +257,7 @@ export function AdminModuleWorkspace({
         </div>
       </div>
 
-      {/* Selector de Herramientas Horizontal en Móvil (Segmented Rail Accesible) */}
+      {/* Selector de Herramientas Horizontal en Móvil (Segmented Rail Accesible con LayoutId) */}
       <div
         role="tablist"
         aria-label={`Herramientas de ${categoryDef.title}`}
@@ -268,16 +275,23 @@ export function AdminModuleWorkspace({
               aria-selected={isSelected}
               aria-label={sub.title}
               onClick={() => setActiveToolId(sub.id)}
-              className={`flex items-center gap-2 min-h-11 px-3.5 rounded-2xl border shrink-0 transition-all cursor-pointer select-none text-left active:scale-98 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
+              className={`relative flex items-center gap-2 min-h-11 px-3.5 rounded-2xl border shrink-0 transition-all cursor-pointer select-none text-left active:scale-95 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
                 isSelected
-                  ? 'bg-text-primary text-surface-card shadow-xs font-black border-text-primary'
+                  ? 'text-surface-card font-black border-text-primary'
                   : 'bg-surface-card border-line hover:border-accent/40 text-text-secondary hover:text-text-primary shadow-xs'
               }`}
             >
+              {isSelected && (
+                <motion.div
+                  layoutId="activeWorkspaceToolMobile"
+                  transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                  className="absolute inset-0 bg-text-primary rounded-2xl z-0 shadow-xs"
+                />
+              )}
               <SubIcon
-                className={`w-4 h-4 ${isSelected ? 'text-accent' : 'text-text-muted'}`}
+                className={`w-4 h-4 relative z-10 ${isSelected ? 'text-accent' : 'text-text-muted'}`}
               />
-              <span className="text-xs font-bold">{sub.shortTitle}</span>
+              <span className="text-xs font-bold relative z-10">{sub.shortTitle}</span>
             </button>
           );
         })}
@@ -311,13 +325,20 @@ export function AdminModuleWorkspace({
                     aria-selected={isSelected}
                     aria-label={sub.title}
                     onClick={() => setActiveToolId(sub.id)}
-                    className={`w-full flex items-center justify-between gap-2.5 p-2.5 rounded-2xl text-left transition-all cursor-pointer select-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
+                    className={`relative w-full flex items-center justify-between gap-2.5 p-2.5 rounded-2xl text-left transition-all cursor-pointer select-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
                       isSelected
-                        ? 'bg-text-primary text-surface-card shadow-xs font-black'
+                        ? 'text-surface-card font-black'
                         : 'bg-surface hover:bg-surface-raised border border-line/60 text-text-secondary hover:text-text-primary'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    {isSelected && (
+                      <motion.div
+                        layoutId="activeWorkspaceToolDesktop"
+                        transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                        className="absolute inset-0 bg-text-primary rounded-2xl z-0 shadow-xs"
+                      />
+                    )}
+                    <div className="relative z-10 flex items-center gap-2.5 min-w-0">
                       <div
                         className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
                           isSelected
@@ -424,6 +445,12 @@ export function AdminModuleWorkspace({
               )}
               {category === 'ingredients' && (
                 <IngredientsAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
+              )}
+              {category === 'billing' && (
+                <SubscriptionBillingPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
+              )}
+              {category === 'superadmin' && (
+                <SuperAdminControlPanel />
               )}
             </Suspense>
           </div>

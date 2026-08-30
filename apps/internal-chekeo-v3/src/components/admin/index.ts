@@ -5,12 +5,16 @@
  */
 
 export * from './ProductEditModal';
+export * from './CategoryManagerModal';
 export * from './MenuStockPanel';
 export * from './TowersAdminPanel';
 export * from './BannersAdminPanel';
 export * from './RafflesAdminPanel';
 export * from './CashCutPanel';
 export * from './IngredientsAdminPanel';
+export * from './SubscriptionBillingPanel';
+export * from './SuperAdminControlPanel';
+export * from './TenantOnboardingModal';
 export * from './AdminWorkspace';
 export * from './AdminBreadcrumbs';
 export * from './AdminQuickFavorites';

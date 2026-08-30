@@ -1,18 +1,35 @@
 /**
- * ProductEditModal.tsx — PR-V3-12
+ * ProductEditModal.tsx — Chekeo V3
  *
- * Modal accesible de creación y edición completa de productos del menú.
- * Soporta SKU, nombre, descripción, precio, categoría, promociones, stock controlado e imagen.
+ * Drawer accesible de creación y edición completa de productos del menú.
+ * Soporta SKU, nombre, descripción, precio, categoría, promociones, cálculo de descuento en vivo,
+ * stock controlado e imagen optimizada en R2.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, Trash2, Check, AlertCircle, Sparkles, Package, DollarSign, Tag, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  X,
+  Upload,
+  Trash2,
+  Check,
+  AlertCircle,
+  Sparkles,
+  Package,
+  DollarSign,
+  Tag,
+  Image as ImageIcon,
+  Flame,
+  TrendingDown,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import type { MenuItem, MenuCategory } from '@config/index';
+import { Drawer } from '@ui/drawer';
 import { Button } from '@ui/button';
 import { Badge } from '@ui/badge';
 import type { CreateMenuItemPayload, UpdateMenuItemPayload } from '../../features/admin/types/admin.types';
 
-interface ProductEditModalProps {
+export interface ProductEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   item: MenuItem | null;
@@ -72,7 +89,7 @@ export function ProductEditModal({
       setSku(item.sku);
       setName(item.name);
       setDescription(item.description || '');
-      setCategory(item.category || 'burgers');
+      setCategory(item.category || categories[0]?.key || 'burgers');
       setPrice(String(item.price));
       setBadge(item.badge || '');
       setSortOrder(String(item.sortOrder ?? 0));
@@ -124,26 +141,24 @@ export function ProductEditModal({
     setError(null);
   }, [isOpen, item, categories]);
 
-  // Listener para cerrar con tecla Escape
-  useEffect(() => {
-    if (!isOpen) return;
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        onClose();
-      }
+  // Cálculos de descuento en tiempo real
+  const promoSavings = useMemo(() => {
+    const reg = parseFloat(price);
+    const promo = parseFloat(promoPrice);
+    if (!isPromoActive || isNaN(reg) || isNaN(promo) || reg <= 0 || promo >= reg) {
+      return null;
     }
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
+    const diff = reg - promo;
+    const pct = Math.round((diff / reg) * 100);
+    return { diff, pct };
+  }, [price, promoPrice, isPromoActive]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      setError('La imagen no puede pesar más de 5 MB');
+      setError('La imagen no puede pesar más de 5 MB.');
       return;
     }
 
@@ -166,21 +181,20 @@ export function ProductEditModal({
     e.preventDefault();
     setError(null);
 
-    // Validation
     const cleanSku = sku.trim().toUpperCase();
     const cleanName = name.trim();
     const cleanPrice = parseFloat(price);
 
     if (!cleanSku) {
-      setError('El SKU es obligatorio (ej. BURGER_OG_SENCILLA)');
+      setError('El SKU es obligatorio (ej. BURGER_OG).');
       return;
     }
     if (!cleanName) {
-      setError('El nombre del producto es obligatorio');
+      setError('El nombre del producto es obligatorio.');
       return;
     }
     if (isNaN(cleanPrice) || cleanPrice < 0) {
-      setError('El precio debe ser un número válido mayor o igual a 0');
+      setError('El precio debe ser un número válido mayor o igual a 0.');
       return;
     }
 
@@ -188,7 +202,7 @@ export function ProductEditModal({
     if (isPromoActive) {
       parsedPromoPrice = parseFloat(promoPrice);
       if (isNaN(parsedPromoPrice) || parsedPromoPrice < 0) {
-        setError('El precio promocional debe ser un número válido');
+        setError('El precio promocional debe ser un número válido.');
         return;
       }
     }
@@ -199,11 +213,11 @@ export function ProductEditModal({
       parsedStockLimit = parseInt(stockLimit, 10);
       parsedStockRemaining = parseInt(stockRemaining, 10);
       if (isNaN(parsedStockLimit) || parsedStockLimit < 0) {
-        setError('El límite de stock debe ser un entero positivo');
+        setError('El límite de stock debe ser un entero positivo.');
         return;
       }
       if (isNaN(parsedStockRemaining) || parsedStockRemaining < 0) {
-        setError('El stock restante debe ser un entero positivo');
+        setError('El stock restante debe ser un entero positivo.');
         return;
       }
     }
@@ -236,400 +250,389 @@ export function ProductEditModal({
       await onSave(cleanSku, payload, selectedFile);
       onClose();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error al guardar el producto';
+      const message = err instanceof Error ? err.message : 'Error al guardar el producto.';
       setError(message);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div
-        className="bg-surface-card w-full max-w-2xl rounded-3xl border border-line shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
-      >
-        {/* Header */}
-        <div className="p-5 border-b border-line flex items-center justify-between bg-surface-raised/50">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-accent-soft text-accent flex items-center justify-center font-bold">
-              {isCreating ? <Sparkles className="w-5 h-5" /> : <Package className="w-5 h-5" />}
+    <Drawer
+      open={isOpen}
+      onClose={onClose}
+      title={
+        <div className="flex items-center gap-2">
+          {isCreating ? (
+            <div className="w-8 h-8 rounded-xl bg-accent/15 text-accent flex items-center justify-center">
+              <Sparkles className="w-4 h-4" />
             </div>
-            <div>
-              <h3 id="modal-title" className="text-base font-bold text-text-primary">
-                {isCreating ? 'Crear Nuevo Producto' : `Editar ${item.name}`}
-              </h3>
-              <p className="text-xs text-text-secondary">
-                {isCreating ? 'Agrega un nuevo producto o combo al catálogo.' : `SKU: ${item.sku}`}
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-surface-raised flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Body (Scrollable) */}
-        <form id="product-form" onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-6 flex-1">
-          {error && (
-            <div className="p-3 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
+          ) : (
+            <div className="w-8 h-8 rounded-xl bg-surface-raised text-text-primary flex items-center justify-center">
+              <Package className="w-4 h-4" />
             </div>
           )}
+          <span>{isCreating ? 'Nuevo Platillo' : `Editar: ${item?.name}`}</span>
+        </div>
+      }
+      description={isCreating ? 'Crea un nuevo producto para el catálogo público y comandas.' : `SKU: ${item?.sku}`}
+      className="max-w-2xl"
+    >
+      <form id="product-edit-form" onSubmit={handleSubmit} className="space-y-5 pt-1">
+        {error && (
+          <div className="p-3 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
 
-          {/* Sección 1: Datos Básicos */}
-          <div className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
-              <Tag className="w-3.5 h-3.5" />
-              Información General
-            </h4>
+        {/* 1. Información General */}
+        <div className="p-4 rounded-2xl bg-surface-raised border border-line space-y-3">
+          <span className="text-[11px] font-black uppercase tracking-wider text-text-muted flex items-center gap-1.5">
+            <Tag className="w-3.5 h-3.5 text-accent" />
+            Datos Básicos
+          </span>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">
-                  SKU (Identificador Único) *
-                </label>
-                <input
-                  type="text"
-                  required
-                  disabled={!isCreating}
-                  placeholder="EJ. BURGER-OG"
-                  value={sku}
-                  onChange={(e) => setSku(e.target.value.toUpperCase())}
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary placeholder-text-muted outline-none focus:border-accent disabled:opacity-60 font-mono uppercase"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">
-                  Categoría *
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent"
-                >
-                  {categories.map((cat) => (
-                    <option key={cat.key} value={cat.key}>
-                      {cat.emoji ? `${cat.emoji} ` : ''}
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-1">
-                Nombre del Producto *
+              <label className="block text-[11px] font-bold text-text-secondary mb-1">
+                SKU (Identificador Único) *
               </label>
               <input
                 type="text"
                 required
-                placeholder="Nombre para el catálogo..."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary placeholder-text-muted outline-none focus:border-accent font-semibold"
+                disabled={!isCreating}
+                placeholder="EJ. BURGER-OG"
+                value={sku}
+                onChange={(e) => setSku(e.target.value.toUpperCase())}
+                className="w-full px-3 py-2 text-xs rounded-xl bg-surface-card border border-line text-text-primary font-mono uppercase outline-none focus:border-accent disabled:opacity-60"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-1">
-                Descripción detallada
+              <label className="block text-[11px] font-bold text-text-secondary mb-1">
+                Categoría *
               </label>
-              <textarea
-                rows={2}
-                placeholder="Ingredientes, preparación o detalles para el cliente..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary placeholder-text-muted outline-none focus:border-accent resize-none"
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl bg-surface-card border border-line text-text-primary outline-none focus:border-accent font-bold"
+              >
+                {categories.map((cat) => (
+                  <option key={cat.key} value={cat.key}>
+                    {cat.emoji ? `${cat.emoji} ` : '📁 '}
+                    {cat.name} ({cat.key})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-bold text-text-secondary mb-1">
+              Nombre del Platillo *
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="Ej. Doble Queso Smash"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 text-xs rounded-xl bg-surface-card border border-line text-text-primary font-bold outline-none focus:border-accent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-bold text-text-secondary mb-1">
+              Descripción para el Catálogo
+            </label>
+            <textarea
+              rows={2}
+              placeholder="Ingredientes, preparación y detalles para el comensal..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3 py-2 text-xs rounded-xl bg-surface-card border border-line text-text-primary outline-none focus:border-accent resize-none"
+            />
+          </div>
+        </div>
+
+        {/* 2. Precios & Promociones con Calculadora en Vivo */}
+        <div className="p-4 rounded-2xl bg-surface-raised border border-line space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-black uppercase tracking-wider text-text-muted flex items-center gap-1.5">
+              <DollarSign className="w-3.5 h-3.5 text-accent" />
+              Precios & Promoción
+            </span>
+            {promoSavings && (
+              <Badge variant="default" className="text-[10px] font-black bg-accent text-white flex items-center gap-1">
+                <TrendingDown className="w-3 h-3" />
+                <span>Ahorro: -${promoSavings.diff.toFixed(2)} ({promoSavings.pct}% OFF)</span>
+              </Badge>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-[11px] font-bold text-text-secondary mb-1">
+                Precio Regular ($ MXN) *
+              </label>
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                required
+                placeholder="149.00"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl bg-surface-card border border-line text-text-primary font-bold font-mono outline-none focus:border-accent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-text-secondary mb-1">
+                Distintivo (Badge)
+              </label>
+              <input
+                type="text"
+                placeholder="Ej. TOP VENTAS"
+                value={badge}
+                onChange={(e) => setBadge(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl bg-surface-card border border-line text-text-primary outline-none focus:border-accent uppercase"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-text-secondary mb-1">
+                Orden de Lista
+              </label>
+              <input
+                type="number"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl bg-surface-card border border-line text-text-primary font-mono outline-none focus:border-accent"
               />
             </div>
           </div>
 
-          {/* Sección 2: Precios y Ofertas */}
-          <div className="space-y-4 pt-4 border-t border-line">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
-              <DollarSign className="w-3.5 h-3.5" />
-              Precios y Promociones
-            </h4>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Switch de Promoción */}
+          <div className="pt-2 border-t border-line/60 space-y-3">
+            <div className="flex items-center justify-between">
               <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">
-                  Precio Regular ($ MXN) *
+                <span className="text-xs font-bold text-text-primary">Activar Oferta / Descuento</span>
+                <p className="text-[10px] text-text-muted">Muestra el precio tachado y badge de descuento.</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isPromoActive}
+                  onChange={(e) => setIsPromoActive(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-line peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent" />
+              </label>
+            </div>
+
+            {isPromoActive && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 animate-in fade-in duration-200">
+                <div>
+                  <label className="block text-[10px] font-bold text-text-muted mb-1">
+                    Precio en Oferta ($) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    placeholder="129.00"
+                    value={promoPrice}
+                    onChange={(e) => setPromoPrice(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-surface-card border border-line text-text-primary font-bold font-mono outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-text-muted mb-1">
+                    Etiqueta Promo
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej. -15% OFF"
+                    value={promoLabel}
+                    onChange={(e) => setPromoLabel(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-surface-card border border-line text-text-primary font-bold outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-text-muted mb-1">
+                    Expira (Opcional)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={promoExpiresAt}
+                    onChange={(e) => setPromoExpiresAt(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-surface-card border border-line text-text-primary outline-none focus:border-accent"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 3. Control de Stock Diario */}
+        <div className="p-4 rounded-2xl bg-surface-raised border border-line space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs font-bold text-text-primary flex items-center gap-1.5">
+                <Package className="w-3.5 h-3.5 text-accent" />
+                Control de Stock Diario
+              </span>
+              <p className="text-[10px] text-text-muted">
+                Decrementa con cada pedido y marca como agotado al llegar a 0.
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={stockManaged}
+                onChange={(e) => setStockManaged(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-line peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent" />
+            </label>
+          </div>
+
+          {stockManaged && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 animate-in fade-in duration-200">
+              <div>
+                <label className="block text-[10px] font-bold text-text-muted mb-1">
+                  Límite Diario (Capacidad Máxima)
                 </label>
                 <input
                   type="number"
-                  step="0.5"
-                  min="0"
-                  required
-                  placeholder="149.00"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary placeholder-text-muted outline-none focus:border-accent font-bold"
+                  placeholder="50"
+                  value={stockLimit}
+                  onChange={(e) => setStockLimit(e.target.value)}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-surface-card border border-line text-text-primary font-bold font-mono outline-none focus:border-accent"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">
-                  Badge / Etiqueta
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej. TOP VENTAS, NUEVO"
-                  value={badge}
-                  onChange={(e) => setBadge(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary placeholder-text-muted outline-none focus:border-accent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">
-                  Orden de Visualización
+                <label className="block text-[10px] font-bold text-text-muted mb-1">
+                  Stock Restante del Turno
                 </label>
                 <input
                   type="number"
-                  placeholder="0"
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary placeholder-text-muted outline-none focus:border-accent"
+                  placeholder="50"
+                  value={stockRemaining}
+                  onChange={(e) => setStockRemaining(e.target.value)}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-surface-card border border-line text-text-primary font-bold font-mono outline-none focus:border-accent"
                 />
               </div>
             </div>
+          )}
 
-            {/* Toggle Promo */}
-            <div className="p-4 rounded-2xl bg-surface-raised border border-line space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-text-primary">Activar Precio Promocional</span>
-                  <p className="text-[11px] text-text-secondary">Aplica un descuento tachando el precio regular.</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isPromoActive}
-                    onChange={(e) => setIsPromoActive(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-10 h-5 bg-line peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent"></div>
-                </label>
-              </div>
+          {/* Quick Toggles */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-line/60">
+            <label className="flex items-center gap-2 p-2.5 rounded-xl bg-surface-card border border-line cursor-pointer hover:border-accent/40 text-xs font-bold text-text-primary">
+              <input
+                type="checkbox"
+                checked={isAvailable}
+                onChange={(e) => setIsAvailable(e.target.checked)}
+                className="rounded text-accent w-4 h-4"
+              />
+              <span>🟢 En Vivo</span>
+            </label>
 
-              {isPromoActive && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-text-secondary mb-1">
-                      Precio Promo ($)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      placeholder="129.00"
-                      value={promoPrice}
-                      onChange={(e) => setPromoPrice(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-surface-card border border-line text-text-primary outline-none focus:border-accent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-text-secondary mb-1">
-                      Texto Promo
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ej. -15% OFF"
-                      value={promoLabel}
-                      onChange={(e) => setPromoLabel(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-surface-card border border-line text-text-primary outline-none focus:border-accent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-text-secondary mb-1">
-                      Expira (Opcional)
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={promoExpiresAt}
-                      onChange={(e) => setPromoExpiresAt(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-surface-card border border-line text-text-primary outline-none focus:border-accent"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
+            <label className="flex items-center gap-2 p-2.5 rounded-xl bg-surface-card border border-line cursor-pointer hover:border-accent/40 text-xs font-bold text-text-primary">
+              <input
+                type="checkbox"
+                checked={isHidden}
+                onChange={(e) => setIsHidden(e.target.checked)}
+                className="rounded text-accent w-4 h-4"
+              />
+              <span>👁️‍🗨️ Oculto</span>
+            </label>
+
+            <label className="flex items-center gap-2 p-2.5 rounded-xl bg-surface-card border border-line cursor-pointer hover:border-accent/40 text-xs font-bold text-text-primary">
+              <input
+                type="checkbox"
+                checked={isFeatured}
+                onChange={(e) => setIsFeatured(e.target.checked)}
+                className="rounded text-accent w-4 h-4"
+              />
+              <span>⭐ Top Vendido</span>
+            </label>
           </div>
+        </div>
 
-          {/* Sección 3: Stock y Existencias */}
-          <div className="space-y-4 pt-4 border-t border-line">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
-              <Package className="w-3.5 h-3.5" />
-              Control de Stock & Visibilidad
-            </h4>
+        {/* 4. Imagen en Cloudflare R2 */}
+        <div className="p-4 rounded-2xl bg-surface-raised border border-line space-y-3">
+          <span className="text-[11px] font-black uppercase tracking-wider text-text-muted flex items-center gap-1.5">
+            <ImageIcon className="w-3.5 h-3.5 text-accent" />
+            Foto del Producto (R2 Asset)
+          </span>
 
-            <div className="p-4 rounded-2xl bg-surface-raised border border-line space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-text-primary">Control de Stock Diario</span>
-                  <p className="text-[11px] text-text-secondary">
-                    Decrementa automáticamente con cada orden y marca como agotado al llegar a 0.
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={stockManaged}
-                    onChange={(e) => setStockManaged(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-10 h-5 bg-line peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent"></div>
-                </label>
-              </div>
-
-              {stockManaged && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-text-secondary mb-1">
-                      Límite Diario (Capacidad)
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="50"
-                      value={stockLimit}
-                      onChange={(e) => setStockLimit(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-surface-card border border-line text-text-primary outline-none focus:border-accent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-text-secondary mb-1">
-                      Stock Restante Actual
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="50"
-                      value={stockRemaining}
-                      onChange={(e) => setStockRemaining(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-surface-card border border-line text-text-primary outline-none focus:border-accent"
-                    />
-                  </div>
-                </div>
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 rounded-2xl bg-surface-card border border-line flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+              {imagePreview ? (
+                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+              ) : (
+                <ImageIcon className="w-8 h-8 text-text-muted" />
               )}
             </div>
 
-            {/* Quick toggles */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <label className="flex items-center gap-2 p-3 rounded-2xl bg-surface-raised border border-line cursor-pointer hover:border-accent/40">
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <p className="text-[11px] text-text-secondary">
+                Formatos: JPG, PNG, WebP o AVIF (máx. 5 MB).
+              </p>
+              <div className="flex items-center gap-2 flex-wrap">
                 <input
-                  type="checkbox"
-                  checked={isAvailable}
-                  onChange={(e) => setIsAvailable(e.target.checked)}
-                  className="rounded text-accent focus:ring-accent w-4 h-4"
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/jpeg,image/png,image/webp,image/avif"
+                  onChange={handleFileChange}
+                  className="hidden"
                 />
-                <span className="text-xs font-bold text-text-primary">Disponible (En Vivo)</span>
-              </label>
-
-              <label className="flex items-center gap-2 p-3 rounded-2xl bg-surface-raised border border-line cursor-pointer hover:border-accent/40">
-                <input
-                  type="checkbox"
-                  checked={isHidden}
-                  onChange={(e) => setIsHidden(e.target.checked)}
-                  className="rounded text-accent focus:ring-accent w-4 h-4"
-                />
-                <span className="text-xs font-bold text-text-primary">Ocultar del Menú</span>
-              </label>
-
-              <label className="flex items-center gap-2 p-3 rounded-2xl bg-surface-raised border border-line cursor-pointer hover:border-accent/40">
-                <input
-                  type="checkbox"
-                  checked={isFeatured}
-                  onChange={(e) => setIsFeatured(e.target.checked)}
-                  className="rounded text-accent focus:ring-accent w-4 h-4"
-                />
-                <span className="text-xs font-bold text-text-primary">Destacado (Top)</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Sección 4: Imagen del Producto */}
-          <div className="space-y-4 pt-4 border-t border-line">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
-              <ImageIcon className="w-3.5 h-3.5" />
-              Imagen del Producto (R2 Asset)
-            </h4>
-
-            <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-2xl bg-surface-raised border border-line">
-              <div className="w-24 h-24 rounded-2xl bg-surface-card border border-line flex items-center justify-center overflow-hidden shrink-0">
-                {imagePreview ? (
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                ) : (
-                  <ImageIcon className="w-8 h-8 text-text-muted" />
-                )}
-              </div>
-
-              <div className="space-y-2 flex-1 text-center sm:text-left">
-                <p className="text-xs text-text-secondary">
-                  Formatos permitidos: JPG, PNG, WebP o AVIF (máx. 5 MB).
-                </p>
-                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept="image/jpeg,image/png,image/webp,image/avif"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs h-8 px-3 rounded-xl font-bold"
+                >
+                  <Upload className="w-3.5 h-3.5 mr-1" />
+                  Seleccionar Foto
+                </Button>
+                {imagePreview && (
                   <Button
                     type="button"
-                    variant="secondary"
-                    className="text-xs h-8 px-3"
-                    onClick={() => fileInputRef.current?.click()}
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRemoveImage}
+                    className="text-xs h-8 px-2.5 rounded-xl text-destructive hover:bg-destructive/10"
+                    title="Quitar foto"
                   >
-                    <Upload className="w-3.5 h-3.5 mr-1" />
-                    Seleccionar Imagen
+                    <Trash2 className="w-3.5 h-3.5" />
                   </Button>
-                  {imagePreview && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="text-xs h-8 px-3 text-destructive hover:bg-destructive/10"
-                      onClick={handleRemoveImage}
-                    >
-                      <Trash2 className="w-3.5 h-3.5 mr-1" />
-                      Quitar Imagen
-                    </Button>
-                  )}
-                </div>
+                )}
               </div>
             </div>
           </div>
-        </form>
+        </div>
 
         {/* Footer */}
-        <div className="p-5 border-t border-line flex items-center justify-end gap-3 bg-surface-raised/50">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isSaving} className="text-xs">
+        <div className="pt-3 border-t border-line flex items-center justify-end gap-2">
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSaving} className="text-xs rounded-xl">
             Cancelar
           </Button>
           <Button
             type="submit"
-            form="product-form"
             disabled={isSaving}
-            className="text-xs font-bold bg-accent text-white"
+            className="text-xs font-bold bg-accent text-white rounded-xl"
           >
-            {isSaving ? (
-              <span>Guardando...</span>
-            ) : (
-              <span className="flex items-center gap-1">
-                <Check className="w-4 h-4" />
-                {isCreating ? 'Crear Producto' : 'Guardar Cambios'}
-              </span>
-            )}
+            <Check className="w-3.5 h-3.5 mr-1" />
+            {isSaving ? 'Guardando...' : isCreating ? 'Crear Platillo' : 'Guardar Cambios'}
           </Button>
         </div>
-      </div>
-    </div>
+      </form>
+    </Drawer>
   );
 }

@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "stripe": {
+      "command": "npx",
+      "args": ["-y", "@stripe/mcp"],
+      "env": {
+        "STRIPE_SECRET_KEY": "sk_test_tu_clave_stripe_aqui"
+      }
+    },
+    "supabase": {
+      "serverUrl": "https://mcp.supabase.com/mcp"
+    },
+    "resend": {
+      "serverUrl": "https://mcp.resend.com/mcp"
+    },
+    "posthog": {
+      "command": "npx",
+      "args": ["-y", "posthog-mcp"],
+      "env": {
+        "POSTHOG_API_KEY": "phx_tu_clave_posthog_aqui",
+        "POSTHOG_HOST": "https://us.i.posthog.com"
+      }
+    },
+    "clerk": {
+      "command": "npx",
+      "args": ["-y", "@clerk/mcp-tools"],
+      "env": {
+        "CLERK_SECRET_KEY": "sk_test_tu_clave_clerk_aqui"
+      }
+    }
+  }
+}

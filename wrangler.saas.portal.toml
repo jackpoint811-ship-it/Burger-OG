@@ -1,0 +1,17 @@
+name = "resto-saas-portal"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist/apps/public-order-v3"
+
+[vars]
+BOG_ENVIRONMENT = "production"
+PORTAL_MODE = "saas-landing"
+
+[[d1_databases]]
+binding = "SAAS_CONTROL_DB"
+database_name = "resto-saas-control-plane-production"
+database_id = "resto-saas-control-plane-production"
+
+[[r2_buckets]]
+binding = "SAAS_ASSETS_BUCKET"
+bucket_name = "resto-saas-brand-assets"

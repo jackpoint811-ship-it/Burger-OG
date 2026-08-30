@@ -1,0 +1,27 @@
+name = "resto-saas-app"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist/apps/internal-chekeo-v3"
+
+[vars]
+BOG_ENVIRONMENT = "production"
+ORDERS_V2_WRITE_ENABLED = "true"
+SAAS_MODE_ENABLED = "true"
+
+[[d1_databases]]
+binding = "SAAS_CONTROL_DB"
+database_name = "resto-saas-control-plane-production"
+database_id = "resto-saas-control-plane-production"
+
+[[d1_databases]]
+binding = "BOG_MENU_DB"
+database_name = "burgers-exe-menu-v2-production"
+database_id = "2974d36e-9005-4bb3-bb39-b949507bbdc4"
+
+[[r2_buckets]]
+binding = "SAAS_ASSETS_BUCKET"
+bucket_name = "resto-saas-brand-assets"
+
+[[r2_buckets]]
+binding = "BOG_MENU_ASSETS"
+bucket_name = "burgers-exe-assets-v2"

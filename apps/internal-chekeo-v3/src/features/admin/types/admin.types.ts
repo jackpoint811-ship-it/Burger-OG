@@ -6,7 +6,7 @@
  * - Subcategorías y Herramientas Especializadas
  * - Sistema de Favoritos Dinámicos (Pin/Unpin)
  * - Buscador Command Palette
- * - Menú, Torres, Banners, Sorteos, Corte Z e Insumos
+ * - Menú, Torres, Banners, Sorteos, Corte Z, Insumos, Facturación y SaaS Control Plane
  */
 
 import type {
@@ -31,7 +31,9 @@ export type AdminMasterCategory =
   | 'banners'
   | 'raffles'
   | 'cashcut'
-  | 'ingredients';
+  | 'ingredients'
+  | 'billing'
+  | 'superadmin';
 
 export type AdminActiveTab = 'overview' | AdminMasterCategory;
 
