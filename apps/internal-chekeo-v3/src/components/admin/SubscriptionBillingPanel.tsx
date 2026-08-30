@@ -3,8 +3,8 @@ import { CreditCard, CheckCircle2, ShieldCheck, Zap, Sparkles, Lock, Gift } from
 import { Button } from '@ui/button';
 import { Badge } from '@ui/badge';
 import { ComingSoonModal } from '@ui/coming-soon-modal';
-import { SAAS_PLANS, type SaaSPlanTier } from '@config/saas.types';
-import { getActiveTenant } from '@config/active-tenant';
+import { SAAS_PLANS, type SaaSPlanTier } from '@config';
+import { getActiveTenant } from '@config';
 
 export interface SubscriptionBillingPanelProps {
   activeToolId?: string;
@@ -179,7 +179,7 @@ export function SubscriptionBillingPanel({
                       Incluye:
                     </p>
                     <ul className="space-y-1.5 text-xs text-text-secondary">
-                      {plan.features.map((feat, idx) => (
+                      {plan.features.map((feat: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-2">
                           <CheckCircle2 className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
                           <span>{feat}</span>
