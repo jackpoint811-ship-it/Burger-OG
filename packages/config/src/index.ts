@@ -7,5 +7,3 @@ export * from './active-tenant';
 export * from './tenants/burgers-exe.tenant';
 export * from './tenants/tamplet.tenant';
 export * from './tenants/amsi-tortas.tenant';
-export * from './saas.types';
-export * from './saas.schemas';

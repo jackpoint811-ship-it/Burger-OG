@@ -273,62 +273,6 @@ export const ADMIN_CATEGORIES_CONFIG: AdminCategoryDefinition[] = [
       },
     ],
   },
-  {
-    id: 'billing',
-    title: 'Facturación & Suscripción SaaS',
-    shortTitle: 'Mi Suscripción',
-    subtitle: 'Plan activo de Chekeo, límites, facturas y portal Stripe',
-    tag: 'SaaS',
-    iconName: 'CreditCard',
-    colorClass: 'text-sky-500 bg-sky-500/10 border-sky-500/20',
-    badgeColor: 'bg-sky-500/10 text-sky-500 border-sky-500/20',
-    subcategories: [
-      {
-        id: 'current-plan',
-        title: 'Plan Activo & Cuotas',
-        shortTitle: 'Mi Plan',
-        description: 'Límites de pedidos, estaciones KDS y estado de facturación.',
-        iconName: 'CreditCard',
-        tag: 'Plan',
-      },
-      {
-        id: 'upgrade',
-        title: 'Mejorar Plan / Upgrades',
-        shortTitle: 'Upgrades',
-        description: 'Desbloquea KDS multi-estación, dominios propios y soporte 24/7.',
-        iconName: 'Sparkles',
-        tag: 'Planes',
-      },
-    ],
-  },
-  {
-    id: 'superadmin',
-    title: 'SaaS Control Plane & Marcas',
-    shortTitle: 'Super Admin',
-    subtitle: 'Directorio de todos los restaurantes, MRR y onboarding',
-    tag: 'Control',
-    iconName: 'ShieldCheck',
-    colorClass: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
-    badgeColor: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-    subcategories: [
-      {
-        id: 'tenants-directory',
-        title: 'Directorio de Restaurantes',
-        shortTitle: 'Marcas',
-        description: 'Listado global de inquilinos, acceso directo a tiendas y POS.',
-        iconName: 'Building2',
-        tag: 'Directorio',
-      },
-      {
-        id: 'onboarding-wizard',
-        title: 'Lanzar Nuevo Restaurante',
-        shortTitle: 'Nuevo Resto',
-        description: 'Asistente de alta de nuevos restaurantes en 3 pasos.',
-        iconName: 'Plus',
-        tag: 'Alta',
-      },
-    ],
-  },
 ];
 
 export const DEFAULT_PINNED_FAVORITES: AdminPinnedFavorite[] = [
@@ -360,22 +304,22 @@ export const DEFAULT_PINNED_FAVORITES: AdminPinnedFavorite[] = [
     tag: 'Logística',
   },
   {
-    id: 'fav-billing-plan',
-    title: 'Mi Suscripción SaaS',
-    shortTitle: 'Suscripción',
-    category: 'billing',
-    toolId: 'current-plan',
-    iconName: 'CreditCard',
-    tag: 'SaaS',
+    id: 'fav-banners-carousel',
+    title: 'Banners de Tienda',
+    shortTitle: 'Banners',
+    category: 'banners',
+    toolId: 'carousel',
+    iconName: 'Image',
+    tag: 'Marketing',
   },
   {
-    id: 'fav-superadmin-hub',
-    title: 'Super Admin Multi-Tenant',
-    shortTitle: 'Super Admin',
-    category: 'superadmin',
-    toolId: 'tenants-directory',
-    iconName: 'ShieldCheck',
-    tag: 'Control',
+    id: 'fav-raffles-roulette',
+    title: 'Ruleta de Ganador',
+    shortTitle: 'Ruleta',
+    category: 'raffles',
+    toolId: 'roulette',
+    iconName: 'Gift',
+    tag: 'Sorteos',
   },
   {
     id: 'fav-ingredients-catalog',
@@ -488,6 +432,16 @@ export const ADMIN_SEARCH_INDEX: AdminSearchItem[] = [
     keywords: ['corte', 'caja', 'arqueo', 'dinero', 'ventas', 'spei', 'transferencia', 'efectivo', 'z'],
     iconName: 'Calculator',
   },
+  {
+    id: 'search-cashcut-csv',
+    title: 'Exportar Reporte a CSV',
+    description: 'Descargar archivo Excel / CSV con el historial de pedidos.',
+    category: 'cashcut',
+    categoryLabel: 'Finanzas & Corte',
+    toolId: 'export-csv',
+    keywords: ['exportar', 'csv', 'excel', 'reporte', 'descargar', 'contabilidad'],
+    iconName: 'FileSpreadsheet',
+  },
 
   // Insumos
   {
@@ -499,29 +453,5 @@ export const ADMIN_SEARCH_INDEX: AdminSearchItem[] = [
     toolId: 'catalog',
     keywords: ['insumos', 'recetas', 'ingredientes', 'carne', 'pan', 'costos', 'resumen k', 'food cost'],
     iconName: 'Wheat',
-  },
-
-  // SaaS Facturación
-  {
-    id: 'search-billing-all',
-    title: 'Mi Suscripción & Facturación SaaS',
-    description: 'Administrar plan de Chekeo, límites y portal Stripe.',
-    category: 'billing',
-    categoryLabel: 'Mi Suscripción',
-    toolId: 'current-plan',
-    keywords: ['suscripcion', 'plan', 'stripe', 'pago', 'facturacion', 'upgrade', 'tarjeta'],
-    iconName: 'CreditCard',
-  },
-
-  // SaaS Super Admin
-  {
-    id: 'search-superadmin-all',
-    title: 'Super Admin Multi-Tenant',
-    description: 'Directorio de restaurantes, métricas MRR y nuevo restaurante.',
-    category: 'superadmin',
-    categoryLabel: 'Super Admin',
-    toolId: 'tenants-directory',
-    keywords: ['superadmin', 'tenants', 'mrr', 'restaurantes', 'onboarding', 'alta', 'marcas'],
-    iconName: 'ShieldCheck',
   },
 ];

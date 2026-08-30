@@ -41,12 +41,6 @@ const CashCutPanel = lazy(() =>
 const IngredientsAdminPanel = lazy(() =>
   import('./IngredientsAdminPanel').then((m) => ({ default: m.IngredientsAdminPanel }))
 );
-const SubscriptionBillingPanel = lazy(() =>
-  import('./SubscriptionBillingPanel').then((m) => ({ default: m.SubscriptionBillingPanel }))
-);
-const SuperAdminControlPanel = lazy(() =>
-  import('./SuperAdminControlPanel').then((m) => ({ default: m.SuperAdminControlPanel }))
-);
 
 function AdminPanelLoadingFallback() {
   return (
@@ -445,12 +439,6 @@ export function AdminModuleWorkspace({
               )}
               {category === 'ingredients' && (
                 <IngredientsAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
-              )}
-              {category === 'billing' && (
-                <SubscriptionBillingPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
-              )}
-              {category === 'superadmin' && (
-                <SuperAdminControlPanel />
               )}
             </Suspense>
           </div>
