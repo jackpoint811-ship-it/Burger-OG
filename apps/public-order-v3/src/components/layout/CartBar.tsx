@@ -27,6 +27,8 @@ export function CartBar() {
             initial={shouldReduceMotion ? { opacity: 0 } : { y: 60, opacity: 0 }}
             animate={shouldReduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { y: 60, opacity: 0 }}
+            whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
             transition={{ type: 'spring', damping: 24, stiffness: 220 }}
             onClick={() => openDrawer('cart')}
             style={{ borderRadius: 'var(--radius-card)' }}

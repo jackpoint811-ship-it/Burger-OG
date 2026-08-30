@@ -854,6 +854,22 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `npm run build:chekeo` ✅ (6.58s, 0 warnings).
   - `git diff --check` ✅.
 
+### 📅 Sesión — 2026-08-30 (Polish de UX/UI, Skeletons Shimmer & Micro-interacciones Táctiles)
+- **Contexto**: Implementación del Punto 4 del Backlog enfocado en elevación estética Taste Skill, feedback elástico mobile-first y accesibilidad WCAG 2.1 AA.
+- **Cambios realizados**:
+  1. `packages/ui/src/skeleton.tsx`: Gradiente shimmer orgánico y suave para estados de carga limpios y sin parpadeos visuales (CLS = 0).
+  2. `apps/public-order-v3`:
+     - `ProductCard.tsx`: Micro-animación elástica (`scale: 1.25` ➔ `1`) en el badge de carrito al agregar productos, y retroalimentación táctil `active:scale-[0.96]`.
+     - `CartBar.tsx`: Animación spring con `whileHover={{ scale: 1.01 }}` y `whileTap={{ scale: 0.98 }}` en la barra flotante.
+     - `CategoryNav.tsx`: Feedback táctil `active:scale-95` en botones de categorías.
+  3. `apps/internal-chekeo-v3/src/components/shared/HorizontalDateCalendarFilter.tsx`:
+     - Botones de fecha con `active:scale-[0.96]` y foco visible `:focus-visible:ring-2 :focus-visible:ring-accent`.
+- **Resultado de Checks**:
+  - `npm run typecheck` ✅ (0 errores).
+  - `npm run build:public` ✅ (5.71s, 0 warnings).
+  - `npm run build:chekeo` ✅ (6.67s, 0 warnings).
+  - `git diff --check` ✅.
+
 ## 📌 Issues Abiertos
 
 | # | Descripción | Severidad | Estado |
