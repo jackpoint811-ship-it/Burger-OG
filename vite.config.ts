@@ -35,15 +35,15 @@ export default defineConfig({
       '@config': path.resolve(__dirname, 'packages/config/src'),
     },
   },
-  // Proxy /api para dev:internal / dev:chekeo -> wrangler pages dev corriendo en :8788
+  // Proxy /api para desarrollo local hacia el backend de preview en Cloudflare Pages
   ...(isInternal
     ? {
         server: {
           proxy: {
             '/api': {
-              target: 'http://localhost:8788',
-              changeOrigin: false,
-              secure: false,
+              target: process.env.API_PROXY_TARGET || 'https://burgers-exe-internal-v2-preview.pages.dev',
+              changeOrigin: true,
+              secure: true,
             },
           },
         },
