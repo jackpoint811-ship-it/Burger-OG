@@ -829,7 +829,18 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   8. `migrations/amsi_tortas/`: Schema `0001_v3_clean_schema.sql` y seed auténtico de tortas de chilaquiles `0002_amsi_tortas_seed.sql`.
   9. `wrangler.*.toml`: Configuraciones dedicadas de Cloudflare para `tamplet` y `amsi-tortas`.
   10. `scripts/provision-cloudflare.sh`: Script automatizado para aprovisionar D1, R2 y Pages por tenant.
-- **Resultado de Checks**: `npm run typecheck` (0 errores), `npm run build:public` (OK en 7.3s), `npm run build:chekeo` (OK en 6.8s), `APP_TENANT=amsi-tortas` (OK en 5.9s).
+### 📅 Sesión — 2026-08-30 (Optimizaciones Técnicas, Code Splitting & Manual Chunks)
+- **Contexto**: Reducción drástica del bundle size inicial y eliminación de warnings de Vite (>500 kB) mediante segmentación de vendor chunks y carga diferida con `React.lazy` y `<Suspense>`.
+- **Cambios realizados**:
+  1. `vite.config.ts`: Configuración de `rollupOptions.output.manualChunks` segregando librerías clave (`vendor-react`, `vendor-query`, `vendor-framer`, `vendor-icons`, `vendor-ui`, `vendor-forms`).
+  2. `apps/internal-chekeo-v3/src/app/ChekeoApp.tsx`: Carga diferida con `React.lazy` para `PedidosView`, `CocinaView`, `PagosView` y `AdminView` con `ViewLoadingFallback` de Skeletons.
+  3. `apps/internal-chekeo-v3/src/components/admin/AdminModuleWorkspace.tsx`: Carga diferida granular con `React.lazy` de los 6 paneles administrativos (`MenuStockPanel`, `TowersAdminPanel`, `BannersAdminPanel`, `RafflesAdminPanel`, `CashCutPanel`, `IngredientsAdminPanel`) con `AdminPanelLoadingFallback`.
+  4. `apps/public-order-v3`: Carga diferida de `TowerScheduleModal` en `BrandHeader.tsx` y `OrderSuccessModal` en `PublicApp.tsx`.
+- **Resultado de Checks y Métricas**:
+  - `npm run typecheck` ✅ (0 errores).
+  - `npm run build:public` ✅: Chunk principal reducido de 584 kB a 140 kB (-76%).
+  - `npm run build:chekeo` ✅: Chunk principal reducido de 848 kB a 104 kB (-88%).
+  - 0 advertencias de chunk size de Vite.
 
 ## 📌 Issues Abiertos
 

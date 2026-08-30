@@ -32,6 +32,7 @@
 
 ## Completados recientemente
 
+- [x] **PR-V3-Performance (2026-08-30)**: Optimizaciones Técnicas & Performance — `manualChunks` en Vite, `React.lazy` y `Suspense` en vistas de Chekeo (`PedidosView`, `CocinaView`, `PagosView`, `AdminView`), paneles de administración y modales públicos. Reducción de ~88% en el bundle inicial de Chekeo y ~76% en Public Order (0 warnings >500 kB).
 - [x] **Consolidación de Banners y Catálogo V3 (2026-08-21)**: Live Preview y selectores inteligentes en Chekeo Banners, BannerCarousel interactivo, FeaturedRail (Top Vendidos), ReorderModule (1-Click Reorder) y Scrollspy en CategoryNav.
 - [x] **PR #553**: Afinaciones de UX/UI en Public Order V3 (Personalización burgers/combos, switch Dark/Light, emoji 🎁, layout 2 cols, checkout).
 - [x] **PR #552**: Chekeo Cocina Enfocada de Producción y KPIs en Resumen K.

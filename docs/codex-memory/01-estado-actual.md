@@ -57,6 +57,7 @@ Burgers.exe tiene una app pública de pedidos (`apps/public-order-v3`) y una app
 | V3-ResumenKHome | Resumen K como Home & KDS Especializado en 2 Estaciones | ✅ Mergeado (#615) |
 | V3-ProdAudit | Auditoría Forense 360° Pre-Producción & Certificación Cutover | ✅ Completado (GO 🟢) |
 | V3-Cutover | Cutover Definitivo V3 a Producción (main) | ✅ Mergeado (#618, #619) |
+| V3-Performance | Optimizaciones Técnicas, Code Splitting & Manual Chunks | 🟢 Listo para PR |
 
 ## Infraestructura y URLs Activas (Cloudflare Pages)
 
@@ -187,3 +188,7 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Creación de la instancia **Amsi Tortas** (Tortas de Chilaquiles & Desayunos) con identidad visual Taste Skill (`#FAF6F0`, `#EA580C`, logo `🥪`), menú auténtico D1 con recetas e insumos (`migrations/amsi_tortas/0002_amsi_tortas_seed.sql`) y fallbacks SVG de tortas y chilaquiles.
   - Sistema universal de Feature Flags con 15 opciones y primitivas UI de bloqueo (`ComingSoonGate`, `ComingSoonModal`, `ComingSoonBadge`) para módulos en preparación.
   - Generación de configuraciones Cloudflare (`wrangler.tamplet.*.toml`, `wrangler.amsi-tortas.*.toml`) y script automatizado de aprovisionamiento (`scripts/provision-cloudflare.sh`).
+- **Optimizaciones Técnicas, Code Splitting & Manual Chunks V3 (2026-08-30)**:
+  - Configuración de `rollupOptions.output.manualChunks` en `vite.config.ts` segregando `vendor-react`, `vendor-query`, `vendor-framer`, `vendor-icons`, `vendor-ui` y `vendor-forms`.
+  - Carga diferida con `React.lazy()` y `<Suspense>` con fallback de Skeleton en `ChekeoApp.tsx` (`PedidosView`, `CocinaView`, `PagosView`, `AdminView`), paneles administrativos en `AdminModuleWorkspace.tsx` y modales en `PublicApp.tsx` / `BrandHeader.tsx`.
+  - Reducción del chunk principal de Chekeo de 848 kB a 104 kB (-88%) y de Public Order de 584 kB a 140 kB (-76%), erradicando todas las alertas de tamaño de Vite (>500 kB).

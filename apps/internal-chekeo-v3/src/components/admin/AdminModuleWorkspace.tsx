@@ -8,10 +8,11 @@
  * - Adaptable para Mobile / Tablet / Desktop
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { ArrowLeft, ChevronRight, Home, Star, Lock, Zap } from 'lucide-react';
 import { Button } from '@ui/button';
 import { Badge } from '@ui/badge';
+import { Skeleton } from '@ui/skeleton';
 import { ComingSoonGate } from '@ui/coming-soon-gate';
 import { getActiveTenant } from '@config';
 import type { AdminMasterCategory } from '../../features/admin/types/admin.types';
@@ -19,12 +20,43 @@ import { ADMIN_CATEGORIES_CONFIG } from '../../features/admin/constants/admin-na
 import { useAdminPinnedFavorites } from '../../features/admin/hooks/use-admin-pinned-favorites';
 import { getAdminIcon } from '../../features/admin/utils/admin-icons.utils';
 import { AdminSearchBar } from './AdminSearchBar';
-import { MenuStockPanel } from './MenuStockPanel';
-import { TowersAdminPanel } from './TowersAdminPanel';
-import { BannersAdminPanel } from './BannersAdminPanel';
-import { RafflesAdminPanel } from './RafflesAdminPanel';
-import { CashCutPanel } from './CashCutPanel';
-import { IngredientsAdminPanel } from './IngredientsAdminPanel';
+
+// Lazy loading granular para cada panel de administración
+const MenuStockPanel = lazy(() =>
+  import('./MenuStockPanel').then((m) => ({ default: m.MenuStockPanel }))
+);
+const TowersAdminPanel = lazy(() =>
+  import('./TowersAdminPanel').then((m) => ({ default: m.TowersAdminPanel }))
+);
+const BannersAdminPanel = lazy(() =>
+  import('./BannersAdminPanel').then((m) => ({ default: m.BannersAdminPanel }))
+);
+const RafflesAdminPanel = lazy(() =>
+  import('./RafflesAdminPanel').then((m) => ({ default: m.RafflesAdminPanel }))
+);
+const CashCutPanel = lazy(() =>
+  import('./CashCutPanel').then((m) => ({ default: m.CashCutPanel }))
+);
+const IngredientsAdminPanel = lazy(() =>
+  import('./IngredientsAdminPanel').then((m) => ({ default: m.IngredientsAdminPanel }))
+);
+
+function AdminPanelLoadingFallback() {
+  return (
+    <div className="bg-surface-card p-5 rounded-3xl border border-line shadow-xs space-y-4 animate-in fade-in duration-200">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-8 w-44 rounded-xl" />
+        <Skeleton className="h-8 w-28 rounded-xl" />
+      </div>
+      <Skeleton className="h-20 w-full rounded-2xl" />
+      <div className="space-y-3">
+        <Skeleton className="h-14 w-full rounded-xl" />
+        <Skeleton className="h-14 w-full rounded-xl" />
+        <Skeleton className="h-14 w-full rounded-xl" />
+      </div>
+    </div>
+  );
+}
 
 export interface AdminModuleWorkspaceProps {
   category: AdminMasterCategory;
@@ -362,36 +394,38 @@ export function AdminModuleWorkspace({
         {/* Lienzo Principal Derecho (Ancho Total a Pantalla Completa) */}
         <main className="flex-1 min-w-0 w-full">
           <div className="min-h-[550px]">
-            {category === 'menu' && (
-              <MenuStockPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
-            )}
-            {category === 'towers' && (
-              <TowersAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
-            )}
-            {category === 'banners' && (
-              <BannersAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
-            )}
-            {category === 'raffles' && (
-              <ComingSoonGate
-                featureName="Sorteos & Campañas de Referidos"
-                description="Configuración de sorteos por consumo, tickets automáticos y dinámicas de fidelidad. Próximamente disponible."
-                status={tenant.features.rafflesAndReferrals}
-              >
-                <RafflesAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
-              </ComingSoonGate>
-            )}
-            {category === 'cashcut' && (
-              <ComingSoonGate
-                featureName="Arqueo Z & Corte de Caja Avanzado"
-                description="Arqueo formal de turnos, conciliación contable y desglose de caja por turno. Próximamente disponible."
-                status={tenant.features.cashCutZReports}
-              >
-                <CashCutPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
-              </ComingSoonGate>
-            )}
-            {category === 'ingredients' && (
-              <IngredientsAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
-            )}
+            <Suspense fallback={<AdminPanelLoadingFallback />}>
+              {category === 'menu' && (
+                <MenuStockPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
+              )}
+              {category === 'towers' && (
+                <TowersAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
+              )}
+              {category === 'banners' && (
+                <BannersAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
+              )}
+              {category === 'raffles' && (
+                <ComingSoonGate
+                  featureName="Sorteos & Campañas de Referidos"
+                  description="Configuración de sorteos por consumo, tickets automáticos y dinámicas de fidelidad. Próximamente disponible."
+                  status={tenant.features.rafflesAndReferrals}
+                >
+                  <RafflesAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
+                </ComingSoonGate>
+              )}
+              {category === 'cashcut' && (
+                <ComingSoonGate
+                  featureName="Arqueo Z & Corte de Caja Avanzado"
+                  description="Arqueo formal de turnos, conciliación contable y desglose de caja por turno. Próximamente disponible."
+                  status={tenant.features.cashCutZReports}
+                >
+                  <CashCutPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
+                </ComingSoonGate>
+              )}
+              {category === 'ingredients' && (
+                <IngredientsAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
+              )}
+            </Suspense>
           </div>
         </main>
       </div>
