@@ -127,9 +127,15 @@ export function ProductCard({ item }: ProductCardProps) {
 
         {/* In-cart count bubble */}
         {inCartQty > 0 && (
-          <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-accent text-white text-xs font-extrabold shadow-md tabular-nums">
+          <motion.div
+            key={inCartQty}
+            initial={shouldReduceMotion ? false : { scale: 1.25, opacity: 0.8 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 20 }}
+            className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-accent text-white text-xs font-extrabold shadow-md tabular-nums"
+          >
             {inCartQty} en carrito
-          </div>
+          </motion.div>
         )}
 
         {!isAvailable && (

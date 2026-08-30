@@ -126,7 +126,7 @@ export function CategoryNav() {
                 role="tab"
                 aria-selected={isSelected}
                 onClick={() => handleCategoryClick(cat.key)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer min-h-[44px] shrink-0 select-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer min-h-[44px] shrink-0 select-none active:scale-95 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
                   isSelected
                     ? 'bg-accent text-white shadow-sm ring-2 ring-accent/20'
                     : 'bg-surface hover:bg-surface-raised text-text-secondary hover:text-text-primary border border-line'

@@ -57,7 +57,8 @@ Burgers.exe tiene una app pública de pedidos (`apps/public-order-v3`) y una app
 | V3-ResumenKHome | Resumen K como Home & KDS Especializado en 2 Estaciones | ✅ Mergeado (#615) |
 | V3-ProdAudit | Auditoría Forense 360° Pre-Producción & Certificación Cutover | ✅ Completado (GO 🟢) |
 | V3-Performance | Optimizaciones Técnicas, Code Splitting & Manual Chunks | ✅ Mergeado (#629) |
-| V3-E2ETesting | Auditoría M3/M4, Workspace Hardening & Tests Playwright E2E | 🟢 Listo para PR |
+| V3-E2ETesting | Auditoría M3/M4, Workspace Hardening & Tests Playwright E2E | ✅ Mergeado (#630) |
+| V3-Polish | Polish de UX/UI, Skeletons Shimmer & Micro-interacciones Táctiles | 🟢 Listo para PR |
 
 ## Infraestructura y URLs Activas (Cloudflare Pages)
 
@@ -195,4 +196,8 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
 - **Auditoría M3/M4, Workspace Hardening & Tests Playwright E2E V3 (2026-08-30)**:
   - Hardening integral de `@config` con tipado estricto y schemas Zod sin dependencias circulares.
   - Modernización completa de `tests/e2e-catalog-kitchen.spec.ts` alineado con componentes shadcn/ui, roles accesibles ARIA, multi-step checkout y estaciones KDS de Cocina V3.
-  - Cobertura integral de los 4 Tiers: Tier 1 (Feature Coverage), Tier 2 (Boundaries & Edge Cases), Tier 3 (Cross-Feature Combinations) y Tier 4 (Customer Journey End-to-End).
+  - Cobertura integral de los 4 Tiers: Tier 1 (Feature Coverage), Tier 2 (Boundaries & Edge Cases), Tier 3 (Cross-Feature Combinations) y Tier 4 (Customer Journey End-to-End) (PR #630).
+- **Polish de UX/UI, Skeletons Shimmer & Micro-interacciones Táctiles V3 (2026-08-30)**:
+  - Shimmer fluido en `packages/ui/src/skeleton.tsx` para cargas visualmente suaves y libres de destellos (CLS = 0).
+  - Micro-interacciones táctiles elásticas (`active:scale-[0.98]` / `active:scale-95`) en catálogo, `ProductCard`, `CategoryNav` y `CartBar` con contador animado.
+  - Accesibilidad WCAG 2.1 AA y foco visible reforzado en `HorizontalDateCalendarFilter` y controles de Chekeo.
