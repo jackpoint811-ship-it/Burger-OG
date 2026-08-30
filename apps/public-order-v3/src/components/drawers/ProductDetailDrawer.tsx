@@ -4,6 +4,7 @@ import { X, Plus, Minus, Check, Sparkles, ChevronDown, ChevronUp } from 'lucide-
 import { useUIStore, useCartStore, type CartItemCustomization } from '../../stores';
 import { useMenuRecipes, useMenuItems } from '../../features';
 import { resolveCatalogAssetUrl } from '@config/assets';
+import { getActiveTenant } from '@config';
 import { formatCurrency } from '../../utils/format';
 import { ProductFallbackSvg } from '../shared/ProductFallbackSvg';
 import { QuantityStepper } from '@ui/stepper';
@@ -26,6 +27,7 @@ export function ProductDetailDrawer() {
   const addItem = useCartStore((s) => s.addItem);
   const updateItem = useCartStore((s) => s.updateItem);
 
+  const tenant = getActiveTenant();
   const isOpen = activeDrawer === 'product' && Boolean(selectedProduct);
   const product = selectedProduct;
 
@@ -604,8 +606,9 @@ export function ProductDetailDrawer() {
                     </span>
                   )}
                   {isCombo && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-accent text-white text-[10px] font-extrabold shadow-sm">
-                      🍔 COMBO
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-accent text-white text-[10px] font-extrabold shadow-sm">
+                      <span>{tenant.logoEmoji}</span>
+                      <span>{tenant.theme.terminology?.combosLabel || 'COMBO'}</span>
                     </span>
                   )}
                 </div>
@@ -641,9 +644,17 @@ export function ProductDetailDrawer() {
                 )}
               </div>
 
-              {/* ── BURGER CUSTOMIZATION (Unit) ── */}
-              {product.category.toLowerCase() === 'burgers' && (
-                <div className="p-4 rounded-2xl bg-surface border border-line space-y-3.5">
+              {/* ── PRODUCT RECIPE CUSTOMIZATION (Unit) ── */}
+              {(product.category.toLowerCase() === 'burgers' ||
+                product.category.toLowerCase() === 'tortas' ||
+                product.category.toLowerCase() === 'cajas' ||
+                product.category.toLowerCase() === 'desayunos' ||
+                product.category.toLowerCase() === 'platillos' ||
+                recipeIngredients.length > 0) && (
+                <div
+                  className="p-4 bg-surface border border-line space-y-3.5"
+                  style={{ borderRadius: 'var(--radius-card)' }}
+                >
                   {/* 🥗 Ingredientes de la receta D1 */}
                   {recipeIngredients.length > 0 && (
                     <div>
@@ -666,18 +677,20 @@ export function ProductDetailDrawer() {
                     <button
                       type="button"
                       onClick={() => setMode('original')}
-                      className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[44px] flex items-center justify-center gap-1.5 ${
+                      style={{ borderRadius: 'var(--radius-btn)' }}
+                      className={`py-2.5 px-3 text-xs font-bold transition-all cursor-pointer min-h-[44px] flex items-center justify-center gap-1.5 ${
                         mode === 'original'
                           ? 'bg-accent/10 text-accent border-2 border-accent font-extrabold shadow-xs'
                           : 'bg-surface-card text-text-secondary hover:text-text-primary border border-line'
                       }`}
                     >
-                      🍔 Receta Original
+                      {tenant.logoEmoji} Receta Original
                     </button>
                     <button
                       type="button"
                       onClick={() => setMode('customize')}
-                      className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[44px] flex items-center justify-center gap-1.5 ${
+                      style={{ borderRadius: 'var(--radius-btn)' }}
+                      className={`py-2.5 px-3 text-xs font-bold transition-all cursor-pointer min-h-[44px] flex items-center justify-center gap-1.5 ${
                         mode === 'customize'
                           ? 'bg-accent/10 text-accent border-2 border-accent font-extrabold shadow-xs'
                           : 'bg-surface-card text-text-secondary hover:text-text-primary border border-line'

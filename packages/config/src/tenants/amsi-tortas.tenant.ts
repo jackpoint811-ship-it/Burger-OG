@@ -9,10 +9,36 @@ export const AMSI_TORTAS_TENANT: TenantConfig = {
   logoEmoji: '🥪',
   defaultFoodType: 'torta',
   theme: {
-    accentColor: '#EA580C',        // Naranja salsa chipotle cálido
-    accentColorDark: '#FB923C',
-    surfaceColor: '#FAF6F0',       // Crema cálido artesanal
+    accentColor: '#EA580C',        // Naranja salsa chipotle tostada
+    accentColorDark: '#F97316',
+    accentColorSoft: 'rgba(234, 88, 12, 0.12)',
+    secondaryColor: '#16A34A',     // Verde cilantro fresco
+    surfaceColor: '#FAF6F0',       // Crema cálido masa/maíz
     surfaceCardColor: '#FFFFFF',
+    surfaceRaisedColor: '#F3EBE1',
+    surfaceAltColor: '#FDFBF7',
+    lineColor: '#E8DFD5',
+    shadowCta: '0 6px 24px rgba(234, 88, 12, 0.38)',
+    heroGradient: 'from-orange-600 via-amber-600 to-red-600',
+
+    // Curvaturas y Formas Artesanales
+    radiusStyle: 'rounded',
+    radiusCard: '1.25rem',        // 20px
+    radiusButton: '1rem',          // 16px
+    radiusBadge: '9999px',
+    radiusInput: '0.75rem',        // 12px
+
+    // Vocabulario Amsi Tortas
+    terminology: {
+      itemSingular: 'Torta',
+      itemPlural: 'Tortas',
+      customizationTitle: 'Personalizar mi Torta de Chilaquiles',
+      combosLabel: 'Paquetes con Café & Jugo',
+      cartCtaLabel: 'Ordenar mis Tortas',
+      searchPlaceholder: 'Buscar tortas, chilaquiles, café de olla...',
+      heroHeadline: '¡Tortas de chilaquiles calientitas!',
+      heroSubtitle: 'Totopos dorados con salsas caseras y telera artesanal al momento.',
+    },
     accentLabel: 'Naranja Salsa Chipotle',
   },
   bankPayment: {

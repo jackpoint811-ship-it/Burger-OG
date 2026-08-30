@@ -805,6 +805,17 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 
 
+### 📅 Sesión — 2026-08-30 (Motor de Theming Dinámico, Curvaturas/Radius y Branding por Tenant)
+- **Contexto**: Extensión de la arquitectura para soportar tokens dinámicos de diseño (colores primarios, secundarios, fondos crema, bordes, sombras CTA), curvaturas de esquina (`radiusStyle`, `radiusCard`, `radiusButton`) y terminología específica por restaurante (`itemSingular`, `customizationTitle`, `combosLabel`, `cartCtaLabel`).
+- **Cambios realizados**:
+  1. `packages/config/src/tenant.types.ts`: Ampliación de `TenantTheme` con `TenantTerminology`, `TenantRadiusStyle`, tokens de color, sombras de CTA y radio de bordes.
+  2. `packages/config/src/tenants/amsi-tortas.tenant.ts`: Configuración artesanal completa para Amsi Tortas (naranja salsa chipotle `#EA580C`, crema cálido `#FAF6F0`, esquinas suaves `1.25rem` / 20px, y vocabulario de tortas/chilaquiles).
+  3. `packages/config/src/tenants/tamplet.tenant.ts` & `burgers-exe.tenant.ts`: Inyección de tokens neutros y de burgers.
+  4. `packages/ui/src/tenant-theme-provider.tsx`: Componente inyector en tiempo de ejecución de variables CSS Custom Properties (`--color-accent`, `--color-surface`, `--radius-card`, `--radius-btn`, `--shadow-cta`) y hooks `useTenantTheme` y `useTenantTerminology`.
+  5. `apps/public-order-v3`: Adaptación de `ProductCard`, `ProductDetailDrawer`, `CartBar`, `BrandHeader` y `globals.css` para consumir los tokens y activar personalización para tortas, combos y platillos.
+  6. `apps/internal-chekeo-v3`: Integración de `TenantThemeProvider` en el punto de entrada.
+- **Resultado de Checks**: `npm run typecheck` (0 errores), `npm run build:public` (OK), `npm run build:chekeo` (OK), `git diff --check` (OK).
+
 ### 📅 Sesión — 2026-08-30 (Motor White-Label Multi-Tenant, Template en Blanco 'tamplet' & 'Amsi Tortas')
 - **Contexto**: Parametrización del core V3 en un motor agnóstico reutilizable para generar templates en blanco (`tamplet`) y nuevas instancias de restaurantes (`amsi-tortas`).
 - **Cambios realizados**:

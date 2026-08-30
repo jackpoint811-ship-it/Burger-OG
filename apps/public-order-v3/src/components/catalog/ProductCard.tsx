@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Plus, Check, Sparkles } from 'lucide-react';
 import { useUIStore, useCartStore, menuItemToCartItem } from '../../stores';
 import { resolveCatalogAssetUrl } from '@config/assets';
+import { getActiveTenant } from '@config';
 import { formatCurrency } from '../../utils/format';
 import { ProductFallbackSvg } from '../shared/ProductFallbackSvg';
 import type { MenuItem } from '@config/contracts';
@@ -17,14 +18,18 @@ export function ProductCard({ item }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem);
   const cartItems = useCartStore((s) => s.items);
 
+  const tenant = getActiveTenant();
   const [justAdded, setJustAdded] = useState(false);
 
   const imageUrl = resolveCatalogAssetUrl(item.imageUrl, item.imageKey);
   const isAvailable = item.isAvailable !== false;
 
-  const isCombo = item.comboConfig?.isCombo || item.category.toLowerCase() === 'combos';
-  const isBurger = item.category.toLowerCase() === 'burgers';
-  const requiresCustomization = isCombo || isBurger;
+  const catLower = item.category.toLowerCase();
+  const isCombo = Boolean(item.comboConfig?.isCombo) || catLower === 'combos' || catLower === 'paquetes';
+  const isBurger = catLower === 'burgers' || catLower === 'hamburguesas';
+  const isTorta = catLower === 'tortas' || catLower === 'chilaquiles' || catLower === 'cajas' || catLower === 'desayunos';
+  const isPlatillo = catLower === 'platillos';
+  const requiresCustomization = isCombo || isBurger || isTorta || isPlatillo;
 
   const isPromo = Boolean(
     item.isPromoActive && item.promoPrice != null && item.promoPrice < item.price
@@ -78,12 +83,16 @@ export function ProductCard({ item }: ProductCardProps) {
       onKeyDown={handleKeyDown}
       aria-label={`${item.name}, ${formatCurrency(effectivePrice)}`}
       aria-disabled={!isAvailable}
-      className={`group relative flex flex-col justify-between rounded-3xl bg-surface-card border border-line shadow-card hover:shadow-panel hover:border-text-muted/30 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none transition-all cursor-pointer overflow-hidden p-3 sm:p-4 select-none ${
+      className={`group relative flex flex-col justify-between bg-surface-card border border-line shadow-card hover:shadow-panel hover:border-text-muted/30 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none transition-all cursor-pointer overflow-hidden p-3 sm:p-4 select-none ${
         !isAvailable ? 'opacity-60 grayscale-[40%] cursor-not-allowed' : ''
       }`}
+      style={{ borderRadius: 'var(--radius-card)' }}
     >
       {/* Top Media & Badges */}
-      <div className="relative aspect-4/3 w-full rounded-2xl overflow-hidden bg-surface-raised mb-3 border border-line/60">
+      <div
+        className="relative aspect-4/3 w-full overflow-hidden bg-surface-raised mb-3 border border-line/60"
+        style={{ borderRadius: 'calc(var(--radius-card) * 0.75)' }}
+      >
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -137,7 +146,7 @@ export function ProductCard({ item }: ProductCardProps) {
         <div>
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">
             <span>{item.category}</span>
-            {isCombo && <span className="text-accent font-extrabold">· Combo</span>}
+            {isCombo && <span className="text-accent font-extrabold">· {tenant.theme.terminology?.combosLabel ? 'Combo' : 'Combo'}</span>}
           </div>
           <h3 className="font-bold text-sm sm:text-base text-text-primary group-hover:text-accent transition-colors line-clamp-1 leading-snug">
             {item.name}
@@ -167,7 +176,8 @@ export function ProductCard({ item }: ProductCardProps) {
             <button
               type="button"
               onClick={handleQuickAdd}
-              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer min-h-[44px] min-w-[44px] active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
+              style={{ borderRadius: 'var(--radius-btn)' }}
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold transition-all cursor-pointer min-h-[44px] min-w-[44px] active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
                 justAdded
                   ? 'bg-accent text-white'
                   : requiresCustomization

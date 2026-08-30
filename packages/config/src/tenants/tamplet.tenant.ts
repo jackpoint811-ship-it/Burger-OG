@@ -9,10 +9,34 @@ export const TAMPLET_TENANT: TenantConfig = {
   logoEmoji: '🍽️',
   defaultFoodType: 'other',
   theme: {
-    accentColor: '#2563EB',
+    accentColor: '#2563EB',        // Azul moderno neutro
     accentColorDark: '#3B82F6',
-    surfaceColor: '#F8FAFC',
+    accentColorSoft: 'rgba(37, 99, 235, 0.1)',
+    secondaryColor: '#4F46E5',
+    surfaceColor: '#F8FAFC',       // Fondo gris neutro claro
     surfaceCardColor: '#FFFFFF',
+    surfaceRaisedColor: '#F1F5F9',
+    surfaceAltColor: '#F8FAFC',
+    lineColor: '#E2E8F0',
+    shadowCta: '0 4px 20px rgba(37, 99, 235, 0.3)',
+    heroGradient: 'from-blue-600 via-indigo-600 to-slate-800',
+
+    radiusStyle: 'modern',
+    radiusCard: '0.75rem',        // 12px
+    radiusButton: '0.5rem',        // 8px
+    radiusBadge: '9999px',
+    radiusInput: '0.5rem',
+
+    terminology: {
+      itemSingular: 'Platillo',
+      itemPlural: 'Platillos',
+      customizationTitle: 'Personalizar platillo',
+      combosLabel: 'Paquetes & Combos',
+      cartCtaLabel: 'Realizar Pedido',
+      searchPlaceholder: 'Buscar platillos, bebidas, postres...',
+      heroHeadline: '¡Bienvenidos a nuestro menú digital!',
+      heroSubtitle: 'Ordena tus platillos favoritos en línea de forma rápida y sencilla.',
+    },
     accentLabel: 'Azul Neutro',
   },
   bankPayment: {
