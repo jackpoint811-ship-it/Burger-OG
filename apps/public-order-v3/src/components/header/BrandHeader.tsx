@@ -27,15 +27,16 @@ export function BrandHeader() {
   useEffect(() => {
     const isDarkMode =
       document.documentElement.classList.contains('theme-dark') ||
+      document.documentElement.classList.contains('dark') ||
       localStorage.getItem('public_theme') === 'dark' ||
       (!('public_theme' in localStorage) &&
         window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     setIsDark(isDarkMode);
     if (isDarkMode) {
-      document.documentElement.classList.add('theme-dark');
+      document.documentElement.classList.add('theme-dark', 'dark');
     } else {
-      document.documentElement.classList.remove('theme-dark');
+      document.documentElement.classList.remove('theme-dark', 'dark');
     }
   }, []);
 
@@ -43,10 +44,11 @@ export function BrandHeader() {
     const nextDark = !isDark;
     setIsDark(nextDark);
     if (nextDark) {
-      document.documentElement.classList.add('theme-dark');
+      document.documentElement.classList.add('theme-dark', 'dark');
       localStorage.setItem('public_theme', 'dark');
     } else {
-      document.documentElement.classList.remove('theme-dark');
+      document.documentElement.classList.remove('theme-dark', 'dark');
+      localStorage.setItem('public_theme', 'light');
     }
   };
 
