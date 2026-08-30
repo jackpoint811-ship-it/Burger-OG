@@ -181,3 +181,9 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Cuadrícula de 6 Módulos Maestros en 2 columnas limpias (`ModuleCard`) con colores temáticos e iconografía Lucide.
   - Integración del buscador `AdminSearchBar` en la cabecera del Workspace (`AdminModuleWorkspace`) para búsqueda instantánea desde cualquier submódulo.
   - Limpieza total de componentes obsoletos (`AdminDashboardGrid.tsx`, `AdminCategorySubmenu.tsx`).
+- **Motor Multi-Tenant White-Label, Template en Blanco ('tamplet') & 'Amsi Tortas' (2026-08-30)**:
+  - Desacoplamiento del core V3 en un motor multi-tenant con contratos en `@config/tenant.types.ts` y resolución dinámica (`getActiveTenant()`).
+  - Creación del template base en blanco (`tamplet`) con schema D1 consolidado y limpio (`migrations/template/0001_v3_clean_schema.sql` y `0002_v3_blank_seed.sql`).
+  - Creación de la instancia **Amsi Tortas** (Tortas de Chilaquiles & Desayunos) con identidad visual Taste Skill (`#FAF6F0`, `#EA580C`, logo `🥪`), menú auténtico D1 con recetas e insumos (`migrations/amsi_tortas/0002_amsi_tortas_seed.sql`) y fallbacks SVG de tortas y chilaquiles.
+  - Sistema universal de Feature Flags con 15 opciones y primitivas UI de bloqueo (`ComingSoonGate`, `ComingSoonModal`, `ComingSoonBadge`) para módulos en preparación.
+  - Generación de configuraciones Cloudflare (`wrangler.tamplet.*.toml`, `wrangler.amsi-tortas.*.toml`) y script automatizado de aprovisionamiento (`scripts/provision-cloudflare.sh`).

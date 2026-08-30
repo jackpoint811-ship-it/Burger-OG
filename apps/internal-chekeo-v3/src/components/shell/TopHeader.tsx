@@ -12,6 +12,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Wifi, WifiOff, LogOut, Lock, Sun, Moon, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../../features/auth';
+import { getActiveTenant } from '@config';
 
 export function TopHeader() {
   const { isAuthenticated, logout } = useAuthStore();
@@ -21,6 +22,7 @@ export function TopHeader() {
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
   const [isDark, setIsDark] = useState(false);
+  const tenant = getActiveTenant();
 
   // Inicialización de tema
   useEffect(() => {
@@ -97,7 +99,6 @@ export function TopHeader() {
   // Detección de entorno
   const isProduction =
     typeof window !== 'undefined' &&
-    window.location.hostname.includes('burgers') &&
     !window.location.hostname.includes('preview') &&
     !window.location.hostname.includes('localhost') &&
     !window.location.hostname.includes('127.0.0.1');
@@ -113,9 +114,9 @@ export function TopHeader() {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
         {/* Izquierda: Logotipo y Badge de Entorno */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-          <div className="flex items-center gap-1.5 font-black text-lg sm:text-xl tracking-tight text-text-primary">
-            <span>Burgers</span>
-            <span className="text-accent">.exe</span>
+          <div className="flex items-center gap-2 font-black text-lg sm:text-xl tracking-tight text-text-primary">
+            <span>{tenant.logoEmoji}</span>
+            <span>{tenant.brandName}</span>
           </div>
 
           <span className="hidden xs:inline-flex px-2 py-0.5 rounded-md bg-accent/15 text-accent text-[11px] font-extrabold uppercase tracking-wider">

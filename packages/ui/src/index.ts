@@ -14,3 +14,6 @@ export * from './shell-card';
 export * from './stepper';
 export * from './kpi-card';
 export * from './segmented-control';
+export * from './coming-soon-badge';
+export * from './coming-soon-modal';
+export * from './coming-soon-gate';

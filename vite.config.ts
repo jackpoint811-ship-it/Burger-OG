@@ -25,6 +25,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  define: {
+    'process.env.APP_TENANT': JSON.stringify(process.env.APP_TENANT || ''),
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, `apps/${target}/src`),

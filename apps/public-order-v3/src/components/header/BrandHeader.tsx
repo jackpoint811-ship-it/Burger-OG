@@ -7,6 +7,7 @@ import {
   usePublicConfig,
   getMexicoCityDateTime,
 } from '../../features';
+import { getActiveTenant, isFeatureEnabled } from '@config';
 import { TowerScheduleModal } from './TowerScheduleModal';
 
 export function BrandHeader() {
@@ -17,6 +18,7 @@ export function BrandHeader() {
   const { siteConfig } = useSiteConfig();
   const { publicConfig } = usePublicConfig();
   const { data: activeRaffle } = useActiveRaffleQuery();
+  const tenant = getActiveTenant();
 
   // Inicialización de tema Dark / Light
   useEffect(() => {
@@ -46,7 +48,7 @@ export function BrandHeader() {
   };
 
   const mxNow = getMexicoCityDateTime();
-  const brandName = siteConfig?.brandName || 'Burgers.exe';
+  const brandName = siteConfig?.brandName || tenant.brandName;
 
   const isCatalogEnabled = publicConfig?.catalogEnabled !== false;
   const isAllTowersPaused = towers.length > 0 && towers.every((t) => t.isActive === false);
@@ -80,7 +82,7 @@ export function BrandHeader() {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-2xl bg-accent flex items-center justify-center text-white shadow-sm font-extrabold text-lg">
-              🍔
+              {tenant.logoEmoji}
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -114,14 +116,14 @@ export function BrandHeader() {
                 </button>
               </div>
               <p className="text-xs text-text-secondary font-medium">
-                Smash Burgers Artesanales
+                {tenant.tagline}
               </p>
             </div>
           </div>
 
           {/* Right Actions: Sorteo / Promo Tag & Theme Toggle */}
           <div className="flex items-center gap-2">
-            {activeRaffle && (
+            {isFeatureEnabled('rafflesAndReferrals', tenant) && activeRaffle && (
               <div
                 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold border border-amber-500/20 max-w-[170px] sm:max-w-[240px]"
                 title={`Sorteo activo: ${activeRaffle.title}`}
