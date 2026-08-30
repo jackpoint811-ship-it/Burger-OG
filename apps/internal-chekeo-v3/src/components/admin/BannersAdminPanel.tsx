@@ -1,11 +1,13 @@
 /**
- * BannersAdminPanel.tsx — PR-V3-12
+ * BannersAdminPanel.tsx — Chekeo V3
  *
- * Submódulo de Administración de Banners Promocionales para el Carrusel Público.
- * Permite crear, editar, reordenar, activar/pausar y subir imágenes a R2.
+ * Submódulo de Marketing, Promociones y Banners del Carrusel Superior.
+ * Integrado con Dynamic UI Components (@ui/kpi-card, @ui/drawer, @ui/badge, @ui/button),
+ * Simulador interactivo WYSIWYG en vivo, reordenamiento 1-toque y assets en Cloudflare R2.
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Image as ImageIcon,
   Plus,
@@ -21,10 +23,16 @@ import {
   ArrowRight,
   RefreshCw,
   Palette,
+  ArrowUp,
+  ArrowDown,
+  CheckCircle2,
+  Smartphone,
 } from 'lucide-react';
 import type { CatalogBanner } from '@config/index';
 import { Button } from '@ui/button';
 import { Badge } from '@ui/badge';
+import { KpiCard } from '@ui/kpi-card';
+import { Drawer } from '@ui/drawer';
 import { useAdminBanners, useAdminMenu } from '../../features/admin/hooks/use-admin';
 import type { CreateCatalogBannerPayload, UpdateCatalogBannerPayload } from '../../features/admin/types/admin.types';
 
@@ -54,19 +62,16 @@ export function BannersAdminPanel({ activeToolId, onSelectTool }: BannersAdminPa
   const {
     banners,
     isLoading,
-    isError,
-    error,
     refetchBanners,
     createBannerMutation,
     updateBannerMutation,
     deleteBannerMutation,
     uploadBannerImageMutation,
-    deleteBannerImageMutation,
   } = useAdminBanners();
 
   const { items: menuItems = [], categories: menuCategories = [] } = useAdminMenu();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<CatalogBanner | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -100,10 +105,9 @@ export function BannersAdminPanel({ activeToolId, onSelectTool }: BannersAdminPa
     setIsActive(true);
     setSelectedFile(null);
     setImagePreview(null);
-    setIsModalOpen(true);
+    setIsDrawerOpen(true);
   };
 
-  // Reaccionar a activeToolId
   React.useEffect(() => {
     if (activeToolId === 'create') {
       handleOpenCreate();
@@ -127,7 +131,7 @@ export function BannersAdminPanel({ activeToolId, onSelectTool }: BannersAdminPa
       banner.imageUrl ||
         (banner.imageKey ? `/api/assets-v2/${encodeURIComponent(banner.imageKey)}` : null)
     );
-    setIsModalOpen(true);
+    setIsDrawerOpen(true);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -160,15 +164,15 @@ export function BannersAdminPanel({ activeToolId, onSelectTool }: BannersAdminPa
         if (selectedFile) {
           await uploadBannerImageMutation.mutateAsync({ id: editingBanner.id, file: selectedFile });
         }
-        setNotice('Banner actualizado correctamente.');
+        setNotice(`Banner "${title}" actualizado correctamente.`);
       } else {
         const newBanner = await createBannerMutation.mutateAsync(payload);
         if (selectedFile && newBanner?.id) {
           await uploadBannerImageMutation.mutateAsync({ id: newBanner.id, file: selectedFile });
         }
-        setNotice('Banner creado con éxito.');
+        setNotice(`Banner "${title}" publicado con éxito.`);
       }
-      setIsModalOpen(false);
+      setIsDrawerOpen(false);
       setTimeout(() => setNotice(null), 3000);
     } catch {
       // Handled
@@ -179,8 +183,30 @@ export function BannersAdminPanel({ activeToolId, onSelectTool }: BannersAdminPa
     const nextActive = !banner.isActive;
     try {
       await updateBannerMutation.mutateAsync({ id: banner.id, payload: { isActive: nextActive } });
-      setNotice(`Banner "${banner.title}" ${nextActive ? 'activado ✓' : 'pausado ⏸️'}`);
+      setNotice(`Banner "${banner.title}" ${nextActive ? 'activado en tienda ✓' : 'pausado ⏸️'}`);
       setTimeout(() => setNotice(null), 2500);
+    } catch {
+      // Handled
+    }
+  };
+
+  const handleMoveOrder = async (banner: CatalogBanner, direction: 'up' | 'down') => {
+    const sorted = [...banners].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    const index = sorted.findIndex((b) => b.id === banner.id);
+    if (index === -1) return;
+
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= sorted.length) return;
+
+    const targetBanner = sorted[targetIndex];
+    const currentOrder = banner.sortOrder ?? index + 1;
+    const targetOrder = targetBanner.sortOrder ?? targetIndex + 1;
+
+    try {
+      await updateBannerMutation.mutateAsync({ id: banner.id, payload: { sortOrder: targetOrder } });
+      await updateBannerMutation.mutateAsync({ id: targetBanner.id, payload: { sortOrder: currentOrder } });
+      setNotice('Orden de banners actualizado.');
+      setTimeout(() => setNotice(null), 2000);
     } catch {
       // Handled
     }
@@ -197,41 +223,96 @@ export function BannersAdminPanel({ activeToolId, onSelectTool }: BannersAdminPa
     }
   };
 
-  return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Notice */}
-      {notice && (
-        <div className="p-3 rounded-2xl bg-accent-soft border border-accent/20 text-accent text-xs font-bold flex items-center justify-between">
-          <span>{notice}</span>
-          <button onClick={() => setNotice(null)} className="opacity-70 hover:opacity-100">
-            ×
-          </button>
-        </div>
-      )}
+  // KPIs
+  const stats = useMemo(() => {
+    const total = banners.length;
+    const active = banners.filter((b) => b.isActive).length;
+    const paused = total - active;
+    const withAssets = banners.filter((b) => b.imageUrl || b.imageKey).length;
+    return { total, active, paused, withAssets };
+  }, [banners]);
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-card p-5 rounded-3xl border border-line shadow-xs">
+  return (
+    <div className="space-y-5 animate-in fade-in duration-300">
+      {/* Toast Flotante */}
+      <AnimatePresence>
+        {notice && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="p-3.5 rounded-2xl bg-accent-soft border border-accent/20 text-accent text-xs font-black flex items-center justify-between shadow-sm"
+          >
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-accent" />
+              <span>{notice}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setNotice(null)}
+              className="opacity-70 hover:opacity-100 cursor-pointer text-base leading-none"
+            >
+              ×
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 1. Tarjetas KPI Reactivas (@ui/kpi-card) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard
+          title="Total Banners"
+          value={stats.total}
+          subtitle="Campañas creadas"
+          icon={<ImageIcon className="w-4 h-4" />}
+          variant="default"
+        />
+        <KpiCard
+          title="Activos en Tienda"
+          value={stats.active}
+          subtitle="Visibles en el carrusel"
+          icon={<Check className="w-4 h-4" />}
+          variant="accent"
+        />
+        <KpiCard
+          title="Banners Pausados"
+          value={stats.paused}
+          subtitle="Desactivados temporalmente"
+          icon={<EyeOff className="w-4 h-4" />}
+          variant="warning"
+        />
+        <KpiCard
+          title="Con Imagen R2"
+          value={stats.withAssets}
+          subtitle="Optimizados para CDN"
+          icon={<Layers className="w-4 h-4" />}
+          variant="info"
+        />
+      </div>
+
+      {/* 2. Banner de Cabecera con Botón de Creación */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-surface-card p-4 rounded-3xl border border-line shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-accent-soft text-accent flex items-center justify-center font-bold shrink-0">
-            <ImageIcon className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-2xl bg-accent/15 text-accent flex items-center justify-center font-bold shrink-0">
+            <Palette className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-text-primary">
-              Banners Promocionales del Catálogo
+            <h3 className="text-sm font-black text-text-primary">
+              Diseñador de Banners & Marketing
             </h3>
             <p className="text-xs text-text-secondary">
-              Personaliza las tarjetas de bienvenida y ofertas interactivas del carrusel superior.
+              Gestiona los anuncios visuales, promociones y llamados a la acción de la cabecera.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           <Button
             type="button"
             onClick={handleOpenCreate}
-            className="text-xs font-bold bg-accent text-white"
+            className="text-xs font-black bg-accent text-white h-8.5 px-3 rounded-xl cursor-pointer active:scale-95"
           >
-            <Plus className="w-4 h-4 mr-1" />
+            <Plus className="w-3.5 h-3.5 mr-1" />
             Nuevo Banner
           </Button>
 
@@ -239,7 +320,7 @@ export function BannersAdminPanel({ activeToolId, onSelectTool }: BannersAdminPa
             type="button"
             variant="outline"
             onClick={() => refetchBanners()}
-            className="p-2 h-9 w-9 text-text-secondary"
+            className="p-2 h-8.5 w-8.5 text-text-secondary hover:text-text-primary rounded-xl cursor-pointer"
             title="Refrescar banners"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -247,11 +328,11 @@ export function BannersAdminPanel({ activeToolId, onSelectTool }: BannersAdminPa
         </div>
       </div>
 
-      {/* Lista de Banners */}
+      {/* 3. Grid de Banners con Reordenamiento */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-44 rounded-3xl bg-surface-card border border-line animate-pulse p-4" />
+            <div key={i} className="h-48 rounded-3xl bg-surface-card border border-line animate-pulse p-4" />
           ))}
         </div>
       ) : banners.length === 0 ? (
@@ -265,73 +346,98 @@ export function BannersAdminPanel({ activeToolId, onSelectTool }: BannersAdminPa
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {banners.map((banner) => {
-            const preset = BG_PRESETS.find((p) => p.key === banner.bgPreset) || BG_PRESETS[0];
-            const badgeMeta = BADGE_COLORS.find((b) => b.key === banner.badgeColor) || BADGE_COLORS[0];
-            const imgUrl = banner.imageUrl || (banner.imageKey ? `/api/assets-v2/${encodeURIComponent(banner.imageKey)}` : null);
+        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+          <AnimatePresence>
+            {banners.map((banner, index) => {
+              const preset = BG_PRESETS.find((p) => p.key === banner.bgPreset) || BG_PRESETS[0];
+              const badgeMeta = BADGE_COLORS.find((b) => b.key === banner.badgeColor) || BADGE_COLORS[0];
+              const imgUrl = banner.imageUrl || (banner.imageKey ? `/api/assets-v2/${encodeURIComponent(banner.imageKey)}` : null);
 
-            return (
-              <div
-                key={banner.id}
-                className={`rounded-3xl border overflow-hidden flex flex-col justify-between shadow-card transition-all ${
-                  banner.isActive ? 'border-line' : 'border-line opacity-60'
-                }`}
-              >
-                {/* Visual Banner Preview Card */}
-                <div
-                  className="p-6 text-white relative flex flex-col justify-between min-h-[140px]"
-                  style={{ background: preset?.style }}
+              return (
+                <motion.div
+                  key={banner.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  className={`rounded-3xl border overflow-hidden flex flex-col justify-between shadow-card transition-all ${
+                    banner.isActive ? 'border-line hover:border-accent/40' : 'border-line opacity-60'
+                  }`}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    {banner.badgeText && (
-                      <span className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg border ${badgeMeta?.cls}`}>
-                        {banner.badgeText}
-                      </span>
-                    )}
-                    <span className="text-[10px] font-bold bg-black/30 px-2 py-0.5 rounded-full ml-auto">
-                      Orden: {banner.sortOrder}
-                    </span>
+                  {/* Tarjeta Visual de Banner */}
+                  <div
+                    className="p-5 sm:p-6 text-white relative flex flex-col justify-between min-h-[150px] shadow-inner"
+                    style={{ background: preset?.style }}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      {banner.badgeText && (
+                        <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border ${badgeMeta?.cls}`}>
+                          {banner.badgeText}
+                        </span>
+                      )}
+                      <div className="flex items-center gap-1 ml-auto">
+                        <button
+                          type="button"
+                          onClick={() => handleMoveOrder(banner, 'up')}
+                          disabled={index === 0}
+                          className="w-6 h-6 rounded-lg bg-black/40 text-white flex items-center justify-center disabled:opacity-30 cursor-pointer hover:bg-black/60"
+                          title="Mover antes"
+                        >
+                          <ArrowUp className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveOrder(banner, 'down')}
+                          disabled={index === banners.length - 1}
+                          className="w-6 h-6 rounded-lg bg-black/40 text-white flex items-center justify-center disabled:opacity-30 cursor-pointer hover:bg-black/60"
+                          title="Mover después"
+                        >
+                          <ArrowDown className="w-3 h-3" />
+                        </button>
+                        <span className="text-[10px] font-mono font-bold bg-black/40 px-2 py-0.5 rounded-full ml-1">
+                          #{banner.sortOrder}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 my-3">
+                      <h4 className="text-base sm:text-lg font-black leading-tight text-white">{banner.title}</h4>
+                      {banner.subtitle && (
+                        <p className="text-xs text-white/90 line-clamp-2">{banner.subtitle}</p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      {banner.ctaLabel ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-black bg-white text-neutral-900 px-3 py-1 rounded-xl shadow-xs">
+                          {banner.ctaLabel}
+                          <ArrowRight className="w-3 h-3" />
+                        </span>
+                      ) : (
+                        <div />
+                      )}
+
+                      {imgUrl && (
+                        <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-md">Con Foto R2</span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="space-y-1 my-3">
-                    <h4 className="text-base font-extrabold leading-tight text-white">{banner.title}</h4>
-                    {banner.subtitle && (
-                      <p className="text-xs text-white/80 line-clamp-1">{banner.subtitle}</p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1">
-                    {banner.ctaLabel ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-bold bg-white text-neutral-900 px-3 py-1 rounded-xl shadow-xs">
-                        {banner.ctaLabel}
-                        <ArrowRight className="w-3 h-3" />
-                      </span>
-                    ) : (
-                      <div />
-                    )}
-
-                    {imgUrl && (
-                      <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-md">Con Asset</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Controles del Banner */}
-                <div className="p-4 bg-surface-card border-t border-line flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
+                  {/* Barra de Acciones del Banner */}
+                  <div className="p-3.5 sm:p-4 bg-surface-card border-t border-line flex items-center justify-between gap-2">
                     <Button
                       type="button"
                       variant="outline"
+                      size="sm"
                       onClick={() => handleToggleActive(banner)}
-                      className={`text-xs h-8 px-3 rounded-xl font-bold ${
+                      className={`text-xs h-8 px-3 rounded-xl font-bold cursor-pointer active:scale-95 ${
                         banner.isActive ? 'text-accent border-accent/30' : 'text-text-muted'
                       }`}
                     >
                       {banner.isActive ? (
                         <>
                           <Eye className="w-3.5 h-3.5 mr-1 text-accent" />
-                          Activo en Carrusel
+                          En Carrusel
                         </>
                       ) : (
                         <>
@@ -340,344 +446,317 @@ export function BannersAdminPanel({ activeToolId, onSelectTool }: BannersAdminPa
                         </>
                       )}
                     </Button>
-                  </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => handleOpenEdit(banner)}
-                      className="text-xs h-8 px-3 rounded-xl font-bold"
-                    >
-                      <Edit2 className="w-3.5 h-3.5 mr-1" />
-                      Editar
-                    </Button>
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleOpenEdit(banner)}
+                        className="text-xs h-8 px-3 rounded-xl font-black cursor-pointer active:scale-95"
+                      >
+                        <Edit2 className="w-3.5 h-3.5 mr-1" />
+                        Editar
+                      </Button>
 
-                    {deletingId === banner.id ? (
-                      <div className="flex items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          onClick={() => handleDeleteBanner(banner.id)}
-                          className="text-[10px] h-8 px-2 rounded-xl font-bold"
-                        >
-                          Sí, borrar
-                        </Button>
+                      {deletingId === banner.id ? (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteBanner(banner.id)}
+                            className="text-[10px] h-8 px-2 rounded-xl font-bold"
+                          >
+                            Sí
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setDeletingId(null)}
+                            className="text-[10px] h-8 px-2 rounded-xl"
+                          >
+                            No
+                          </Button>
+                        </div>
+                      ) : (
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => setDeletingId(null)}
-                          className="text-[10px] h-8 px-2 rounded-xl"
+                          size="sm"
+                          onClick={() => setDeletingId(banner.id)}
+                          className="text-xs h-8 px-2.5 rounded-xl text-destructive hover:bg-destructive/10 cursor-pointer active:scale-95"
+                          title="Eliminar banner"
                         >
-                          No
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setDeletingId(banner.id)}
-                        className="text-xs h-8 px-2.5 rounded-xl text-destructive hover:bg-destructive/10"
-                        title="Eliminar banner"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Modal de Creación / Edición de Banner */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-surface-card w-full max-w-xl rounded-3xl border border-line shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-line flex items-center justify-between bg-surface-raised/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-accent-soft text-accent flex items-center justify-center font-bold">
-                  <Palette className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-text-primary">
-                    {editingBanner ? 'Editar Banner' : 'Crear Nuevo Banner'}
-                  </h3>
-                  <p className="text-xs text-text-secondary">Ajusta los textos, colores de gradiente y acción.</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-surface-raised flex items-center justify-center text-text-secondary hover:text-text-primary"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Live WYSIWYG Mockup Preview */}
-            <div className="p-4 bg-surface border-b border-line shrink-0">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-text-muted block mb-2">
-                👁️ Vista Previa en Vivo (Móvil)
-              </span>
-              <div
-                className="w-full rounded-2xl p-4 sm:p-5 text-white relative overflow-hidden shadow-lg border border-white/15"
-                style={{
-                  background:
-                    BG_PRESETS.find((p) => p.key === bgPreset)?.style ||
-                    'linear-gradient(135deg, #15803D 0%, #16A34A 100%)',
-                }}
-              >
-                <div className="flex items-center justify-between gap-3 relative z-10">
-                  <div className="space-y-1 max-w-[70%]">
-                    {badgeText && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/40 text-white text-[10px] font-extrabold uppercase border border-white/20">
-                        ⭐ {badgeText}
-                      </span>
-                    )}
-                    <h4 className="text-base font-extrabold leading-tight text-white line-clamp-2">
-                      {title || 'Título del Banner'}
-                    </h4>
-                    {subtitle && (
-                      <p className="text-xs text-white/80 line-clamp-1">
-                        {subtitle}
-                      </p>
-                    )}
-                    {ctaLabel && (
-                      <span className="inline-block mt-2 text-[11px] font-extrabold bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg backdrop-blur-xs border border-white/30">
-                        {ctaLabel} →
-                      </span>
-                    )}
-                  </div>
-                  {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt="Banner Preview"
-                      className="w-16 h-16 rounded-xl object-cover border border-white/30 shrink-0 shadow-md"
-                    />
-                  ) : (
-                    <div className="w-14 h-14 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-2xl shrink-0">
-                      🍔
+                      )}
                     </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </motion.div>
+      )}
+
+      {/* 4. Drawer de Creación / Edición de Banner */}
+      <Drawer
+        open={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        title={
+          <div className="flex items-center gap-2">
+            <Palette className="w-5 h-5 text-accent" />
+            <span>{editingBanner ? 'Editar Banner' : 'Crear Nuevo Banner'}</span>
+          </div>
+        }
+        description="Personaliza el diseño visual, gradientes y acciones interactivas."
+        className="max-w-xl"
+      >
+        <div className="space-y-4 pt-1">
+          {/* Live Mobile Mockup Preview */}
+          <div className="p-4 rounded-2xl bg-surface-raised border border-line space-y-2">
+            <span className="text-[11px] font-black uppercase tracking-wider text-text-muted flex items-center gap-1.5">
+              <Smartphone className="w-3.5 h-3.5 text-accent" />
+              Vista Previa en Vivo (Móvil)
+            </span>
+            <div
+              className="w-full rounded-2xl p-4 sm:p-5 text-white relative overflow-hidden shadow-md border border-white/20"
+              style={{
+                background:
+                  BG_PRESETS.find((p) => p.key === bgPreset)?.style ||
+                  'linear-gradient(135deg, #15803D 0%, #16A34A 100%)',
+              }}
+            >
+              <div className="flex items-center justify-between gap-3 relative z-10">
+                <div className="space-y-1 max-w-[70%]">
+                  {badgeText && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/40 text-white text-[10px] font-black uppercase border border-white/20">
+                      ⭐ {badgeText}
+                    </span>
+                  )}
+                  <h4 className="text-base font-black leading-tight text-white line-clamp-2">
+                    {title || 'Título del Banner'}
+                  </h4>
+                  {subtitle && (
+                    <p className="text-xs text-white/90 line-clamp-2">
+                      {subtitle}
+                    </p>
+                  )}
+                  {ctaLabel && (
+                    <span className="inline-block mt-2 text-[11px] font-black bg-white/25 hover:bg-white/35 px-3 py-1 rounded-lg backdrop-blur-xs border border-white/30 text-white">
+                      {ctaLabel} →
+                    </span>
                   )}
                 </div>
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Banner Preview"
+                    className="w-16 h-16 rounded-2xl object-cover border border-white/30 shrink-0 shadow-md"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-2xl shrink-0">
+                    🍔
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleSaveBanner} className="space-y-4">
+            <div>
+              <label className="block text-[11px] font-bold text-text-secondary mb-1">
+                Título Principal *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Ej. ¡Llegó la nueva BBQ Bacon Smash!"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent font-bold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-text-secondary mb-1">
+                Subtítulo / Mensaje Secundario
+              </label>
+              <input
+                type="text"
+                placeholder="Ej. Doble carne smash con salsa BBQ ahumada casera."
+                value={subtitle}
+                onChange={(e) => setSubtitle(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-text-secondary mb-1">
+                  Texto del Botón CTA
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej. Pedir ahora"
+                  value={ctaLabel}
+                  onChange={(e) => setCtaLabel(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-text-secondary mb-1">
+                  Etiqueta (Badge)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej. NUEVO, 20% OFF"
+                  value={badgeText}
+                  onChange={(e) => setBadgeText(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent font-bold uppercase"
+                />
               </div>
             </div>
 
-            <form onSubmit={handleSaveBanner} className="p-6 overflow-y-auto space-y-4 flex-1">
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">
-                  Título Principal *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej. ¡Llegó la nueva BBQ Bacon Smash!"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1">
-                  Subtítulo / Mensaje Secundario
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej. Doble carne smash con salsa BBQ ahumada casera."
-                  value={subtitle}
-                  onChange={(e) => setSubtitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-text-secondary mb-1">
-                    Texto del Botón CTA
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej. Pedir ahora"
-                    value={ctaLabel}
-                    onChange={(e) => setCtaLabel(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-text-secondary mb-1">
-                    Texto de la Etiqueta (Badge)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej. NUEVO, 20% OFF"
-                    value={badgeText}
-                    onChange={(e) => setBadgeText(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent font-bold uppercase"
-                  />
-                </div>
-              </div>
-
-              {/* Selector de Fondo (Preset) */}
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1.5">
-                  Estilo de Gradiente de Fondo
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {BG_PRESETS.map((preset) => (
-                    <button
-                      key={preset.key}
-                      type="button"
-                      onClick={() => setBgPreset(preset.key)}
-                      className={`h-12 rounded-xl p-2 text-left relative overflow-hidden transition-all flex items-center justify-between text-white text-[11px] font-bold ${
-                        bgPreset === preset.key ? 'ring-2 ring-accent ring-offset-2' : 'opacity-80 hover:opacity-100'
-                      }`}
-                      style={{ background: preset.style }}
-                    >
-                      <span className="truncate">{preset.label}</span>
-                      {bgPreset === preset.key && <Check className="w-3.5 h-3.5 shrink-0 ml-1" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-text-secondary mb-1">
-                    Tipo de Acción CTA
-                  </label>
-                  <select
-                    value={ctaActionType}
-                    onChange={(e) => {
-                      const newType = e.target.value;
-                      setCtaActionType(newType);
-                      if (newType === 'category' && menuCategories[0]) {
-                        setCtaTarget(menuCategories[0].key);
-                      } else if (newType === 'product' && menuItems[0]) {
-                        setCtaTarget(menuItems[0].sku);
-                      } else if (newType === 'raffle') {
-                        setCtaTarget('/tickets');
-                      }
-                    }}
-                    className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent"
-                  >
-                    <option value="category">Filtrar Categoría</option>
-                    <option value="product">Abrir Producto</option>
-                    <option value="raffle">Ir a Sorteos</option>
-                    <option value="url">Enlace Externo</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-text-secondary mb-1">
-                    Destino (Target)
-                  </label>
-                  {ctaActionType === 'category' ? (
-                    <select
-                      value={ctaTarget}
-                      onChange={(e) => setCtaTarget(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent"
-                    >
-                      <option value="">-- Selecciona una categoría --</option>
-                      {menuCategories.map((c) => (
-                        <option key={c.key} value={c.key}>
-                          {c.emoji || '📁'} {c.name} ({c.key})
-                        </option>
-                      ))}
-                    </select>
-                  ) : ctaActionType === 'product' ? (
-                    <select
-                      value={ctaTarget}
-                      onChange={(e) => setCtaTarget(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent"
-                    >
-                      <option value="">-- Selecciona un producto --</option>
-                      {menuItems.map((p) => (
-                        <option key={p.sku} value={p.sku}>
-                          {p.name} ({p.sku}) — ${p.price}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      placeholder={ctaActionType === 'url' ? 'https://...' : 'Ej. /tickets o cupón'}
-                      value={ctaTarget}
-                      onChange={(e) => setCtaTarget(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent"
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-text-secondary mb-1">
-                    Orden de Visualización
-                  </label>
-                  <input
-                    type="number"
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent"
-                  />
-                </div>
-
-                <div className="flex items-end pb-1">
-                  <label className="flex items-center gap-2 text-xs font-bold text-text-primary cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isActive}
-                      onChange={(e) => setIsActive(e.target.checked)}
-                      className="rounded text-accent w-4 h-4"
-                    />
-                    <span>Activar de inmediato</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Subida de Imagen */}
-              <div className="p-4 rounded-2xl bg-surface-raised border border-line space-y-2">
-                <label className="block text-xs font-semibold text-text-secondary">
-                  Imagen Opcional de Acompañamiento
-                </label>
-                <div className="flex items-center gap-3">
-                  {imagePreview && (
-                    <img src={imagePreview} alt="Preview" className="w-12 h-12 rounded-xl object-cover border border-line" />
-                  )}
-                  <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-                  <Button
+            {/* Presets de Gradiente */}
+            <div>
+              <label className="block text-[11px] font-bold text-text-secondary mb-1.5">
+                Estilo de Gradiente de Fondo
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {BG_PRESETS.map((preset) => (
+                  <button
+                    key={preset.key}
                     type="button"
-                    variant="outline"
-                    className="text-xs h-8 px-3"
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => setBgPreset(preset.key)}
+                    className={`h-11 rounded-xl p-2 text-left relative overflow-hidden transition-all flex items-center justify-between text-white text-[10px] font-black cursor-pointer ${
+                      bgPreset === preset.key ? 'ring-2 ring-accent ring-offset-2 scale-102' : 'opacity-85 hover:opacity-100'
+                    }`}
+                    style={{ background: preset.style }}
                   >
-                    <Upload className="w-3.5 h-3.5 mr-1" />
-                    Subir Imagen
-                  </Button>
+                    <span className="truncate">{preset.label}</span>
+                    {bgPreset === preset.key && <Check className="w-3.5 h-3.5 shrink-0 ml-1" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Selector de Destino */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-text-secondary mb-1">
+                  Tipo de Acción CTA
+                </label>
+                <select
+                  value={ctaActionType}
+                  onChange={(e) => {
+                    const newType = e.target.value;
+                    setCtaActionType(newType);
+                    if (newType === 'category' && menuCategories[0]) {
+                      setCtaTarget(menuCategories[0].key);
+                    } else if (newType === 'product' && menuItems[0]) {
+                      setCtaTarget(menuItems[0].sku);
+                    } else if (newType === 'raffle') {
+                      setCtaTarget('/tickets');
+                    }
+                  }}
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent font-bold"
+                >
+                  <option value="category">Filtrar Categoría</option>
+                  <option value="product">Abrir Producto</option>
+                  <option value="raffle">Ir a Sorteos</option>
+                  <option value="url">Enlace Externo</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-text-secondary mb-1">
+                  Destino (Target)
+                </label>
+                {ctaActionType === 'category' ? (
+                  <select
+                    value={ctaTarget}
+                    onChange={(e) => setCtaTarget(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent font-medium"
+                  >
+                    {menuCategories.map((c) => (
+                      <option key={c.key} value={c.key}>
+                        {c.emoji || '📁'} {c.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : ctaActionType === 'product' ? (
+                  <select
+                    value={ctaTarget}
+                    onChange={(e) => setCtaTarget(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent font-medium"
+                  >
+                    {menuItems.map((p) => (
+                      <option key={p.sku} value={p.sku}>
+                        {p.name} (${p.price})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder={ctaActionType === 'url' ? 'https://...' : 'Ej. /tickets'}
+                    value={ctaTarget}
+                    onChange={(e) => setCtaTarget(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-surface-raised border border-line text-text-primary outline-none focus:border-accent font-medium"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Imagen R2 */}
+            <div className="p-3.5 rounded-2xl bg-surface-raised border border-line flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {imagePreview ? (
+                  <img src={imagePreview} alt="Preview" className="w-10 h-10 rounded-xl object-cover border border-line" />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-surface-card border border-line flex items-center justify-center text-text-muted">
+                    <ImageIcon className="w-5 h-5" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-xs font-bold text-text-primary">Foto del Banner</p>
+                  <p className="text-[10px] text-text-muted">JPG, PNG o WebP</p>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-line flex items-center justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="text-xs">
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={createBannerMutation.isPending || updateBannerMutation.isPending}
-                  className="text-xs font-bold bg-accent text-white"
-                >
-                  <Check className="w-3.5 h-3.5 mr-1" />
-                  Guardar Banner
-                </Button>
-              </div>
-            </form>
-          </div>
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-xs h-8 px-3 rounded-xl"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="w-3.5 h-3.5 mr-1" />
+                Subir
+              </Button>
+            </div>
+
+            <div className="pt-3 border-t border-line flex items-center justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setIsDrawerOpen(false)} className="text-xs rounded-xl">
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={createBannerMutation.isPending || updateBannerMutation.isPending}
+                className="text-xs font-black bg-accent text-white rounded-xl cursor-pointer active:scale-95"
+              >
+                <Check className="w-3.5 h-3.5 mr-1" />
+                Guardar Banner
+              </Button>
+            </div>
+          </form>
         </div>
-      )}
+      </Drawer>
     </div>
   );
 }

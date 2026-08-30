@@ -870,6 +870,31 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `npm run build:chekeo` ✅ (6.67s, 0 warnings).
   - `git diff --check` ✅.
 
+### 📅 Sesión — 2026-08-30 (Admin V3 Suite Completa: Refinamiento de las 6 Categorías con Dynamic UI & Framer Motion)
+- **Contexto**: Modernización y enriquecimiento integral de las 6 categorías del panel de administración en Chekeo V3 integrando la suite de Componentes Dinámicos (`@ui/drawer`, `@ui/segmented-control`, `@ui/kpi-card`, `@ui/stepper`, `@ui/skeleton`), animaciones fluidas con Framer Motion, calculadoras en vivo y datos reales en Cloudflare D1/R2.
+- **Cambios realizados**:
+  1. **🍔 Fase 1 (Menú, Catálogo & Stock)**:
+     - `CategoryManagerModal.tsx` *(Nuevo)*: Drawer gestual con drag-to-dismiss para crear, renombrar, cambiar emojis (`🍔`, `🍟`, `🥤`, `✨`) y reordenar categorías en D1 (`POST /api/menu-v2-admin/categories`).
+     - `ProductEditModal.tsx`: Migración a `@ui/drawer` con calculadora en tiempo real de porcentaje de descuento (`-$XX.XX (XX% OFF)`), subida a R2 y steppers táctiles.
+     - `MenuStockPanel.tsx`: 4 `KpiCard` reactivas con filtro al clic, `SegmentedControl` con `layoutId="menu-status-segmented"`, barra flotante de acciones en lote (*Reabastecer al Límite*, *Pausar Agotados*) y steppers $\ge 44\text{px}$.
+  2. **🏢 Fase 2 (Torres, Logística & Horarios)**:
+     - `TowersAdminPanel.tsx`: Radar en vivo con reloj CDMX (`America/Mexico_City`), estado de apertura dinámico (`🟢 Abierta y Tomando Pedidos (Quedan XX min)` / `🟡 Cerrada` / `🔴 Pausada`), presets 1-toque de días (`🏢 Lun-Vie`, `🌐 Toda la Semana`, `🍻 Fines de Semana`), validación inteligente de ventanas horarias y 4 `KpiCard` reactivas.
+  3. **💵 Fase 3 (Finanzas, Arqueo & Corte Z)**:
+     - `CashCutPanel.tsx`: Calculadora de arqueo físico en tiempo real dentro de `@ui/drawer` (calcula caja cuadrada `$0.00`, sobrante o faltante con feedback de color animado), selector de horizonte con `SegmentedControl`, barra gráfica de métodos de pago y exportación CSV.
+  4. **🌾 Fase 4 (Insumos, Recetas & Costeo D1)**:
+     - `IngredientsAdminPanel.tsx`: Calculadora en tiempo real de **Food Cost % y Margen Bruto** comparando costo de ingredientes vs precio en menú con semáforo de rentabilidad ($\ge 65\%$), 4 `KpiCard` reactivas, buscador de insumos y `@ui/drawer` para alta de materia prima.
+  5. **🎨 Fase 5 (Marketing & Banners Tienda)**:
+     - `BannersAdminPanel.tsx`: Simulador WYSIWYG en vivo en marco de smartphone, selector de productos reales con foto y precio de D1, selector de gradientes con anillo activo, botones de reordenamiento 1-toque $\uparrow / \downarrow$, 4 `KpiCard` reactivas y editor en `@ui/drawer`.
+  6. **🎁 Fase 6 (Lealtad, Sorteos & Referidos)**:
+     - `RafflesAdminPanel.tsx`: Ruleta animada de sorteo ponderada con Framer Motion y efecto de ticker de nombres en vivo, 4 `KpiCard` reactivas, navegación con `SegmentedControl`, generador automático de códigos de referido (`[ ✨ Sugerir Aleatorio ]`) y `@ui/drawer` para ajustes de tickets.
+  7. **🎛️ Workspace Global**:
+     - `AdminModuleWorkspace.tsx`: Transición con `motion.div` `layoutId` en el selector segmentado móvil y sidebar de desktop.
+- **Resultado de Checks**:
+  - `git diff --check` ✅.
+  - `npm run typecheck` ✅ (0 errores en todo el monorepo).
+  - `npm run build:chekeo` ✅ (12.09s, 0 warnings).
+  - `npm run build:public` ✅ (9.46s, 0 warnings).
+
 ## 📌 Issues Abiertos
 
 | # | Descripción | Severidad | Estado |

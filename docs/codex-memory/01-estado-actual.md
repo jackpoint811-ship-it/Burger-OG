@@ -58,7 +58,8 @@ Burgers.exe tiene una app pública de pedidos (`apps/public-order-v3`) y una app
 | V3-ProdAudit | Auditoría Forense 360° Pre-Producción & Certificación Cutover | ✅ Completado (GO 🟢) |
 | V3-Performance | Optimizaciones Técnicas, Code Splitting & Manual Chunks | ✅ Mergeado (#629) |
 | V3-E2ETesting | Auditoría M3/M4, Workspace Hardening & Tests Playwright E2E | ✅ Mergeado (#630) |
-| V3-Polish | Polish de UX/UI, Skeletons Shimmer & Micro-interacciones Táctiles | 🟢 Listo para PR |
+| V3-Polish | Polish de UX/UI, Skeletons Shimmer & Micro-interacciones Táctiles | ✅ Mergeado (#631) |
+| SaaS-Platform | Motor SaaS Multi-Tenant, Facturación Stripe & Control Plane Aislado | 🟢 Completado en rama `saas-platform` |
 
 ## Infraestructura y URLs Activas (Cloudflare Pages)
 
@@ -201,3 +202,11 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Shimmer fluido en `packages/ui/src/skeleton.tsx` para cargas visualmente suaves y libres de destellos (CLS = 0).
   - Micro-interacciones táctiles elásticas (`active:scale-[0.98]` / `active:scale-95`) en catálogo, `ProductCard`, `CategoryNav` y `CartBar` con contador animado.
   - Accesibilidad WCAG 2.1 AA y foco visible reforzado en `HorizontalDateCalendarFilter` y controles de Chekeo.
+- **Admin V3 Suite Completa: Refinamiento de las 6 Categorías con Dynamic UI & Framer Motion (2026-08-30)**:
+  - **Menú & Stock**: `CategoryManagerModal.tsx` con `@ui/drawer` para gestionar categorías en D1, `ProductEditModal.tsx` con calculadora de descuento en tiempo real (`-$XX.XX (XX% OFF)`), `MenuStockPanel.tsx` con 4 `KpiCard` reactivas, `SegmentedControl` con `layoutId` y barra de acciones en lote.
+  - **Torres & Horarios**: `TowersAdminPanel.tsx` con Radar CDMX en vivo (`America/Mexico_City`), estado de apertura dinámico, presets de días 1-toque y validaciones de ventanas horarias.
+  - **Finanzas & Corte Z**: `CashCutPanel.tsx` con calculadora interactiva de arqueo físico en `@ui/drawer` (calcula caja cuadrada `$0.00`, sobrante o faltante con feedback animado), `SegmentedControl` y exportación CSV.
+  - **Insumos & Costeo**: `IngredientsAdminPanel.tsx` con calculadora en vivo de **Food Cost % y Margen Bruto** contra el menú, 4 `KpiCard` reactivas y alta de insumos en `@ui/drawer`.
+  - **Marketing & Banners**: `BannersAdminPanel.tsx` con simulador WYSIWYG en vivo en marco de smartphone, selector de productos reales de D1 y reordenamiento 1-toque $\uparrow / \downarrow$.
+  - **Sorteos & Lealtad**: `RafflesAdminPanel.tsx` con ruleta interactiva animada con Framer Motion, ticker en vivo de nombres, generador de códigos de referido y `@ui/drawer` para ajustes de tickets.
+  - **Workspace Global**: `AdminModuleWorkspace.tsx` con transiciones de resorte suave `motion.div` `layoutId` en móvil y desktop.
