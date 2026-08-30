@@ -14,9 +14,6 @@ import { menuRouter } from './_routes/menu';
 import { menuAdminRouter } from './_routes/menu-admin';
 import { ordersRouter } from './_routes/orders';
 import { ordersAdminRouter } from './_routes/orders-admin';
-import { saasTenantsRouter } from './_routes/saas-tenants';
-import { saasOnboardingRouter } from './_routes/saas-onboarding';
-import { saasBillingRouter } from './_routes/saas-billing';
 
 const app = new Hono<AppEnv>().basePath('/api');
 
@@ -45,7 +42,7 @@ app.notFound((c) => {
   );
 });
 
-// Mount sub-routers canónicos de Restaurante (Base / Tenant)
+// Mount sub-routers
 app.route('/internal-v2-auth', authRouter);
 app.route('/tower-schedules', towerSchedulesRouter);
 app.route('/campaign-config', campaignConfigRouter);
@@ -59,11 +56,6 @@ app.route('/menu-v2', menuRouter);
 app.route('/menu-v2-admin', menuAdminRouter);
 app.route('/orders-v2', ordersRouter);
 app.route('/orders-v2-admin', ordersAdminRouter);
-
-// Mount sub-routers del SaaS Control Plane
-app.route('/saas/tenants', saasTenantsRouter);
-app.route('/saas/onboarding', saasOnboardingRouter);
-app.route('/saas/billing', saasBillingRouter);
 
 export const onRequest = handle(app);
 export default app;

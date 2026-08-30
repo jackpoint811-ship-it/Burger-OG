@@ -28,15 +28,16 @@ export function TopHeader() {
   useEffect(() => {
     const isDarkMode =
       document.documentElement.classList.contains('theme-dark') ||
+      document.documentElement.classList.contains('dark') ||
       localStorage.getItem('chekeo_theme') === 'dark' ||
       (!('chekeo_theme' in localStorage) &&
         window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     setIsDark(isDarkMode);
     if (isDarkMode) {
-      document.documentElement.classList.add('theme-dark');
+      document.documentElement.classList.add('theme-dark', 'dark');
     } else {
-      document.documentElement.classList.remove('theme-dark');
+      document.documentElement.classList.remove('theme-dark', 'dark');
     }
   }, []);
 
@@ -44,10 +45,10 @@ export function TopHeader() {
     const nextDark = !isDark;
     setIsDark(nextDark);
     if (nextDark) {
-      document.documentElement.classList.add('theme-dark');
+      document.documentElement.classList.add('theme-dark', 'dark');
       localStorage.setItem('chekeo_theme', 'dark');
     } else {
-      document.documentElement.classList.remove('theme-dark');
+      document.documentElement.classList.remove('theme-dark', 'dark');
       localStorage.setItem('chekeo_theme', 'light');
     }
   };

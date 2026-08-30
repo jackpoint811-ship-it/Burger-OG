@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { motion, AnimatePresence, useReducedMotion, type PanInfo } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion, useDragControls, type PanInfo } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from './cn';
 
@@ -23,6 +23,7 @@ export function Drawer({
   enableDrag = true,
 }: DrawerProps) {
   const shouldReduceMotion = useReducedMotion();
+  const dragControls = useDragControls();
   const titleId = React.useId();
   const descId = React.useId();
 
@@ -46,7 +47,7 @@ export function Drawer({
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           {/* Animated Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -69,25 +70,30 @@ export function Drawer({
             exit={shouldReduceMotion ? { opacity: 0 } : { y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
             drag={enableDrag && !shouldReduceMotion ? 'y' : false}
+            dragControls={dragControls}
+            dragListener={false}
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}
             onDragEnd={handleDragEnd}
             className={cn(
-              'relative z-50 w-full max-w-lg rounded-t-3xl sm:rounded-3xl border-t sm:border border-line bg-surface-card p-5 sm:p-6 shadow-floating max-h-[90vh] overflow-y-auto',
+              'relative z-50 w-full max-w-lg rounded-t-3xl sm:rounded-3xl border-t sm:border border-line bg-surface-card p-5 sm:p-6 shadow-floating max-h-[90vh] flex flex-col overflow-hidden',
               'pb-[max(1.5rem,env(safe-area-inset-bottom))]',
               className
             )}
           >
             {/* Mobile drag pill / Grab handle */}
             {enableDrag && (
-              <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-line/80 sm:hidden cursor-grab active:cursor-grabbing" />
+              <div
+                onPointerDown={(e) => dragControls.start(e)}
+                className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-line/80 sm:hidden cursor-grab active:cursor-grabbing shrink-0 touch-none"
+              />
             )}
 
             {/* Header: Title, Description & Close Button */}
             {title && (
-              <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="mb-4 flex items-start justify-between gap-3 shrink-0">
                 <div>
-                  <h2 id={titleId} className="text-lg font-bold text-text-primary">
+                  <h2 id={titleId} className="text-lg font-black text-text-primary">
                     {title}
                   </h2>
                   {description && (
@@ -107,7 +113,10 @@ export function Drawer({
               </div>
             )}
 
-            {children}
+            {/* Scrollable Content Body */}
+            <div className="overflow-y-auto overscroll-contain flex-1 min-h-0 pr-1 -mr-1">
+              {children}
+            </div>
           </motion.div>
         </div>
       )}
