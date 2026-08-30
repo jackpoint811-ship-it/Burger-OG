@@ -23,7 +23,10 @@
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-panel: 0 4px 16px rgba(0, 0, 0, 0.12);
   --shadow-floating: 0 8px 32px rgba(0, 0, 0, 0.16);
-  --shadow-cta: 0 4px 20px rgba(22, 163, 74, 0.35);
+  --radius-card: var(--radius-card, 1rem);
+  --radius-btn: var(--radius-btn, 0.75rem);
+  --radius-badge: var(--radius-badge, 9999px);
+  --radius-input: var(--radius-input, 0.75rem);
 }
 
 :root {
@@ -32,6 +35,7 @@
   --color-surface-raised: #EAE6E1;
   --color-surface-alt: #F9FAFB;
   --color-accent: #16A34A;
+  --color-accent-dark: #22C55E;
   --color-accent-soft: rgba(22, 163, 74, 0.1);
   --color-text-primary: #0F172A;
   --color-text-secondary: #475569;
@@ -40,6 +44,11 @@
   --color-line: #E2DCD5;
   --color-danger: #EF4444;
   --color-warning: #F59E0B;
+  --shadow-cta: 0 4px 20px rgba(22, 163, 74, 0.35);
+  --radius-card: 1rem;
+  --radius-btn: 0.75rem;
+  --radius-badge: 9999px;
+  --radius-input: 0.75rem;
   --touch-target-min: 44px;
 }
 

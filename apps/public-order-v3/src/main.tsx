@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { TenantThemeProvider } from '@ui';
 import { PublicApp } from './app/PublicApp';
 import './styles/globals.css';
 
@@ -18,9 +19,11 @@ const rootElement = document.getElementById('root');
 if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <PublicApp />
-      </QueryClientProvider>
+      <TenantThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <PublicApp />
+        </QueryClientProvider>
+      </TenantThemeProvider>
     </React.StrictMode>
   );
 }

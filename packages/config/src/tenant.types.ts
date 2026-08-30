@@ -44,11 +44,43 @@ export type TenantFeatureFlags = {
   oneClickReorder: FeatureStatus;
 };
 
+export type TenantTerminology = {
+  itemSingular: string;
+  itemPlural: string;
+  customizationTitle: string;
+  combosLabel: string;
+  cartCtaLabel: string;
+  searchPlaceholder?: string;
+  heroHeadline?: string;
+  heroSubtitle?: string;
+};
+
+export type TenantRadiusStyle = 'sharp' | 'modern' | 'rounded' | 'pill';
+
 export type TenantTheme = {
+  // Paleta de Color Principal y Acentos
   accentColor: string;
   accentColorDark: string;
+  accentColorSoft: string;
+  secondaryColor?: string;
   surfaceColor: string;
   surfaceCardColor: string;
+  surfaceRaisedColor?: string;
+  surfaceAltColor?: string;
+  lineColor?: string;
+  shadowCta?: string;
+  heroGradient?: string;
+
+  // Formas, Esquinas y Curvaturas (Border Radius Tokens)
+  radiusStyle?: TenantRadiusStyle;
+  radiusCard?: string;
+  radiusButton?: string;
+  radiusBadge?: string;
+  radiusInput?: string;
+
+  // Vocabulario & Terminología
+  terminology?: TenantTerminology;
+
   accentLabel?: string;
 };
 
