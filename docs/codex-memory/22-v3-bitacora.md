@@ -906,6 +906,17 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Backlog de Refinamiento 1 por 1**:
   - Documentado en `docs/codex-memory/05-backlog.md` el roadmap detallado para las 6 categorías maestras de Admin y sus sub-herramientas.
 
+### 2026-08-31 — Plataforma SaaS Multi-Tenant & Control Plane Aislado (PR #635)
+- **Objetivo**: Transformar Burgers.exe en un SaaS multi-tenant donde Burgers.exe opera como el **Cliente Insignia (Tenant #0)**, con arquitectura de control plane desacoplada e infraestructura independiente.
+- **Implementación**:
+  - **SaaS Command Center (`SaaSHubView.tsx`)**: Dashboard principal para gestión de organizaciones, proyectos, estado de salud de la red y cálculo de MRR global.
+  - **Onboarding Engine (`TenantOnboardingModal.tsx`)**: Asistente interactivo en 3 pasos con validación Zod (`saasOnboardingSchema`), temas visuales y asignación de credenciales.
+  - **Gobernanza de Suscripciones (`SubscriptionBillingPanel.tsx`)**: Tiers Starter ($29/m), Pro ($79/m), Enterprise ($199/m) con modo *Beta Gratuita ($0/mes)* y pasarela de cobros en *Próximamente*.
+  - **Infraestructura Cloudflare**: Schemas D1 en `migrations/saas/0001_saas_control_plane.sql`, `0002_saas_control_plane_seed.sql`, configs `wrangler.saas.*.toml` y script `scripts/provision-cloudflare.sh`.
+  - **Backend Hono (`functions/api/_routes/saas.ts`)**: Endpoints `/api/saas/onboarding`, `/api/saas/tenants`, `/api/saas/billing/checkout`, `/api/saas/billing/portal`, `/api/saas/billing/webhook`.
+  - **Standalone Workspace**: Suite independiente construida en `~/teamwork_projects/resto_saas_admin` con TypeScript estricto, pure SVG charts y 0 errores.
+- **Estado**: ✅ Mergeado en `preview` vía PR [#635](https://github.com/JackPointJP/Burgers-exe/pull/635). Build de producción y typecheck limpios con 0 errores.
+
 ## 📌 Issues Abiertos
 
 | # | Descripción | Severidad | Estado |

@@ -56,6 +56,7 @@ Esta carpeta funciona como memoria viva del proyecto.
 | `11-skills-and-tools.md` | Reglas oficiales de skills, herramientas y validación local. |
 | `21-order-communication-and-recipe-spec.md` | Especificación de comunicación DTO estructurada, recetas de cocina y catálogo de insumos. |
 | `22-v3-bitacora.md` | **Bitácora viva V3**: Log de sesiones, decisiones, métricas, PRs y auditorías de post-migración. |
+| `23-saas-multi-tenant-platform.md` | **Plataforma SaaS Multi-Tenant**: Arquitectura, control plane D1, onboarding, gobernanza de planes e integración de Burgers.exe como Flagship #0. |
 
 ### 📁 Notas Históricas / Archivo V2 (Referencia Pasada)
 

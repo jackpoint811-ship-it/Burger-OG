@@ -313,3 +313,26 @@ Prevenir desalineaciones entre la base de datos real y la interfaz de usuario, e
 - Cero productos o precios ficticios en la aplicación.
 - Comandas y desgloses de cocina 100% consistentes con el catálogo de D1.
 - Inclusión de la regla en `AGENTS.md`, `GEMINI.md` y `.agents/rules/00-hard-constraints.md` como prohibición permanente.
+
+### Fecha
+
+2026-08-31
+
+### Decisión
+
+**Transformación de Plataforma a SaaS Multi-Tenant Independiente (Chekeo Cloud Engine) con Burgers.exe como Flagship #0 (PR #635)**:
+
+1. **Aislamiento Multi-Tenant**: El SaaS opera como una plataforma central que aprovisiona y aloja instancias de restaurantes con particionamiento de bases de datos Cloudflare D1 (`resto-saas-control-plane-*`), almacenamiento R2 y dominios propios.
+2. **Burgers.exe como Cliente Insignia**: Burgers.exe se mantiene como el caso de éxito #0 (Enterprise Flagship), con inmunidad de borrado, operando de forma 100% independiente sin contaminar el código del SaaS.
+3. **Control Plane & Onboarding Self-Serve**: El acceso principal de la plataforma (`/`) renderiza el `SaaSHubView` para gestión de flota de restaurantes, asistente de alta en 3 pasos (`TenantOnboardingModal`), control de cuotas y cálculo de MRR global.
+4. **Gobernanza de Suscripciones**: Definición de 3 tiers de servicio (Starter $29/m, Pro $79/m, Enterprise $199/m) con modo *Acceso Anticipado / Beta Gratuita ($0/mes)* y pasarela Stripe en *Próximamente*.
+
+### Motivo
+
+Permitir que la tecnología de Burgers.exe escale como un SaaS para múltiples restaurantes y dark kitchens, manteniendo el software de Burgers.exe intacto y desacoplado.
+
+### Impacto
+
+- Mergeado en `preview` mediante PR [#635](https://github.com/JackPointJP/Burgers-exe/pull/635).
+- Creación del espacio de trabajo independiente en `~/teamwork_projects/resto_saas_admin`.
+- Disponibilidad del Hub Multi-Tenant en la ruta raíz de Chekeo.
