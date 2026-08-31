@@ -63,6 +63,7 @@ Burgers.exe opera en un monorepo limpio y dedicado exclusivamente al restaurante
 | V3-E2ETesting | Auditoría M3/M4, Workspace Hardening & Tests Playwright E2E | ✅ Mergeado (#630) |
 | V3-Polish | Polish de UX/UI, Skeletons Shimmer & Micro-interacciones Táctiles | ✅ Mergeado (#631) |
 | SaaS-Decouple | Desacoplamiento de SaaS Multi-Tenant al Repositorio Hresto | ✅ Completado |
+| V3-ProdRelease | Pase a Producción Oficial (Suite Admin, Performance & Polish) | ✅ Mergeado (#640) |
 
 ## Infraestructura y URLs Activas (Cloudflare Pages)
 
@@ -226,3 +227,6 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Eliminación de la sección redundante de *Favoritos Rápidos* del sidebar lateral (centralizados en el Hub con *Acceso Rápido ⚡*).
   - Preservación del buscador universal 🔍 (`AdminSearchBar`), pin/unpin ⭐ y bloqueo 🔒.
   - Reducción de ~88 líneas y optimización del bundle de `AdminView` (-2.66 kB).
+- **Pase a Producción Oficial de Burgers.exe V3 (Release PR #640 - 2026-08-31)**:
+  - Despliegue exitoso en la rama oficial `main` de la plataforma completa de Burgers.exe V3.
+  - Integración en producción de: Suite completa de 6 categorías de Administración con Dynamic UI y Framer Motion (Menú, Torres, Corte Z, Insumos/Costeo, Banners y Ruleta de Sorteos), Workspace ergonómico simplificado, optimizaciones extremas de rendimiento y code-splitting en Vite (-88% en Chekeo, -76% en Tienda Pública), Dark Mode fluido mediante `@custom-variant dark`, modernización de tests E2E y desacoplamiento de SaaS Multi-Tenant al repositorio `Hresto`.

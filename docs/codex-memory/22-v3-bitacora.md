@@ -935,6 +935,22 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `npm run build:chekeo` ✅ (5.08s).
   - `npm run build:public` ✅ (3.91s).
 
+### 📅 2026-08-31 — Sesión 33: Pase a Producción Oficial (Release PR #640 Mergeado)
+- **Certificación & Despliegue en Producción (`main`)**:
+  - Apertura y merge del Pull Request oficial [#640](https://github.com/JackPointJP/Burgers-exe/pull/640) desde `release/v3-preview-to-main` hacia `main`.
+  - Integración definitiva en producción de todos los hitos acumulados:
+    1. **Suite Completa de 6 Categorías de Admin V3**: Menú & Stock con gestión de categorías en D1, Torres & Horarios con Radar CDMX en vivo, Finanzas & Corte Z con calculadora de arqueo (sobrante/faltante), Insumos con cálculo de Food Cost % y Margen Bruto, Banners con simulador WYSIWYG y Ruleta de Sorteos interactiva con Framer Motion (PR #632).
+    2. **Workspace de Admin V3 Simplificado**: Cabecera compacta con retorno rápido 1-toque (`← [Módulo]` / <kbd>Esc</kbd>) y eliminación de sidebar redundante (PR #625).
+    3. **Rendimiento & Code-Splitting**: Manual chunks en Vite con reducción del -88% en Chekeo (95 kB) y -76% en Tienda Pública (130 kB) (PR #629).
+    4. **Taste Skill & UI/UX Polish**: Shimmer visual fluido en skeletons, micro-interacciones elásticas y Dark Mode con `@custom-variant dark` (PRs #631, #633).
+    5. **Monorepo Puro**: Desacoplamiento total del SaaS Multi-Tenant al repositorio independiente `Hresto` (PR #639).
+- **Verificación Técnica**:
+  - `git diff --check` ✅ (0 errores).
+  - `npm run typecheck` ✅ (0 errores).
+  - `npm run build:public` ✅ (4.75s).
+  - `npm run build:chekeo` ✅ (5.38s).
+  - Cloudflare Pages: Despliegue automático a producción (`https://burgers-exe.pages.dev/` y `https://chekeo2-0.pages.dev/`).
+
 
 ## 📌 Issues Abiertos
 
