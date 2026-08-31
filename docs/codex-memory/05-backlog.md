@@ -32,7 +32,10 @@
 
 ## Completados recientemente
 
+- [x] **SaaS Cloudflare Backend & D1 Control Plane Suite (2026-08-31)**: Subrouter Hono `functions/api/_routes/saas.ts` montado en `/api/saas/*` (`/tenants`, `/metrics`, `/onboarding`), `_tenant-utils.ts` con resolución dinámica, esquema D1 `0001_saas_control_plane.sql`, seed canónico `0002_saas_control_plane_seed.sql`, script `provision-cloudflare.sh` ampliado y documentación técnica en `docs/saas-cloudflare-architecture.md`.
+- [x] **PR #635 (2026-08-31)**: Motor SaaS Multi-Tenant, Facturación Stripe & Control Plane Aislado — `SaaSHubView.tsx` como vista raíz, `TenantOnboardingModal.tsx`, `SuperAdminControlPanel.tsx`, switch de marcas en `TopHeader.tsx` y contratos `@config`.
 - [x] **PR #633 (2026-08-30)**: Fix de Dark Mode & Scroll Fluido en Modales / Drawers — Activada directiva `@custom-variant dark` para Tailwind CSS v4 con variables dinámicas `var(--color-*)` en Chekeo y Tienda Pública; desacoplado el drag listener de Framer Motion en `@ui/drawer` mediante `useDragControls` y habilitado `overflow-y-auto` con `max-h` en `@ui/dialog` para scroll vertical fluido sin bloqueos de gestos.
+
 - [x] **PR-V3-Polish (2026-08-30)**: Polish de UX/UI, Skeletons Shimmer & Micro-interacciones Táctiles — Shimmer suave en `Skeleton`, retroalimentación elástica (`active:scale-[0.98]` / `active:scale-95`) en catálogo, drawers, `CartBar` animado y `HorizontalDateCalendarFilter` con accesibilidad WCAG 2.1 AA.
 - [x] **PR-V3-E2ETesting (2026-08-30)**: Auditoría M3/M4 & Modernización Suite E2E Playwright — Validación integral de tipos en `@config`, schemas Zod y modernización de `tests/e2e-catalog-kitchen.spec.ts` con selectores semánticos shadcn/ui y flujo completo de 4 Tiers.
 - [x] **PR-V3-Performance (2026-08-30)**: Optimizaciones Técnicas & Performance — `manualChunks` en Vite, `React.lazy` y `Suspense` en vistas de Chekeo (`PedidosView`, `CocinaView`, `PagosView`, `AdminView`), paneles de administración y modales públicos. Reducción de ~88% en el bundle inicial de Chekeo y ~76% en Public Order (0 warnings >500 kB).
