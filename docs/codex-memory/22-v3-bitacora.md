@@ -921,6 +921,21 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `npm run build:public` ✅ (3.47s).
   - `npm run build:chekeo` ✅ (3.82s).
 
+### 📅 2026-08-31 — Sesión 32: Simplificación del Workspace de Admin V3 & Limpieza de Sidebar (PR #625)
+- **Cabecera Simplificada & Ergonómica**:
+  - Reemplazo de migas de pan extensas por un botón ergonómico y directo `← [Icono] [Nombre del Módulo]` en `AdminModuleWorkspace.tsx` con target táctil $\ge 44\text{px}$ y atajo <kbd>Escape</kbd>.
+- **Sidebar Limpio (Cero Duplicidad)**:
+  - Eliminación de la sección redundante de *Favoritos Rápidos* del sidebar lateral (centralizados en el Hub principal con *Acceso Rápido ⚡*).
+  - Preservación del buscador universal Command Palette 🔍 (`AdminSearchBar`), botón de Pin/Unpin ⭐ y botón de bloqueo 🔒.
+- **Optimización y Limpieza de Código**:
+  - Eliminación de imports y variables no utilizadas (`Badge`, `ChevronRight`, `Home`, `Zap` y `favorites`), reduciendo ~88 líneas netas y optimizando el bundle de `AdminView` (-2.66 kB).
+- **Verificación Técnica**:
+  - `git diff --check` ✅ (0 errores).
+  - `npm run typecheck` ✅ (0 errores).
+  - `npm run build:chekeo` ✅ (5.08s).
+  - `npm run build:public` ✅ (3.91s).
+
+
 ## 📌 Issues Abiertos
 
 | # | Descripción | Severidad | Estado |
