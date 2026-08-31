@@ -78,9 +78,9 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 | Milestone | Nombre | Alcance | Estado | Dependencias |
 |---|---|---|:---:|---|
 | **M1** | Tooling & Test Configurations Alignment | Actualizar configs de Playwright (`playwright.e2e.config.ts`, `playwright.internal-kitchen.config.ts`), `.gitignore` y limpiar artefactos raíz | ✅ Completado | Ninguna |
-| **M2** | Documentation & Codex Memory Synchronization | Alinear `README.md`, `AGENTS.md` y sincronizar notas de `docs/codex-memory/` (00, 02, 09, 22-v3) | 🔄 En Progreso | M1 |
-| **M3** | Code Consistency & Workspace Hardening | Verificar reachability 100% de apps/packages/functions, auditar `auth.api.ts` y tipos | ⏳ Planificado | M1 |
-| **M4** | Final E2E Test Pass & Audit Verification | Ejecución integral de typechecks, builds, tests Playwright y auditorías forenses/adversariales | ⏳ Planificado | M1, M2, M3 |
+| **M2** | Documentation & Codex Memory Synchronization | Alinear `README.md`, `AGENTS.md` y sincronizar notas de `docs/codex-memory/` (00, 02, 09, 22-v3) | ✅ Completado | M1 |
+| **M3** | Code Consistency & Workspace Hardening | Verificar reachability 100% de apps/packages/functions, auditar `auth.api.ts` y tipos | ✅ Completado | M1 |
+| **M4** | Final E2E Test Pass & Audit Verification | Ejecución integral de typechecks, builds, tests Playwright y auditorías forenses/adversariales | ✅ Completado | M1, M2, M3 |
 
 **Leyenda**: ⏳ Pendiente · 🔄 En progreso · ✅ Completado / Mergeado · ❌ Bloqueado · ⏸️ Pausado
 
@@ -775,11 +775,165 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 ---
 
+### 📅 2026-08-28 — Sesión 40: Rediseño Integral UX/UI de la Pestaña Admin en Chekeo V3 (Progressive Disclosure Hub & Search Overlay)
+
+- **🎯 Objetivos**:
+  1. Rediseñar la experiencia completa de la pestaña Admin implementando la arquitectura *Progressive Disclosure Hub* para eliminar la sobrecarga cognitiva y acelerar la navegación.
+  2. Implementar el buscador colapsado tipo lupita 🔍 (`AdminSearchBar`) que se expande a overlay modal con atajo `⌘K`/`Ctrl+K`, escape y navegación por teclado.
+  3. Integrar la franja de Acceso Rápido (`QuickActionChip`) con soporte de pin/unpin dinámico y favoritos del operador.
+  4. Organizar los 6 módulos maestros en cuadrícula de 2 columnas compactas (`ModuleCard`) con iconografía Lucide y colores temáticos.
+  5. Incorporar el buscador en la cabecera del Workspace (`AdminModuleWorkspace`) para búsqueda instantánea desde cualquier herramienta.
+  6. Eliminar componentes obsoletos (`AdminDashboardGrid.tsx`, `AdminCategorySubmenu.tsx`) y limpiar barrel exports.
+- **🛠️ Implementación**:
+  - `apps/internal-chekeo-v3/src/components/admin/AdminHubGrid.tsx`: Reescribo completo sin data-fetching pesado, con cabecera compacta, Acceso Rápido y grid 2-col de módulos.
+  - `apps/internal-chekeo-v3/src/components/admin/AdminSearchBar.tsx`: Transformado a botón colapsado con modal overlay, filtrado en vivo sobre `ADMIN_SEARCH_INDEX` y auto-focus.
+  - `apps/internal-chekeo-v3/src/components/admin/AdminModuleWorkspace.tsx`: Header integrado con `AdminSearchBar` para búsqueda fluida sin retornar al hub.
+  - `apps/internal-chekeo-v3/src/components/admin/index.ts`: Removidos exports de archivos eliminados.
+  - Eliminados `AdminDashboardGrid.tsx` y `AdminCategorySubmenu.tsx`.
+- **🧪 Verificación Técnica**:
+  - `git diff --check` ✅ (0 errores)
+  - `npm run typecheck` ✅ (0 errores en TypeScript)
+  - `npm run build:chekeo` ✅ (836 kB en 5.71s)
+  - `npm run build:public` ✅ (554 kB en 5.17s)
+
+---
 
 
 
 
 
+
+
+
+### 📅 Sesión — 2026-08-30 (Motor de Theming Dinámico, Curvaturas/Radius y Branding por Tenant)
+- **Contexto**: Extensión de la arquitectura para soportar tokens dinámicos de diseño (colores primarios, secundarios, fondos crema, bordes, sombras CTA), curvaturas de esquina (`radiusStyle`, `radiusCard`, `radiusButton`) y terminología específica por restaurante (`itemSingular`, `customizationTitle`, `combosLabel`, `cartCtaLabel`).
+- **Cambios realizados**:
+  1. `packages/config/src/tenant.types.ts`: Ampliación de `TenantTheme` con `TenantTerminology`, `TenantRadiusStyle`, tokens de color, sombras de CTA y radio de bordes.
+  2. `packages/config/src/tenants/amsi-tortas.tenant.ts`: Configuración artesanal completa para Amsi Tortas (naranja salsa chipotle `#EA580C`, crema cálido `#FAF6F0`, esquinas suaves `1.25rem` / 20px, y vocabulario de tortas/chilaquiles).
+  3. `packages/config/src/tenants/tamplet.tenant.ts` & `burgers-exe.tenant.ts`: Inyección de tokens neutros y de burgers.
+  4. `packages/ui/src/tenant-theme-provider.tsx`: Componente inyector en tiempo de ejecución de variables CSS Custom Properties (`--color-accent`, `--color-surface`, `--radius-card`, `--radius-btn`, `--shadow-cta`) y hooks `useTenantTheme` y `useTenantTerminology`.
+  5. `apps/public-order-v3`: Adaptación de `ProductCard`, `ProductDetailDrawer`, `CartBar`, `BrandHeader` y `globals.css` para consumir los tokens y activar personalización para tortas, combos y platillos.
+  6. `apps/internal-chekeo-v3`: Integración de `TenantThemeProvider` en el punto de entrada.
+- **Resultado de Checks**: `npm run typecheck` (0 errores), `npm run build:public` (OK), `npm run build:chekeo` (OK), `git diff --check` (OK).
+
+### 📅 Sesión — 2026-08-30 (Motor White-Label Multi-Tenant, Template en Blanco 'tamplet' & 'Amsi Tortas')
+- **Contexto**: Parametrización del core V3 en un motor agnóstico reutilizable para generar templates en blanco (`tamplet`) y nuevas instancias de restaurantes (`amsi-tortas`).
+- **Cambios realizados**:
+  1. `packages/config/src/tenant.types.ts`: Contratos para `TenantConfig`, `TenantFeatureFlags` (15 feature flags) y `TenantTheme`.
+  2. `packages/config/src/tenants/`: Configuraciones independientes para `burgers-exe.tenant.ts`, `tamplet.tenant.ts` y `amsi-tortas.tenant.ts`.
+  3. `packages/config/src/active-tenant.ts`: Resolvedor de tenant activo con soporte para compilación, hostname y URL params.
+  4. `packages/ui/`: Primitivas de UI accesibles para funciones en preparación: `ComingSoonBadge`, `ComingSoonGate`, `ComingSoonModal`.
+  5. `apps/public-order-v3`: Adaptación de `BrandHeader`, `CheckoutDrawer`, `OrderSuccessModal` y `ProductFallbackSvg` (vectores de tortas, chilaquiles, café de olla y jugos).
+  6. `apps/internal-chekeo-v3`: Adaptación de `TopHeader`, `AdminHubGrid` y `AdminModuleWorkspace` con `ComingSoonGate` y `ComingSoonBadge`.
+  7. `migrations/template/`: Schema limpio consolidado `0001_v3_clean_schema.sql` y seed en blanco `0002_v3_blank_seed.sql`.
+  8. `migrations/amsi_tortas/`: Schema `0001_v3_clean_schema.sql` y seed auténtico de tortas de chilaquiles `0002_amsi_tortas_seed.sql`.
+  9. `wrangler.*.toml`: Configuraciones dedicadas de Cloudflare para `tamplet` y `amsi-tortas`.
+  10. `scripts/provision-cloudflare.sh`: Script automatizado para aprovisionar D1, R2 y Pages por tenant.
+### 📅 Sesión — 2026-08-30 (Optimizaciones Técnicas, Code Splitting & Manual Chunks)
+- **Contexto**: Reducción drástica del bundle size inicial y eliminación de warnings de Vite (>500 kB) mediante segmentación de vendor chunks y carga diferida con `React.lazy` y `<Suspense>`.
+- **Cambios realizados**:
+  1. `vite.config.ts`: Configuración de `rollupOptions.output.manualChunks` segregando librerías clave (`vendor-react`, `vendor-query`, `vendor-framer`, `vendor-icons`, `vendor-ui`, `vendor-forms`).
+  2. `apps/internal-chekeo-v3/src/app/ChekeoApp.tsx`: Carga diferida con `React.lazy` para `PedidosView`, `CocinaView`, `PagosView` y `AdminView` con `ViewLoadingFallback` de Skeletons.
+  3. `apps/internal-chekeo-v3/src/components/admin/AdminModuleWorkspace.tsx`: Carga diferida granular con `React.lazy` de los 6 paneles administrativos (`MenuStockPanel`, `TowersAdminPanel`, `BannersAdminPanel`, `RafflesAdminPanel`, `CashCutPanel`, `IngredientsAdminPanel`) con `AdminPanelLoadingFallback`.
+  4. `apps/public-order-v3`: Carga diferida de `TowerScheduleModal` en `BrandHeader.tsx` y `OrderSuccessModal` en `PublicApp.tsx`.
+- **Resultado de Checks y Métricas**:
+  - `npm run typecheck` ✅ (0 errores).
+  - `npm run build:public` ✅: Chunk principal reducido de 584 kB a 140 kB (-76%).
+### 📅 Sesión — 2026-08-30 (Auditoría M3/M4, Workspace Hardening & Tests Playwright E2E V3)
+- **Contexto**: Cierre formal de los Milestones M3 (Workspace Hardening & Code Consistency) y M4 (Suite E2E Playwright Pass) de la migración V3.
+- **Cambios realizados**:
+  1. `packages/config/`: Auditoría de tipos, contratos y schemas Zod sin dependencias circulares.
+  2. `tests/e2e-catalog-kitchen.spec.ts`: Modernización integral de la suite de pruebas E2E con selectores semánticos shadcn/ui, roles accesibles ARIA, multi-step checkout (ubicación/pago -> datos cliente -> confirmación) y estaciones KDS de cocina V3.
+  3. Cobertura de 4 Tiers de prueba:
+     - Tier 1: Kitchen classification, Catalog banners y Phone normalization (+52, 52, espacios).
+     - Tier 2: Boundary cases (banners vacíos, números inválidos).
+     - Tier 3 & 4: Customer journey completo de punta a punta (Catálogo -> Carrito -> Checkout -> Folio `#ORD-...`).
+- **Resultado de Checks**:
+  - `npm run typecheck` ✅ (0 errores).
+  - `npm run build:public` ✅ (5.88s, 0 warnings).
+  - `npm run build:chekeo` ✅ (6.58s, 0 warnings).
+  - `git diff --check` ✅.
+
+### 📅 Sesión — 2026-08-30 (Polish de UX/UI, Skeletons Shimmer & Micro-interacciones Táctiles)
+- **Contexto**: Implementación del Punto 4 del Backlog enfocado en elevación estética Taste Skill, feedback elástico mobile-first y accesibilidad WCAG 2.1 AA.
+- **Cambios realizados**:
+  1. `packages/ui/src/skeleton.tsx`: Gradiente shimmer orgánico y suave para estados de carga limpios y sin parpadeos visuales (CLS = 0).
+  2. `apps/public-order-v3`:
+     - `ProductCard.tsx`: Micro-animación elástica (`scale: 1.25` ➔ `1`) en el badge de carrito al agregar productos, y retroalimentación táctil `active:scale-[0.96]`.
+     - `CartBar.tsx`: Animación spring con `whileHover={{ scale: 1.01 }}` y `whileTap={{ scale: 0.98 }}` en la barra flotante.
+     - `CategoryNav.tsx`: Feedback táctil `active:scale-95` en botones de categorías.
+  3. `apps/internal-chekeo-v3/src/components/shared/HorizontalDateCalendarFilter.tsx`:
+     - Botones de fecha con `active:scale-[0.96]` y foco visible `:focus-visible:ring-2 :focus-visible:ring-accent`.
+- **Resultado de Checks**:
+  - `npm run typecheck` ✅ (0 errores).
+  - `npm run build:public` ✅ (5.71s, 0 warnings).
+  - `npm run build:chekeo` ✅ (6.67s, 0 warnings).
+  - `git diff --check` ✅.
+
+### 📅 Sesión — 2026-08-30 (Admin V3 Suite Completa: Refinamiento de las 6 Categorías con Dynamic UI & Framer Motion)
+- **Contexto**: Modernización y enriquecimiento integral de las 6 categorías del panel de administración en Chekeo V3 integrando la suite de Componentes Dinámicos (`@ui/drawer`, `@ui/segmented-control`, `@ui/kpi-card`, `@ui/stepper`, `@ui/skeleton`), animaciones fluidas con Framer Motion, calculadoras en vivo y datos reales en Cloudflare D1/R2.
+- **Cambios realizados**:
+  1. **🍔 Fase 1 (Menú, Catálogo & Stock)**:
+     - `CategoryManagerModal.tsx` *(Nuevo)*: Drawer gestual con drag-to-dismiss para crear, renombrar, cambiar emojis (`🍔`, `🍟`, `🥤`, `✨`) y reordenar categorías en D1 (`POST /api/menu-v2-admin/categories`).
+     - `ProductEditModal.tsx`: Migración a `@ui/drawer` con calculadora en tiempo real de porcentaje de descuento (`-$XX.XX (XX% OFF)`), subida a R2 y steppers táctiles.
+     - `MenuStockPanel.tsx`: 4 `KpiCard` reactivas con filtro al clic, `SegmentedControl` con `layoutId="menu-status-segmented"`, barra flotante de acciones en lote (*Reabastecer al Límite*, *Pausar Agotados*) y steppers $\ge 44\text{px}$.
+  2. **🏢 Fase 2 (Torres, Logística & Horarios)**:
+     - `TowersAdminPanel.tsx`: Radar en vivo con reloj CDMX (`America/Mexico_City`), estado de apertura dinámico (`🟢 Abierta y Tomando Pedidos (Quedan XX min)` / `🟡 Cerrada` / `🔴 Pausada`), presets 1-toque de días (`🏢 Lun-Vie`, `🌐 Toda la Semana`, `🍻 Fines de Semana`), validación inteligente de ventanas horarias y 4 `KpiCard` reactivas.
+  3. **💵 Fase 3 (Finanzas, Arqueo & Corte Z)**:
+     - `CashCutPanel.tsx`: Calculadora de arqueo físico en tiempo real dentro de `@ui/drawer` (calcula caja cuadrada `$0.00`, sobrante o faltante con feedback de color animado), selector de horizonte con `SegmentedControl`, barra gráfica de métodos de pago y exportación CSV.
+  4. **🌾 Fase 4 (Insumos, Recetas & Costeo D1)**:
+     - `IngredientsAdminPanel.tsx`: Calculadora en tiempo real de **Food Cost % y Margen Bruto** comparando costo de ingredientes vs precio en menú con semáforo de rentabilidad ($\ge 65\%$), 4 `KpiCard` reactivas, buscador de insumos y `@ui/drawer` para alta de materia prima.
+  5. **🎨 Fase 5 (Marketing & Banners Tienda)**:
+     - `BannersAdminPanel.tsx`: Simulador WYSIWYG en vivo en marco de smartphone, selector de productos reales con foto y precio de D1, selector de gradientes con anillo activo, botones de reordenamiento 1-toque $\uparrow / \downarrow$, 4 `KpiCard` reactivas y editor en `@ui/drawer`.
+  6. **🎁 Fase 6 (Lealtad, Sorteos & Referidos)**:
+     - `RafflesAdminPanel.tsx`: Ruleta animada de sorteo ponderada con Framer Motion y efecto de ticker de nombres en vivo, 4 `KpiCard` reactivas, navegación con `SegmentedControl`, generador automático de códigos de referido (`[ ✨ Sugerir Aleatorio ]`) y `@ui/drawer` para ajustes de tickets.
+  7. **🎛️ Workspace Global**:
+     - `AdminModuleWorkspace.tsx`: Transición con `motion.div` `layoutId` en el selector segmentado móvil y sidebar de desktop.
+- **Resultado de Checks**:
+  - `git diff --check` ✅.
+  - `npm run typecheck` ✅ (0 errores en todo el monorepo).
+  - `npm run build:chekeo` ✅ (12.09s, 0 warnings).
+  - `npm run build:public` ✅ (9.46s, 0 warnings).
+
+### 📅 2026-08-30 — Sesión 30: Fix de Dark Mode & Scroll Fluido en Modales / Drawers — PR #633 (Mergeado)
+- **Dark Mode 100% Funcional**:
+  - Incorporada la directiva `@custom-variant dark (&:where(.dark, .dark *, .theme-dark, .theme-dark *));` en `globals.css` de Chekeo y Tienda Pública.
+  - Vinculación de tokens `@theme` a variables CSS dinámicas `var(--color-*)` y `var(--shadow-*)`, permitiendo que el switch de tema en runtime actualice instantáneamente los fondos (`#0C0E12`), tarjetas (`#161922`), textos (`#F8FAFC`) y bordes (`#2E3545`).
+  - Sincronización de switches en `TopHeader.tsx` y `BrandHeader.tsx` para alternar tanto `.theme-dark` como `.dark` con persistencia en `localStorage`.
+- **Scroll Fluido en Modales y Drawers**:
+  - En `@ui/dialog` (`packages/ui/src/dialog.tsx`): Límite de altura `max-h-[min(90vh,calc(100dvh-2rem))]`, estructura flex-col y envoltura interna `overflow-y-auto overscroll-contain flex-1 min-h-0`.
+  - En `@ui/drawer` (`packages/ui/src/drawer.tsx`): Desacoplado el listener de arrastre de Framer Motion mediante `useDragControls` y `dragListener={false}`, restringiendo el gesto de arrastre únicamente al handle superior. El cuerpo del drawer cuenta ahora con scroll nativo fluido sin bloqueos de gestos.
+- **Backlog de Refinamiento 1 por 1**:
+  - Documentado en `docs/codex-memory/05-backlog.md` el roadmap detallado para las 6 categorías maestras de Admin y sus sub-herramientas.
+
+### 📅 2026-08-31 — Sesión 31: Desacoplamiento Total de SaaS Multi-Tenant al Repositorio Hresto
+- **Desacoplamiento y Separación Canónica de Repositorios**:
+  - Toda la infraestructura, desarrollo y arquitectura de SaaS Multi-Tenant (`apps/saas-control-plane/`, backend Hono `/api/saas/*`, migraciones D1 de SaaS, templates y aprovisionamiento Cloudflare) fue trasladada y desacoplada a su propio repositorio independiente **`Hresto`** (`C:\Documentos\Hresto`).
+  - `Burgers.exe` queda restaurado al 100% como un monorepo puro y dedicado exclusivamente a sus dos aplicaciones oficiales: `apps/public-order-v3` (tienda pública) y `apps/internal-chekeo-v3` (POS/KDS, Resumen K, Pagos y Admin).
+- **Limpieza Integral en Burgers.exe**:
+  - Eliminados archivos y carpetas de SaaS (`apps/saas-control-plane/`, `functions/api/_routes/saas.ts`, `functions/api/_tenant-utils.ts`, `migrations/saas/`, `migrations/amsi_tortas/`, `migrations/template/`, `wrangler.amsi-tortas.*.toml`, `wrangler.tamplet.*.toml`, `scripts/provision-cloudflare.sh`, `docs/saas-*`).
+  - Simplificado `packages/config` con configuración estática `brand-config.ts` (`BRAND_CONFIG`) para Burgers.exe.
+  - Eliminados gates y providers multi-tenant (`TenantThemeProvider`, `ComingSoonGate`, `ComingSoonBadge`, `ComingSoonModal`) de `packages/ui` y Chekeo Admin.
+  - Limpiados scripts en `package.json` (`dev:saas`, `build:saas`, `db:saas:*`) y targets en `vite.config.ts`.
+- **Verificación Técnica**:
+  - `git diff --check` ✅ (0 errores).
+  - `npm run typecheck` ✅ (0 errores).
+  - `npm run build:public` ✅ (3.47s).
+  - `npm run build:chekeo` ✅ (3.82s).
+
+### 📅 2026-08-31 — Sesión 32: Simplificación del Workspace de Admin V3 & Limpieza de Sidebar (PR #625)
+- **Cabecera Simplificada & Ergonómica**:
+  - Reemplazo de migas de pan extensas por un botón ergonómico y directo `← [Icono] [Nombre del Módulo]` en `AdminModuleWorkspace.tsx` con target táctil $\ge 44\text{px}$ y atajo <kbd>Escape</kbd>.
+- **Sidebar Limpio (Cero Duplicidad)**:
+  - Eliminación de la sección redundante de *Favoritos Rápidos* del sidebar lateral (centralizados en el Hub principal con *Acceso Rápido ⚡*).
+  - Preservación del buscador universal Command Palette 🔍 (`AdminSearchBar`), botón de Pin/Unpin ⭐ y botón de bloqueo 🔒.
+- **Optimización y Limpieza de Código**:
+  - Eliminación de imports y variables no utilizadas (`Badge`, `ChevronRight`, `Home`, `Zap` y `favorites`), reduciendo ~88 líneas netas y optimizando el bundle de `AdminView` (-2.66 kB).
+- **Verificación Técnica**:
+  - `git diff --check` ✅ (0 errores).
+  - `npm run typecheck` ✅ (0 errores).
+  - `npm run build:chekeo` ✅ (5.08s).
+  - `npm run build:public` ✅ (3.91s).
 
 
 ## 📌 Issues Abiertos

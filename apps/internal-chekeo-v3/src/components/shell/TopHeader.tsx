@@ -1,17 +1,18 @@
 /**
- * TopHeader.tsx — PR-V3-08
+ * TopHeader.tsx — Chekeo V3
  *
  * Barra superior operativa de Chekeo V3:
- * - Indicador de entorno (Producción / Preview / Dev)
+ * - Identidad y logo de Burgers.exe
  * - Reloj operativo CDMX en tiempo real
  * - Estado de sincronización en red (Online / Offline)
  * - Switch de tema (Light / Dark mode)
- * - Botón de cierre de sesión
+ * - Botón de bloqueo / cierre de sesión administrativa
  */
 
 import React, { useState, useEffect } from 'react';
-import { Clock, Wifi, WifiOff, LogOut, Lock, Sun, Moon, Sparkles } from 'lucide-react';
+import { Clock, Wifi, WifiOff, Lock, Sun, Moon } from 'lucide-react';
 import { useAuthStore } from '../../features/auth';
+import { BRAND_CONFIG } from '@config';
 
 export function TopHeader() {
   const { isAuthenticated, logout } = useAuthStore();
@@ -26,15 +27,16 @@ export function TopHeader() {
   useEffect(() => {
     const isDarkMode =
       document.documentElement.classList.contains('theme-dark') ||
+      document.documentElement.classList.contains('dark') ||
       localStorage.getItem('chekeo_theme') === 'dark' ||
       (!('chekeo_theme' in localStorage) &&
         window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     setIsDark(isDarkMode);
     if (isDarkMode) {
-      document.documentElement.classList.add('theme-dark');
+      document.documentElement.classList.add('theme-dark', 'dark');
     } else {
-      document.documentElement.classList.remove('theme-dark');
+      document.documentElement.classList.remove('theme-dark', 'dark');
     }
   }, []);
 
@@ -42,10 +44,10 @@ export function TopHeader() {
     const nextDark = !isDark;
     setIsDark(nextDark);
     if (nextDark) {
-      document.documentElement.classList.add('theme-dark');
+      document.documentElement.classList.add('theme-dark', 'dark');
       localStorage.setItem('chekeo_theme', 'dark');
     } else {
-      document.documentElement.classList.remove('theme-dark');
+      document.documentElement.classList.remove('theme-dark', 'dark');
       localStorage.setItem('chekeo_theme', 'light');
     }
   };
@@ -54,7 +56,6 @@ export function TopHeader() {
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      // Formato hora CDMX
       const timeFormatted = new Intl.DateTimeFormat('es-MX', {
         timeZone: 'America/Mexico_City',
         hour: '2-digit',
@@ -63,7 +64,6 @@ export function TopHeader() {
         hour12: false,
       }).format(now);
 
-      // Formato fecha corta
       const dateFormatted = new Intl.DateTimeFormat('es-MX', {
         timeZone: 'America/Mexico_City',
         weekday: 'short',
@@ -94,49 +94,24 @@ export function TopHeader() {
     };
   }, []);
 
-  // Detección de entorno
-  const isProduction =
-    typeof window !== 'undefined' &&
-    window.location.hostname.includes('burgers') &&
-    !window.location.hostname.includes('preview') &&
-    !window.location.hostname.includes('localhost') &&
-    !window.location.hostname.includes('127.0.0.1');
-
-  const envLabel = isProduction
-    ? 'PRODUCCIÓN'
-    : window.location.hostname.includes('preview')
-    ? 'PREVIEW'
-    : 'DEV';
-
   return (
     <header className="sticky top-0 z-40 w-full bg-surface-card/90 backdrop-blur-md border-b border-line transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
-        {/* Izquierda: Logotipo y Badge de Entorno */}
-        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-          <div className="flex items-center gap-1.5 font-black text-lg sm:text-xl tracking-tight text-text-primary">
-            <span>Burgers</span>
-            <span className="text-accent">.exe</span>
-          </div>
-
-          <span className="hidden xs:inline-flex px-2 py-0.5 rounded-md bg-accent/15 text-accent text-[11px] font-extrabold uppercase tracking-wider">
-            CHEKEO V3
-          </span>
-
-          {/* Badge de Entorno */}
+        {/* Izquierda: Identidad de Marca Burgers.exe */}
+        <div className="flex items-center gap-2.5">
           <div
-            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
-              isProduction
-                ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
-                : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
-            }`}
-            title={`Entorno activo: ${envLabel}`}
+            className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shrink-0 border border-line shadow-xs"
+            style={{ backgroundColor: `${BRAND_CONFIG.theme.accentColor}15` }}
           >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                isProduction ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500 animate-pulse'
-              }`}
-            />
-            <span>{envLabel}</span>
+            {BRAND_CONFIG.logoEmoji}
+          </div>
+          <div className="text-left min-w-0">
+            <span className="font-black text-sm sm:text-base text-text-primary truncate block">
+              {BRAND_CONFIG.brandName}
+            </span>
+            <span className="text-[10px] font-bold text-accent uppercase tracking-wider block">
+              Punto de Venta & Cocina
+            </span>
           </div>
         </div>
 
@@ -185,7 +160,7 @@ export function TopHeader() {
             {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
           </button>
 
-          {/* Botón Bloquear Admin (Solo visible cuando la sesión de administración está activa) */}
+          {/* Botón Bloquear Admin */}
           {isAuthenticated && (
             <button
               type="button"

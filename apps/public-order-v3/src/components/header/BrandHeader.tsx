@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Sun, Moon, AlertCircle } from 'lucide-react';
 import {
   useActiveTowers,
@@ -7,7 +7,11 @@ import {
   usePublicConfig,
   getMexicoCityDateTime,
 } from '../../features';
-import { TowerScheduleModal } from './TowerScheduleModal';
+import { getActiveTenant, isFeatureEnabled } from '@config';
+
+const TowerScheduleModal = lazy(() =>
+  import('./TowerScheduleModal').then((m) => ({ default: m.TowerScheduleModal }))
+);
 
 export function BrandHeader() {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -17,20 +21,22 @@ export function BrandHeader() {
   const { siteConfig } = useSiteConfig();
   const { publicConfig } = usePublicConfig();
   const { data: activeRaffle } = useActiveRaffleQuery();
+  const tenant = getActiveTenant();
 
   // Inicialización de tema Dark / Light
   useEffect(() => {
     const isDarkMode =
       document.documentElement.classList.contains('theme-dark') ||
+      document.documentElement.classList.contains('dark') ||
       localStorage.getItem('public_theme') === 'dark' ||
       (!('public_theme' in localStorage) &&
         window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     setIsDark(isDarkMode);
     if (isDarkMode) {
-      document.documentElement.classList.add('theme-dark');
+      document.documentElement.classList.add('theme-dark', 'dark');
     } else {
-      document.documentElement.classList.remove('theme-dark');
+      document.documentElement.classList.remove('theme-dark', 'dark');
     }
   }, []);
 
@@ -38,15 +44,16 @@ export function BrandHeader() {
     const nextDark = !isDark;
     setIsDark(nextDark);
     if (nextDark) {
-      document.documentElement.classList.add('theme-dark');
+      document.documentElement.classList.add('theme-dark', 'dark');
       localStorage.setItem('public_theme', 'dark');
     } else {
-      document.documentElement.classList.remove('theme-dark');
+      document.documentElement.classList.remove('theme-dark', 'dark');
+      localStorage.setItem('public_theme', 'light');
     }
   };
 
   const mxNow = getMexicoCityDateTime();
-  const brandName = siteConfig?.brandName || 'Burgers.exe';
+  const brandName = siteConfig?.brandName || tenant.brandName;
 
   const isCatalogEnabled = publicConfig?.catalogEnabled !== false;
   const isAllTowersPaused = towers.length > 0 && towers.every((t) => t.isActive === false);
@@ -80,7 +87,7 @@ export function BrandHeader() {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-2xl bg-accent flex items-center justify-center text-white shadow-sm font-extrabold text-lg">
-              🍔
+              {tenant.logoEmoji}
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -114,14 +121,14 @@ export function BrandHeader() {
                 </button>
               </div>
               <p className="text-xs text-text-secondary font-medium">
-                Smash Burgers Artesanales
+                {tenant.tagline}
               </p>
             </div>
           </div>
 
           {/* Right Actions: Sorteo / Promo Tag & Theme Toggle */}
           <div className="flex items-center gap-2">
-            {activeRaffle && (
+            {isFeatureEnabled('rafflesAndReferrals', tenant) && activeRaffle && (
               <div
                 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold border border-amber-500/20 max-w-[170px] sm:max-w-[240px]"
                 title={`Sorteo activo: ${activeRaffle.title}`}
@@ -201,14 +208,18 @@ export function BrandHeader() {
         )}
       </div>
 
-      <TowerScheduleModal
-        isOpen={isScheduleOpen}
-        selectedTowerKey={selectedTowerForModal}
-        onClose={() => {
-          setIsScheduleOpen(false);
-          setSelectedTowerForModal(null);
-        }}
-      />
+      {isScheduleOpen && (
+        <Suspense fallback={null}>
+          <TowerScheduleModal
+            isOpen={isScheduleOpen}
+            selectedTowerKey={selectedTowerForModal}
+            onClose={() => {
+              setIsScheduleOpen(false);
+              setSelectedTowerForModal(null);
+            }}
+          />
+        </Suspense>
+      )}
     </header>
   );
 }

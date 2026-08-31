@@ -253,7 +253,7 @@ export function HorizontalDateCalendarFilter({
               key={item.key}
               type="button"
               onClick={() => onSelectDate(item.key)}
-              className={`flex-shrink-0 snap-start px-3.5 py-2.5 rounded-2xl transition-all border text-left min-w-[85px] flex flex-col justify-between cursor-pointer select-none ${
+              className={`flex-shrink-0 snap-start px-3.5 py-2.5 rounded-2xl transition-all border text-left min-w-[85px] min-h-[58px] flex flex-col justify-between cursor-pointer select-none active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                 isSelected
                   ? 'bg-accent/15 border-accent text-accent ring-2 ring-accent/30 shadow-card'
                   : item.isToday

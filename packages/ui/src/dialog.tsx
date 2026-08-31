@@ -58,19 +58,21 @@ export function Dialog({
         aria-labelledby={title ? titleId : undefined}
         aria-describedby={description ? descId : undefined}
         className={cn(
-          'relative z-50 w-full rounded-2xl border border-line bg-surface-card p-6 shadow-floating overflow-hidden',
+          'relative z-50 w-full max-h-[min(90vh,calc(100dvh-2rem))] flex flex-col rounded-3xl border border-line bg-surface-card p-5 sm:p-6 shadow-floating overflow-hidden',
           'animate-in fade-in-0 zoom-in-95 duration-150',
           maxWidthClasses[maxWidth],
           className
         )}
       >
         {(title || description) && (
-          <div className="mb-4">
-            {title && <h2 id={titleId} className="text-lg font-bold text-text-primary">{title}</h2>}
-            {description && <p id={descId} className="mt-1 text-sm text-text-secondary">{description}</p>}
+          <div className="mb-4 shrink-0">
+            {title && <h2 id={titleId} className="text-lg font-black text-text-primary">{title}</h2>}
+            {description && <p id={descId} className="mt-1 text-xs text-text-secondary">{description}</p>}
           </div>
         )}
-        {children}
+        <div className="overflow-y-auto overscroll-contain flex-1 min-h-0 pr-1 -mr-1">
+          {children}
+        </div>
       </div>
     </div>
   );

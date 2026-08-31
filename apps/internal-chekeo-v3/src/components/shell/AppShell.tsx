@@ -1,10 +1,9 @@
 /**
- * AppShell.tsx — PR-V3-08
+ * AppShell.tsx — Chekeo V3
  *
  * Contenedor principal de la aplicación Chekeo V3:
- * - TopHeader con métricas operativas
+ * - TopHeader con botón para volver al SaaS Hub
  * - Navegación accesible por pestañas
- * - Contenedor responsivo optimizado para tabletas de cocina, monitores POS y móviles
  */
 
 import React from 'react';

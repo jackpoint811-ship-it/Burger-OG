@@ -1,10 +1,11 @@
 /**
- * components/admin/index.ts — Chekeo V3
+ * components/admin/index.ts — Chekeo V3 + SaaS Platform
  *
  * Barrel export para los componentes de Administración de Chekeo V3.
  */
 
 export * from './ProductEditModal';
+export * from './CategoryManagerModal';
 export * from './MenuStockPanel';
 export * from './TowersAdminPanel';
 export * from './BannersAdminPanel';
@@ -14,8 +15,6 @@ export * from './IngredientsAdminPanel';
 export * from './AdminWorkspace';
 export * from './AdminBreadcrumbs';
 export * from './AdminQuickFavorites';
-export * from './AdminDashboardGrid';
-export * from './AdminCategorySubmenu';
 export * from './AdminSearchBar';
 export * from './AdminAuthGate';
 export * from './AdminHubGrid';
