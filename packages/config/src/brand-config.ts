@@ -1,6 +1,66 @@
-import type { TenantConfig } from '../tenant.types';
+/**
+ * brand-config.ts — Configuración Canónica de Marca para Burgers.exe
+ *
+ * Fuente única de verdad para la identidad visual, terminología y datos de Burgers.exe.
+ */
 
-export const BURGERS_EXE_TENANT: TenantConfig = {
+export interface BrandTheme {
+  accentColor: string;
+  accentColorDark: string;
+  accentColorSoft: string;
+  secondaryColor: string;
+  surfaceColor: string;
+  surfaceCardColor: string;
+  surfaceRaisedColor: string;
+  surfaceAltColor: string;
+  lineColor: string;
+  shadowCta: string;
+  heroGradient: string;
+  radiusStyle: 'modern' | 'sharp' | 'pill';
+  radiusCard: string;
+  radiusButton: string;
+  radiusBadge: string;
+  radiusInput: string;
+  terminology: {
+    itemSingular: string;
+    itemPlural: string;
+    customizationTitle: string;
+    combosLabel: string;
+    cartCtaLabel: string;
+    searchPlaceholder: string;
+    heroHeadline: string;
+    heroSubtitle: string;
+  };
+  accentLabel: string;
+}
+
+export interface BrandBankPayment {
+  bankName: string;
+  accountHolder: string;
+  clabe: string;
+}
+
+export interface BrandConfig {
+  id: string;
+  brandName: string;
+  shortName: string;
+  tagline: string;
+  categoryHeadline: string;
+  logoEmoji: string;
+  defaultFoodType: string;
+  theme: BrandTheme;
+  bankPayment: BrandBankPayment;
+  supportPhone: string;
+  whatsappTemplates: {
+    orderGreeting: string;
+    paymentFollowUp: string;
+    orderReady: string;
+    orderDelivered: string;
+  };
+  features: Record<string, 'enabled' | 'disabled' | 'coming-soon'>;
+}
+
+export const BRAND_CONFIG: BrandConfig = {
   id: 'burgers-exe',
   brandName: 'Burgers.exe',
   shortName: 'Burgers.exe',
@@ -72,3 +132,18 @@ export const BURGERS_EXE_TENANT: TenantConfig = {
     oneClickReorder: 'enabled',
   },
 };
+
+/**
+ * Helper de compatibilidad para componentes existentes.
+ */
+export function getBrandConfig(): BrandConfig {
+  return BRAND_CONFIG;
+}
+
+export function getActiveTenant(): BrandConfig {
+  return BRAND_CONFIG;
+}
+
+export function isFeatureEnabled(featureKey: string, _brand = BRAND_CONFIG): boolean {
+  return BRAND_CONFIG.features[featureKey] === 'enabled';
+}

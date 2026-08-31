@@ -2,7 +2,7 @@
  * TopHeader.tsx — Chekeo V3
  *
  * Barra superior operativa de Chekeo V3:
- * - Identidad y logo del restaurante activo
+ * - Identidad y logo de Burgers.exe
  * - Reloj operativo CDMX en tiempo real
  * - Estado de sincronización en red (Online / Offline)
  * - Switch de tema (Light / Dark mode)
@@ -12,7 +12,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Wifi, WifiOff, Lock, Sun, Moon } from 'lucide-react';
 import { useAuthStore } from '../../features/auth';
-import { getActiveTenant } from '@config';
+import { BRAND_CONFIG } from '@config';
 
 export function TopHeader() {
   const { isAuthenticated, logout } = useAuthStore();
@@ -22,7 +22,6 @@ export function TopHeader() {
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
   const [isDark, setIsDark] = useState(false);
-  const tenant = getActiveTenant();
 
   // Inicialización de tema
   useEffect(() => {
@@ -98,23 +97,18 @@ export function TopHeader() {
   return (
     <header className="sticky top-0 z-40 w-full bg-surface-card/90 backdrop-blur-md border-b border-line transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
-        {/* Izquierda: Identidad de Marca Activa */}
+        {/* Izquierda: Identidad de Marca Burgers.exe */}
         <div className="flex items-center gap-2.5">
           <div
             className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shrink-0 border border-line shadow-xs"
-            style={{ backgroundColor: `${tenant.theme.accentColor}15` }}
+            style={{ backgroundColor: `${BRAND_CONFIG.theme.accentColor}15` }}
           >
-            {tenant.logoEmoji}
+            {BRAND_CONFIG.logoEmoji}
           </div>
           <div className="text-left min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-black text-sm sm:text-base text-text-primary truncate">
-                {tenant.brandName}
-              </span>
-              <span className="hidden sm:inline-block text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-surface-raised border border-line text-text-muted">
-                {tenant.id}
-              </span>
-            </div>
+            <span className="font-black text-sm sm:text-base text-text-primary truncate block">
+              {BRAND_CONFIG.brandName}
+            </span>
             <span className="text-[10px] font-bold text-accent uppercase tracking-wider block">
               Punto de Venta & Cocina
             </span>
