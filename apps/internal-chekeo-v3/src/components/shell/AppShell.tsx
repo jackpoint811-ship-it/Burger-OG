@@ -14,15 +14,14 @@ import { NavTabs, ChekeoTab } from './NavTabs';
 interface AppShellProps {
   activeTab: ChekeoTab;
   onTabChange: (tab: ChekeoTab) => void;
-  onReturnToSaaSHub?: () => void;
   children: React.ReactNode;
 }
 
-export function AppShell({ activeTab, onTabChange, onReturnToSaaSHub, children }: AppShellProps) {
+export function AppShell({ activeTab, onTabChange, children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-surface flex flex-col transition-colors duration-200 text-text-primary">
       {/* Header Operativo */}
-      <TopHeader onReturnToSaaSHub={onReturnToSaaSHub} />
+      <TopHeader />
 
       {/* Tabs Container */}
       <Tabs

@@ -3,34 +3,25 @@ import {
   Building2,
   DollarSign,
   Plus,
-  ExternalLink,
   RefreshCw,
-  Sparkles,
-  Store,
-  ShieldCheck,
   Zap,
   Server,
   Layers,
-  ArrowRight,
   ChefHat,
   ShoppingBag,
   CreditCard,
   Lock,
   Globe,
-  Sliders,
+  ShieldCheck,
 } from 'lucide-react';
 import { Button } from '@ui/button';
 import { Badge } from '@ui/badge';
 import { TENANTS_REGISTRY } from '@config';
 import { SAAS_PLANS, type SaaSPlanTier } from '@config';
-import { TenantOnboardingModal } from '../admin/TenantOnboardingModal';
+import { TenantOnboardingModal } from './TenantOnboardingModal';
 import { ComingSoonModal } from '@ui/coming-soon-modal';
 
-export interface SaaSHubViewProps {
-  onLaunchTenantPos?: (tenantId: string) => void;
-}
-
-export function SaaSHubView({ onLaunchTenantPos }: SaaSHubViewProps) {
+export function SaaSHubView() {
   const [activeSection, setActiveSection] = useState<'tenants' | 'billing' | 'infra'>('tenants');
   const [metrics, setMetrics] = useState<any>(null);
   const [tenants, setTenants] = useState<any[]>([]);
@@ -86,11 +77,11 @@ export function SaaSHubView({ onLaunchTenantPos }: SaaSHubViewProps) {
                   Chekeo Cloud Engine
                 </h1>
                 <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-[10px] font-black uppercase">
-                  SaaS Multi-Tenant
+                  SaaS Control Plane
                 </Badge>
               </div>
               <p className="text-xs text-slate-400">
-                Centro de Mando & Control Plane para gestión y despliegue de restaurantes.
+                Centro de Mando & Gestión Multi-Tenant de Restaurantes en Cloudflare Edge.
               </p>
             </div>
           </div>
@@ -331,13 +322,7 @@ export function SaaSHubView({ onLaunchTenantPos }: SaaSHubViewProps) {
                         type="button"
                         variant="default"
                         size="sm"
-                        onClick={() => {
-                          if (onLaunchTenantPos) {
-                            onLaunchTenantPos(t.id);
-                          } else {
-                            window.location.search = `?tenant=${t.id}`;
-                          }
-                        }}
+                        onClick={() => window.open(`/chekeo/?tenant=${t.id}`, '_blank')}
                         className="h-9 px-2.5 rounded-xl text-xs font-black gap-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white cursor-pointer shadow-md"
                       >
                         <ChefHat className="w-3.5 h-3.5" />

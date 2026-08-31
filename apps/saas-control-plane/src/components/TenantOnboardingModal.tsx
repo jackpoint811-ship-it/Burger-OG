@@ -113,15 +113,15 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
   const modalTitle = (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
+        <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
           <Store className="w-4 h-4" />
         </div>
-        <span className="text-base font-black text-text-primary">
-          {step === 4 ? '🎉 ¡Restaurante Creado!' : 'Lanza tu Restaurante en Chekeo'}
+        <span className="text-base font-black text-white">
+          {step === 4 ? '🎉 ¡Restaurante Creado!' : 'Lanza tu Restaurante en Chekeo Cloud'}
         </span>
       </div>
       {step < 4 && (
-        <Badge variant="outline" className="font-mono text-[10px] text-accent border-accent/30 bg-accent/5 font-black">
+        <Badge variant="outline" className="font-mono text-[10px] text-purple-400 border-purple-500/30 bg-purple-500/10 font-black">
           Paso {step} / 3
         </Badge>
       )}
@@ -147,7 +147,7 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
     >
       <div className="space-y-4 pt-1 max-h-[70vh] overflow-y-auto">
         {errorMessage && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-xs text-red-600 dark:text-red-400 font-bold">
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-xs text-red-400 font-bold">
             ⚠️ {errorMessage}
           </div>
         )}
@@ -156,7 +156,7 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
         {step === 1 && (
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="brandName" className="text-xs font-bold text-text-primary">
+              <Label htmlFor="brandName" className="text-xs font-bold text-slate-200">
                 Nombre del Restaurante / Marca *
               </Label>
               <Input
@@ -164,13 +164,13 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
                 value={brandName}
                 onChange={handleBrandNameChange}
                 placeholder="Ej. Tacos El Güero, Pizzería Bella, etc."
-                className="rounded-xl border-line text-xs font-bold h-10"
+                className="rounded-xl border-slate-700 bg-slate-900 text-slate-100 text-xs font-bold h-10"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="slug" className="text-xs font-bold text-text-primary">
+                <Label htmlFor="slug" className="text-xs font-bold text-slate-200">
                   Identificador / Slug URL *
                 </Label>
                 <Input
@@ -178,15 +178,15 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
                   value={slug}
                   onChange={(e) => setSlug(e.target.value.toLowerCase().trim())}
                   placeholder="tacos-el-guero"
-                  className="rounded-xl border-line text-xs font-mono h-10"
+                  className="rounded-xl border-slate-700 bg-slate-900 text-slate-100 text-xs font-mono h-10"
                 />
-                <p className="text-[10px] text-text-muted font-mono truncate">
+                <p className="text-[10px] text-slate-400 font-mono truncate">
                   https://{slug || 'mi-tienda'}.chekeo.io
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="logoEmoji" className="text-xs font-bold text-text-primary">
+                <Label htmlFor="logoEmoji" className="text-xs font-bold text-slate-200">
                   Emoji / Icono de Marca
                 </Label>
                 <div className="flex items-center gap-2">
@@ -194,7 +194,7 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
                     id="logoEmoji"
                     value={logoEmoji}
                     onChange={(e) => setLogoEmoji(e.target.value)}
-                    className="rounded-xl border-line text-lg text-center h-10 w-16"
+                    className="rounded-xl border-slate-700 bg-slate-900 text-slate-100 text-lg text-center h-10 w-16"
                   />
                   <div className="flex gap-1">
                     {['🍔', '🥪', '🌮', '🍕', '☕', '🍗'].map((em) => (
@@ -202,7 +202,7 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
                         key={em}
                         type="button"
                         onClick={() => setLogoEmoji(em)}
-                        className="w-8 h-8 rounded-lg bg-surface hover:bg-surface-raised border border-line text-sm flex items-center justify-center cursor-pointer active:scale-95"
+                        className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sm flex items-center justify-center cursor-pointer active:scale-95"
                       >
                         {em}
                       </button>
@@ -213,7 +213,7 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-text-primary">Color de Acento Principal</Label>
+              <Label className="text-xs font-bold text-slate-200">Color de Acento Principal</Label>
               <div className="flex items-center gap-2">
                 {TASTE_ACCENTS.map((c) => (
                   <button
@@ -223,7 +223,7 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
                     title={c.name}
                     style={{ backgroundColor: c.hex }}
                     className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer ${
-                      accentColor === c.hex ? 'border-text-primary scale-110 shadow-md' : 'border-transparent opacity-80'
+                      accentColor === c.hex ? 'border-white scale-110 shadow-md' : 'border-transparent opacity-80'
                     }`}
                   />
                 ))}
@@ -235,7 +235,7 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
         {/* PASO 2: Plantilla de Menú */}
         {step === 2 && (
           <div className="space-y-3">
-            <Label className="text-xs font-bold text-text-primary">Selecciona una Plantilla de Menú Base</Label>
+            <Label className="text-xs font-bold text-slate-200">Selecciona una Plantilla de Menú Base</Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {MENU_TEMPLATES.map((tpl) => (
                 <div
@@ -243,15 +243,15 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
                   onClick={() => setMenuTemplate(tpl.id as any)}
                   className={`p-3.5 rounded-2xl border cursor-pointer transition-all space-y-1 ${
                     menuTemplate === tpl.id
-                      ? 'bg-accent/5 border-accent ring-2 ring-accent/20 shadow-xs'
-                      : 'bg-surface border-line hover:border-line/80'
+                      ? 'bg-purple-500/10 border-purple-500 ring-2 ring-purple-500/30 shadow-xs'
+                      : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-xl">{tpl.emoji}</span>
-                    <p className="text-xs font-black text-text-primary">{tpl.title}</p>
+                    <p className="text-xs font-black text-white">{tpl.title}</p>
                   </div>
-                  <p className="text-[11px] text-text-secondary leading-tight">{tpl.desc}</p>
+                  <p className="text-[11px] text-slate-400 leading-tight">{tpl.desc}</p>
                 </div>
               ))}
             </div>
@@ -263,7 +263,7 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="ownerEmail" className="text-xs font-bold text-text-primary">
+                <Label htmlFor="ownerEmail" className="text-xs font-bold text-slate-200">
                   Correo del Administrador *
                 </Label>
                 <Input
@@ -272,11 +272,11 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
                   value={ownerEmail}
                   onChange={(e) => setOwnerEmail(e.target.value)}
                   placeholder="dueño@tacos.com"
-                  className="rounded-xl border-line text-xs font-bold h-10"
+                  className="rounded-xl border-slate-700 bg-slate-900 text-slate-100 text-xs font-bold h-10"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="ownerPhone" className="text-xs font-bold text-text-primary">
+                <Label htmlFor="ownerPhone" className="text-xs font-bold text-slate-200">
                   WhatsApp de Contacto *
                 </Label>
                 <Input
@@ -285,13 +285,13 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
                   value={ownerPhone}
                   onChange={(e) => setOwnerPhone(e.target.value)}
                   placeholder="5512345678"
-                  className="rounded-xl border-line text-xs font-bold h-10"
+                  className="rounded-xl border-slate-700 bg-slate-900 text-slate-100 text-xs font-bold h-10"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="pinCode" className="text-xs font-bold text-text-primary">
+              <Label htmlFor="pinCode" className="text-xs font-bold text-slate-200">
                 PIN de Acceso POS (4 dígitos)
               </Label>
               <Input
@@ -300,12 +300,12 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
                 value={pinCode}
                 onChange={(e) => setPinCode(e.target.value)}
                 placeholder="1234"
-                className="rounded-xl border-line text-base font-black tracking-widest text-center w-32 h-10"
+                className="rounded-xl border-slate-700 bg-slate-900 text-slate-100 text-base font-black tracking-widest text-center w-32 h-10"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-text-primary">Nivel de Servicio (Acceso Anticipado $0)</Label>
+              <Label className="text-xs font-bold text-slate-200">Nivel de Servicio (Acceso Anticipado $0)</Label>
               <div className="grid grid-cols-3 gap-2">
                 {(['starter', 'pro', 'enterprise'] as SaaSPlanTier[]).map((pKey) => {
                   const plan = SAAS_PLANS[pKey];
@@ -315,12 +315,12 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
                       onClick={() => setPlanTier(pKey)}
                       className={`p-2.5 rounded-2xl border text-center cursor-pointer transition-all ${
                         planTier === pKey
-                          ? 'bg-accent/10 border-accent text-accent font-black shadow-xs'
-                          : 'bg-surface border-line text-text-secondary'
+                          ? 'bg-purple-500/20 border-purple-500 text-purple-300 font-black shadow-xs'
+                          : 'bg-slate-900/60 border-slate-800 text-slate-400'
                       }`}
                     >
                       <p className="text-[11px] font-black">{plan.name.split('/')[0]}</p>
-                      <p className="text-[10px] font-bold text-accent">Gratis en Beta</p>
+                      <p className="text-[10px] font-bold text-purple-400">Gratis en Beta</p>
                     </div>
                   );
                 })}
@@ -332,31 +332,31 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
         {/* PASO 4: Pantalla de Éxito */}
         {step === 4 && createdTenant && (
           <div className="space-y-4 text-center py-2">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center justify-center mx-auto text-2xl">
+            <div className="w-16 h-16 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center mx-auto text-2xl">
               {logoEmoji}
             </div>
 
             <div className="space-y-1">
-              <h3 className="text-lg font-black text-text-primary">
+              <h3 className="text-lg font-black text-white">
                 ¡{createdTenant.brandName} está en vivo!
               </h3>
-              <p className="text-xs text-text-secondary">
+              <p className="text-xs text-slate-300">
                 Hemos configurado tu tienda online y punto de venta con acceso anticipado gratuito.
               </p>
             </div>
 
-            <div className="p-4 bg-surface rounded-2xl border border-line text-left space-y-2">
+            <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 text-left space-y-2">
               <div>
-                <p className="text-[10px] font-black uppercase text-text-muted">Tienda Pública de Clientes:</p>
-                <p className="text-xs font-mono font-bold text-accent truncate">{createdTenant.storeUrl}</p>
+                <p className="text-[10px] font-black uppercase text-slate-400">Tienda Pública de Clientes:</p>
+                <p className="text-xs font-mono font-bold text-purple-400 truncate">{createdTenant.storeUrl}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase text-text-muted">Acceso a Chekeo POS / KDS:</p>
-                <p className="text-xs font-mono font-bold text-text-primary truncate">{createdTenant.adminUrl}</p>
+                <p className="text-[10px] font-black uppercase text-slate-400">Acceso a Chekeo POS / KDS:</p>
+                <p className="text-xs font-mono font-bold text-slate-200 truncate">{createdTenant.posUrl}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase text-text-muted">PIN de Operación:</p>
-                <p className="text-xs font-mono font-black text-text-primary">{createdTenant.pinCode}</p>
+                <p className="text-[10px] font-black uppercase text-slate-400">PIN de Operación:</p>
+                <p className="text-xs font-mono font-black text-slate-100">{createdTenant.adminPin || '1234'}</p>
               </div>
             </div>
           </div>
@@ -364,14 +364,14 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
       </div>
 
       {/* Footer con Botones de Navegación */}
-      <div className="pt-4 mt-3 border-t border-line/60 flex items-center justify-between">
+      <div className="pt-4 mt-3 border-t border-slate-800 flex items-center justify-between">
         {step > 1 && step < 4 ? (
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => setStep((step - 1) as any)}
-            className="h-9 px-3 rounded-xl text-xs font-bold gap-1 cursor-pointer border-line"
+            className="h-9 px-3 rounded-xl text-xs font-bold gap-1 cursor-pointer border-slate-700 bg-slate-800 text-slate-200"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Anterior</span>
@@ -391,7 +391,7 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
               setErrorMessage(null);
               setStep((step + 1) as any);
             }}
-            className="h-9 px-4 rounded-xl text-xs font-black gap-1 cursor-pointer"
+            className="h-9 px-4 rounded-xl text-xs font-black gap-1 cursor-pointer bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
           >
             <span>Siguiente</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -405,7 +405,7 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
             size="sm"
             onClick={handleCreateTenant}
             disabled={isSubmitting || !ownerEmail || !ownerPhone}
-            className="h-9 px-5 rounded-xl text-xs font-black gap-1.5 cursor-pointer bg-accent text-white hover:bg-accent-hover"
+            className="h-9 px-5 rounded-xl text-xs font-black gap-1.5 cursor-pointer bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500 shadow-md"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>{isSubmitting ? 'Creando Tienda...' : 'Lanzar Restaurante'}</span>
@@ -418,7 +418,7 @@ export function TenantOnboardingModal({ isOpen, onClose, onSuccess }: TenantOnbo
             variant="default"
             size="sm"
             onClick={onClose}
-            className="w-full h-10 rounded-xl text-xs font-black cursor-pointer bg-accent text-white"
+            className="w-full h-10 rounded-xl text-xs font-black cursor-pointer bg-purple-600 hover:bg-purple-500 text-white"
           >
             Cerrar y Empezar a Operar
           </Button>

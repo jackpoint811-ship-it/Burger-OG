@@ -5,9 +5,13 @@
 
 ## Contexto general
 
-Burgers.exe tiene una app pública de pedidos (`apps/public-order-v3`) y una app interna de Chekeo (`apps/internal-chekeo-v3`).
+Burgers.exe opera en un monorepo con tres aplicaciones completamente independientes:
+- `apps/public-order-v3`: App pública de pedidos para clientes finales de cada restaurante.
+- `apps/internal-chekeo-v3`: Punto de Venta (POS), Cocina (KDS) y Administración operativa exclusiva del restaurante.
+- `apps/saas-control-plane`: Centro de Mando / Dashboard Master Multi-Tenant para administración de la plataforma SaaS (Chekeo Cloud Engine).
 
-**Migración V3 100% Completada** — Toda la plataforma opera sobre la arquitectura moderna V3. Código V2 obsoleto eliminado en su totalidad.
+**Migración V3 & SaaS Decoupled 100% Completada** — Toda la plataforma opera sobre la arquitectura moderna V3.
+
 
 ## Stack V3 Definitivo
 
