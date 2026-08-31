@@ -32,6 +32,7 @@
 
 ## Completados recientemente
 
+- [x] **PR #633 (2026-08-30)**: Fix de Dark Mode & Scroll Fluido en Modales / Drawers — Activada directiva `@custom-variant dark` para Tailwind CSS v4 con variables dinámicas `var(--color-*)` en Chekeo y Tienda Pública; desacoplado el drag listener de Framer Motion en `@ui/drawer` mediante `useDragControls` y habilitado `overflow-y-auto` con `max-h` en `@ui/dialog` para scroll vertical fluido sin bloqueos de gestos.
 - [x] **PR-V3-Polish (2026-08-30)**: Polish de UX/UI, Skeletons Shimmer & Micro-interacciones Táctiles — Shimmer suave en `Skeleton`, retroalimentación elástica (`active:scale-[0.98]` / `active:scale-95`) en catálogo, drawers, `CartBar` animado y `HorizontalDateCalendarFilter` con accesibilidad WCAG 2.1 AA.
 - [x] **PR-V3-E2ETesting (2026-08-30)**: Auditoría M3/M4 & Modernización Suite E2E Playwright — Validación integral de tipos en `@config`, schemas Zod y modernización de `tests/e2e-catalog-kitchen.spec.ts` con selectores semánticos shadcn/ui y flujo completo de 4 Tiers.
 - [x] **PR-V3-Performance (2026-08-30)**: Optimizaciones Técnicas & Performance — `manualChunks` en Vite, `React.lazy` y `Suspense` en vistas de Chekeo (`PedidosView`, `CocinaView`, `PagosView`, `AdminView`), paneles de administración y modales públicos. Reducción de ~88% en el bundle inicial de Chekeo y ~76% en Public Order (0 warnings >500 kB).
@@ -54,6 +55,37 @@
 - [x] **PR-V3-02**: Config & UI Packages (#533).
 - [x] **PR-V3-01**: Deps & Scaffold (#531).
 - [x] **PR-V3-00**: Repo Cleanup & Branch (#530).
+
+## 📋 Backlog de Refinamiento: 6 Categorías & Sub-Herramientas de Admin (1 por 1)
+
+- [ ] **1. Menú, Catálogo & Stock (`menu`)**:
+  - `catalog`: Grilla y lista completa con filtros de categoría, badges de estado y búsqueda instantánea.
+  - `quick-stock`: Modo Stock Rápido Express para el turno con steppers en línea (+/-) y botones de 1-toque para pausar/activar sin abrir modales.
+  - `promos`: Vista dedicada de ofertas con calculadora de descuento en vivo (`-$XX.XX · XX% OFF`) y activación rápida.
+  - `create`: Drawer de alta de producto con subida optimizada a Cloudflare R2 y validación Zod.
+  - `categories`: Gestor de categorías en D1 (`CategoryManagerModal`) para ordenar, agregar y editar emojis.
+- [ ] **2. Torres, Logística & Horarios (`towers`)**:
+  - `active-towers`: Activación/pausa inmediata de edificios (Torre GGA, Torre Valcob).
+  - `schedules`: Horarios de toma de pedidos vs. Horarios de entrega con Radar CDMX en vivo.
+  - `service-days`: Selector de días de entrega con presets (`Lun a Vie`, `Toda la semana`, `Fines de semana`).
+- [ ] **3. Marketing & Banners Tienda (`banners`)**:
+  - `carousel`: Orden de rotación del carrusel con reordenamiento $\uparrow / \downarrow$ y visibilidad.
+  - `cta-links`: Enlaces de acción (categorías, productos, WhatsApp o URLs externas).
+  - `create`: Diseñador WYSIWYG en marco de smartphone con gradientes y badges temáticos.
+- [ ] **4. Lealtad, Sorteos & Referidos (`raffles`)**:
+  - `campaign`: Configuración de rifa activa, vigencia y boletos por monto.
+  - `participants`: Tabla de clientes con saldo de boletos y Drawer de ajuste manual auditado.
+  - `referrals`: Generador de códigos mnemotécnicos de embajadores y métricas de conversión.
+  - `roulette`: Ruleta interactiva ponderada por boletos con animación Framer Motion y confetti.
+- [ ] **5. Finanzas, Arqueo & Corte Z (`cashcut`)**:
+  - `today-cut`: Métricas de venta bruta, ticket promedio y pedidos entregados en hora CDMX.
+  - `reconciliation`: Desglose comparativo gráfico Transferencia vs. Efectivo vs. Tarjeta.
+  - `export-csv`: Generación y descarga de archivo contable estructurado por fechas.
+  - `z-cut`: Calculadora de arqueo físico por denominación ($500, $200, $100, $50, $20, monedas), cálculo de balance (Caja Cuadrada `$0.00`) y archivado formal.
+- [ ] **6. Insumos, Recetas & Costeo (`ingredients`)**:
+  - `catalog`: CRUD de materia prima en D1 con unidades (`pieza`, `g`, `kg`, `ml`, `l`) y precios de compra.
+  - `recipes`: Recetario por hamburguesa vinculado al Resumen K de Cocina para Mise en Place.
+  - `costing`: Dashboard de rentabilidad con Food Cost % y Margen Bruto en tiempo real.
 
 ## Ideas futuras
 
