@@ -59,7 +59,7 @@ Burgers.exe tiene una app pública de pedidos (`apps/public-order-v3`) y una app
 | V3-Performance | Optimizaciones Técnicas, Code Splitting & Manual Chunks | ✅ Mergeado (#629) |
 | V3-E2ETesting | Auditoría M3/M4, Workspace Hardening & Tests Playwright E2E | ✅ Mergeado (#630) |
 | V3-Polish | Polish de UX/UI, Skeletons Shimmer & Micro-interacciones Táctiles | ✅ Mergeado (#631) |
-| SaaS-Platform | Motor SaaS Multi-Tenant, Facturación Stripe & Control Plane Aislado | 🟢 Completado en rama `saas-platform` |
+| SaaS-Platform | Motor SaaS Multi-Tenant, Facturación Stripe & Control Plane Aislado | 🟢 PR [#635](https://github.com/jackpoint811-ship-it/Burgers-exe/pull/635) Abierto |
 
 ## Infraestructura y URLs Activas (Cloudflare Pages)
 

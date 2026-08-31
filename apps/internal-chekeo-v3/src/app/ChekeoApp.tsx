@@ -1,10 +1,9 @@
 /**
- * ChekeoApp.tsx — PR-V3-08
+ * ChekeoApp.tsx — Chekeo Cloud SaaS Platform
  *
- * Componente raíz de la aplicación Chekeo V3:
- * - AuthGate con validación de sesión automática y persistencia
- * - AppShell con TopHeader, reloj operativo y barra de navegación accesible
- * - Vistas modulares por pestañas (Pedidos, Cocina, Pagos y Admin)
+ * Flujo Principal:
+ * - Vista Raíz: SaaSHubView (Control Plane del SaaS, Gestión de Restaurantes y Proyectos)
+ * - Vista Restaurante / POS: Chekeo AppShell para la marca seleccionada (Burgers.exe, Amsi Tortas, etc.)
  */
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
@@ -13,8 +12,9 @@ import { Skeleton } from '@ui/skeleton';
 import { useAuthStore } from '../features/auth';
 import { AppShell, ChekeoTab } from '../components/shell';
 import { ResumenKView } from '../components/views/ResumenKView';
+import { SaaSHubView } from '../components/views/SaaSHubView';
 
-// Carga diferida (lazy loading) de vistas secundarias para optimizar el bundle inicial
+// Carga diferida (lazy loading) de vistas secundarias
 const PedidosView = lazy(() =>
   import('../components/views/PedidosView').then((m) => ({ default: m.PedidosView }))
 );
@@ -49,16 +49,45 @@ function ViewLoadingFallback() {
 }
 
 export function ChekeoApp() {
+  const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const tenantFromUrl = urlParams?.get('tenant');
+  const viewFromUrl = urlParams?.get('view');
+
+  // Si no hay tenant especificado en la URL o el view es 'saas', mostramos el SaaS Hub
+  const [isSaaSHubMode, setIsSaaSHubMode] = useState<boolean>(!tenantFromUrl || viewFromUrl === 'saas');
   const [activeTab, setActiveTab] = useState<ChekeoTab>('resumenK');
   const { checkSession } = useAuthStore();
 
-  // Comprobar estado de sesión con el backend al inicializar (silencioso para Admin)
   useEffect(() => {
     checkSession();
   }, [checkSession]);
 
+  const handleLaunchTenantPos = (tenantId: string) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tenant', tenantId);
+    url.searchParams.delete('view');
+    window.location.href = url.toString();
+  };
+
+  const handleReturnToSaaSHub = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('tenant');
+    url.searchParams.set('view', 'saas');
+    window.location.href = url.toString();
+  };
+
+  // 1. Vista Master: SaaS Hub (Centro de Mando de la Plataforma)
+  if (isSaaSHubMode) {
+    return <SaaSHubView onLaunchTenantPos={handleLaunchTenantPos} />;
+  }
+
+  // 2. Vista Tenant: Punto de Venta & Cocina de la Marca Seleccionada
   return (
-    <AppShell activeTab={activeTab} onTabChange={setActiveTab}>
+    <AppShell
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      onReturnToSaaSHub={handleReturnToSaaSHub}
+    >
       <TabsContent value="resumenK" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-3xl m-0">
         <ResumenKView onTabChange={setActiveTab} />
       </TabsContent>
