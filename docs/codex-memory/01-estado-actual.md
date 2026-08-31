@@ -221,3 +221,8 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
 - **Desacoplamiento Total de SaaS al Repositorio Hresto (2026-08-31)**:
   - Todo el ecosistema SaaS Multi-Tenant, el Control Plane (`apps/saas-control-plane`), el backend Hono `/api/saas/*`, esquemas de D1 y aprovisionamiento fueron desacoplados y trasladados a su repositorio independiente **`Hresto`** (`C:\Documentos\Hresto`).
   - `Burgers.exe` queda 100% limpio, optimizado y enfocado en su operación de marca única con `apps/public-order-v3` e `apps/internal-chekeo-v3`.
+- **Simplificación del Workspace de Admin V3 & Limpieza de Sidebar (PR #625 - 2026-08-31)**:
+  - Cabecera simplificada en `AdminModuleWorkspace.tsx` con botón accesible `← [Icono] [Nombre del Módulo]` para volver al Hub en 1-toque o con <kbd>Esc</kbd>, eliminando migas de pan sobrecargadas.
+  - Eliminación de la sección redundante de *Favoritos Rápidos* del sidebar lateral (centralizados en el Hub con *Acceso Rápido ⚡*).
+  - Preservación del buscador universal 🔍 (`AdminSearchBar`), pin/unpin ⭐ y bloqueo 🔒.
+  - Reducción de ~88 líneas y optimización del bundle de `AdminView` (-2.66 kB).

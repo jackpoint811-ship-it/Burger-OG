@@ -9,10 +9,9 @@
  */
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronRight, Home, Star, Lock, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Star, Lock } from 'lucide-react';
 import { Button } from '@ui/button';
-import { Badge } from '@ui/badge';
 import { Skeleton } from '@ui/skeleton';
 import type { AdminMasterCategory } from '../../features/admin/types/admin.types';
 import { ADMIN_CATEGORIES_CONFIG } from '../../features/admin/constants/admin-navigation.constants';
@@ -79,7 +78,7 @@ export function AdminModuleWorkspace({
     return initialToolId || categoryDef?.subcategories[0]?.id || 'root';
   });
 
-  const { favorites, isPinned, togglePin } = useAdminPinnedFavorites();
+  const { isPinned, togglePin } = useAdminPinnedFavorites();
 
   // Sincronizar si cambia initialToolId desde fuera
   useEffect(() => {
@@ -146,105 +145,59 @@ export function AdminModuleWorkspace({
 
   return (
     <div className={`space-y-4 sm:space-y-5 animate-in fade-in duration-200 ${className}`}>
-      {/* 1. Barra Superior del Workspace */}
-      <div className="bg-surface-card p-3.5 sm:p-4 rounded-3xl border border-line shadow-xs space-y-2.5 sm:space-y-0">
-        {/* Fila Principal de Navegación */}
-        <div className="flex items-center justify-between gap-3">
-          {/* Botón Volver y Título */}
-          <div className="flex items-center gap-2.5 min-w-0">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onBackToHub}
-              className="h-8.5 sm:h-9 px-2.5 sm:px-3 rounded-xl text-xs font-bold gap-1.5 cursor-pointer text-text-secondary hover:text-text-primary border-line shrink-0 active:scale-98"
-              title="Volver al Panel General (Esc)"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Volver</span>
-            </Button>
+      {/* 1. Barra Superior Simplificada */}
+      <div className="bg-surface-card p-3.5 sm:p-4 rounded-3xl border border-line shadow-xs flex items-center justify-between gap-3">
+        {/* ← Volver + Nombre del Módulo */}
+        <button
+          type="button"
+          onClick={onBackToHub}
+          className="flex items-center gap-2 text-sm font-bold text-text-secondary hover:text-accent transition-colors cursor-pointer min-h-[var(--touch-target-min,44px)] px-1 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none rounded-xl active:scale-[0.97]"
+          title="Volver al Panel General (Esc)"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <CategoryIcon className="w-4 h-4 text-accent" />
+          <span className="truncate">{categoryDef.shortTitle}</span>
+        </button>
 
-            {/* Migas de Pan (Visible en Tablet/Desktop) */}
-            <nav aria-label="Migas de pan" className="hidden sm:flex items-center gap-1.5 text-xs font-bold shrink-0">
-              <button
-                type="button"
-                onClick={onBackToHub}
-                className="flex items-center gap-1 text-text-muted hover:text-text-primary transition-colors cursor-pointer"
-              >
-                <Home className="w-3.5 h-3.5" />
-                <span>Panel Admin</span>
-              </button>
-              <ChevronRight className="w-3.5 h-3.5 text-text-muted" />
-              <div className="flex items-center gap-1.5 text-text-primary font-black">
-                <CategoryIcon className="w-3.5 h-3.5 text-accent" />
-                <span>{categoryDef.title}</span>
-              </div>
-              {activeSubcategory && (
-                <>
-                  <ChevronRight className="w-3.5 h-3.5 text-text-muted" />
-                  <Badge variant="outline" className="text-[10px] font-black bg-accent/10 text-accent border-accent/20">
-                    {activeSubcategory.shortTitle}
-                  </Badge>
-                </>
-              )}
-            </nav>
+        {/* Acciones de Cabecera */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* 🔍 Buscador Lupita Accesible */}
+          <AdminSearchBar onSelect={(cat, tool) => onNavigateModule(cat, tool)} />
 
-            {/* Título Compacto en Móvil */}
-            <div className="flex sm:hidden items-center gap-1.5 min-w-0">
-              <CategoryIcon className="w-4 h-4 text-accent shrink-0" />
-              <span className="text-xs font-black text-text-primary truncate">
-                {categoryDef.shortTitle}
-              </span>
-              {activeSubcategory && (
-                <span className="text-[10px] font-bold text-text-muted truncate">
-                  · {activeSubcategory.shortTitle}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Acciones de Cabecera */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* 🔍 Buscador Lupita Accesible */}
-            <AdminSearchBar onSelect={(cat, tool) => onNavigateModule(cat, tool)} />
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleToggleCurrentPin}
-              className={`h-8.5 sm:h-9 px-2 sm:px-2.5 rounded-xl text-xs font-bold gap-1.5 cursor-pointer border-line active:scale-98 ${
-                isCurrentPinned
-                  ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20'
-                  : 'text-text-secondary hover:text-text-primary'
+          {/* ⭐ Pin/Unpin */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleToggleCurrentPin}
+            className={`h-9 px-2 sm:px-2.5 rounded-xl text-xs font-bold gap-1.5 cursor-pointer border-line active:scale-98 ${
+              isCurrentPinned
+                ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+            title={isCurrentPinned ? 'Desfijar de favoritos' : 'Fijar herramienta en favoritos'}
+            aria-label={isCurrentPinned ? 'Desfijar de favoritos' : 'Fijar herramienta en favoritos'}
+          >
+            <Star
+              className={`w-3.5 h-3.5 ${
+                isCurrentPinned ? 'fill-amber-500 text-amber-500' : 'text-text-muted'
               }`}
-              title={isCurrentPinned ? 'Desfijar de favoritos' : 'Fijar herramienta en favoritos'}
-              aria-label={isCurrentPinned ? 'Desfijar de favoritos' : 'Fijar herramienta en favoritos'}
-            >
-              <Star
-                className={`w-3.5 h-3.5 ${
-                  isCurrentPinned ? 'fill-amber-500 text-amber-500' : 'text-text-muted'
-                }`}
-              />
-              <span className="hidden md:inline">
-                {isCurrentPinned ? 'Fijado' : 'Fijar ⭐'}
-              </span>
-            </Button>
+            />
+          </Button>
 
-            {onLockAdmin && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={onLockAdmin}
-                className="h-8.5 sm:h-9 px-2.5 sm:px-3 rounded-xl text-xs font-bold gap-1.5 cursor-pointer text-red-600 dark:text-red-400 border-red-500/20 bg-red-500/5 hover:bg-red-500/15 active:scale-98"
-                title="Bloquear panel de administración"
-              >
-                <Lock className="w-3.5 h-3.5" />
-                <span className="hidden lg:inline">Bloquear</span>
-              </Button>
-            )}
-          </div>
+          {/* 🔒 Bloquear */}
+          {onLockAdmin && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onLockAdmin}
+              className="h-9 px-2.5 rounded-xl text-xs font-bold gap-1.5 cursor-pointer text-red-600 dark:text-red-400 border-red-500/20 bg-red-500/5 hover:bg-red-500/15 active:scale-98"
+              title="Bloquear panel de administración"
+            >
+              <Lock className="w-3.5 h-3.5" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -357,50 +310,6 @@ export function AdminModuleWorkspace({
               })}
             </div>
           </div>
-
-          {/* Sección de Favoritos Rápidos en Sidebar (para saltar a otro módulo) */}
-          {favorites.length > 0 && (
-            <div className="bg-surface-card rounded-3xl p-3.5 sm:p-4 border border-line shadow-xs space-y-2">
-              <div className="px-2 py-1 flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase tracking-wider text-text-muted flex items-center gap-1.5">
-                  <Zap className="w-3 h-3 text-accent" />
-                  <span>Favoritos Rápidos</span>
-                </span>
-              </div>
-
-              <div className="space-y-1">
-                {favorites.map((fav) => {
-                  const FavIcon = getAdminIcon(fav.iconName);
-                  const isCurrent =
-                    fav.category === categoryDef.id &&
-                    (!fav.toolId || fav.toolId === activeToolId);
-
-                  return (
-                    <button
-                      key={fav.id}
-                      type="button"
-                      onClick={() => onNavigateModule(fav.category, fav.toolId)}
-                      className={`w-full flex items-center justify-between gap-2 p-2 rounded-xl text-left transition-all cursor-pointer select-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
-                        isCurrent
-                          ? 'bg-accent/10 text-accent font-bold ring-1 ring-accent/20'
-                          : 'text-text-secondary hover:text-text-primary hover:bg-surface-raised'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <FavIcon className="w-3.5 h-3.5 shrink-0" />
-                        <span className="text-xs font-bold truncate">
-                          {fav.shortTitle}
-                        </span>
-                      </div>
-                      <span className="text-[9px] font-mono text-text-muted px-1.5 py-0.5 rounded bg-surface-raised border border-line/60">
-                        {fav.tag}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </aside>
 
         {/* Lienzo Principal Derecho (Ancho Total a Pantalla Completa) */}
