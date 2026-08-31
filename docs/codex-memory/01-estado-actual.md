@@ -210,3 +210,8 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - **Marketing & Banners**: `BannersAdminPanel.tsx` con simulador WYSIWYG en vivo en marco de smartphone, selector de productos reales de D1 y reordenamiento 1-toque $\uparrow / \downarrow$.
   - **Sorteos & Lealtad**: `RafflesAdminPanel.tsx` con ruleta interactiva animada con Framer Motion, ticker en vivo de nombres, generador de códigos de referido y `@ui/drawer` para ajustes de tickets.
   - **Workspace Global**: `AdminModuleWorkspace.tsx` con transiciones de resorte suave `motion.div` `layoutId` en móvil y desktop.
+- **Fix Dark Mode & Scroll Fluido en Modales / Drawers (PR #633 - 2026-08-30)**:
+  - Directiva `@custom-variant dark` para Tailwind CSS v4 con variables CSS dinámicas `var(--color-*)` en `globals.css` de Chekeo y Tienda Pública.
+  - Desacoplado el listener de arrastre de Framer Motion en `@ui/drawer` con `useDragControls` restringido exclusivamente al handle superior.
+  - Límite de altura `max-h-[min(90vh,calc(100dvh-2rem))]` y contenedor `overflow-y-auto` en `@ui/dialog` para scroll vertical fluido sin recortes.
+  - Roadmap de refinamiento secuencial de las 6 categorías de Admin documentado y registrado en `docs/codex-memory/05-backlog.md`.

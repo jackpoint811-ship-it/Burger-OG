@@ -895,6 +895,17 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - `npm run build:chekeo` ✅ (12.09s, 0 warnings).
   - `npm run build:public` ✅ (9.46s, 0 warnings).
 
+### 📅 2026-08-30 — Sesión 30: Fix de Dark Mode & Scroll Fluido en Modales / Drawers — PR #633 (Mergeado)
+- **Dark Mode 100% Funcional**:
+  - Incorporada la directiva `@custom-variant dark (&:where(.dark, .dark *, .theme-dark, .theme-dark *));` en `globals.css` de Chekeo y Tienda Pública.
+  - Vinculación de tokens `@theme` a variables CSS dinámicas `var(--color-*)` y `var(--shadow-*)`, permitiendo que el switch de tema en runtime actualice instantáneamente los fondos (`#0C0E12`), tarjetas (`#161922`), textos (`#F8FAFC`) y bordes (`#2E3545`).
+  - Sincronización de switches en `TopHeader.tsx` y `BrandHeader.tsx` para alternar tanto `.theme-dark` como `.dark` con persistencia en `localStorage`.
+- **Scroll Fluido en Modales y Drawers**:
+  - En `@ui/dialog` (`packages/ui/src/dialog.tsx`): Límite de altura `max-h-[min(90vh,calc(100dvh-2rem))]`, estructura flex-col y envoltura interna `overflow-y-auto overscroll-contain flex-1 min-h-0`.
+  - En `@ui/drawer` (`packages/ui/src/drawer.tsx`): Desacoplado el listener de arrastre de Framer Motion mediante `useDragControls` y `dragListener={false}`, restringiendo el gesto de arrastre únicamente al handle superior. El cuerpo del drawer cuenta ahora con scroll nativo fluido sin bloqueos de gestos.
+- **Backlog de Refinamiento 1 por 1**:
+  - Documentado en `docs/codex-memory/05-backlog.md` el roadmap detallado para las 6 categorías maestras de Admin y sus sub-herramientas.
+
 ## 📌 Issues Abiertos
 
 | # | Descripción | Severidad | Estado |
