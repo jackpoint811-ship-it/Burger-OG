@@ -27,6 +27,12 @@
     "db:v2:produce:seed:local": "wrangler d1 execute burgers-exe-menu-live --local --file=./migrations/0002_v2_menu_seed.sql",
     "db:v2:produce:orders:migrate:local": "wrangler d1 execute burgers-exe-menu-live --local --file=./migrations/0003_v2_orders_schema.sql",
     "db:v2:produce:migrate:remote": "wrangler d1 execute burgers-exe-menu-live --remote --file=./migrations/0001_v2_menu_schema.sql",
+    "db:saas:local:migrate": "wrangler d1 execute burgers-exe-menu-v2-preview --local --file=./migrations/saas/0001_saas_control_plane.sql",
+    "db:saas:local:seed": "wrangler d1 execute burgers-exe-menu-v2-preview --local --file=./migrations/saas/0002_saas_control_plane_seed.sql",
+    "db:saas:preview:migrate": "wrangler d1 execute burgers-exe-menu-v2-preview --remote --file=./migrations/saas/0001_saas_control_plane.sql",
+    "db:saas:preview:seed": "wrangler d1 execute burgers-exe-menu-v2-preview --remote --file=./migrations/saas/0002_saas_control_plane_seed.sql",
+    "db:saas:produce:migrate": "wrangler d1 execute resto-saas-control-plane-production --remote --file=./migrations/saas/0001_saas_control_plane.sql",
+    "db:saas:produce:seed": "wrangler d1 execute resto-saas-control-plane-production --remote --file=./migrations/saas/0002_saas_control_plane_seed.sql",
     "graphify": "graphify update"
   },
   "dependencies": {

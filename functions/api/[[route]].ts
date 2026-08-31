@@ -14,6 +14,7 @@ import { menuRouter } from './_routes/menu';
 import { menuAdminRouter } from './_routes/menu-admin';
 import { ordersRouter } from './_routes/orders';
 import { ordersAdminRouter } from './_routes/orders-admin';
+import { saasRouter } from './_routes/saas';
 
 const app = new Hono<AppEnv>().basePath('/api');
 
@@ -56,6 +57,7 @@ app.route('/menu-v2', menuRouter);
 app.route('/menu-v2-admin', menuAdminRouter);
 app.route('/orders-v2', ordersRouter);
 app.route('/orders-v2-admin', ordersAdminRouter);
+app.route('/saas', saasRouter);
 
 export const onRequest = handle(app);
 export default app;
