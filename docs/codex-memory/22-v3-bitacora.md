@@ -906,6 +906,21 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Backlog de Refinamiento 1 por 1**:
   - Documentado en `docs/codex-memory/05-backlog.md` el roadmap detallado para las 6 categorías maestras de Admin y sus sub-herramientas.
 
+### 📅 2026-08-31 — Sesión 31: Desacoplamiento Total de SaaS Multi-Tenant al Repositorio Hresto
+- **Desacoplamiento y Separación Canónica de Repositorios**:
+  - Toda la infraestructura, desarrollo y arquitectura de SaaS Multi-Tenant (`apps/saas-control-plane/`, backend Hono `/api/saas/*`, migraciones D1 de SaaS, templates y aprovisionamiento Cloudflare) fue trasladada y desacoplada a su propio repositorio independiente **`Hresto`** (`C:\Documentos\Hresto`).
+  - `Burgers.exe` queda restaurado al 100% como un monorepo puro y dedicado exclusivamente a sus dos aplicaciones oficiales: `apps/public-order-v3` (tienda pública) y `apps/internal-chekeo-v3` (POS/KDS, Resumen K, Pagos y Admin).
+- **Limpieza Integral en Burgers.exe**:
+  - Eliminados archivos y carpetas de SaaS (`apps/saas-control-plane/`, `functions/api/_routes/saas.ts`, `functions/api/_tenant-utils.ts`, `migrations/saas/`, `migrations/amsi_tortas/`, `migrations/template/`, `wrangler.amsi-tortas.*.toml`, `wrangler.tamplet.*.toml`, `scripts/provision-cloudflare.sh`, `docs/saas-*`).
+  - Simplificado `packages/config` con configuración estática `brand-config.ts` (`BRAND_CONFIG`) para Burgers.exe.
+  - Eliminados gates y providers multi-tenant (`TenantThemeProvider`, `ComingSoonGate`, `ComingSoonBadge`, `ComingSoonModal`) de `packages/ui` y Chekeo Admin.
+  - Limpiados scripts en `package.json` (`dev:saas`, `build:saas`, `db:saas:*`) y targets en `vite.config.ts`.
+- **Verificación Técnica**:
+  - `git diff --check` ✅ (0 errores).
+  - `npm run typecheck` ✅ (0 errores).
+  - `npm run build:public` ✅ (3.47s).
+  - `npm run build:chekeo` ✅ (3.82s).
+
 ## 📌 Issues Abiertos
 
 | # | Descripción | Severidad | Estado |

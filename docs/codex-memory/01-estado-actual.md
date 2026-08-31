@@ -5,12 +5,11 @@
 
 ## Contexto general
 
-Burgers.exe opera en un monorepo con tres aplicaciones completamente independientes:
-- `apps/public-order-v3`: App pública de pedidos para clientes finales de cada restaurante.
-- `apps/internal-chekeo-v3`: Punto de Venta (POS), Cocina (KDS) y Administración operativa exclusiva del restaurante.
-- `apps/saas-control-plane`: Centro de Mando / Dashboard Master Multi-Tenant para administración de la plataforma SaaS (Chekeo Cloud Engine).
+Burgers.exe opera en un monorepo limpio y dedicado exclusivamente al restaurante Burgers.exe con dos aplicaciones canónicas:
+- `apps/public-order-v3`: Tienda pública de pedidos para clientes de Burgers.exe.
+- `apps/internal-chekeo-v3`: Punto de Venta (POS), Cocina (KDS 2 estaciones), Resumen K (Home & Mise en place), Pagos y Administración operativa de Burgers.exe.
 
-**Migración V3 & SaaS Decoupled 100% Completada** — Toda la plataforma opera sobre la arquitectura moderna V3.
+> **Nota de Gobernanza de Arquitectura**: La plataforma SaaS Multi-Tenant y el Control Plane fueron desacoplados y trasladados a su propio repositorio independiente **`Hresto`** (`C:\Documentos\Hresto`). Este repositorio de Burgers.exe permanece 100% puro y enfocado en la operación de marca única.
 
 
 ## Stack V3 Definitivo
@@ -63,8 +62,7 @@ Burgers.exe opera en un monorepo con tres aplicaciones completamente independien
 | V3-Performance | Optimizaciones Técnicas, Code Splitting & Manual Chunks | ✅ Mergeado (#629) |
 | V3-E2ETesting | Auditoría M3/M4, Workspace Hardening & Tests Playwright E2E | ✅ Mergeado (#630) |
 | V3-Polish | Polish de UX/UI, Skeletons Shimmer & Micro-interacciones Táctiles | ✅ Mergeado (#631) |
-| SaaS-Platform | Motor SaaS Multi-Tenant, Facturación Stripe & Control Plane Aislado | ✅ Mergeado (#635) |
-| SaaS-Cloudflare | Backend Hono /api/saas/*, Migraciones D1 Control Plane & Provisioning | 🟢 En Rama de Feature |
+| SaaS-Decouple | Desacoplamiento de SaaS Multi-Tenant al Repositorio Hresto | ✅ Completado |
 
 ## Infraestructura y URLs Activas (Cloudflare Pages)
 
@@ -220,9 +218,6 @@ Ver `docs/codex-memory/22-v3-bitacora.md` para el log detallado de sesiones, dec
   - Desacoplado el listener de arrastre de Framer Motion en `@ui/drawer` con `useDragControls` restringido exclusivamente al handle superior.
   - Límite de altura `max-h-[min(90vh,calc(100dvh-2rem))]` y contenedor `overflow-y-auto` en `@ui/dialog` para scroll vertical fluido sin recortes.
   - Roadmap de refinamiento secuencial de las 6 categorías de Admin documentado y registrado en `docs/codex-memory/05-backlog.md`.
-- **SaaS Cloudflare Backend & D1 Control Plane Suite (2026-08-31)**:
-  - Creación del sub-router Hono `functions/api/_routes/saas.ts` montado en `/api/saas/*` con endpoints para listado de flota (`GET /api/saas/tenants`), métricas globales y MRR (`GET /api/saas/tenants/metrics`), detalle de tenant (`GET /api/saas/tenants/:id`), alta y provisión (`POST /api/saas/onboarding`) y edición (`PATCH /api/saas/tenants/:id`).
-  - Utilidades de resolución de tenant en backend `functions/api/_tenant-utils.ts` con detección por `X-Tenant-Id`, hostname de Cloudflare Pages y query params.
-  - Esquema y migraciones de D1 del Control Plane: `migrations/saas/0001_saas_control_plane.sql` (tablas `saas_tenants`, `saas_subscriptions`, `saas_users`, `saas_audit_logs`) y `0002_saas_control_plane_seed.sql` (seed canónico para `burgers-exe`, `amsi-tortas` y `tamplet`).
-  - Automatización de aprovisionamiento en Cloudflare con `scripts/provision-cloudflare.sh` y scripts de migración en `package.json` (`npm run db:saas:preview:migrate`, `npm run db:saas:preview:seed`, etc.).
-  - Documentación técnica exhaustiva en `docs/saas-cloudflare-architecture.md`.
+- **Desacoplamiento Total de SaaS al Repositorio Hresto (2026-08-31)**:
+  - Todo el ecosistema SaaS Multi-Tenant, el Control Plane (`apps/saas-control-plane`), el backend Hono `/api/saas/*`, esquemas de D1 y aprovisionamiento fueron desacoplados y trasladados a su repositorio independiente **`Hresto`** (`C:\Documentos\Hresto`).
+  - `Burgers.exe` queda 100% limpio, optimizado y enfocado en su operación de marca única con `apps/public-order-v3` e `apps/internal-chekeo-v3`.

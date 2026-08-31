@@ -12,16 +12,12 @@ const targetMap: Record<string, string> = {
   'internal': 'internal-chekeo-v3',
   'public-v3': 'public-order-v3',
   'chekeo-v3': 'internal-chekeo-v3',
-  'saas': 'saas-control-plane',
-  'control-plane': 'saas-control-plane',
-  'saas-control-plane': 'saas-control-plane',
 };
 
 const rawTarget = process.env.APP_TARGET ?? 'public';
 const target = targetMap[rawTarget] ?? rawTarget;
 
-const isInternal = target.includes('internal') || target.includes('chekeo') || target.includes('saas');
-
+const isInternal = target.includes('internal') || target.includes('chekeo');
 
 export default defineConfig({
   root: path.resolve(__dirname, `apps/${target}`),
@@ -29,9 +25,6 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  define: {
-    'process.env.APP_TENANT': JSON.stringify(process.env.APP_TENANT || ''),
-  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, `apps/${target}/src`),

@@ -32,10 +32,7 @@
 
 ## Completados recientemente
 
-- [x] **Desacoplamiento de SaaS Control Plane a App Standalone (`apps/saas-control-plane`) (2026-08-31)**: Creación de `apps/saas-control-plane` con `SaaSApp`, `SaaSHubView`, `TenantOnboardingModal`, `SuperAdminControlPanel`, `SubscriptionBillingPanel`, scripts `dev:saas`, `build:saas`, `preview:saas` en `package.json` y `vite.config.ts`, y restauración de `apps/internal-chekeo-v3` para dedicarse al 100% a la comandería y cocina del restaurante.
-- [x] **SaaS Cloudflare Backend & D1 Control Plane Suite (2026-08-31)**: Subrouter Hono `functions/api/_routes/saas.ts` montado en `/api/saas/*` (`/tenants`, `/metrics`, `/onboarding`), `_tenant-utils.ts` con resolución dinámica, esquema D1 `0001_saas_control_plane.sql`, seed canónico `0002_saas_control_plane_seed.sql`, script `provision-cloudflare.sh` ampliado y documentación técnica en `docs/saas-cloudflare-architecture.md`.
-
-- [x] **PR #635 (2026-08-31)**: Motor SaaS Multi-Tenant, Facturación Stripe & Control Plane Aislado — `SaaSHubView.tsx` como vista raíz, `TenantOnboardingModal.tsx`, `SuperAdminControlPanel.tsx`, switch de marcas en `TopHeader.tsx` y contratos `@config`.
+- [x] **Desacoplamiento Total de SaaS al Repositorio Hresto (2026-08-31)**: Todo el desarrollo, arquitectura multi-tenant, control plane, facturación y backend SaaS fue trasladado y desacoplado a su propio repositorio independiente **`Hresto`** (`C:\Documentos\Hresto`). Burgers.exe queda 100% puro y enfocado en la tienda pública y POS/KDS del restaurante.
 - [x] **PR #633 (2026-08-30)**: Fix de Dark Mode & Scroll Fluido en Modales / Drawers — Activada directiva `@custom-variant dark` para Tailwind CSS v4 con variables dinámicas `var(--color-*)` en Chekeo y Tienda Pública; desacoplado el drag listener de Framer Motion en `@ui/drawer` mediante `useDragControls` y habilitado `overflow-y-auto` con `max-h` en `@ui/dialog` para scroll vertical fluido sin bloqueos de gestos.
 
 - [x] **PR-V3-Polish (2026-08-30)**: Polish de UX/UI, Skeletons Shimmer & Micro-interacciones Táctiles — Shimmer suave en `Skeleton`, retroalimentación elástica (`active:scale-[0.98]` / `active:scale-95`) en catálogo, drawers, `CartBar` animado y `HorizontalDateCalendarFilter` con accesibilidad WCAG 2.1 AA.

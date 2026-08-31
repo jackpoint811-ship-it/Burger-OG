@@ -14,8 +14,6 @@ import { ArrowLeft, ChevronRight, Home, Star, Lock, Zap } from 'lucide-react';
 import { Button } from '@ui/button';
 import { Badge } from '@ui/badge';
 import { Skeleton } from '@ui/skeleton';
-import { ComingSoonGate } from '@ui/coming-soon-gate';
-import { getActiveTenant } from '@config';
 import type { AdminMasterCategory } from '../../features/admin/types/admin.types';
 import { ADMIN_CATEGORIES_CONFIG } from '../../features/admin/constants/admin-navigation.constants';
 import { useAdminPinnedFavorites } from '../../features/admin/hooks/use-admin-pinned-favorites';
@@ -76,7 +74,6 @@ export function AdminModuleWorkspace({
   onLockAdmin,
   className = '',
 }: AdminModuleWorkspaceProps) {
-  const tenant = getActiveTenant();
   const categoryDef = ADMIN_CATEGORIES_CONFIG.find((c) => c.id === category);
   const [activeToolId, setActiveToolId] = useState<string>(() => {
     return initialToolId || categoryDef?.subcategories[0]?.id || 'root';
@@ -420,22 +417,10 @@ export function AdminModuleWorkspace({
                 <BannersAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
               )}
               {category === 'raffles' && (
-                <ComingSoonGate
-                  featureName="Sorteos & Campañas de Referidos"
-                  description="Configuración de sorteos por consumo, tickets automáticos y dinámicas de fidelidad. Próximamente disponible."
-                  status={tenant.features.rafflesAndReferrals}
-                >
-                  <RafflesAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
-                </ComingSoonGate>
+                <RafflesAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
               )}
               {category === 'cashcut' && (
-                <ComingSoonGate
-                  featureName="Arqueo Z & Corte de Caja Avanzado"
-                  description="Arqueo formal de turnos, conciliación contable y desglose de caja por turno. Próximamente disponible."
-                  status={tenant.features.cashCutZReports}
-                >
-                  <CashCutPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
-                </ComingSoonGate>
+                <CashCutPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
               )}
               {category === 'ingredients' && (
                 <IngredientsAdminPanel activeToolId={activeToolId} onSelectTool={setActiveToolId} />
