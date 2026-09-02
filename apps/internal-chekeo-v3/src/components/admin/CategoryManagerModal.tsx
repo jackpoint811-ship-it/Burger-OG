@@ -17,7 +17,7 @@ import {
   Sparkles,
   AlertCircle,
 } from 'lucide-react';
-import type { MenuCategory } from '@config/index';
+import type { MenuCategory, MenuItem } from '@config/index';
 import { Drawer } from '@ui/drawer';
 import { Button } from '@ui/button';
 import { Badge } from '@ui/badge';
@@ -28,7 +28,9 @@ export interface CategoryManagerModalProps {
   isOpen: boolean;
   onClose: () => void;
   categories: MenuCategory[];
+  items?: MenuItem[];
   onSaveCategories: (categories: MenuCategory[]) => Promise<unknown>;
+  onDeleteCategory?: (key: string) => Promise<unknown>;
   isSaving: boolean;
 }
 
@@ -36,7 +38,9 @@ export function CategoryManagerModal({
   isOpen,
   onClose,
   categories,
+  items = [],
   onSaveCategories,
+  onDeleteCategory,
   isSaving,
 }: CategoryManagerModalProps) {
   const [localCategories, setLocalCategories] = useState<MenuCategory[]>([]);
@@ -47,6 +51,7 @@ export function CategoryManagerModal({
   const [newEmoji, setNewEmoji] = useState('🍔');
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -55,6 +60,7 @@ export function CategoryManagerModal({
       setIsAddingNew(false);
       setError(null);
       setHasChanges(false);
+      setDeletingKey(null);
     }
   }, [isOpen, categories]);
 
@@ -84,14 +90,37 @@ export function CategoryManagerModal({
     setHasChanges(true);
   };
 
-  const handleDeleteCategory = (key: string) => {
+  const handleDeleteCategory = async (key: string) => {
     if (localCategories.length <= 1) {
       setError('Debes mantener al menos una categoría en el menú.');
       return;
     }
-    setLocalCategories((prev) => prev.filter((c) => c.key !== key));
-    setHasChanges(true);
-    setError(null);
+
+    const assignedCount = (items || []).filter((i) => i.category === key).length;
+    if (assignedCount > 0) {
+      setError(
+        `No se puede eliminar la categoría "${key}" porque tiene ${assignedCount} platillo(s) asignado(s). Reasigna o elimina los platillos primero.`
+      );
+      return;
+    }
+
+    if (onDeleteCategory) {
+      try {
+        setDeletingKey(key);
+        await onDeleteCategory(key);
+        setLocalCategories((prev) => prev.filter((c) => c.key !== key));
+        setHasChanges(true);
+        setError(null);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Error al eliminar la categoría de D1.');
+      } finally {
+        setDeletingKey(null);
+      }
+    } else {
+      setLocalCategories((prev) => prev.filter((c) => c.key !== key));
+      setHasChanges(true);
+      setError(null);
+    }
   };
 
   const handleAddNewCategory = (e: React.FormEvent) => {
@@ -166,6 +195,7 @@ export function CategoryManagerModal({
           <AnimatePresence initial={false}>
             {localCategories.map((cat, index) => {
               const isEditing = editingKey === cat.key;
+              const assignedCount = (items || []).filter((i) => i.category === cat.key).length;
 
               return (
                 <motion.div
@@ -229,6 +259,14 @@ export function CategoryManagerModal({
                             <Badge variant="outline" className="text-[10px] font-mono text-text-muted">
                               {cat.key}
                             </Badge>
+                            <Badge
+                              variant="secondary"
+                              className={`text-[10px] font-semibold ${
+                                assignedCount > 0 ? 'text-accent bg-accent/10 border-accent/20' : 'text-text-muted'
+                              }`}
+                            >
+                              {assignedCount} platillo{assignedCount === 1 ? '' : 's'}
+                            </Badge>
                           </div>
                         )}
                       </div>
@@ -250,9 +288,18 @@ export function CategoryManagerModal({
                         type="button"
                         variant="ghost"
                         size="sm"
+                        disabled={assignedCount > 0 || isSaving || deletingKey === cat.key}
                         onClick={() => handleDeleteCategory(cat.key)}
-                        className="h-8 w-8 p-0 rounded-lg text-destructive hover:bg-destructive/10"
-                        title="Eliminar categoría"
+                        className={`h-8 w-8 p-0 rounded-lg transition-all ${
+                          assignedCount > 0
+                            ? 'opacity-30 cursor-not-allowed text-text-muted'
+                            : 'text-destructive hover:bg-destructive/10'
+                        }`}
+                        title={
+                          assignedCount > 0
+                            ? `No se puede eliminar: tiene ${assignedCount} platillo(s) asignado(s)`
+                            : 'Eliminar categoría'
+                        }
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>

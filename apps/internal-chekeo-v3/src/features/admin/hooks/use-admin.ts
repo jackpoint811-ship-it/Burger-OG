@@ -24,6 +24,7 @@ import {
   deleteMenuItemImage,
   fetchAdminCategories,
   saveAdminCategories,
+  deleteAdminCategory,
   fetchAdminSiteConfig,
   updateAdminSiteConfig,
   fetchAdminTowerSchedules,
@@ -165,6 +166,15 @@ export function useAdminMenu() {
     mutationFn: (categories: MenuCategory[]) => saveAdminCategories(categories),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.categories });
+      queryClient.invalidateQueries({ queryKey: adminKeys.menu });
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (key: string) => deleteAdminCategory(key),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.categories });
+      queryClient.invalidateQueries({ queryKey: adminKeys.menu });
     },
   });
 
@@ -190,6 +200,7 @@ export function useAdminMenu() {
     uploadImageMutation,
     deleteImageMutation,
     saveCategoriesMutation,
+    deleteCategoryMutation,
     updateSiteConfigMutation,
   };
 }

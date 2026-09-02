@@ -952,6 +952,25 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
   - Cloudflare Pages: Despliegue automático a producción (`https://burgers-exe.pages.dev/` y `https://chekeo2-0.pages.dev/`).
 
 
+### 📅 2026-09-02 — Sesión 34: Gestor de Categorías y Editor de Combos en Laboratorio Preview
+- **Consagración de `preview` como Laboratorio Activo**:
+  - Oficializada la rama `preview` como la base de trabajo para desarrollo y experimentos de Burgers.exe.
+- **Blindaje de Categorías en `CategoryManagerModal.tsx`**:
+  - Conteo de platillos dependientes en tiempo real (`items: MenuItem[]`).
+  - Bloqueo de borrado si una categoría tiene platillos asignados en `menu_items` (prevención de orfandad).
+  - Borrado real en Cloudflare D1 vía `DELETE /api/menu-v2-admin/categories/:key`.
+- **Editor de Combos y Opciones en `ProductEditModal.tsx`**:
+  - Sección integrada dentro del `<Drawer>` de producto en `preview`.
+  - Configuración de `bundlePriceCents`, selección de hamburguesas base en `comboLinks` y `optionGroups` dinámicos (guarniciones, bebidas, upcharges y opciones default) validados con `MenuItemComboConfigSchema`.
+- **Backend Hono.js en D1 (`menu-admin.ts`)**:
+  - Flexibilización de slugs de categorías en `POST /items`.
+  - Endpoint seguro `DELETE /api/menu-v2-admin/categories/:key` con comprobación de integridad y respuesta HTTP 409 si existen platillos asignados.
+- **Verificación Técnica**:
+  - `git diff --check` ✅ (0 errores).
+  - `npm run typecheck` ✅ (0 errores).
+  - `npm run build:public` ✅ (6.84s).
+  - `npm run build:chekeo` ✅ (6.58s).
+
 ## 📌 Issues Abiertos
 
 | # | Descripción | Severidad | Estado |
@@ -960,9 +979,9 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 
 ---
 
-## 🔴 Reglas Permanentes V3 (de AGENTS.md)
+## 🔴 Reglas Permanentes (de AGENTS.md)
 
-- **Base de PRs Obligatoria**: Todos los PRs del roadmap V3 se crean con base en `v3`.
+- **Base de PRs Obligatoria**: La rama `preview` es el laboratorio activo y base obligatoria para features y PRs (`gh pr create --base preview`).
 - **Cutover Final (PR-V3-13)**: Apertura del PR final desde `v3` hacia `main` tras validar compilación y checks completos.
 - **Atomicidad**: Cada PR cumple un único objetivo acotado y verificable.
 - **Checks Obligatorios**: `git diff --check`, `npm run typecheck` y `npm run build` validados en cada fase.

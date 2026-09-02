@@ -23,6 +23,7 @@ import type {
   OrderV2Environment,
   IngredientV2,
   ProductIngredientRecipeV2,
+  MenuItemComboConfig,
 } from '@config/index';
 
 export type AdminMasterCategory =
@@ -86,7 +87,7 @@ export type CreateMenuItemPayload = {
   stockLimit?: number | null;
   stockRemaining?: number | null;
   comboLinks?: string[];
-  comboConfig?: any;
+  comboConfig?: MenuItemComboConfig | null;
 };
 
 export type UpdateMenuItemPayload = Partial<CreateMenuItemPayload>;
