@@ -121,6 +121,13 @@ export async function saveAdminCategories(categories: MenuCategory[]): Promise<M
   return res.categories ?? [];
 }
 
+export async function deleteAdminCategory(key: string): Promise<string> {
+  const res = await apiFetch<{ ok: boolean; deletedKey: string }>(`/api/menu-v2-admin/categories/${encodeURIComponent(key)}`, {
+    method: 'DELETE',
+  });
+  return res.deletedKey;
+}
+
 export async function fetchAdminSiteConfig(): Promise<PublicConfig> {
   const res = await apiFetch<{ ok: boolean; publicConfig: PublicConfig }>('/api/menu-v2-admin/site-config');
   return res.publicConfig;

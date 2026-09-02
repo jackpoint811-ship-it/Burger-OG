@@ -55,6 +55,7 @@ export function MenuStockPanel({ activeToolId = 'catalog', onSelectTool }: MenuS
     uploadImageMutation,
     deleteImageMutation,
     saveCategoriesMutation,
+    deleteCategoryMutation,
   } = useAdminMenu();
 
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -691,6 +692,7 @@ export function MenuStockPanel({ activeToolId = 'catalog', onSelectTool }: MenuS
         onClose={() => setIsEditModalOpen(false)}
         item={selectedItem}
         categories={categories}
+        allItems={items}
         onSave={handleSaveItem}
         onDeleteImage={deleteImageMutation.mutateAsync}
         isSaving={createItemMutation.isPending || updateItemMutation.isPending || uploadImageMutation.isPending}
@@ -701,8 +703,10 @@ export function MenuStockPanel({ activeToolId = 'catalog', onSelectTool }: MenuS
         isOpen={isCategoryModalOpen}
         onClose={() => setIsCategoryModalOpen(false)}
         categories={categories}
+        items={items}
         onSaveCategories={saveCategoriesMutation.mutateAsync}
-        isSaving={saveCategoriesMutation.isPending}
+        onDeleteCategory={deleteCategoryMutation.mutateAsync}
+        isSaving={saveCategoriesMutation.isPending || deleteCategoryMutation.isPending}
       />
     </div>
   );

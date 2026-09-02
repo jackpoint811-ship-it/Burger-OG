@@ -64,6 +64,7 @@ Burgers.exe opera en un monorepo limpio y dedicado exclusivamente al restaurante
 | V3-Polish | Polish de UX/UI, Skeletons Shimmer & Micro-interacciones Táctiles | ✅ Mergeado (#631) |
 | SaaS-Decouple | Desacoplamiento de SaaS Multi-Tenant al Repositorio Hresto | ✅ Completado |
 | V3-ProdRelease | Pase a Producción Oficial (Suite Admin, Performance & Polish) | ✅ Mergeado (#640) |
+| Preview-Lab-01 | Gestor de Categorías & Editor de Combos (comboConfig) en Preview | 🚀 Listo para PR |
 
 ## Infraestructura y URLs Activas (Cloudflare Pages)
 

@@ -147,7 +147,7 @@ menuAdminRouter.post('/items', async (c) => {
     !name ||
     !Number.isFinite(price) ||
     price < 0 ||
-    !CATEGORIES.has(category as MenuCategory['key']) ||
+    (!CATEGORIES.has(category as MenuCategory['key']) && !/^[a-z0-9-]{2,50}$/.test(category)) ||
     !Number.isInteger(sortOrder) ||
     typeof isAvailable !== 'boolean' ||
     typeof isFeatured !== 'boolean' ||
@@ -492,6 +492,33 @@ const handleCategoriesSave = async (c: Context<AppEnv>) => {
 };
 menuAdminRouter.post('/categories', handleCategoriesSave);
 menuAdminRouter.put('/categories', handleCategoriesSave);
+
+// DELETE /api/menu-v2-admin/categories/:key
+menuAdminRouter.delete('/categories/:key', async (c) => {
+  if (!c.env.BOG_MENU_DB) return json(503, { ok: false, error: 'Admin disabled' });
+  const authError = await requireAdminToken(c.req.raw, c.env);
+  if (authError) return authError;
+
+  const key = c.req.param('key')?.trim()?.toLowerCase() ?? '';
+  if (!key) return json(400, { ok: false, error: 'Clave de categoría requerida' });
+
+  // Comprobar si existen productos asociados a esta categoría
+  const itemCheck = await c.env.BOG_MENU_DB.prepare(
+    'SELECT COUNT(*) as count FROM menu_items WHERE category_key = ?'
+  ).bind(key).first<{ count: number }>();
+
+  const assignedCount = itemCheck?.count ?? 0;
+  if (assignedCount > 0) {
+    return json(409, {
+      ok: false,
+      error: 'CATEGORY_IN_USE',
+      message: `No se puede eliminar la categoría "${key}" porque tiene ${assignedCount} platillo(s) asignado(s). Reasigna o elimina los platillos primero.`
+    });
+  }
+
+  await c.env.BOG_MENU_DB.prepare('DELETE FROM menu_categories WHERE key = ?').bind(key).run();
+  return json(200, { ok: true, deletedKey: key });
+});
 
 // -------------------------------------------------------------
 // CATEGORY BANNERS

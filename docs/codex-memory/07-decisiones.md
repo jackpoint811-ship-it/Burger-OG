@@ -313,3 +313,33 @@ Prevenir desalineaciones entre la base de datos real y la interfaz de usuario, e
 - Cero productos o precios ficticios en la aplicación.
 - Comandas y desgloses de cocina 100% consistentes con el catálogo de D1.
 - Inclusión de la regla en `AGENTS.md`, `GEMINI.md` y `.agents/rules/00-hard-constraints.md` como prohibición permanente.
+
+### Fecha
+
+2026-08-26
+
+---
+
+### Decisión
+
+**Consagración de `preview` como Laboratorio Activo & Gestión Quirúrgica de Categorías y Combos**:
+
+1. **Laboratorio Activo (`preview`)**: Tras el release exitoso a producción (PR #640), la rama `preview` retoma su rol como laboratorio principal de desarrollo y testing en vivo de Burgers.exe. Todo nuevo PR se abre contra `--base preview`.
+2. **Blindaje de Categorías en `CategoryManagerModal.tsx`**: Integración del conteo en tiempo real de platillos dependientes y desactivación del borrado si la categoría contiene productos asignados en `menu_items`, evitando platillos huérfanos.
+3. **Borrado Real en D1**: Incorporación del endpoint `DELETE /api/menu-v2-admin/categories/:key` con protección referencial (HTTP 409 Conflict) en backend Hono.js.
+4. **Editor de Combos y Opciones (`comboConfig`) en `ProductEditModal.tsx`**: Inyección limpia de la sección de combos dentro del `<Drawer>` existente en `preview`, soportando precios de paquete (`bundlePriceCents`), vinculación de hamburguesas base (`comboLinks`) y grupos dinámicos de opciones (`optionGroups`) con recargos (`upchargeCents`).
+
+### Motivo
+
+Preservar intacta la arquitectura de Drawers y micro-interacciones ya estabilizada en `preview`, proveyendo las herramientas necesarias para que Chekeo gobierne el 100% de la configuración de combos y categorías de forma segura.
+
+### Impacto
+
+- Cero regresiones en los 6 módulos administrativos ni en la app pública.
+- Experiencia de usuario consistente basada en `<Drawer>`.
+- Auto-despliegue en Cloudflare Pages al mergear en `preview`.
+
+### Fecha
+
+2026-09-02
+
