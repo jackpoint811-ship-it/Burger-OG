@@ -5,6 +5,7 @@
  */
 
 export * from './ProductEditModal';
+export * from './CategoriesManagerModal';
 export * from './MenuStockPanel';
 export * from './TowersAdminPanel';
 export * from './BannersAdminPanel';

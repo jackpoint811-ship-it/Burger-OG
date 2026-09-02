@@ -252,6 +252,22 @@ Migración completa V2 → V3 de Burgers.exe. Reescritura total con stack modern
 - **Validación Staging**: `typecheck` ✅ (0 errores), `build:public` ✅ (537 kB), `build:chekeo` ✅ (600 kB).
 - **Despliegue Automático**: Habilitado el pipeline de CI/CD para que Cloudflare Pages despliegue la suite completa de V3 en el entorno de pruebas en vivo.
 
+### 📅 2026-09-02 — Sesión 24: Gestor de Categorías y Editor de Combos en Chekeo Admin
+- **Gestor Visual de Categorías**:
+  - Creado `CategoriesManagerModal.tsx` con controles de ordenamiento fluido (Subir/Bajar), presets de emojis culinarios, edición en vivo de nombres, slug autogenerado y prevención referencial contra el borrado de categorías con platillos asignados.
+  - Integrado botón accesible `Gestionar` con ícono `Layers` en `MenuStockPanel.tsx`.
+- **Editor Visual de Combos y Opciones (`comboConfig`)**:
+  - En `ProductEditModal.tsx`, implementada la sección interactiva de Combos y Grupos de Opciones.
+  - Soporte de vinculación de productos base (`comboLinks`), precio de paquete (`bundlePriceCents`), y grupos de opciones dinámicas (guarniciones, bebidas, upcharges y selección por defecto) conformes a `MenuItemComboConfigSchema`.
+  - Presets rápidos de 1 tap (`+ Guarnición`, `+ Bebida`, `+ Personalizado`).
+- **Hardening Backend Cloudflare D1**:
+  - En `menu-admin.ts`, flexibilizada la validación de categorías en `POST /items` para admitir slugs dinámicos.
+  - Agregado endpoint seguro `DELETE /api/menu-v2-admin/categories/:key` con comprobación de integridad y respuesta HTTP 409 si existen platillos asignados.
+- **Verificaciones**:
+  - `typecheck` ✅ (0 errores).
+  - `build` (`build:public` + `build:chekeo`) ✅ (100% en verde).
+  - `git diff --check` ✅ (limpio, sin errores de formato).
+
 ---
 
 ## 📌 Issues Abiertos

@@ -13,6 +13,7 @@
 import type {
   MenuItem,
   MenuCategory,
+  MenuItemComboConfig,
   CatalogBanner,
   TowerSchedule,
   RaffleCampaignV2,
@@ -49,7 +50,7 @@ export type CreateMenuItemPayload = {
   stockLimit?: number | null;
   stockRemaining?: number | null;
   comboLinks?: string[];
-  comboConfig?: any;
+  comboConfig?: MenuItemComboConfig | null;
 };
 
 export type UpdateMenuItemPayload = Partial<CreateMenuItemPayload>;

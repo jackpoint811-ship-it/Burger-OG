@@ -6,8 +6,31 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, Trash2, Check, AlertCircle, Sparkles, Package, DollarSign, Tag, Image as ImageIcon } from 'lucide-react';
-import type { MenuItem, MenuCategory } from '@config/index';
+import {
+  X,
+  Upload,
+  Trash2,
+  Check,
+  AlertCircle,
+  Sparkles,
+  Package,
+  DollarSign,
+  Tag,
+  Image as ImageIcon,
+  Layers,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Sliders,
+  UtensilsCrossed,
+} from 'lucide-react';
+import type {
+  MenuItem,
+  MenuCategory,
+  MenuItemComboConfig,
+  ComboOptionGroup,
+  ComboItemOption,
+} from '@config/index';
 import { Button } from '@ui/button';
 import { Badge } from '@ui/badge';
 import type { CreateMenuItemPayload, UpdateMenuItemPayload } from '../../features/admin/types/admin.types';
@@ -17,6 +40,7 @@ interface ProductEditModalProps {
   onClose: () => void;
   item: MenuItem | null;
   categories: MenuCategory[];
+  allItems?: MenuItem[];
   onSave: (sku: string, payload: CreateMenuItemPayload | UpdateMenuItemPayload, file?: File | null) => Promise<void>;
   onDeleteImage?: (sku: string) => Promise<unknown>;
   isSaving: boolean;
@@ -27,6 +51,7 @@ export function ProductEditModal({
   onClose,
   item,
   categories,
+  allItems = [],
   onSave,
   onDeleteImage,
   isSaving,
@@ -56,6 +81,13 @@ export function ProductEditModal({
   const [stockManaged, setStockManaged] = useState(false);
   const [stockLimit, setStockLimit] = useState('');
   const [stockRemaining, setStockRemaining] = useState('');
+
+  // Combo & Option groups states
+  const [isCombo, setIsCombo] = useState(false);
+  const [bundlePrice, setBundlePrice] = useState('');
+  const [comboLinks, setComboLinks] = useState<string[]>([]);
+  const [optionGroups, setOptionGroups] = useState<ComboOptionGroup[]>([]);
+  const [isComboSectionOpen, setIsComboSectionOpen] = useState(false);
 
   // Image states
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -89,6 +121,17 @@ export function ProductEditModal({
       setStockLimit(item.stockLimit != null ? String(item.stockLimit) : '');
       setStockRemaining(item.stockRemaining != null ? String(item.stockRemaining) : '');
 
+      const itemIsCombo = Boolean(item.comboConfig?.isCombo || item.category === 'combos');
+      setIsCombo(itemIsCombo);
+      setBundlePrice(item.comboConfig?.bundlePriceCents != null ? String(item.comboConfig.bundlePriceCents / 100) : '');
+      setComboLinks(item.comboLinks || []);
+      setOptionGroups(
+        item.comboConfig?.optionGroups
+          ? JSON.parse(JSON.stringify(item.comboConfig.optionGroups))
+          : []
+      );
+      setIsComboSectionOpen(itemIsCombo);
+
       setImagePreview(
         item.imageUrl ||
           (item.imageKey ? `/api/assets-v2/${encodeURIComponent(item.imageKey)}` : null)
@@ -116,6 +159,12 @@ export function ProductEditModal({
       setStockManaged(false);
       setStockLimit('50');
       setStockRemaining('50');
+
+      setIsCombo(false);
+      setBundlePrice('');
+      setComboLinks([]);
+      setOptionGroups([]);
+      setIsComboSectionOpen(false);
 
       setImagePreview(null);
       setSelectedFile(null);
@@ -148,6 +197,126 @@ export function ProductEditModal({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // Option groups & combo helpers
+  const handleAddOptionGroup = (type: 'guarnicion' | 'bebida' | 'custom') => {
+    if (type === 'guarnicion') {
+      const defaultGuarniciones = (allItems || [])
+        .filter((p) => p.category?.toLowerCase() === 'guarniciones' && p.isAvailable !== false)
+        .slice(0, 4)
+        .map((p, idx) => ({
+          sku: p.sku,
+          isDefault: idx === 0,
+          upchargeCents: 0,
+        }));
+
+      setOptionGroups((prev) => [
+        ...prev,
+        {
+          id: `side-${Date.now()}`,
+          name: 'Elige tu Guarnición',
+          isRequired: true,
+          minSelections: 1,
+          maxSelections: 1,
+          options: defaultGuarniciones.length > 0 ? defaultGuarniciones : [
+            { sku: 'SIDE-FRIES', isDefault: true, upchargeCents: 0 },
+          ],
+        },
+      ]);
+    } else if (type === 'bebida') {
+      const defaultDrinks = (allItems || [])
+        .filter((p) => p.category?.toLowerCase() === 'drinks' && p.isAvailable !== false)
+        .slice(0, 4)
+        .map((p, idx) => ({
+          sku: p.sku,
+          isDefault: idx === 0,
+          upchargeCents: 0,
+        }));
+
+      setOptionGroups((prev) => [
+        ...prev,
+        {
+          id: `drink-${Date.now()}`,
+          name: 'Elige tu Bebida',
+          isRequired: false,
+          minSelections: 0,
+          maxSelections: 1,
+          options: defaultDrinks.length > 0 ? defaultDrinks : [
+            { sku: 'DRINK-COKE', isDefault: true, upchargeCents: 0 },
+          ],
+        },
+      ]);
+    } else {
+      setOptionGroups((prev) => [
+        ...prev,
+        {
+          id: `opt-${Date.now()}`,
+          name: 'Grupo de Opciones',
+          isRequired: false,
+          minSelections: 0,
+          maxSelections: 1,
+          options: [],
+        },
+      ]);
+    }
+  };
+
+  const handleRemoveOptionGroup = (groupIndex: number) => {
+    setOptionGroups((prev) => prev.filter((_, idx) => idx !== groupIndex));
+  };
+
+  const handleUpdateOptionGroup = (groupIndex: number, field: keyof ComboOptionGroup, val: any) => {
+    setOptionGroups((prev) => {
+      const copy = [...prev];
+      copy[groupIndex] = { ...copy[groupIndex], [field]: val };
+      return copy;
+    });
+  };
+
+  const handleAddOptionToGroup = (groupIndex: number) => {
+    setOptionGroups((prev) => {
+      const copy = [...prev];
+      const grp = copy[groupIndex];
+      const newOptions = [...grp.options, { sku: '', isDefault: grp.options.length === 0, upchargeCents: 0 }];
+      copy[groupIndex] = { ...grp, options: newOptions };
+      return copy;
+    });
+  };
+
+  const handleRemoveOptionFromGroup = (groupIndex: number, optIndex: number) => {
+    setOptionGroups((prev) => {
+      const copy = [...prev];
+      const grp = copy[groupIndex];
+      copy[groupIndex] = {
+        ...grp,
+        options: grp.options.filter((_, idx) => idx !== optIndex),
+      };
+      return copy;
+    });
+  };
+
+  const handleUpdateOption = (groupIndex: number, optIndex: number, field: keyof ComboItemOption, val: any) => {
+    setOptionGroups((prev) => {
+      const copy = [...prev];
+      const grp = copy[groupIndex];
+      const opts = [...grp.options];
+      opts[optIndex] = { ...opts[optIndex], [field]: val };
+      // Si se marca como default y el grupo es single-select (maxSelections === 1), desmarcar los demás
+      if (field === 'isDefault' && val === true && grp.maxSelections === 1) {
+        opts.forEach((o, i) => {
+          if (i !== optIndex) o.isDefault = false;
+        });
+      }
+      copy[groupIndex] = { ...grp, options: opts };
+      return copy;
+    });
+  };
+
+  const handleToggleComboLink = (linkSku: string) => {
+    setComboLinks((prev) =>
+      prev.includes(linkSku) ? prev.filter((s) => s !== linkSku) : [...prev, linkSku]
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -169,6 +338,38 @@ export function ProductEditModal({
       return;
     }
 
+    // Limpiar y estructurar comboConfig
+    let comboConfigPayload: MenuItemComboConfig | null = null;
+    if (isCombo) {
+      const cleanedGroups: ComboOptionGroup[] = optionGroups
+        .filter((g) => g.name.trim().length > 0)
+        .map((g) => ({
+          id: g.id || `group-${Date.now()}`,
+          name: g.name.trim(),
+          isRequired: Boolean(g.isRequired),
+          minSelections: Math.max(0, Number(g.minSelections) || 0),
+          maxSelections: Math.max(1, Number(g.maxSelections) || 1),
+          options: g.options
+            .filter((o) => o.sku.trim().length > 0)
+            .map((o) => ({
+              sku: o.sku.trim().toUpperCase(),
+              isDefault: Boolean(o.isDefault),
+              upchargeCents: Math.max(0, Math.round(Number(o.upchargeCents) || 0)),
+            })),
+        }));
+
+      const numBundlePrice = bundlePrice ? Number(bundlePrice) : numPrice;
+      const bundlePriceCents = Number.isFinite(numBundlePrice) && numBundlePrice >= 0
+        ? Math.round(numBundlePrice * 100)
+        : Math.round(numPrice * 100);
+
+      comboConfigPayload = {
+        isCombo: true,
+        bundlePriceCents,
+        optionGroups: cleanedGroups,
+      };
+    }
+
     const payload: CreateMenuItemPayload = {
       sku: cleanSku,
       name: name.trim(),
@@ -187,7 +388,8 @@ export function ProductEditModal({
       stockManaged,
       stockLimit: stockManaged && stockLimit ? Number(stockLimit) : null,
       stockRemaining: stockManaged && stockRemaining ? Number(stockRemaining) : null,
-      comboLinks: item?.comboLinks || [],
+      comboLinks: isCombo ? comboLinks : [],
+      comboConfig: comboConfigPayload,
     };
 
     try {
@@ -418,6 +620,320 @@ export function ProductEditModal({
                       onChange={(e) => setPromoExpiresAt(e.target.value)}
                       className="w-full px-3 py-1.5 text-xs rounded-xl bg-surface-card border border-line text-text-primary outline-none focus:border-accent"
                     />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sección: Configuración de Combo y Grupos de Opciones */}
+          <div className="space-y-4 pt-4 border-t border-line">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-2">
+                <Sliders className="w-3.5 h-3.5 text-accent" />
+                Configuración de Combo & Opciones
+              </h4>
+              <Badge variant={isCombo ? 'default' : 'outline'} className="text-[10px]">
+                {isCombo ? 'Modo Combo Activo' : 'Producto Individual'}
+              </Badge>
+            </div>
+
+            <div className="p-4 rounded-3xl bg-surface-raised border border-line space-y-4">
+              {/* Main Switch */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-text-primary">
+                    ¿Es un Combo o Platillo con Opciones?
+                  </span>
+                  <p className="text-[11px] text-text-secondary">
+                    Habilita la selección de guarniciones, bebidas o personalizaciones en la app pública.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isCombo}
+                    onChange={(e) => {
+                      const next = e.target.checked;
+                      setIsCombo(next);
+                      if (next) {
+                        setIsComboSectionOpen(true);
+                        if (optionGroups.length === 0) {
+                          handleAddOptionGroup('guarnicion');
+                        }
+                      }
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-10 h-5 bg-line peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent"></div>
+                </label>
+              </div>
+
+              {isCombo && (
+                <div className="space-y-4 pt-2 border-t border-line animate-in fade-in duration-200">
+                  {/* Bundle Price & Included Products (comboLinks) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-text-secondary mb-1">
+                        Precio Paquete Combo ($ MXN)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-text-muted">$</span>
+                        <input
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          placeholder={price || '189.00'}
+                          value={bundlePrice}
+                          onChange={(e) => setBundlePrice(e.target.value)}
+                          className="w-full pl-7 pr-3 py-2 text-xs rounded-xl bg-surface-card border border-line text-text-primary outline-none focus:border-accent font-mono font-bold"
+                        />
+                      </div>
+                      <span className="text-[10px] text-text-muted mt-1 block">
+                        Si se deja vacío, tomará el precio regular del producto.
+                      </span>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-text-secondary mb-1">
+                        Platillos Base Incluidos (comboLinks)
+                      </label>
+                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-2 rounded-xl bg-surface-card border border-line">
+                        {(allItems || [])
+                          .filter((p) => p.category?.toLowerCase() === 'burgers')
+                          .map((b) => {
+                            const isLinked = comboLinks.includes(b.sku);
+                            return (
+                              <button
+                                key={b.sku}
+                                type="button"
+                                onClick={() => handleToggleComboLink(b.sku)}
+                                className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                                  isLinked
+                                    ? 'bg-accent text-white shadow-xs'
+                                    : 'bg-surface-raised text-text-secondary hover:text-text-primary'
+                                }`}
+                              >
+                                {isLinked ? '✓ ' : '+ '}
+                                {b.name}
+                              </button>
+                            );
+                          })}
+                      </div>
+                      <span className="text-[10px] text-text-muted mt-1 block">
+                        Permite que el cliente personalice la receta de la hamburguesa en el checkout.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Option Groups Manager */}
+                  <div className="space-y-3 pt-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <span className="text-xs font-extrabold text-text-primary">
+                          Grupos de Opciones ({optionGroups.length})
+                        </span>
+                        <p className="text-[11px] text-text-secondary">
+                          Guarniciones, bebidas o pasos obligatorios/opcionales.
+                        </p>
+                      </div>
+
+                      {/* Preset Add Buttons */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddOptionGroup('guarnicion')}
+                          className="text-[11px] h-8 px-2.5 rounded-xl border-dashed"
+                        >
+                          + Guarnición
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddOptionGroup('bebida')}
+                          className="text-[11px] h-8 px-2.5 rounded-xl border-dashed"
+                        >
+                          + Bebida
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddOptionGroup('custom')}
+                          className="text-[11px] h-8 px-2.5 rounded-xl border-dashed"
+                        >
+                          + Personalizado
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Option Groups List */}
+                    {optionGroups.length === 0 ? (
+                      <div className="p-6 rounded-2xl bg-surface-card border border-dashed border-line text-center space-y-2">
+                        <UtensilsCrossed className="w-6 h-6 text-text-muted mx-auto" />
+                        <p className="text-xs font-semibold text-text-secondary">
+                          Sin grupos de opciones configurados
+                        </p>
+                        <p className="text-[11px] text-text-muted">
+                          Usa los botones superiores para agregar un grupo de guarnición o bebida.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {optionGroups.map((group, gIdx) => (
+                          <div
+                            key={group.id || gIdx}
+                            className="p-3.5 rounded-2xl bg-surface-card border border-line space-y-3 shadow-xs"
+                          >
+                            {/* Group Header */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-line">
+                              <div className="flex items-center gap-2 flex-1">
+                                <span className="w-5 h-5 rounded-lg bg-accent-soft text-accent text-xs font-bold flex items-center justify-center shrink-0">
+                                  {gIdx + 1}
+                                </span>
+                                <input
+                                  type="text"
+                                  value={group.name}
+                                  onChange={(e) => handleUpdateOptionGroup(gIdx, 'name', e.target.value)}
+                                  placeholder="Nombre del grupo (ej. Elige tu Guarnición)"
+                                  className="px-2.5 py-1 text-xs font-bold rounded-lg bg-surface-raised border border-line text-text-primary outline-none focus:border-accent flex-1"
+                                />
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                <label className="flex items-center gap-1.5 text-[11px] font-semibold text-text-secondary cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={group.isRequired}
+                                    onChange={(e) => handleUpdateOptionGroup(gIdx, 'isRequired', e.target.checked)}
+                                    className="rounded text-accent focus:ring-accent w-3.5 h-3.5"
+                                  />
+                                  <span>Obligatorio</span>
+                                </label>
+
+                                <div className="flex items-center gap-1 text-[11px] text-text-muted font-mono">
+                                  <span>min:</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="5"
+                                    value={group.minSelections}
+                                    onChange={(e) => handleUpdateOptionGroup(gIdx, 'minSelections', Number(e.target.value))}
+                                    className="w-9 px-1 py-0.5 text-center text-xs rounded bg-surface-raised border border-line"
+                                  />
+                                  <span>max:</span>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                    value={group.maxSelections}
+                                    onChange={(e) => handleUpdateOptionGroup(gIdx, 'maxSelections', Number(e.target.value))}
+                                    className="w-9 px-1 py-0.5 text-center text-xs rounded bg-surface-raised border border-line"
+                                  />
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveOptionGroup(gIdx)}
+                                  className="w-7 h-7 rounded-lg text-text-muted hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-colors"
+                                  title="Eliminar grupo"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Options within group */}
+                            <div className="space-y-2">
+                              {group.options.map((opt, oIdx) => (
+                                <div
+                                  key={oIdx}
+                                  className="flex items-center gap-2 p-2 rounded-xl bg-surface-raised border border-line/60"
+                                >
+                                  {/* SKU Selector */}
+                                  <div className="flex-1 min-w-0">
+                                    <select
+                                      value={opt.sku}
+                                      onChange={(e) => handleUpdateOption(gIdx, oIdx, 'sku', e.target.value)}
+                                      className="w-full px-2 py-1 text-xs rounded-lg bg-surface-card border border-line text-text-primary outline-none focus:border-accent font-semibold"
+                                    >
+                                      <option value="">-- Selecciona producto --</option>
+                                      {(allItems || []).map((p) => (
+                                        <option key={p.sku} value={p.sku}>
+                                          {p.name} ({p.sku})
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  {/* Upcharge Input */}
+                                  <div className="w-28 shrink-0 flex items-center gap-1">
+                                    <span className="text-[10px] text-text-muted font-bold">+$</span>
+                                    <input
+                                      type="number"
+                                      step="1"
+                                      min="0"
+                                      placeholder="0"
+                                      value={(opt.upchargeCents || 0) / 100}
+                                      onChange={(e) =>
+                                        handleUpdateOption(
+                                          gIdx,
+                                          oIdx,
+                                          'upchargeCents',
+                                          Math.round(Number(e.target.value || 0) * 100)
+                                        )
+                                      }
+                                      className="w-full px-2 py-1 text-xs font-mono text-center rounded-lg bg-surface-card border border-line text-text-primary outline-none focus:border-accent font-bold"
+                                      title="Cargo extra en pesos MXN"
+                                    />
+                                  </div>
+
+                                  {/* isDefault Checkbox */}
+                                  <label
+                                    className="flex items-center gap-1 text-[10px] font-semibold text-text-secondary cursor-pointer shrink-0"
+                                    title="Opción seleccionada por defecto"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={Boolean(opt.isDefault)}
+                                      onChange={(e) =>
+                                        handleUpdateOption(gIdx, oIdx, 'isDefault', e.target.checked)
+                                      }
+                                      className="rounded text-accent focus:ring-accent w-3.5 h-3.5"
+                                    />
+                                    <span>Default</span>
+                                  </label>
+
+                                  {/* Delete Option */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveOptionFromGroup(gIdx, oIdx)}
+                                    className="w-6 h-6 rounded-md text-text-muted hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-colors shrink-0"
+                                    title="Quitar opción"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ))}
+
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleAddOptionToGroup(gIdx)}
+                                className="w-full h-8 rounded-xl border-dashed border-line text-[11px] font-semibold text-text-secondary hover:text-text-primary hover:border-accent"
+                              >
+                                <Plus className="w-3 h-3 mr-1" />
+                                Añadir Opción a este Grupo
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

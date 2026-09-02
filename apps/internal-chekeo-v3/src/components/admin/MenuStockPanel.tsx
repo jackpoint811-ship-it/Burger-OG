@@ -29,7 +29,9 @@ import { Badge } from '@ui/badge';
 import { Card } from '@ui/card';
 import { useAdminMenu } from '../../features/admin/hooks/use-admin';
 import { ProductEditModal } from './ProductEditModal';
+import { CategoriesManagerModal } from './CategoriesManagerModal';
 import type { CreateMenuItemPayload, UpdateMenuItemPayload } from '../../features/admin/types/admin.types';
+import type { MenuCategory } from '@config/index';
 
 export function MenuStockPanel() {
   const {
@@ -45,12 +47,15 @@ export function MenuStockPanel() {
     toggleAvailabilityMutation,
     uploadImageMutation,
     deleteImageMutation,
+    saveCategoriesMutation,
+    deleteCategoryMutation,
   } = useAdminMenu();
 
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
   const [deletingSku, setDeletingSku] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -157,6 +162,18 @@ export function MenuStockPanel() {
     }
   };
 
+  const handleSaveCategories = async (newCategories: MenuCategory[]) => {
+    await saveCategoriesMutation.mutateAsync(newCategories);
+    setNotice('Categorías actualizadas y sincronizadas correctamente.');
+    setTimeout(() => setNotice(null), 3500);
+  };
+
+  const handleDeleteCategory = async (key: string) => {
+    await deleteCategoryMutation.mutateAsync(key);
+    setNotice(`Categoría "${key}" eliminada.`);
+    setTimeout(() => setNotice(null), 3500);
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Banner Notice */}
@@ -235,6 +252,17 @@ export function MenuStockPanel() {
               </button>
             );
           })}
+
+          {/* Botón Gestionar Categorías */}
+          <button
+            type="button"
+            onClick={() => setIsCategoriesModalOpen(true)}
+            className="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 bg-surface-raised border border-dashed border-line text-text-secondary hover:text-text-primary hover:border-accent flex items-center gap-1.5"
+            title="Gestionar, reordenar y crear categorías"
+          >
+            <Layers className="w-3.5 h-3.5 text-accent" />
+            <span>Gestionar</span>
+          </button>
         </div>
 
         {/* Buscador & CTA */}
@@ -489,9 +517,21 @@ export function MenuStockPanel() {
         onClose={() => setIsModalOpen(false)}
         item={selectedItem}
         categories={categories}
+        allItems={items}
         onSave={handleSaveItem}
         onDeleteImage={deleteImageMutation.mutateAsync}
         isSaving={createItemMutation.isPending || updateItemMutation.isPending || uploadImageMutation.isPending}
+      />
+
+      {/* Modal de Gestión de Categorías */}
+      <CategoriesManagerModal
+        isOpen={isCategoriesModalOpen}
+        onClose={() => setIsCategoriesModalOpen(false)}
+        categories={categories}
+        items={items}
+        onSaveCategories={handleSaveCategories}
+        onDeleteCategory={handleDeleteCategory}
+        isSaving={saveCategoriesMutation.isPending || deleteCategoryMutation.isPending}
       />
     </div>
   );

@@ -306,3 +306,33 @@ Permitir la validación de campo y pruebas de extremo a extremo en el entorno de
 - El entorno de preview despliega Burgers.exe V3 en vivo de forma autónoma.
 - Cero riesgo operativo para la versión en producción.
 - Alineación total de las ramas de trabajo del proyecto.
+
+### Fecha
+
+2026-08-21
+
+---
+
+### Decisión
+
+**Gestión Integral de Categorías Dinámicas y Editor de Combos en Chekeo Admin**:
+
+1. **Gestor Visual de Categorías**: Creación del componente modal accesible `CategoriesManagerModal.tsx` que permite reordenar categorías (arriba/abajo), editar nombres, configurar emojis culinarios y crear nuevas categorías con slugs autogenerados.
+2. **Protección Referencial de Catálogo**: Se añade verificación de integridad en backend (`DELETE /api/menu-v2-admin/categories/:key`), impidiendo la eliminación de cualquier categoría que contenga platillos asignados en `menu_items` (HTTP 409 Conflict).
+3. **Editor Nativo de Combos & Grupos de Opciones (`comboConfig`)**: Integración directa en `ProductEditModal.tsx` de un panel interactivo para configurar precios de paquete (`bundlePriceCents`), platillos base vinculados (`comboLinks`) y grupos de opciones dinámicas (guarniciones, bebidas, upcharges y opciones por defecto), garantizando cumplimiento estricto con `MenuItemComboConfigSchema`.
+4. **Backend Hono.js Dinámico**: Flexibilización de validaciones estáticas en `menu-admin.ts` para permitir cualquier categoría registrada por el administrador.
+
+### Motivo
+
+Cumplir rigurosamente con la regla arquitectónica de "Single Source of Truth": el frontend público nunca debe simular opciones ni calcular precios al vuelo; Chekeo Admin debe gobernar directamente la configuración de catálogo en Cloudflare D1.
+
+### Impacto
+
+- Cero dependencia de migraciones o inserts manuales en D1 para nuevas categorías o combos.
+- El drawer de producto de la app pública refleja instantáneamente las opciones y recargos configurados en Chekeo.
+- Máxima seguridad operativa sin riesgo de platillos huérfanos por borrado accidental.
+
+### Fecha
+
+2026-09-02
+

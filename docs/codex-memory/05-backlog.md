@@ -32,6 +32,7 @@
 
 ## Completados recientemente
 
+- [x] **Chekeo Admin: Gestor de Categorías y Editor de Combos/Opciones (2026-09-02)**: Gestor visual de categorías (`CategoriesManagerModal.tsx`) con ordenamiento y emojis, editor de combos/opciones (`comboConfig`, `comboLinks`, `optionGroups`, `upchargeCents`) en `ProductEditModal.tsx` y endpoint de borrado referencial `DELETE /api/menu-v2-admin/categories/:key` en D1.
 - [x] **Consolidación de Banners y Catálogo V3 (2026-08-21)**: Live Preview y selectores inteligentes en Chekeo Banners, BannerCarousel interactivo, FeaturedRail (Top Vendidos), ReorderModule (1-Click Reorder) y Scrollspy en CategoryNav.
 - [x] **PR #553**: Afinaciones de UX/UI en Public Order V3 (Personalización burgers/combos, switch Dark/Light, emoji 🎁, layout 2 cols, checkout).
 - [x] **PR #552**: Chekeo Cocina Enfocada de Producción y KPIs en Resumen K.
