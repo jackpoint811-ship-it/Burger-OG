@@ -13,6 +13,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, Wifi, WifiOff, Lock, Sun, Moon } from 'lucide-react';
 import { useAuthStore } from '../../features/auth';
 import { BRAND_CONFIG } from '@config';
+import { SplitFlapDepartmentBadge } from './SplitFlapDepartmentBadge';
 
 export function TopHeader() {
   const { isAuthenticated, logout } = useAuthStore();
@@ -115,14 +116,18 @@ export function TopHeader() {
           </div>
         </div>
 
-        {/* Centro: Reloj Operativo en Tiempo Real */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-raised border border-line text-text-primary text-xs font-semibold shadow-xs">
-          <Clock className="w-3.5 h-3.5 text-accent shrink-0" />
-          <span className="font-mono text-sm tracking-wider font-bold">{timeStr || '--:--:--'}</span>
-          <span className="text-text-muted text-xs capitalize">• {dateStr}</span>
-          <span className="text-[10px] uppercase font-bold text-text-muted px-1 py-0.5 rounded bg-surface border border-line">
-            CDMX
-          </span>
+        {/* Centro: Selector Split-Flap de Departamento y Reloj Operativo CDMX */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <SplitFlapDepartmentBadge />
+
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-raised border border-line text-text-primary text-xs font-semibold shadow-xs">
+            <Clock className="w-3.5 h-3.5 text-accent shrink-0" />
+            <span className="font-mono text-sm tracking-wider font-bold">{timeStr || '--:--:--'}</span>
+            <span className="text-text-muted text-xs capitalize">• {dateStr}</span>
+            <span className="text-[10px] uppercase font-bold text-text-muted px-1 py-0.5 rounded bg-surface border border-line">
+              CDMX
+            </span>
+          </div>
         </div>
 
         {/* Derecha: Sync Status, Theme Toggle y Botón Logout */}

@@ -4,6 +4,7 @@ import { Skeleton } from '@ui/skeleton';
 import { useAuthStore } from '../features/auth';
 import { AppShell, ChekeoTab } from '../components/shell';
 import { ResumenKView } from '../components/views/ResumenKView';
+import { useDepartmentStore } from '../features/shared';
 
 // Carga diferida (lazy loading) de vistas secundarias
 const PedidosView = lazy(() =>
@@ -40,7 +41,10 @@ function ViewLoadingFallback() {
 }
 
 export function ChekeoApp() {
-  const [activeTab, setActiveTab] = useState<ChekeoTab>('resumenK');
+  const activeDepartment = useDepartmentStore((s) => s.activeDepartment);
+  const [activeTab, setActiveTab] = useState<ChekeoTab>(
+    activeDepartment === 'cocina' ? 'cocina' : 'resumenK'
+  );
   const { checkSession } = useAuthStore();
 
   useEffect(() => {
