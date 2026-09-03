@@ -32,6 +32,8 @@
 
 ## Completados recientemente
 
+- [x] **Fase 1 — Split-Flap Department Switcher & Workspace Isolation en Chekeo V3 (2026-09-03)**: Selector mecánico 3D Split-Flap en cabecera para alternar entre Cocina y Admin con tap rápido (<400ms), long-press (>450ms) con menú flotante y atajos de teclado (Alt+1, Alt+2, Alt+D); aislamiento contextual en NavTabs y persistencia en localStorage y query param URL (?dept=cocina|admin).
+- [x] **PR #644 (2026-09-02)**: Gestor de Categorías y Editor de Combos en Laboratorio Preview — Conteo reactivo de platillos dependientes y borrado seguro `DELETE /api/menu-v2-admin/categories/:key` con protección referencial en `CategoryManagerModal.tsx`; editor visual de combos y grupos de opciones (`comboConfig`, `comboLinks`, `optionGroups`, `upchargeCents`) integrado dentro del `<Drawer>` de `ProductEditModal.tsx` sobre la base de `preview`.
 - [x] **Desacoplamiento Total de SaaS al Repositorio Hresto (2026-08-31)**: Todo el desarrollo, arquitectura multi-tenant, control plane, facturación y backend SaaS fue trasladado y desacoplado a su propio repositorio independiente **`Hresto`** (`C:\Documentos\Hresto`). Burgers.exe queda 100% puro y enfocado en la tienda pública y POS/KDS del restaurante.
 - [x] **PR #633 (2026-08-30)**: Fix de Dark Mode & Scroll Fluido en Modales / Drawers — Activada directiva `@custom-variant dark` para Tailwind CSS v4 con variables dinámicas `var(--color-*)` en Chekeo y Tienda Pública; desacoplado el drag listener de Framer Motion en `@ui/drawer` mediante `useDragControls` y habilitado `overflow-y-auto` con `max-h` en `@ui/dialog` para scroll vertical fluido sin bloqueos de gestos.
 
